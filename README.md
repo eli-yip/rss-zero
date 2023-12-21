@@ -1,2 +1,5 @@
 # zsxq-parser
-A golang package parsing zsxq api.
+
+Still working in progress, don't use it.
+
+A golang package parsing zsxq api response.
