@@ -4,6 +4,7 @@ import "encoding/json"
 
 type TopicParseResult struct {
 	Topic
+	Author    string
 	ShareLink string
 	Raw       json.RawMessage
 }
