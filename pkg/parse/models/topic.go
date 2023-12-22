@@ -1,5 +1,13 @@
 package models
 
+import "encoding/json"
+
+type TopicParseResult struct {
+	Topic
+	ShareLink string
+	Raw       json.RawMessage
+}
+
 type Topic struct {
 	TopicID int `json:"topic_id"`
 	Group   struct {
