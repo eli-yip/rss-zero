@@ -7,7 +7,7 @@ import (
 	"github.com/eli-yip/zsxq-parser/pkg/parse/models"
 )
 
-func (s *ParseService) parseImage(images []models.Image) (err error) {
+func (s *ParseService) parseImages(images []models.Image) (err error) {
 	if images == nil {
 		return nil
 	}

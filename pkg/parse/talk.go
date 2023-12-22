@@ -23,7 +23,7 @@ func (s *ParseService) parseTalk(talk *models.Talk) (author string, err error) {
 		return "", err
 	}
 
-	if err = s.parseImage(talk.Images); err != nil {
+	if err = s.parseImages(talk.Images); err != nil {
 		return "", err
 	}
 
