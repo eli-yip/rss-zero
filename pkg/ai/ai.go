@@ -1,6 +1,8 @@
 package ai
 
 import (
+	"io"
+
 	openai "github.com/sashabaranov/go-openai"
 )
 
@@ -14,7 +16,7 @@ import (
 // It takes path to audio file as input and returns text as output.
 type AIIface interface {
 	Polish(text string) (result string, err error)
-	Text(path string) (text string, err error)
+	Text(path io.Reader) (text string, err error)
 }
 
 func NewAIService(APIKey string) AIIface {
@@ -35,4 +37,4 @@ type AIServiceWithoutAPI struct{}
 
 func (s *AIServiceWithoutAPI) Polish(text string) (result string, err error) { return text, nil }
 
-func (s *AIServiceWithoutAPI) Text(path string) (text string, err error) { return "", nil }
+func (s *AIServiceWithoutAPI) Text(stream io.Reader) (text string, err error) { return "", nil }

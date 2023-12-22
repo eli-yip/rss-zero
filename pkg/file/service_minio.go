@@ -85,3 +85,7 @@ func (s *FileServiceMinio) Save(objectKey, downloadLink string) (err error) {
 
 	return nil
 }
+
+func (s *FileServiceMinio) Get(objectKey string) (reader *minio.Object, err error) {
+	return s.minioClient.GetObject(context.Background(), s.bucketName, objectKey, minio.GetObjectOptions{})
+}

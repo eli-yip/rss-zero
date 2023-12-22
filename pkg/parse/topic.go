@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/eli-yip/zsxq-parser/pkg/ai"
-	zsxqFile "github.com/eli-yip/zsxq-parser/pkg/parse/file"
+	zsxqFile "github.com/eli-yip/zsxq-parser/pkg/file"
 	"github.com/eli-yip/zsxq-parser/pkg/parse/models"
 	"github.com/eli-yip/zsxq-parser/pkg/request"
 )
