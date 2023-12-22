@@ -5,5 +5,6 @@ import "io"
 type FileIface interface {
 	DownloadLink(int) (string, error)
 	Save(string, string) error
-	Get(string) (io.Reader, error)
+	Get(string) (io.ReadCloser, error)
+	GetAssetsDomain() string
 }

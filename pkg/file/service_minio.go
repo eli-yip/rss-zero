@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/eli-yip/zsxq-parser/pkg/request"
@@ -15,6 +16,7 @@ type FileServiceMinio struct {
 	requestService request.RequestIface
 	minioClient    *minio.Client
 	bucketName     string
+	AssetsDomain   string
 }
 
 type MinioConfig struct {
@@ -23,6 +25,7 @@ type MinioConfig struct {
 	SecretAccessKey string
 	UseSSL          bool
 	BucketName      string
+	AssetsDomain    string
 }
 
 func NewFileServiceMinio(requestService request.RequestIface, minioConfig MinioConfig) *FileServiceMinio {
@@ -39,6 +42,7 @@ func NewFileServiceMinio(requestService request.RequestIface, minioConfig MinioC
 		requestService: requestService,
 		minioClient:    minioClient,
 		bucketName:     minioConfig.BucketName,
+		AssetsDomain:   minioConfig.AssetsDomain,
 	}
 }
 
@@ -86,6 +90,10 @@ func (s *FileServiceMinio) Save(objectKey, downloadLink string) (err error) {
 	return nil
 }
 
-func (s *FileServiceMinio) Get(objectKey string) (reader *minio.Object, err error) {
+func (s *FileServiceMinio) Get(objectKey string) (stream io.ReadCloser, err error) {
 	return s.minioClient.GetObject(context.Background(), s.bucketName, objectKey, minio.GetObjectOptions{})
+}
+
+func (s *FileServiceMinio) GetAssetsDomain() (url string) {
+	return s.AssetsDomain
 }
