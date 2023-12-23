@@ -90,6 +90,8 @@ func (s *ParseService) ParseTopic(rawTopic json.RawMessage) (result models.Topic
 		ID:        result.Topic.TopicID,
 		Time:      createTimeInTime,
 		Type:      result.Topic.Type,
+		GroupName: result.Topic.Group.Name,
+		GroupID:   result.Topic.Group.GroupID,
 		Digested:  false,
 		Author:    result.Author,
 		ShareLink: result.ShareLink,

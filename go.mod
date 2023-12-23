@@ -7,8 +7,10 @@ require github.com/lib/pq v1.10.9
 require golang.org/x/net v0.19.0
 
 require (
+	github.com/gorilla/feeds v1.1.2
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/sashabaranov/go-openai v1.17.9
+	github.com/stretchr/testify v1.8.4
 	github.com/yuin/goldmark v1.6.0
 )
 
@@ -26,7 +28,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
 	golang.org/x/crypto v0.16.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

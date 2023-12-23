@@ -10,6 +10,8 @@ type Topic struct {
 	ID        int       `gorm:"column:id;primary_key"`
 	Time      time.Time `gorm:"column:time"`
 	Type      string    `gorm:"column:type;type:text"`
+	GroupName string    `gorm:"column:group_name;type:text"`
+	GroupID   int       `gorm:"column:group_id"`
 	Digested  bool      `gorm:"column:digested;type:bool"`
 	Author    string    `gorm:"column:author;type:text"`
 	ShareLink string    `gorm:"column:share_link;type:text"`

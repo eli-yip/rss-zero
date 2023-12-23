@@ -10,8 +10,6 @@ import (
 	"github.com/eli-yip/zsxq-parser/internal/md"
 	"github.com/eli-yip/zsxq-parser/pkg/db"
 	"github.com/eli-yip/zsxq-parser/pkg/parse/models"
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
 )
 
 type RenderIface interface {
@@ -25,15 +23,14 @@ type MarkdownRenderIface interface {
 }
 
 type MarkdownRenderService struct {
-	DBService   db.DataBaseIface
-	Formatter   goldmark.Markdown
+	DBService db.DataBaseIface
+
 	formatFuncs []func(string) (string, error)
 }
 
 func NewMarkdownRenderService(dbService db.DataBaseIface) *MarkdownRenderService {
 	return &MarkdownRenderService{
 		DBService: dbService,
-		Formatter: goldmark.New(goldmark.WithExtensions(extension.GFM)),
 		formatFuncs: []func(string) (string, error){
 			replaceBookMarkUp,
 			replaceAnswerQuoto,
