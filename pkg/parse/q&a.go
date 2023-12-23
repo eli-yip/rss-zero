@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"fmt"
 	"strconv"
 
 	zsxqTime "github.com/eli-yip/zsxq-parser/internal/time"
@@ -35,7 +36,12 @@ func (s *ParseService) parseQA(topic *models.Topic) (author string, err error) {
 }
 
 func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeStr string) (err error) {
-	if err = s.FileService.Save(strconv.Itoa(voice.VoiceID), voice.URL); err != nil {
+	if voice == nil {
+		return nil
+	}
+
+	objectKey := fmt.Sprintf("%d.%s", voice.VoiceID, "wav")
+	if err = s.FileService.Save(objectKey, voice.URL); err != nil {
 		return err
 	}
 
@@ -64,6 +70,7 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 		TopicID:         topicID,
 		Time:            createTime,
 		Type:            "voice",
+		ObjectKey:       objectKey,
 		StorageProvider: []string{s.FileService.GetAssetsDomain()},
 		Transcript:      polishedTranscript,
 	}); err != nil {

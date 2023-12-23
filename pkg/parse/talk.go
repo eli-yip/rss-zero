@@ -2,7 +2,7 @@ package parse
 
 import (
 	"errors"
-	"strconv"
+	"fmt"
 
 	zsxqTime "github.com/eli-yip/zsxq-parser/internal/time"
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
@@ -44,7 +44,8 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 			return err
 		}
 
-		if err = s.FileService.Save(strconv.Itoa(file.FileID), downloadLink); err != nil {
+		objectKey := fmt.Sprintf("%d-%s", file.FileID, file.Name)
+		if err = s.FileService.Save(objectKey, downloadLink); err != nil {
 			return err
 		}
 
@@ -58,6 +59,7 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 			TopicID:         topicID,
 			Time:            createTime,
 			Type:            "file",
+			ObjectKey:       objectKey,
 			StorageProvider: []string{s.FileService.GetAssetsDomain()},
 		}); err != nil {
 			return err

@@ -22,6 +22,7 @@ type Object struct {
 	TopicID         int            `gorm:"column:topic_id"`
 	Time            time.Time      `gorm:"column:time"`
 	Type            string         `gorm:"column:type;type:text"`
+	ObjectKey       string         `gorm:"column:object_key;type:text"`
 	StorageProvider pq.StringArray `gorm:"column:storage_provider;type:text[]"`
 	Transcript      string         `gorm:"column:transcript;type:text"`
 }

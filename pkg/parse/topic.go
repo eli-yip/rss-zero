@@ -9,6 +9,7 @@ import (
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
 	zsxqFile "github.com/eli-yip/zsxq-parser/pkg/file"
 	"github.com/eli-yip/zsxq-parser/pkg/parse/models"
+	"github.com/eli-yip/zsxq-parser/pkg/render"
 	"github.com/eli-yip/zsxq-parser/pkg/request"
 )
 
@@ -17,6 +18,7 @@ type ParseService struct {
 	RequestService request.RequestIface
 	DBService      db.DataBaseIface
 	AIService      ai.AIIface
+	RenderService  render.MarkdownRenderIface
 }
 
 func NewParseService(
@@ -66,6 +68,21 @@ func (s *ParseService) ParseTopic(rawTopic json.RawMessage) (result models.Topic
 
 	createTimeInTime, err := zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
 	if err != nil {
+		return models.TopicParseResult{}, err
+	}
+
+	if result.Text, err = s.RenderService.RenderMarkdown(&render.Topic{
+		TopicID:    result.Topic.TopicID,
+		GroupName:  result.Topic.Group.Name,
+		Type:       result.Topic.Type,
+		CreateTime: createTimeInTime,
+		Talk:       result.Topic.Talk,
+		Question:   result.Topic.Question,
+		Answer:     result.Topic.Answer,
+		Title:      result.Topic.Title,
+		Author:     result.Author,
+		ShareLink:  result.ShareLink,
+	}); err != nil {
 		return models.TopicParseResult{}, err
 	}
 

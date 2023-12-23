@@ -6,6 +6,7 @@ type TopicParseResult struct {
 	Topic
 	Author    string
 	ShareLink string
+	Text      string
 	Raw       json.RawMessage
 }
 
