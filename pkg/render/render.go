@@ -48,7 +48,7 @@ func (m *MarkdownRenderService) RenderMarkdown(t *Topic) (text string, err error
 
 	switch t.Type {
 	case "talk":
-		if err = m.renderTalk(t.Talk, &buffer); err != nil {
+		if err = m.renderTalk(t.Talk, t.Author, &buffer); err != nil {
 			return "", err
 		}
 	case "q&a":
@@ -58,24 +58,21 @@ func (m *MarkdownRenderService) RenderMarkdown(t *Topic) (text string, err error
 	default:
 	}
 
-	var resultBuffer bytes.Buffer
-	if err = m.Formatter.Convert(buffer.Bytes(), &resultBuffer); err != nil {
-		return "", err
-	}
-	return resultBuffer.String(), nil
+	return buffer.String(), nil
 }
 
-func (m *MarkdownRenderService) renderTalk(talk *models.Talk, writer io.Writer) (err error) {
+func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, writer io.Writer) (err error) {
 	if talk.Text == nil {
 		return errors.New("no text in talk")
 	}
+	authorPart := fmt.Sprintf("作者：%s", author)
 	textPart := *talk.Text
 	for _, f := range m.formatFuncs {
 		if textPart, err = f(textPart); err != nil {
 			return err
 		}
 	}
-	textPart = strings.TrimRight(textPart, "\n")
+	textPart = trimRightSpace(textPart)
 
 	filePart := ""
 	if talk.Files != nil {
@@ -87,7 +84,7 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, writer io.Writer) 
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d个文件：[%s](%s)", i+1, file.Name, uri)
-			filePart = md.Join(filePart, text)
+			filePart = trimRightSpace(md.Join(filePart, text))
 		}
 	}
 
@@ -101,11 +98,13 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, writer io.Writer) 
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
-			imagePart = md.Join(imagePart, text)
+			imagePart = trimRightSpace(md.Join(imagePart, text))
 		}
 	}
 
-	text := md.Join(textPart, filePart, imagePart)
+	// TODO: Render articles
+
+	text := md.Join(authorPart, textPart, filePart, imagePart)
 	if _, err = writer.Write([]byte(text)); err != nil {
 		return err
 	}
@@ -117,6 +116,7 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 	if err != nil {
 		return err
 	}
+	questionPart = trimRightSpace(questionPart)
 
 	questionImagePart := ""
 	if q.Images != nil {
@@ -128,13 +128,13 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
-			questionImagePart = md.Join(questionImagePart, text)
+			questionImagePart = trimRightSpace(md.Join(questionImagePart, text))
 		}
 	}
 
 	questionPart = md.Quote(md.Join(questionPart, questionImagePart))
 
-	answerPart := fmt.Sprintf("%s回答了这个问题：", author)
+	answerPart := fmt.Sprintf("%s回答如下：", md.Bold(author))
 
 	answerVoicePart := ""
 	if a.Voice != nil {
@@ -143,9 +143,9 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 			return err
 		}
 		uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
-		answerVoicePart = md.Join(answerVoicePart,
+		answerVoicePart = trimRightSpace(md.Join(answerVoicePart,
 			fmt.Sprintf("这个[回答](%s)的语音转文字结果：", uri),
-			object.Transcript)
+			object.Transcript))
 	}
 
 	answerText := ""
@@ -155,6 +155,7 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 			return err
 		}
 	}
+	answerText = trimRightSpace(answerText)
 
 	answerImagePart := ""
 	if a.Images != nil {
@@ -166,11 +167,10 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
-			answerImagePart = md.Join(answerImagePart, text)
+			answerImagePart = trimRightSpace(md.Join(answerImagePart, text))
 		}
 	}
-
-	answerPart = md.Join(answerPart, answerVoicePart, answerText, answerImagePart)
+	answerPart = trimRightSpace(md.Join(answerPart, answerVoicePart, answerText, answerImagePart))
 
 	text := md.Join(questionPart, answerPart)
 	if _, err = writer.Write([]byte(text)); err != nil {
@@ -178,4 +178,8 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 	}
 
 	return nil
+}
+
+func trimRightSpace(text string) string {
+	return strings.TrimRight(text, " \n")
 }
