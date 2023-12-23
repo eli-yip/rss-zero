@@ -30,9 +30,10 @@ func TestH3(t *testing.T) {
 
 func TestQuote(t *testing.T) {
 	cases := map[string]string{
-		"Hello":          "> Hello",
-		"Hello\nWorld":   "> Hello\n> World",
-		"Hello\nWorld\n": "> Hello\n> World",
+		"Hello":            "> Hello",
+		"Hello\nWorld":     "> Hello\n> World",
+		"Hello\nWorld\n\n": "> Hello\n> World",
+		"Hello\n\nWorld":   "> Hello\n> \n> World",
 	}
 	for input, expected := range cases {
 		result := Quote(input)

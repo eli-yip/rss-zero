@@ -12,18 +12,18 @@ func TestJoin(t *testing.T) {
 	})
 
 	t.Run("Single string", func(t *testing.T) {
-		assert.Equal(t, "hello", Join("hello"))
+		assert.Equal(t, "hello\n\n", Join("hello"))
 	})
 
 	t.Run("Multiple strings", func(t *testing.T) {
-		assert.Equal(t, "hello\nworld", Join("hello", "world"))
+		assert.Equal(t, "hello\n\nworld\n\n", Join("hello", "world"))
 	})
 
 	t.Run("Empty string included", func(t *testing.T) {
-		assert.Equal(t, "hello\n\nworld", Join("hello", "", "world"))
+		assert.Equal(t, "hello\n\nworld\n\n", Join("hello", "", "world"))
 	})
 
 	t.Run("Strings with special characters", func(t *testing.T) {
-		assert.Equal(t, "hello\nworld\nline\n1\nline\t2", Join("hello", "world", "line\n1", "line\t2"))
+		assert.Equal(t, "hello\n\nworld\n\nline\n1\n\nline\t2\n\n", Join("hello", "world", "line\n1", "line\t2"))
 	})
 }
