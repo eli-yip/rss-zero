@@ -19,7 +19,14 @@ type RSSRenderIface interface {
 type RSSRenderService struct{ HTMLRender goldmark.Markdown }
 
 func NewRSSRenderService() *RSSRenderService {
-	return &RSSRenderService{HTMLRender: goldmark.New(goldmark.WithExtensions(extension.GFM))}
+	return &RSSRenderService{HTMLRender: goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.NewCJK(
+				extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksSimple),
+				extension.WithEscapedSpace(),
+			)),
+	)}
 }
 
 func (r *RSSRenderService) RenderRSS(topics []RSSTopic) (result string, err error) {
