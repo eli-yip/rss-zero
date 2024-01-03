@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
-	"github.com/eli-yip/zsxq-parser/pkg/parse/models"
+	"github.com/eli-yip/zsxq-parser/pkg/zsxq/parse/models"
 )
 
 type mockDBService struct{}

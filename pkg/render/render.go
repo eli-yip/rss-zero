@@ -9,7 +9,7 @@ import (
 
 	"github.com/eli-yip/zsxq-parser/internal/md"
 	"github.com/eli-yip/zsxq-parser/pkg/db"
-	"github.com/eli-yip/zsxq-parser/pkg/parse/models"
+	"github.com/eli-yip/zsxq-parser/pkg/zsxq/parse/models"
 )
 
 type RenderIface interface {
