@@ -9,8 +9,8 @@ import (
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
 	zsxqFile "github.com/eli-yip/zsxq-parser/pkg/file"
 	"github.com/eli-yip/zsxq-parser/pkg/render"
-	"github.com/eli-yip/zsxq-parser/pkg/request"
-	"github.com/eli-yip/zsxq-parser/pkg/zsxq/parse/models"
+	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
+	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/request"
 )
 
 type ParseService struct {

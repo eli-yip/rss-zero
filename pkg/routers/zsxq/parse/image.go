@@ -6,7 +6,7 @@ import (
 
 	zsxqTime "github.com/eli-yip/zsxq-parser/internal/time"
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
-	"github.com/eli-yip/zsxq-parser/pkg/zsxq/parse/models"
+	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
 
 func (s *ParseService) parseImages(images []models.Image, topicID int, createTimeStr string) (err error) {

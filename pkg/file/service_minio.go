@@ -7,7 +7,7 @@ import (
 	"io"
 	"log"
 
-	"github.com/eli-yip/zsxq-parser/pkg/request"
+	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/request"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )

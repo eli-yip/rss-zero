@@ -1,7 +1,7 @@
 package parse
 
 import (
-	"github.com/eli-yip/zsxq-parser/pkg/zsxq/parse/models"
+	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
 
 func (s *ParseService) parseAuthor(user *models.User) (author string, err error) {
