@@ -6,7 +6,7 @@ import (
 
 	zsxqTime "github.com/eli-yip/zsxq-parser/internal/time"
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
-	"github.com/eli-yip/zsxq-parser/pkg/parse/models"
+	"github.com/eli-yip/zsxq-parser/pkg/zsxq/parse/models"
 )
 
 var ErrNoText = errors.New("no text in this topic")
