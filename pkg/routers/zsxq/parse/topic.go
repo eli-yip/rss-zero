@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	zsxqTime "github.com/eli-yip/zsxq-parser/internal/time"
 	"github.com/eli-yip/zsxq-parser/pkg/ai"
 	"github.com/eli-yip/zsxq-parser/pkg/file"
 	"github.com/eli-yip/zsxq-parser/pkg/request"
@@ -12,6 +11,7 @@ import (
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/render"
+	zsxqTime "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/time"
 )
 
 type ParseService struct {

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	zsxqTime "github.com/eli-yip/zsxq-parser/internal/time"
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
+	zsxqTime "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/time"
 )
 
 func (s *ParseService) parseImages(images []models.Image, topicID int, createTimeStr string) (err error) {
