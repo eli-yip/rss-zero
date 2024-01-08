@@ -17,7 +17,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CrawlZsxq(redisService *redis.RedisService, dbService db.DataBaseIface) {
+func CrawlZsxq(redisService *redis.RedisService, dbService db.DataBaseIface, db *gorm.DB) {
 	/* get cookies from redis
 	 * get zsxq group ids from database
 	 * * iterate zsxq group id
@@ -51,7 +51,7 @@ func CrawlZsxq(redisService *redis.RedisService, dbService db.DataBaseIface) {
 	requestService := request.NewRequestService(cookies, redisService)
 	fileService := file.NewFileServiceMinio(file.MinioConfig{})
 	aiService := ai.NewAIService("")
-	zsxqDBService := zsxqDB.NewZsxqDBService(&gorm.DB{})
+	zsxqDBService := zsxqDB.NewZsxqDBService(db)
 	parseService := parse.NewParseService(fileService, requestService, zsxqDBService, aiService)
 
 	for _, groupID := range groupIDs {
