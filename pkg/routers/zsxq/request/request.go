@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/eli-yip/zsxq-parser/internal/redis"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -20,21 +21,23 @@ var (
 )
 
 type RequestService struct {
-	cookies     string
-	client      *http.Client
-	emptyClient *http.Client
-	limiter     chan struct{}
-	maxRetry    int
+	cookies      string
+	client       *http.Client
+	emptyClient  *http.Client
+	limiter      chan struct{}
+	maxRetry     int
+	redisService *redis.RedisService
 }
 
-func NewRequestService(cookies string) *RequestService {
+func NewRequestService(cookies string, redisService *redis.RedisService) *RequestService {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 
 	rs := &RequestService{
-		client:      &http.Client{Jar: jar},
-		emptyClient: &http.Client{},
-		limiter:     make(chan struct{}),
-		maxRetry:    3,
+		client:       &http.Client{Jar: jar},
+		emptyClient:  &http.Client{},
+		limiter:      make(chan struct{}),
+		maxRetry:     3,
+		redisService: redisService,
 	}
 
 	rs.SetCookies(cookies)

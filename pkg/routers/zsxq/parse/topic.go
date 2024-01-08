@@ -36,6 +36,7 @@ func NewParseService(
 	}
 }
 
+// SplitTopics split the api response bytes to raw topics from zsxq api
 func (s *ParseService) SplitTopics(respBytes []byte) (rawTopics []json.RawMessage, err error) {
 	resp := models.APIResponse{}
 	if err = json.Unmarshal(respBytes, &resp); err != nil {
@@ -44,64 +45,60 @@ func (s *ParseService) SplitTopics(respBytes []byte) (rawTopics []json.RawMessag
 	return resp.RespData.RawTopics, nil
 }
 
-func (s *ParseService) ParseTopic(rawTopic json.RawMessage) (result models.TopicParseResult, err error) {
-	result.Raw = rawTopic
-	if err = json.Unmarshal(rawTopic, &result.Topic); err != nil {
-		return models.TopicParseResult{}, err
-	}
-
+// ParseTopics parse the raw topics to topic parse result
+func (s *ParseService) ParseTopic(result models.TopicParseResult) (err error) {
+	// Generate share link
 	result.ShareLink, err = s.shareLink(result.Topic.TopicID)
 	if err != nil {
-		return models.TopicParseResult{}, err
+		return err
 	}
 
+	// Parse topic and set result
 	switch result.Topic.Type {
 	case "talk":
 		if result.Author, err = s.parseTalk(&result.Topic); err != nil {
-			return models.TopicParseResult{}, err
+			return err
 		}
 	case "q&a":
 		if result.Author, err = s.parseQA(&result.Topic); err != nil {
-			return models.TopicParseResult{}, err
+			return err
 		}
 	default:
+		// TODO: Add log
 	}
 
 	createTimeInTime, err := zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
 	if err != nil {
-		return models.TopicParseResult{}, err
+		return err
 	}
 
+	// Render topic to markdown
 	if result.Text, err = s.RenderService.RenderMarkdown(&render.Topic{
-		TopicID:    result.Topic.TopicID,
-		GroupName:  result.Topic.Group.Name,
-		Type:       result.Topic.Type,
-		CreateTime: createTimeInTime,
-		Talk:       result.Topic.Talk,
-		Question:   result.Topic.Question,
-		Answer:     result.Topic.Answer,
-		Title:      result.Topic.Title,
-		Author:     result.Author,
-		ShareLink:  result.ShareLink,
+		Type:     result.Topic.Type,
+		Talk:     result.Topic.Talk,
+		Question: result.Topic.Question,
+		Answer:   result.Topic.Answer,
+		Author:   result.Author,
 	}); err != nil {
-		return models.TopicParseResult{}, err
+		return err
 	}
 
+	// Save topic to database
 	if err = s.DBService.SaveTopic(&dbModels.Topic{
 		ID:        result.Topic.TopicID,
 		Time:      createTimeInTime,
-		Type:      result.Topic.Type,
-		GroupName: result.Topic.Group.Name,
 		GroupID:   result.Topic.Group.GroupID,
+		Type:      result.Topic.Type,
 		Digested:  false,
 		Author:    result.Author,
 		ShareLink: result.ShareLink,
+		Text:      result.Text,
 		Raw:       result.Raw,
 	}); err != nil {
-		return models.TopicParseResult{}, err
+		return err
 	}
 
-	return result, nil
+	return nil
 }
 
 const ZsxqFileBaseURL = "https://api.zsxq.com/v2/files/%d/download_url"

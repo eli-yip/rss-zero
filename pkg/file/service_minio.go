@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/eli-yip/zsxq-parser/pkg/request"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
@@ -27,7 +26,7 @@ type MinioConfig struct {
 	AssetsDomain    string
 }
 
-func NewFileServiceMinio(requestService request.Requester, minioConfig MinioConfig) *FileServiceMinio {
+func NewFileServiceMinio(minioConfig MinioConfig) *FileServiceMinio {
 	minioClient, err := minio.New(minioConfig.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(minioConfig.AccessKeyID, minioConfig.SecretAccessKey, ""),
 		Secure: minioConfig.UseSSL,

@@ -1,3 +1,5 @@
+// This file defines the struct of api response struct of zsxq.
+// Attention: the struct is api response struct, not the struct of database.
 package models
 
 import "encoding/json"

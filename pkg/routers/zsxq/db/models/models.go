@@ -1,3 +1,4 @@
+// This file defines the models in database.
 package models
 
 import (
@@ -9,9 +10,8 @@ import (
 type Topic struct {
 	ID        int       `gorm:"column:id;primary_key"`
 	Time      time.Time `gorm:"column:time"`
-	Type      string    `gorm:"column:type;type:text"`
-	GroupName string    `gorm:"column:group_name;type:text"`
 	GroupID   int       `gorm:"column:group_id"`
+	Type      string    `gorm:"column:type;type:text"`
 	Digested  bool      `gorm:"column:digested;type:bool"`
 	Author    string    `gorm:"column:author;type:text"`
 	ShareLink string    `gorm:"column:share_link;type:text"`
@@ -27,4 +27,11 @@ type Object struct {
 	ObjectKey       string         `gorm:"column:object_key;type:text"`
 	StorageProvider pq.StringArray `gorm:"column:storage_provider;type:text[]"`
 	Transcript      string         `gorm:"column:transcript;type:text"`
+}
+
+type Group struct {
+	ID         int       `gorm:"column:id;primary_key"`
+	Name       string    `gorm:"column:name;type:text"`
+	UpdateAt   time.Time `gorm:"column:update_at"`
+	ErrorTimes int       `gorm:"column:error_times;type:int"`
 }
