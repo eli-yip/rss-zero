@@ -1,6 +1,6 @@
 package db
 
-import "github.com/eli-yip/zsxq-parser/pkg/db/models"
+import "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 
 type DataBaseIface interface {
 	SaveTopic(*models.Topic) error

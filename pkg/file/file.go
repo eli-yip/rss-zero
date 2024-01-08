@@ -1,10 +1,12 @@
 package file
 
-import "io"
+import (
+	"io"
+	"net/http"
+)
 
 type FileIface interface {
-	DownloadLink(int) (string, error)
-	Save(string, string) error
+	SaveHTTPStream(string, *http.Response) error
 	Get(string) (io.ReadCloser, error)
 	GetAssetsDomain() string
 }

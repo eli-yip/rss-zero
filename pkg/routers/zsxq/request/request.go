@@ -67,7 +67,7 @@ type Resp struct {
 	Succeeded bool `json:"succeeded"`
 }
 
-func (r *RequestService) SendWithLimiter(targetURL string) (respByte []byte, err error) {
+func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err error) {
 	for i := 0; i < r.maxRetry; i++ {
 		<-r.limiter
 		var resp *http.Response
@@ -102,7 +102,7 @@ func (r *RequestService) SendWithLimiter(targetURL string) (respByte []byte, err
 	return nil, err
 }
 
-func (r *RequestService) SendWithoutLimiter(targetURL string) (respByte []byte, err error) {
+func (r *RequestService) WithoutLimiter(targetURL string) (respByte []byte, err error) {
 	for i := 0; i < r.maxRetry; i++ {
 		var resp *http.Response
 		resp, err = r.emptyClient.Get(targetURL)
@@ -126,7 +126,7 @@ func (r *RequestService) SendWithoutLimiter(targetURL string) (respByte []byte, 
 	return nil, err
 }
 
-func (r *RequestService) SendWithLimiterStream(targetURL string) (resp *http.Response, err error) {
+func (r *RequestService) WithLimiterStream(targetURL string) (resp *http.Response, err error) {
 	for i := 0; i < r.maxRetry; i++ {
 		resp, err = r.emptyClient.Get(targetURL)
 		if err != nil {

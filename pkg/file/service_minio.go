@@ -2,21 +2,20 @@ package file
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"log"
+	"net/http"
 
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/request"
+	"github.com/eli-yip/zsxq-parser/pkg/request"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type FileServiceMinio struct {
-	requestService request.RequestIface
-	minioClient    *minio.Client
-	bucketName     string
-	AssetsDomain   string
+	minioClient  *minio.Client
+	bucketName   string
+	AssetsDomain string
 }
 
 type MinioConfig struct {
@@ -28,7 +27,7 @@ type MinioConfig struct {
 	AssetsDomain    string
 }
 
-func NewFileServiceMinio(requestService request.RequestIface, minioConfig MinioConfig) *FileServiceMinio {
+func NewFileServiceMinio(requestService request.Requester, minioConfig MinioConfig) *FileServiceMinio {
 	minioClient, err := minio.New(minioConfig.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(minioConfig.AccessKeyID, minioConfig.SecretAccessKey, ""),
 		Secure: minioConfig.UseSSL,
@@ -39,42 +38,17 @@ func NewFileServiceMinio(requestService request.RequestIface, minioConfig MinioC
 	}
 
 	return &FileServiceMinio{
-		requestService: requestService,
-		minioClient:    minioClient,
-		bucketName:     minioConfig.BucketName,
-		AssetsDomain:   minioConfig.AssetsDomain,
+		minioClient:  minioClient,
+		bucketName:   minioConfig.BucketName,
+		AssetsDomain: minioConfig.AssetsDomain,
 	}
 }
 
-type FileDownload struct {
-	RespData struct {
-		DownloadURL string `json:"download_url"`
-	} `json:"resp_data"`
-}
-
-const ZsxqFileBaseURL = "https://api.zsxq.com/v2/files/%d/download_url"
-
-func (s *FileServiceMinio) DownloadLink(fileID int) (link string, err error) {
-	url := fmt.Sprintf(ZsxqFileBaseURL, fileID)
-
-	resp, err := s.requestService.SendWithLimiter(url)
-	if err != nil {
-		return "", err
+func (s *FileServiceMinio) SaveHTTPStream(objectKey string, resp *http.Response) (err error) {
+	if resp == nil || resp.Body == nil {
+		return errors.New("no body")
 	}
 
-	download := FileDownload{}
-	if err = json.Unmarshal(resp, &download); err != nil {
-		return "", err
-	}
-
-	return download.RespData.DownloadURL, nil
-}
-
-func (s *FileServiceMinio) Save(objectKey, downloadLink string) (err error) {
-	resp, err := s.requestService.SendWithLimiterStream(downloadLink)
-	if err != nil {
-		return err
-	}
 	defer resp.Body.Close()
 
 	_, err = s.minioClient.PutObject(context.Background(),

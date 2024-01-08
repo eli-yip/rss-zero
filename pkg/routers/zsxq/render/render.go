@@ -8,16 +8,16 @@ import (
 	"strings"
 
 	"github.com/eli-yip/zsxq-parser/internal/md"
-	"github.com/eli-yip/zsxq-parser/pkg/db"
+	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
 
-type RenderIface interface {
-	MarkdownRenderIface
-	RSSRenderIface
+type Renderer interface {
+	MarkdownRenderer
+	RSSRenderer
 }
 
-type MarkdownRenderIface interface {
+type MarkdownRenderer interface {
 	RenderMarkdown(*Topic) (string, error)
 	RenderFullMarkdown(*Topic) (string, error)
 }

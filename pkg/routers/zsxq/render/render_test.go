@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
+	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
 

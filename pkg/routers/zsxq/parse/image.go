@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	zsxqTime "github.com/eli-yip/zsxq-parser/internal/time"
-	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
+	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
 
@@ -33,7 +33,11 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 			url = image.Original.URL
 		}
 		objectKey := fmt.Sprintf("%d.%s", image.ImageID, image.Type)
-		if err = s.FileService.Save(objectKey, url); err != nil {
+		resp, err := s.RequestService.WithLimiterStream(url)
+		if err != nil {
+			return err
+		}
+		if err = s.FileService.SaveHTTPStream(objectKey, resp); err != nil {
 			return err
 		}
 

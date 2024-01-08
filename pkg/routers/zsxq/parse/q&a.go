@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	zsxqTime "github.com/eli-yip/zsxq-parser/internal/time"
-	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
+	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
 
@@ -41,7 +41,11 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 	}
 
 	objectKey := fmt.Sprintf("%d.%s", voice.VoiceID, "wav")
-	if err = s.FileService.Save(objectKey, voice.URL); err != nil {
+	resp, err := s.RequestService.WithLimiterStream(voice.URL)
+	if err != nil {
+		return err
+	}
+	if err = s.FileService.SaveHTTPStream(objectKey, resp); err != nil {
 		return err
 	}
 

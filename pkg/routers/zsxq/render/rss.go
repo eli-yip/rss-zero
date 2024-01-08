@@ -12,7 +12,7 @@ import (
 	"github.com/yuin/goldmark/extension"
 )
 
-type RSSRenderIface interface {
+type RSSRenderer interface {
 	RenderRSS([]Topic) (string, error)
 }
 

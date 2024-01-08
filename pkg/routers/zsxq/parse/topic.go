@@ -2,28 +2,29 @@ package parse
 
 import (
 	"encoding/json"
+	"fmt"
 
 	zsxqTime "github.com/eli-yip/zsxq-parser/internal/time"
 	"github.com/eli-yip/zsxq-parser/pkg/ai"
-	"github.com/eli-yip/zsxq-parser/pkg/db"
-	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
-	zsxqFile "github.com/eli-yip/zsxq-parser/pkg/file"
-	"github.com/eli-yip/zsxq-parser/pkg/render"
+	"github.com/eli-yip/zsxq-parser/pkg/file"
+	"github.com/eli-yip/zsxq-parser/pkg/request"
+	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
+	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/request"
+	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/render"
 )
 
 type ParseService struct {
-	FileService    zsxqFile.FileIface
-	RequestService request.RequestIface
+	FileService    file.FileIface
+	RequestService request.Requester
 	DBService      db.DataBaseIface
 	AIService      ai.AIIface
-	RenderService  render.MarkdownRenderIface
+	RenderService  render.MarkdownRenderer
 }
 
 func NewParseService(
-	fileIface zsxqFile.FileIface,
-	requestService request.RequestIface,
+	fileIface file.FileIface,
+	requestService request.Requester,
 	dbService db.DataBaseIface,
 	aiService ai.AIIface,
 ) *ParseService {
@@ -101,4 +102,28 @@ func (s *ParseService) ParseTopic(rawTopic json.RawMessage) (result models.Topic
 	}
 
 	return result, nil
+}
+
+const ZsxqFileBaseURL = "https://api.zsxq.com/v2/files/%d/download_url"
+
+type FileDownload struct {
+	RespData struct {
+		DownloadURL string `json:"download_url"`
+	} `json:"resp_data"`
+}
+
+func (s *ParseService) DownloadLink(fileID int) (link string, err error) {
+	url := fmt.Sprintf(ZsxqFileBaseURL, fileID)
+
+	resp, err := s.RequestService.WithLimiter(url)
+	if err != nil {
+		return "", err
+	}
+
+	download := FileDownload{}
+	if err = json.Unmarshal(resp, &download); err != nil {
+		return "", err
+	}
+
+	return download.RespData.DownloadURL, nil
 }

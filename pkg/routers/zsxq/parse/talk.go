@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	zsxqTime "github.com/eli-yip/zsxq-parser/internal/time"
-	dbModels "github.com/eli-yip/zsxq-parser/pkg/db/models"
+	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
 
@@ -39,13 +39,17 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 	}
 
 	for _, file := range files {
-		downloadLink, err := s.FileService.DownloadLink(file.FileID)
+		downloadLink, err := s.DownloadLink(file.FileID)
 		if err != nil {
 			return err
 		}
 
 		objectKey := fmt.Sprintf("%d-%s", file.FileID, file.Name)
-		if err = s.FileService.Save(objectKey, downloadLink); err != nil {
+		resp, err := s.RequestService.WithLimiterStream(downloadLink)
+		if err != nil {
+			return err
+		}
+		if err = s.FileService.SaveHTTPStream(objectKey, resp); err != nil {
 			return err
 		}
 
