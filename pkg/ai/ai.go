@@ -2,6 +2,7 @@ package ai
 
 import (
 	"io"
+	"net/url"
 
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -19,15 +20,21 @@ type AIIface interface {
 	Text(path io.Reader) (text string, err error)
 }
 
-func NewAIService(APIKey string) AIIface {
+type AIService struct{ client *openai.Client }
+
+func NewAIService(APIKey string, baseURL string) AIIface {
 	if APIKey == "" {
 		return &AIServiceWithoutAPI{}
 	}
-	client := openai.NewClient(APIKey)
+	clientConfig := openai.DefaultConfig(APIKey)
+	url, err := url.Parse(baseURL)
+	if err != nil {
+		panic(err)
+	}
+	clientConfig.BaseURL = url.String()
+	client := openai.NewClientWithConfig(clientConfig)
 	return &AIService{client: client}
 }
-
-type AIService struct{ client *openai.Client }
 
 // AIServiceWithoutAPI is a mock service for testing purposes.
 // It will be enabled when API key is not provided.

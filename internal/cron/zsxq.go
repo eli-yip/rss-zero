@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/eli-yip/zsxq-parser/config"
 	"github.com/eli-yip/zsxq-parser/internal/redis"
 	"github.com/eli-yip/zsxq-parser/pkg/ai"
 	"github.com/eli-yip/zsxq-parser/pkg/file"
@@ -37,8 +38,8 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 
 	// Init services
 	requestService := request.NewRequestService(cookies, redisService)
-	fileService := file.NewFileServiceMinio(file.MinioConfig{}) // TODO: Use config minio config
-	aiService := ai.NewAIService("")                            // TODO: Use config api key
+	fileService := file.NewFileServiceMinio(config.C.MinioConfig)
+	aiService := ai.NewAIService(config.C.ApiKey, config.C.BaseURL)
 
 	parseService := parse.NewParseService(fileService, requestService, dbService, aiService)
 
