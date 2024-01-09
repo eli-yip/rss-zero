@@ -26,7 +26,7 @@ const (
 
 const (
 	rssPath = "zsxq_rss_%d"
-	rssTTL  = 2 * 60 * 60
+	rssTTL  = time.Hour * 2
 )
 
 func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
