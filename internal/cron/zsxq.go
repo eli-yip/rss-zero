@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/eli-yip/zsxq-parser/internal/db"
 	"github.com/eli-yip/zsxq-parser/internal/redis"
 	"github.com/eli-yip/zsxq-parser/pkg/ai"
 	"github.com/eli-yip/zsxq-parser/pkg/file"
@@ -17,50 +16,41 @@ import (
 	"gorm.io/gorm"
 )
 
-func CrawlZsxq(redisService *redis.RedisService, dbService db.DataBaseIface, db *gorm.DB) {
-	/* get cookies from redis
-	 * get zsxq group ids from database
-	 * * iterate zsxq group id
-	 * * * get latest time in db
-	 * * * get api response from zsxq
-	 * * * split topics into raw topics
-	 * * * get latest time from database
-	 * * * iterate raw topics
-	 * * * * parse raw topics into result model and extract time
-	 * * * * compare time of topic to latest time
-	 * * * * if time of topic is later than latest time
-	 * * * * * parse topic(only talk and q&a)
-	 * * * * if time of topic is earlier than latest time
-	 * * * * * break
-	 * * * update last crawl time in database
-	 * if any error occurs, log it and save it to database.
-	 * before break this function, check if there is more than three of error,
-	 * if so, use bark to notify eli. */
+const (
+	ApiBaseURL  = "https://api.zsxq.com/v2/groups/%d/topics?scope=all&count=20"
+	ApiFetchURL = "https://api.zsxq.com/v2/groups/%d/topics?scope=all&count=20&end_time=%s"
+)
 
+func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
+	// Get cookies from redis, if not exist, log an cookies error.
 	cookies, err := redisService.Get("zsxq_cookies")
 	if err != nil {
 		panic(err)
 	}
 
+	dbService := zsxqDB.NewZsxqDBService(db)
+	// Get group IDs from database, which is a list of int.
 	groupIDs, err := dbService.GetZsxqGroupIDs()
 	if err != nil {
 		panic(err)
 	}
 
-	// TODO: implement these services
+	// Init services
 	requestService := request.NewRequestService(cookies, redisService)
-	fileService := file.NewFileServiceMinio(file.MinioConfig{})
-	aiService := ai.NewAIService("")
-	zsxqDBService := zsxqDB.NewZsxqDBService(db)
-	parseService := parse.NewParseService(fileService, requestService, zsxqDBService, aiService)
+	fileService := file.NewFileServiceMinio(file.MinioConfig{}) // TODO: Use config minio config
+	aiService := ai.NewAIService("")                            // TODO: Use config api key
 
+	parseService := parse.NewParseService(fileService, requestService, dbService, aiService)
+
+	// Iterate group IDs
 	for _, groupID := range groupIDs {
-		latestTopicTime, err := dbService.GetLatestTopicTime(groupID)
+		// Get latest topic time from database
+		latestTopicTimeInDB, err := dbService.GetLatestTopicTime(groupID)
 		if err != nil {
 			panic(err)
 		}
 
-		url := fmt.Sprintf("https://api.zsxq.com/v2/groups/%d/topics?scope=all&count=20", groupID)
+		url := fmt.Sprintf(ApiBaseURL, groupID)
 		respBytes, err := requestService.WithLimiter(url)
 		if err != nil {
 			panic(err)
@@ -72,17 +62,20 @@ func CrawlZsxq(redisService *redis.RedisService, dbService db.DataBaseIface, db 
 		}
 
 		// Parse topics
-		var createTimeInTime time.Time
+		var createTime time.Time
+		var finished bool = false
 		for _, rawTopic := range rawTopics {
 			result := models.TopicParseResult{}
 			if err := json.Unmarshal(rawTopic, &result.Topic); err != nil {
 				panic(err)
 			}
-			createTimeInTime, err := zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
+
+			createTime, err = zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
 			if err != nil {
 				panic(err)
 			}
-			if createTimeInTime.Before(latestTopicTime) {
+			if createTime.Before(latestTopicTimeInDB) {
+				finished = true
 				break
 			}
 
@@ -91,7 +84,41 @@ func CrawlZsxq(redisService *redis.RedisService, dbService db.DataBaseIface, db 
 			}
 		}
 
-		if err := dbService.SaveLatestTime(groupID, createTimeInTime); err != nil {
+		for !finished {
+			createTimeStr := zsxqTime.EncodeTimeToString(createTime)
+			url := fmt.Sprintf(ApiFetchURL, groupID, createTimeStr)
+			respByte, err := requestService.WithLimiter(url)
+			if err != nil {
+				panic(err)
+			}
+
+			rawTopics, err := parseService.SplitTopics(respByte)
+			if err != nil {
+				panic(err)
+			}
+
+			for _, rawTopic := range rawTopics {
+				result := models.TopicParseResult{}
+				if err := json.Unmarshal(rawTopic, &result.Topic); err != nil {
+					panic(err)
+				}
+
+				createTime, err = zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
+				if err != nil {
+					panic(err)
+				}
+				if createTime.Before(latestTopicTimeInDB) {
+					finished = true
+					break
+				}
+
+				if err := parseService.ParseTopic(result); err != nil {
+					panic(err)
+				}
+			}
+		}
+
+		if err := dbService.SaveLatestTime(groupID, time.Now()); err != nil {
 			panic(err)
 		}
 	}
