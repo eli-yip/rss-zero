@@ -22,11 +22,11 @@ type AIIface interface {
 
 type AIService struct{ client *openai.Client }
 
-func NewAIService(APIKey string, baseURL string) AIIface {
-	if APIKey == "" {
+func NewAIService(apiKey string, baseURL string) AIIface {
+	if apiKey == "" {
 		return &AIServiceWithoutAPI{}
 	}
-	clientConfig := openai.DefaultConfig(APIKey)
+	clientConfig := openai.DefaultConfig(apiKey)
 	url, err := url.Parse(baseURL)
 	if err != nil {
 		panic(err)

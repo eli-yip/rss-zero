@@ -46,7 +46,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 	// Init services
 	requestService := request.NewRequestService(cookies, redisService)
 	fileService := file.NewFileServiceMinio(config.C.MinioConfig)
-	aiService := ai.NewAIService(config.C.ApiKey, config.C.BaseURL)
+	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
 
 	parseService := parse.NewParseService(fileService, requestService, dbService, aiService)
 

@@ -7,9 +7,9 @@ import (
 )
 
 type Config struct {
-	MinioConfig file.MinioConfig
-	ApiKey      string
-	BaseURL     string // e.g.: https://one-api.example.com/v1
+	MinioConfig   file.MinioConfig
+	OpenAIApiKey  string
+	OpenAIBaseURL string // e.g.: https://one-api.example.com/v1
 }
 
 var C Config
@@ -24,5 +24,6 @@ func InitConfig() {
 		AssetsDomain:    os.Getenv("MINIO_ASSETS_DOMAIN"),
 	}
 
-	C.ApiKey = os.Getenv("OPENAI_API_KEY")
+	C.OpenAIApiKey = os.Getenv("OPENAI_API_KEY")
+	C.OpenAIBaseURL = os.Getenv("OPENAI_BASE_URL")
 }
