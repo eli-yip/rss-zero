@@ -34,3 +34,8 @@ commit:
 .PHONY: push
 push:
 	git push -u origin $(CURRENT_BRANCH) --force-with-lease
+
+.PHONY: update
+update:
+	go get -u ./...
+	go mod tidy
