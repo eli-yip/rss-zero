@@ -19,7 +19,7 @@ import (
 
 const (
 	ApiBaseURL  = "https://api.zsxq.com/v2/groups/%d/topics?scope=all&count=20"
-	ApiFetchURL = "https://api.zsxq.com/v2/groups/%d/topics?scope=all&count=20&end_time=%s"
+	ApiFetchURL = "%s&end_time=%s"
 )
 
 func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
@@ -51,43 +51,18 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 			panic(err)
 		}
 
-		url := fmt.Sprintf(ApiBaseURL, groupID)
-		respBytes, err := requestService.WithLimiter(url)
-		if err != nil {
-			panic(err)
-		}
-
-		rawTopics, err := parseService.SplitTopics(respBytes)
-		if err != nil {
-			panic(err)
-		}
-
-		// Parse topics
+		var (
+			finished  bool = false
+			firstTime bool = true
+		)
 		var createTime time.Time
-		var finished bool = false
-		for _, rawTopic := range rawTopics {
-			result := models.TopicParseResult{}
-			if err := json.Unmarshal(rawTopic, &result.Topic); err != nil {
-				panic(err)
-			}
-
-			createTime, err = zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
-			if err != nil {
-				panic(err)
-			}
-			if createTime.Before(latestTopicTimeInDB) {
-				finished = true
-				break
-			}
-
-			if err := parseService.ParseTopic(result); err != nil {
-				panic(err)
-			}
-		}
-
 		for !finished {
-			createTimeStr := zsxqTime.EncodeTimeToString(createTime)
-			url := fmt.Sprintf(ApiFetchURL, groupID, createTimeStr)
+			url := fmt.Sprintf(ApiBaseURL, groupID)
+			firstTime = false
+			if !firstTime {
+				createTimeStr := zsxqTime.EncodeTimeToString(createTime)
+				url = fmt.Sprintf(ApiFetchURL, url, createTimeStr)
+			}
 			respByte, err := requestService.WithLimiter(url)
 			if err != nil {
 				panic(err)
