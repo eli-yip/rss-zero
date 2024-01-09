@@ -45,8 +45,9 @@ func (s *ParseService) SplitTopics(respBytes []byte) (rawTopics []json.RawMessag
 	return resp.RespData.RawTopics, nil
 }
 
+// TODO: Save title to database
 // ParseTopics parse the raw topics to topic parse result
-func (s *ParseService) ParseTopic(result models.TopicParseResult) (err error) {
+func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	// Generate share link
 	result.ShareLink, err = s.shareLink(result.Topic.TopicID)
 	if err != nil {

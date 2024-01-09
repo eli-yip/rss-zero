@@ -40,6 +40,20 @@ func (m *mockDBService) SaveLatestTime(groupID int, t time.Time) error {
 	return nil
 }
 
+func (m *mockDBService) GetLatestTopics(groupID, n int) ([]dbModels.Topic, error) {
+	return []dbModels.Topic{
+		{
+			ID:      1234567,
+			GroupID: 1234567,
+			Type:    "talk",
+		},
+	}, nil
+}
+
+func (m *mockDBService) GetGroupName(id int) (string, error) {
+	return "test-group", nil
+}
+
 func NewMockDBService() *mockDBService {
 	return &mockDBService{}
 }

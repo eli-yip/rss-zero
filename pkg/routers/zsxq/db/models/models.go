@@ -15,6 +15,7 @@ type Topic struct {
 	Digested  bool      `gorm:"column:digested;type:bool"`
 	Author    string    `gorm:"column:author;type:text"`
 	ShareLink string    `gorm:"column:share_link;type:text"`
+	Title     string    `gorm:"column:title;type:text"`
 	Text      string    `gorm:"column:text;type:text"`
 	Raw       []byte    `gorm:"column:raw;type:bytea"`
 }
