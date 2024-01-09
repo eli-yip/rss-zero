@@ -19,6 +19,8 @@ type Topic struct {
 	Raw       []byte    `gorm:"column:raw;type:bytea"`
 }
 
+func (t *Topic) TableName() string { return "zsxq_topics" }
+
 type Object struct {
 	ID              int            `gorm:"column:id;primary_key"`
 	TopicID         int            `gorm:"column:topic_id"`
@@ -29,9 +31,13 @@ type Object struct {
 	Transcript      string         `gorm:"column:transcript;type:text"`
 }
 
+func (o *Object) TableName() string { return "zsxq_objects" }
+
 type Group struct {
 	ID         int       `gorm:"column:id;primary_key"`
 	Name       string    `gorm:"column:name;type:text"`
 	UpdateAt   time.Time `gorm:"column:update_at"`
 	ErrorTimes int       `gorm:"column:error_times;type:int"`
 }
+
+func (g *Group) TableName() string { return "zsxq_groups" }

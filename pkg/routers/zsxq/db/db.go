@@ -16,20 +16,16 @@ type ZsxqDBService struct{ db *gorm.DB }
 func NewZsxqDBService(db *gorm.DB) *ZsxqDBService { return &ZsxqDBService{db: db} }
 
 func (s *ZsxqDBService) SaveTopic(topic *models.Topic) error {
-	// TODO
-	return s.db.Create(topic).Error
+	return s.db.Save(topic).Error
 }
 
 func (s *ZsxqDBService) SaveObject(object *models.Object) error {
-	// TODO
-	return s.db.Create(object).Error
+	return s.db.Save(object).Error
 }
 
 func (s *ZsxqDBService) GetObjectInfo(id int) (*models.Object, error) {
-	// TODO
 	var object models.Object
-	err := s.db.First(&object, id).Error
-	if err != nil {
+	if err := s.db.First(&object, id).Error; err != nil {
 		return nil, err
 	}
 	return &object, nil
