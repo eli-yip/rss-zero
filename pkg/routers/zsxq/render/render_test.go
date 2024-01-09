@@ -3,6 +3,7 @@ package render
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
@@ -25,6 +26,18 @@ func (m *mockDBService) GetObjectInfo(id int) (*dbModels.Object, error) {
 		StorageProvider: []string{"oss.momoai.me"},
 		Transcript:      "test-transcript",
 	}, nil
+}
+
+func (m *mockDBService) GetZsxqGroupIDs() ([]int, error) {
+	return []int{1234567}, nil
+}
+
+func (m *mockDBService) GetLatestTopicTime(groupID int) (time.Time, error) {
+	return time.Time{}, nil
+}
+
+func (m *mockDBService) SaveLatestTime(groupID int, t time.Time) error {
+	return nil
 }
 
 func NewMockDBService() *mockDBService {
