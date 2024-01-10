@@ -9,30 +9,30 @@ import (
 	zsxqTime "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/time"
 )
 
-func (s *ParseService) parseQA(topic *models.Topic) (authorName string, err error) {
+func (s *ParseService) parseQA(topic *models.Topic) (authorID int, authorName string, err error) {
 	question := topic.Question
 	answer := topic.Answer
 	if question == nil || answer == nil {
-		return "", nil
+		return 0, "", nil
 	}
 
-	authorName, err = s.parseAuthor(&answer.Answerer)
+	authorID, authorName, err = s.parseAuthor(&answer.Answerer)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	if err = s.parseImages(question.Images, topic.TopicID, topic.CreateTime); err != nil {
-		return "", err
+		return 0, "", err
 	}
 	if err = s.parseImages(answer.Images, topic.TopicID, topic.CreateTime); err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	if err = s.parseVoice(answer.Voice, topic.TopicID, topic.CreateTime); err != nil {
-		return "", err
+		return 0, "", err
 	}
 
-	return authorName, nil
+	return authorID, authorName, nil
 }
 
 func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeStr string) (err error) {

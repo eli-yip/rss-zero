@@ -6,6 +6,7 @@ import "encoding/json"
 
 type TopicParseResult struct {
 	Topic
+	AuthorID   int
 	AuthorName string
 	ShareLink  string
 	Text       string // Markdown main body

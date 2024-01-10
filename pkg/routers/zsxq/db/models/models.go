@@ -13,7 +13,6 @@ type Topic struct {
 	GroupID   int       `gorm:"column:group_id"`
 	Type      string    `gorm:"column:type;type:text"`
 	Digested  bool      `gorm:"column:digested;type:bool"`
-	Author    string    `gorm:"column:author;type:text"` // TODO: Use author ID instead of name.
 	AuthorID  int       `gorm:"column:author_id"`
 	ShareLink string    `gorm:"column:share_link;type:text"`
 	Title     *string   `gorm:"column:title;type:text"`
@@ -43,3 +42,11 @@ type Group struct {
 }
 
 func (g *Group) TableName() string { return "zsxq_groups" }
+
+type Author struct {
+	ID    int     `gorm:"column:id;primary_key"`
+	Name  string  `gorm:"column:name;type:text"`
+	Alias *string `gorm:"column:alias;type:text"`
+}
+
+func (a *Author) TableName() string { return "zsxq_authors" }

@@ -57,11 +57,11 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	// TODO: Extract author info in main function
 	switch result.Topic.Type {
 	case "talk":
-		if result.AuthorName, err = s.parseTalk(&result.Topic); err != nil {
+		if result.AuthorID, result.AuthorName, err = s.parseTalk(&result.Topic); err != nil {
 			return err
 		}
 	case "q&a":
-		if result.AuthorName, err = s.parseQA(&result.Topic); err != nil {
+		if result.AuthorID, result.AuthorName, err = s.parseQA(&result.Topic); err != nil {
 			return err
 		}
 	default:
@@ -91,7 +91,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 		GroupID:   result.Topic.Group.GroupID,
 		Type:      result.Topic.Type,
 		Digested:  false, // TODO: Set digested to true when the topic is digested.
-		Author:    result.AuthorName,
+		AuthorID:  result.AuthorID,
 		ShareLink: result.ShareLink,
 		Title:     result.Topic.Title,
 		Text:      result.Text,

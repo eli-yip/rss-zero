@@ -54,6 +54,10 @@ func (m *mockDBService) GetGroupName(id int) (string, error) {
 	return "test-group", nil
 }
 
+func (m *mockDBService) SaveAuthorInfo(*dbModels.Author) error {
+	return nil
+}
+
 func NewMockDBService() *mockDBService {
 	return &mockDBService{}
 }

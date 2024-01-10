@@ -11,28 +11,28 @@ import (
 
 var ErrNoText = errors.New("no text in this topic")
 
-func (s *ParseService) parseTalk(topic *models.Topic) (author string, err error) {
+func (s *ParseService) parseTalk(topic *models.Topic) (authorID int, authorName string, err error) {
 	talk := topic.Talk
 	if talk == nil || talk.Text == nil {
-		return "", ErrNoText
+		return 0, "", ErrNoText
 	}
 
-	author, err = s.parseAuthor(&talk.Owner)
+	authorID, authorName, err = s.parseAuthor(&talk.Owner)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	if err = s.parseFiles(talk.Files, topic.TopicID, topic.CreateTime); err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	if err = s.parseImages(talk.Images, topic.TopicID, topic.CreateTime); err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	// TODO: Render articals
 
-	return author, nil
+	return authorID, authorName, nil
 }
 
 func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeStr string) (err error) {
