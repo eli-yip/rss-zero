@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"log"
-	"net/http"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -43,17 +42,17 @@ func NewFileServiceMinio(minioConfig MinioConfig) *FileServiceMinio {
 	}
 }
 
-func (s *FileServiceMinio) SaveHTTPStream(objectKey string, resp *http.Response) (err error) {
-	if resp == nil || resp.Body == nil {
+func (s *FileServiceMinio) SaveHTTPStream(objectKey string, resp io.ReadCloser) (err error) {
+	if resp == nil {
 		return errors.New("no body")
 	}
 
-	defer resp.Body.Close()
+	defer resp.Close()
 
 	_, err = s.minioClient.PutObject(context.Background(),
 		s.bucketName,
 		objectKey,
-		resp.Body,
+		resp,
 		-1,
 		minio.PutObjectOptions{ContentType: "application/octet-stream"})
 	if err != nil {

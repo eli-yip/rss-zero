@@ -7,17 +7,17 @@ import (
 )
 
 type Topic struct {
-	TopicID    int
-	Type       string
-	CreateTime time.Time
-	GroupName  string
-	GroupID    int
+	// TopicID int
+	Type string
+	// CreateTime time.Time
+	// GroupName  string
+	// GroupID    int
 	Talk       *models.Talk
 	Question   *models.Question
 	Answer     *models.Answer
-	Author     string
-	Title      *string
-	ShareLink  string
+	AuthorName string
+	// Title      *string
+	// ShareLink  string
 }
 
 type RSSTopic struct {
@@ -25,7 +25,7 @@ type RSSTopic struct {
 	GroupName  string
 	GroupID    int
 	Title      *string
-	Author     string
+	AuthorName string
 	ShareLink  string
 	CreateTime time.Time
 	Text       string

@@ -27,10 +27,7 @@ func NewAIService(apiKey string, baseURL string) AIIface {
 		return &AIServiceWithoutAPI{}
 	}
 	clientConfig := openai.DefaultConfig(apiKey)
-	url, err := url.Parse(baseURL)
-	if err != nil {
-		panic(err)
-	}
+	url, _ := url.Parse(baseURL)
 	clientConfig.BaseURL = url.String()
 	client := openai.NewClientWithConfig(clientConfig)
 	return &AIService{client: client}

@@ -57,7 +57,7 @@ func (r *RSSRenderService) RenderRSS(topics []RSSTopic) (result string, err erro
 				}
 				return strconv.Itoa(topic.TopicID)
 			}(&topic),
-			Author: &feeds.Author{Name: topic.Author},
+			Author: &feeds.Author{Name: topic.AuthorName},
 			Link:   &feeds.Link{Href: topic.ShareLink},
 			Description: func(topic *RSSTopic) string {
 				// up to 100 word of text

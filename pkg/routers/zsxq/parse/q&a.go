@@ -9,14 +9,14 @@ import (
 	zsxqTime "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/time"
 )
 
-func (s *ParseService) parseQA(topic *models.Topic) (author string, err error) {
+func (s *ParseService) parseQA(topic *models.Topic) (authorName string, err error) {
 	question := topic.Question
 	answer := topic.Answer
 	if question == nil || answer == nil {
 		return "", nil
 	}
 
-	author, err = s.parseAuthor(&answer.Answerer)
+	authorName, err = s.parseAuthor(&answer.Answerer)
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func (s *ParseService) parseQA(topic *models.Topic) (author string, err error) {
 		return "", err
 	}
 
-	return author, nil
+	return authorName, nil
 }
 
 func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeStr string) (err error) {
@@ -40,26 +40,28 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 		return nil
 	}
 
-	objectKey := fmt.Sprintf("%d.%s", voice.VoiceID, "wav")
+	objectKey := fmt.Sprintf("zsxq/%d.%s", voice.VoiceID, "wav")
 	resp, err := s.RequestService.WithLimiterStream(voice.URL)
 	if err != nil {
 		return err
 	}
-	if err = s.FileService.SaveHTTPStream(objectKey, resp); err != nil {
+	if err = s.FileService.SaveHTTPStream(objectKey, resp.Body); err != nil {
 		return err
 	}
 
+	// Get voice stream from file service,
+	// then send it to ai service to get transcript
 	voiceStream, err := s.FileService.Get(strconv.Itoa(voice.VoiceID))
 	if err != nil {
 		return err
 	}
 	defer voiceStream.Close()
 
-	transcript, err := s.AIService.Text(voiceStream)
+	transcript, err := s.AI.Text(voiceStream)
 	if err != nil {
 		return err
 	}
-	polishedTranscript, err := s.AIService.Polish(transcript)
+	polishedTranscript, err := s.AI.Polish(transcript)
 	if err != nil {
 		return err
 	}

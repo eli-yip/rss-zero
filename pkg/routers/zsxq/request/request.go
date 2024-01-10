@@ -29,27 +29,29 @@ type RequestService struct {
 	redisService *redis.RedisService
 }
 
+const defaultMaxRetry = 5
+
 func NewRequestService(cookies string, redisService *redis.RedisService) *RequestService {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 
-	rs := &RequestService{
+	s := &RequestService{
 		client:       &http.Client{Jar: jar},
 		emptyClient:  &http.Client{},
 		limiter:      make(chan struct{}),
-		maxRetry:     3,
+		maxRetry:     defaultMaxRetry,
 		redisService: redisService,
 	}
 
-	rs.SetCookies(cookies)
+	s.SetCookies(cookies)
 
 	go func() {
 		for {
-			time.Sleep(time.Duration(5+rand.Intn(6)) * time.Second)
-			rs.limiter <- struct{}{}
+			time.Sleep(time.Duration(7+rand.Intn(6)) * time.Second)
+			s.limiter <- struct{}{}
 		}
 	}()
 
-	return rs
+	return s
 }
 
 func (r *RequestService) SetCookies(cookies string) {
@@ -62,15 +64,22 @@ func (r *RequestService) SetCookies(cookies string) {
 			r.client.Jar.SetCookies(u, []*http.Cookie{cookies})
 		}
 	}
+	// Set UA and Referer
 }
 
 func (r *RequestService) SetMaxRetry(maxRetryTimes int) { r.maxRetry = maxRetryTimes }
 
 type Resp struct {
 	Succeeded bool `json:"succeeded"`
+	Raw       json.RawMessage
+}
+
+type OtherResp struct {
+	Code int `json:"code"` // 1059 for too many requests, 401 for invalid cookies
 }
 
 func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err error) {
+	// TODO: Rewrite this function to check status code in resp
 	for i := 0; i < r.maxRetry; i++ {
 		<-r.limiter
 		var resp *http.Response
@@ -100,9 +109,43 @@ func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err err
 		}
 		if respData.Succeeded {
 			return bytes, nil
+		} else {
+			var otherResp OtherResp
+			if err := json.Unmarshal(respData.Raw, &otherResp); err != nil {
+				continue
+			}
+			switch otherResp.Code {
+			case 1059:
+				time.Sleep(time.Second * 10)
+				continue
+			case 401:
+				r.redisService.Set("cookies", "", 0)
+				return nil, ErrBadResponse
+			default:
+				continue
+			}
 		}
 	}
 	return nil, err
+}
+
+func (r *RequestService) WithLimiterStream(targetURL string) (resp *http.Response, err error) {
+	// TODO: Rewrite this function to stay same logic with WithLimiter
+	for i := 0; i < r.maxRetry; i++ {
+		resp, err = r.emptyClient.Get(targetURL)
+		if err != nil {
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			continue
+		}
+
+		return resp, nil
+	}
+
+	return nil, ErrBadResponse
 }
 
 func (r *RequestService) WithoutLimiter(targetURL string) (respByte []byte, err error) {
@@ -127,22 +170,4 @@ func (r *RequestService) WithoutLimiter(targetURL string) (respByte []byte, err 
 	}
 
 	return nil, err
-}
-
-func (r *RequestService) WithLimiterStream(targetURL string) (resp *http.Response, err error) {
-	for i := 0; i < r.maxRetry; i++ {
-		resp, err = r.emptyClient.Get(targetURL)
-		if err != nil {
-			continue
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
-			continue
-		}
-
-		return resp, nil
-	}
-
-	return nil, ErrBadResponse
 }

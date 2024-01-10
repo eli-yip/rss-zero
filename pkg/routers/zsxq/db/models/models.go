@@ -13,9 +13,10 @@ type Topic struct {
 	GroupID   int       `gorm:"column:group_id"`
 	Type      string    `gorm:"column:type;type:text"`
 	Digested  bool      `gorm:"column:digested;type:bool"`
-	Author    string    `gorm:"column:author;type:text"`
+	Author    string    `gorm:"column:author;type:text"` // TODO: Use author ID instead of name.
+	AuthorID  int       `gorm:"column:author_id"`
 	ShareLink string    `gorm:"column:share_link;type:text"`
-	Title     string    `gorm:"column:title;type:text"`
+	Title     *string   `gorm:"column:title;type:text"`
 	Text      string    `gorm:"column:text;type:text"`
 	Raw       []byte    `gorm:"column:raw;type:bytea"`
 }

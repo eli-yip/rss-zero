@@ -32,12 +32,12 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 		default:
 			url = image.Original.URL
 		}
-		objectKey := fmt.Sprintf("%d.%s", image.ImageID, image.Type)
+		objectKey := fmt.Sprintf("zsxq/%d.%s", image.ImageID, image.Type)
 		resp, err := s.RequestService.WithLimiterStream(url)
 		if err != nil {
 			return err
 		}
-		if err = s.FileService.SaveHTTPStream(objectKey, resp); err != nil {
+		if err = s.FileService.SaveHTTPStream(objectKey, resp.Body); err != nil {
 			return err
 		}
 

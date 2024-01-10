@@ -18,7 +18,7 @@ type Renderer interface {
 }
 
 type MarkdownRenderer interface {
-	RenderMarkdown(*Topic) (string, error)
+	RenderText(*Topic) (string, error)
 	RenderFullMarkdown(*Topic) (string, error)
 }
 
@@ -40,16 +40,16 @@ func NewMarkdownRenderService(dbService db.DataBaseIface) *MarkdownRenderService
 	}
 }
 
-func (m *MarkdownRenderService) RenderMarkdown(t *Topic) (text string, err error) {
+func (m *MarkdownRenderService) RenderText(t *Topic) (text string, err error) {
 	var buffer bytes.Buffer
 
 	switch t.Type {
 	case "talk":
-		if err = m.renderTalk(t.Talk, t.Author, &buffer); err != nil {
+		if err = m.renderTalk(t.Talk, t.AuthorName, &buffer); err != nil {
 			return "", err
 		}
 	case "q&a":
-		if err = m.renderQA(t.Question, t.Answer, t.Author, &buffer); err != nil {
+		if err = m.renderQA(t.Question, t.Answer, t.AuthorName, &buffer); err != nil {
 			return "", err
 		}
 	default:

@@ -30,6 +30,8 @@ func (s *ParseService) parseTalk(topic *models.Topic) (author string, err error)
 		return "", err
 	}
 
+	// TODO: Render articals
+
 	return author, nil
 }
 
@@ -44,12 +46,12 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 			return err
 		}
 
-		objectKey := fmt.Sprintf("%d-%s", file.FileID, file.Name)
+		objectKey := fmt.Sprintf("zsxq/%d-%s", file.FileID, file.Name)
 		resp, err := s.RequestService.WithLimiterStream(downloadLink)
 		if err != nil {
 			return err
 		}
-		if err = s.FileService.SaveHTTPStream(objectKey, resp); err != nil {
+		if err = s.FileService.SaveHTTPStream(objectKey, resp.Body); err != nil {
 			return err
 		}
 

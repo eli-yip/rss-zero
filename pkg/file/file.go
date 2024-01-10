@@ -2,11 +2,10 @@ package file
 
 import (
 	"io"
-	"net/http"
 )
 
 type FileIface interface {
-	SaveHTTPStream(string, *http.Response) error
+	SaveHTTPStream(string, io.ReadCloser) error
 	Get(string) (io.ReadCloser, error)
 	GetAssetsDomain() string
 }

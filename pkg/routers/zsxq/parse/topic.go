@@ -18,7 +18,7 @@ type ParseService struct {
 	FileService    file.FileIface
 	RequestService request.Requester
 	DBService      db.DataBaseIface
-	AIService      ai.AIIface
+	AI             ai.AIIface
 	RenderService  render.MarkdownRenderer
 }
 
@@ -32,7 +32,7 @@ func NewParseService(
 		FileService:    fileIface,
 		RequestService: requestService,
 		DBService:      dbService,
-		AIService:      aiService,
+		AI:             aiService,
 	}
 }
 
@@ -45,7 +45,6 @@ func (s *ParseService) SplitTopics(respBytes []byte) (rawTopics []json.RawMessag
 	return resp.RespData.RawTopics, nil
 }
 
-// TODO: Save title to database
 // ParseTopics parse the raw topics to topic parse result
 func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	// Generate share link
@@ -55,13 +54,14 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	}
 
 	// Parse topic and set result
+	// TODO: Extract author info in main function
 	switch result.Topic.Type {
 	case "talk":
-		if result.Author, err = s.parseTalk(&result.Topic); err != nil {
+		if result.AuthorName, err = s.parseTalk(&result.Topic); err != nil {
 			return err
 		}
 	case "q&a":
-		if result.Author, err = s.parseQA(&result.Topic); err != nil {
+		if result.AuthorName, err = s.parseQA(&result.Topic); err != nil {
 			return err
 		}
 	default:
@@ -73,13 +73,13 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 		return err
 	}
 
-	// Render topic to markdown
-	if result.Text, err = s.RenderService.RenderMarkdown(&render.Topic{
-		Type:     result.Topic.Type,
-		Talk:     result.Topic.Talk,
-		Question: result.Topic.Question,
-		Answer:   result.Topic.Answer,
-		Author:   result.Author,
+	// Render topic to markdown text
+	if result.Text, err = s.RenderService.RenderText(&render.Topic{
+		Type:       result.Topic.Type,
+		Talk:       result.Topic.Talk,
+		Question:   result.Topic.Question,
+		Answer:     result.Topic.Answer,
+		AuthorName: result.AuthorName,
 	}); err != nil {
 		return err
 	}
@@ -90,9 +90,10 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 		Time:      createTimeInTime,
 		GroupID:   result.Topic.Group.GroupID,
 		Type:      result.Topic.Type,
-		Digested:  false,
-		Author:    result.Author,
+		Digested:  false, // TODO: Set digested to true when the topic is digested.
+		Author:    result.AuthorName,
 		ShareLink: result.ShareLink,
+		Title:     result.Topic.Title,
 		Text:      result.Text,
 		Raw:       result.Raw,
 	}); err != nil {

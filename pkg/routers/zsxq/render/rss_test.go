@@ -8,12 +8,12 @@ import (
 func TestRSSRender(t *testing.T) {
 	topics := []RSSTopic{
 		{
-			TopicID:   12344,
-			GroupName: "test",
-			GroupID:   8888999,
-			Title:     func(s string) *string { return &s }("123"),
-			Author:    "test-user",
-			ShareLink: "https://google.com",
+			TopicID:    12344,
+			GroupName:  "test",
+			GroupID:    8888999,
+			Title:      func(s string) *string { return &s }("123"),
+			AuthorName: "test-user",
+			ShareLink:  "https://google.com",
 			CreateTime: func(s string) time.Time {
 				t, _ := time.Parse(time.RFC3339, s)
 				return t
@@ -106,12 +106,12 @@ this is an answer
 `,
 		},
 		{
-			TopicID:   2,
-			GroupName: "test",
-			GroupID:   8888999,
-			Title:     func(s string) *string { return &s }("222"),
-			Author:    "test-user",
-			ShareLink: "https://google.com",
+			TopicID:    2,
+			GroupName:  "test",
+			GroupID:    8888999,
+			Title:      func(s string) *string { return &s }("222"),
+			AuthorName: "test-user",
+			ShareLink:  "https://google.com",
 			CreateTime: func(s string) time.Time {
 				t, _ := time.Parse(time.RFC3339, s)
 				return t

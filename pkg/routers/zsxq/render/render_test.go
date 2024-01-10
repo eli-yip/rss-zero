@@ -66,8 +66,8 @@ func TestRenderMarkdown(t *testing.T) {
 	cases := []testStruct{
 		{
 			topic: Topic{
-				Type:   "talk",
-				Author: "test-user",
+				Type:       "talk",
+				AuthorName: "test-user",
 				Talk: &models.Talk{
 					Text: func(s string) *string { return &s }("test-text"),
 				},
@@ -80,8 +80,8 @@ test-text
 		},
 		{
 			topic: Topic{
-				Type:   "talk",
-				Author: "test-user2",
+				Type:       "talk",
+				AuthorName: "test-user2",
 				Talk: &models.Talk{
 					Text: func(s string) *string { return &s }("test-text"),
 					Files: []models.File{
@@ -126,8 +126,8 @@ test-text
 		},
 		{
 			topic: Topic{
-				Type:   "q&a",
-				Author: "test-user3",
+				Type:       "q&a",
+				AuthorName: "test-user3",
 				Question: &models.Question{
 					Text: "this is a question",
 					Images: []models.Image{
@@ -187,7 +187,7 @@ this is an answer
 	for _, c := range cases {
 		var text string
 		var err error
-		if text, err = MarkdownRenderService.RenderMarkdown(&c.topic); err != nil {
+		if text, err = MarkdownRenderService.RenderText(&c.topic); err != nil {
 			t.Errorf("RenderMarkdown() error = %v", err)
 		}
 		if text != c.result {

@@ -1,6 +1,8 @@
 package request
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type Requester interface {
 	WithLimiter(string) ([]byte, error)

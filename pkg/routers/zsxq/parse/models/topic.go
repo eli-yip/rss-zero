@@ -6,10 +6,10 @@ import "encoding/json"
 
 type TopicParseResult struct {
 	Topic
-	Author    string
-	ShareLink string
-	Text      string
-	Raw       json.RawMessage
+	AuthorName string
+	ShareLink  string
+	Text       string // Markdown main body
+	Raw        json.RawMessage
 }
 
 type Topic struct {

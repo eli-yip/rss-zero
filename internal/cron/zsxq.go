@@ -2,6 +2,7 @@ package cron
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/eli-yip/zsxq-parser/pkg/ai"
 	"github.com/eli-yip/zsxq-parser/pkg/file"
 	zsxqDB "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
-	zsxqDBModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/render"
@@ -33,6 +33,10 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 	// Get cookies from redis, if not exist, log an cookies error.
 	cookies, err := redisService.Get("zsxq_cookies")
 	if err != nil {
+		if errors.Is(err, redis.ErrKeyNotExist) {
+			// TODO: Use Bark to notify
+			return
+		}
 		panic(err)
 	}
 
@@ -111,6 +115,10 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 		rssRenderer := render.NewRSSRenderService()
 		// FIXME: It only shows 20 topics,
 		// if there are more than 20 new topics, the old ones will be lost.
+		// It can be fixed by this:
+		// 1. Get top 20 topics from db
+		// 2. Check if the ealiest one is later than latestTopicTimeInDB
+		// 3. If not, get more topics from db
 		topics, err := dbService.GetLatestTopics(groupID, 20)
 		if err != nil {
 			panic(err)
@@ -120,18 +128,16 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 			panic(err)
 		}
 		for _, topic := range topics {
-			rssTopic := render.RSSTopic{
-				TopicID:   topic.ID,
-				GroupName: groupName,
-				GroupID:   topic.GroupID,
-				Title: func(t *zsxqDBModels.Topic) *string {
-					if t.Title == "" {
-						return nil
-					}
-					return &t.Title
-				}(&topic),
-			}
-			rssTopics = append(rssTopics, rssTopic)
+			rssTopics = append(rssTopics, render.RSSTopic{
+				TopicID:    topic.ID,
+				GroupName:  groupName,
+				GroupID:    topic.GroupID,
+				Title:      topic.Title,
+				AuthorName: "abc", //TODO: Get author ID from database
+				ShareLink:  topic.ShareLink,
+				CreateTime: topic.Time,
+				Text:       topic.Text,
+			})
 			result, err := rssRenderer.RenderRSS(rssTopics)
 			if err != nil {
 				panic(err)

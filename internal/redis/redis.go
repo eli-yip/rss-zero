@@ -8,6 +8,8 @@ import (
 	redis "github.com/redis/go-redis/v9"
 )
 
+var ErrKeyNotExist = errors.New("key does not exist")
+
 type RedisService struct {
 	client *redis.Client
 	ctx    context.Context
@@ -38,7 +40,14 @@ func (s *RedisService) Set(key string, value interface{}, duration time.Duration
 }
 
 func (s *RedisService) Get(key string) (value string, err error) {
-	return s.client.Get(s.ctx, key).Result()
+	value, err = s.client.Get(s.ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", ErrKeyNotExist
+		}
+		return "", errors.New("get key failed")
+	}
+	return value, nil
 }
 
 func (s *RedisService) Del(key string) (err error) {
