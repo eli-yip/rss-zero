@@ -86,6 +86,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 
 			for _, rawTopic := range rawTopics {
 				result := models.TopicParseResult{}
+				result.Raw = rawTopic
 				if err := json.Unmarshal(rawTopic, &result.Topic); err != nil {
 					panic(err)
 				}
