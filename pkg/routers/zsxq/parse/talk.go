@@ -51,7 +51,7 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 		if err != nil {
 			return err
 		}
-		if err = s.File.SaveHTTPStream(objectKey, resp.Body); err != nil {
+		if err = s.File.SaveStream(objectKey, resp.Body); err != nil {
 			return err
 		}
 

@@ -36,7 +36,7 @@ func NewParseService(
 	}
 }
 
-// SplitTopics split the api response bytes to raw topics from zsxq api
+// SplitTopics split the api response bytes from zsxq api to raw topics
 func (s *ParseService) SplitTopics(respBytes []byte) (rawTopics []json.RawMessage, err error) {
 	resp := models.APIResponse{}
 	if err = json.Unmarshal(respBytes, &resp); err != nil {

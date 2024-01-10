@@ -42,7 +42,7 @@ func NewFileServiceMinio(minioConfig MinioConfig) *FileServiceMinio {
 	}
 }
 
-func (s *FileServiceMinio) SaveHTTPStream(objectKey string, resp io.ReadCloser) (err error) {
+func (s *FileServiceMinio) SaveStream(objectKey string, resp io.ReadCloser) (err error) {
 	if resp == nil {
 		return errors.New("no body")
 	}
