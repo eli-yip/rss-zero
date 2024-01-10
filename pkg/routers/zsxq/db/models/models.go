@@ -20,7 +20,7 @@ type Topic struct {
 	Raw       []byte    `gorm:"column:raw;type:bytea"`
 }
 
-func (t *Topic) TableName() string { return "zsxq_topics" }
+func (t *Topic) TableName() string { return "zsxq_topic" }
 
 type Object struct {
 	ID              int            `gorm:"column:id;primary_key"`
@@ -32,7 +32,7 @@ type Object struct {
 	Transcript      string         `gorm:"column:transcript;type:text"`
 }
 
-func (o *Object) TableName() string { return "zsxq_objects" }
+func (o *Object) TableName() string { return "zsxq_object" }
 
 type Group struct {
 	ID         int       `gorm:"column:id;primary_key"`
@@ -41,7 +41,7 @@ type Group struct {
 	ErrorTimes int       `gorm:"column:error_times;type:int"`
 }
 
-func (g *Group) TableName() string { return "zsxq_groups" }
+func (g *Group) TableName() string { return "zsxq_group" }
 
 type Author struct {
 	ID    int     `gorm:"column:id;primary_key"`
@@ -49,4 +49,4 @@ type Author struct {
 	Alias *string `gorm:"column:alias;type:text"`
 }
 
-func (a *Author) TableName() string { return "zsxq_authors" }
+func (a *Author) TableName() string { return "zsxq_author" }
