@@ -71,7 +71,7 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 		return err
 	}
 
-	if err = s.DBService.SaveObject(&dbModels.Object{
+	if err = s.DBService.SaveObjectInfo(&dbModels.Object{
 		ID:              voice.VoiceID,
 		TopicID:         topicID,
 		Time:            createTime,

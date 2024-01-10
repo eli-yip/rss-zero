@@ -60,7 +60,7 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 			return err
 		}
 
-		if err = s.DBService.SaveObject(&dbModels.Object{
+		if err = s.DBService.SaveObjectInfo(&dbModels.Object{
 			ID:              file.FileID,
 			TopicID:         topicID,
 			Time:            createTime,

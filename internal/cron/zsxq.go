@@ -105,7 +105,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 			}
 		}
 
-		if err := dbService.SaveLatestTime(groupID, time.Now()); err != nil {
+		if err := dbService.UpdateCrawlTime(groupID, time.Now()); err != nil {
 			panic(err)
 		}
 

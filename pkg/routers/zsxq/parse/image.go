@@ -46,7 +46,7 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 			return err
 		}
 
-		if err = s.DBService.SaveObject(&dbModels.Object{
+		if err = s.DBService.SaveObjectInfo(&dbModels.Object{
 			ID:              image.ImageID,
 			TopicID:         topicID,
 			Time:            createTime,

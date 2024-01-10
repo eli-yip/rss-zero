@@ -15,7 +15,7 @@ func (m *mockDBService) SaveTopic(*dbModels.Topic) error {
 	return nil
 }
 
-func (m *mockDBService) SaveObject(*dbModels.Object) error {
+func (m *mockDBService) SaveObjectInfo(*dbModels.Object) error {
 	return nil
 }
 
@@ -36,7 +36,7 @@ func (m *mockDBService) GetLatestTopicTime(groupID int) (time.Time, error) {
 	return time.Time{}, nil
 }
 
-func (m *mockDBService) SaveLatestTime(groupID int, t time.Time) error {
+func (m *mockDBService) UpdateCrawlTime(groupID int, t time.Time) error {
 	return nil
 }
 

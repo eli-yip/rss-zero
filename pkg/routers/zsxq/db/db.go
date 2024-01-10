@@ -8,31 +8,54 @@ import (
 )
 
 type DataBaseIface interface {
-	SaveTopic(*models.Topic) error
-	SaveObject(*models.Object) error
-	GetObjectInfo(id int) (*models.Object, error)
-	GetZsxqGroupIDs() ([]int, error)
-	GetLatestTopicTime(groupID int) (time.Time, error)
-	SaveLatestTime(groupID int, latestTime time.Time) error
-	GetLatestNTopics(groupID, n int) ([]models.Topic, error)
-	GetGroupName(id int) (string, error)
+	// Save topic to zsxq_topic table
+	SaveTopic(t *models.Topic) error
+	// Get latest topic time from zsxq_topic table
+	GetLatestTopicTime(tid int) (t time.Time, err error)
+	// Get latest n topics from zsxq_topic table
+	GetLatestNTopics(gid int, n int) (ts []models.Topic, err error)
+
+	// Save object info to zsxq_object table
+	SaveObjectInfo(o *models.Object) error
+	// Get object info from zsxq_object table
+	GetObjectInfo(oid int) (o *models.Object, err error)
+
+	// Get all zsxq group ids from zsxq_group table
+	GetZsxqGroupIDs() (ids []int, err error)
+	// Get group name by group id from zsxq_group table
+	GetGroupName(gid int) (name string, err error)
+	// Save latest crawl time to zsxq_group table
+	UpdateCrawlTime(gid int, t time.Time) (err error)
 }
 
 type ZsxqDBService struct{ db *gorm.DB }
 
 func NewZsxqDBService(db *gorm.DB) *ZsxqDBService { return &ZsxqDBService{db: db} }
 
-func (s *ZsxqDBService) SaveTopic(topic *models.Topic) error {
-	return s.db.Save(topic).Error
+func (s *ZsxqDBService) SaveTopic(t *models.Topic) error {
+	return s.db.Save(t).Error
 }
 
-func (s *ZsxqDBService) SaveObject(object *models.Object) error {
-	return s.db.Save(object).Error
+func (s *ZsxqDBService) GetLatestTopicTime(gid int) (time.Time, error) {
+	var topic models.Topic
+	if err := s.db.Where("group_id = ?", gid).Order("time desc").First(&topic).Error; err != nil {
+		return time.Time{}, err
+	}
+	return topic.Time, nil
 }
 
-func (s *ZsxqDBService) GetObjectInfo(id int) (*models.Object, error) {
+func (s *ZsxqDBService) GetLatestNTopics(gid, n int) (ts []models.Topic, err error) {
+	err = s.db.Where("group_id = ?", gid).Order("time desc").Limit(n).Find(&ts).Error
+	return ts, err
+}
+
+func (s *ZsxqDBService) SaveObjectInfo(o *models.Object) error {
+	return s.db.Save(o).Error
+}
+
+func (s *ZsxqDBService) GetObjectInfo(oid int) (*models.Object, error) {
 	var object models.Object
-	if err := s.db.First(&object, id).Error; err != nil {
+	if err := s.db.First(&object, oid).Error; err != nil {
 		return nil, err
 	}
 	return &object, nil
@@ -51,32 +74,19 @@ func (s *ZsxqDBService) GetZsxqGroupIDs() ([]int, error) {
 	return groupIDs, nil
 }
 
-func (s *ZsxqDBService) GetLatestTopicTime(groupID int) (time.Time, error) {
-	var topic models.Topic
-	if err := s.db.Where("group_id = ?", groupID).Order("time desc").First(&topic).Error; err != nil {
-		return time.Time{}, err
-	}
-	return topic.Time, nil
-}
-
-func (s *ZsxqDBService) SaveLatestTime(groupID int, latestTime time.Time) error {
+func (s *ZsxqDBService) GetGroupName(gid int) (name string, err error) {
 	var group models.Group
-	if err := s.db.First(&group, groupID).Error; err != nil {
-		return err
-	}
-	group.UpdateAt = latestTime
-	return s.db.Save(&group).Error
-}
-
-func (s *ZsxqDBService) GetLatestNTopics(groupID, n int) (topics []models.Topic, err error) {
-	err = s.db.Where("group_id = ?", groupID).Order("time desc").Limit(n).Find(&topics).Error
-	return topics, err
-}
-
-func (s *ZsxqDBService) GetGroupName(id int) (name string, err error) {
-	var group models.Group
-	if err := s.db.First(&group, id).Error; err != nil {
+	if err := s.db.First(&group, gid).Error; err != nil {
 		return "", err
 	}
 	return group.Name, nil
+}
+
+func (s *ZsxqDBService) UpdateCrawlTime(gid int, t time.Time) error {
+	var group models.Group
+	if err := s.db.First(&group, gid).Error; err != nil {
+		return err
+	}
+	group.UpdateAt = t
+	return s.db.Save(&group).Error
 }
