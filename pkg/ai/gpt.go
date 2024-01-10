@@ -7,6 +7,8 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
+const polishPrompt = "请为我格式化下面的文本，使其通顺完整，谢谢！请使用Markdown格式，并且只需要回答格式化后的文本，不需要其他内容。\n\"\"\"%s\"\"\""
+
 func (a *AIService) Polish(text string) (result string, err error) {
 	ctx := context.Background()
 
@@ -15,7 +17,7 @@ func (a *AIService) Polish(text string) (result string, err error) {
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleUser,
-				Content: fmt.Sprintf("请为我格式化下面的文本，使其通顺完整，谢谢！请使用Markdown格式，并且只需要回答格式化后的文本，不需要其他内容。\n\"\"\"%s\"\"\"", text),
+				Content: fmt.Sprintf(polishPrompt, text),
 			},
 		},
 	}
