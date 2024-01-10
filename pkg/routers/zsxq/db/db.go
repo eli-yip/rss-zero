@@ -22,6 +22,8 @@ type DataBaseIface interface {
 
 	// Save author info to zsxq_author table
 	SaveAuthorInfo(a *models.Author) error
+	// Get author name by id from zsxq_author table
+	GetAuthorName(aid int) (name string, err error)
 
 	// Get all zsxq group ids from zsxq_group table
 	GetZsxqGroupIDs() (ids []int, err error)
@@ -66,6 +68,14 @@ func (s *ZsxqDBService) GetObjectInfo(oid int) (*models.Object, error) {
 
 func (s *ZsxqDBService) SaveAuthorInfo(a *models.Author) error {
 	return s.db.Save(a).Error
+}
+
+func (s *ZsxqDBService) GetAuthorName(aid int) (string, error) {
+	var author models.Author
+	if err := s.db.First(&author, aid).Error; err != nil {
+		return "", err
+	}
+	return author.Name, nil
 }
 
 func (s *ZsxqDBService) GetZsxqGroupIDs() ([]int, error) {

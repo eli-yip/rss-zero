@@ -58,6 +58,10 @@ func (m *mockDBService) SaveAuthorInfo(*dbModels.Author) error {
 	return nil
 }
 
+func (m *mockDBService) GetAuthorName(id int) (string, error) {
+	return "test-user", nil
+}
+
 func NewMockDBService() *mockDBService {
 	return &mockDBService{}
 }

@@ -25,6 +25,7 @@ type Topic struct {
 	Question   *Question `json:"question"`
 	Answer     *Answer   `json:"answer"`
 	Title      *string   `json:"title"`
+	Digested   bool      `json:"digested"`
 }
 
 type Talk struct {

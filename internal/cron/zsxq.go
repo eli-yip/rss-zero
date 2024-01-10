@@ -129,12 +129,16 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 			panic(err)
 		}
 		for _, topic := range topics {
+			var authorName string
+			if authorName, err = dbService.GetAuthorName(topic.AuthorID); err != nil {
+				panic(err)
+			}
 			rssTopics = append(rssTopics, render.RSSTopic{
 				TopicID:    topic.ID,
 				GroupName:  groupName,
 				GroupID:    topic.GroupID,
 				Title:      topic.Title,
-				AuthorName: "abc", //TODO: Get author ID from database
+				AuthorName: authorName,
 				ShareLink:  topic.ShareLink,
 				CreateTime: topic.Time,
 				Text:       topic.Text,

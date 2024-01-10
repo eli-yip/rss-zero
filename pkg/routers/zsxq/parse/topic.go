@@ -54,7 +54,6 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	}
 
 	// Parse topic and set result
-	// TODO: Extract author info in main function
 	switch result.Topic.Type {
 	case "talk":
 		if result.AuthorID, result.AuthorName, err = s.parseTalk(&result.Topic); err != nil {
@@ -90,7 +89,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 		Time:      createTimeInTime,
 		GroupID:   result.Topic.Group.GroupID,
 		Type:      result.Topic.Type,
-		Digested:  false, // TODO: Set digested to true when the topic is digested.
+		Digested:  result.Topic.Digested,
 		AuthorID:  result.AuthorID,
 		ShareLink: result.ShareLink,
 		Title:     result.Topic.Title,
