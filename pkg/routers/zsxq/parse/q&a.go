@@ -41,17 +41,17 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 	}
 
 	objectKey := fmt.Sprintf("zsxq/%d.%s", voice.VoiceID, "wav")
-	resp, err := s.RequestService.WithLimiterStream(voice.URL)
+	resp, err := s.Request.WithLimiterStream(voice.URL)
 	if err != nil {
 		return err
 	}
-	if err = s.FileService.SaveHTTPStream(objectKey, resp.Body); err != nil {
+	if err = s.File.SaveHTTPStream(objectKey, resp.Body); err != nil {
 		return err
 	}
 
 	// Get voice stream from file service,
 	// then send it to ai service to get transcript
-	voiceStream, err := s.FileService.Get(strconv.Itoa(voice.VoiceID))
+	voiceStream, err := s.File.Get(strconv.Itoa(voice.VoiceID))
 	if err != nil {
 		return err
 	}
@@ -71,13 +71,13 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 		return err
 	}
 
-	if err = s.DBService.SaveObjectInfo(&dbModels.Object{
+	if err = s.DB.SaveObjectInfo(&dbModels.Object{
 		ID:              voice.VoiceID,
 		TopicID:         topicID,
 		Time:            createTime,
 		Type:            "voice",
 		ObjectKey:       objectKey,
-		StorageProvider: []string{s.FileService.GetAssetsDomain()},
+		StorageProvider: []string{s.File.GetAssetsDomain()},
 		Transcript:      polishedTranscript,
 	}); err != nil {
 		return err

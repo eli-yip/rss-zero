@@ -18,7 +18,7 @@ type Renderer interface {
 }
 
 type MarkdownRenderer interface {
-	RenderText(*Topic) (string, error)
+	ToText(*Topic) (string, error)
 	RenderFullMarkdown(*Topic) (string, error)
 }
 
@@ -40,7 +40,7 @@ func NewMarkdownRenderService(dbService db.DataBaseIface) *MarkdownRenderService
 	}
 }
 
-func (m *MarkdownRenderService) RenderText(t *Topic) (text string, err error) {
+func (m *MarkdownRenderService) ToText(t *Topic) (text string, err error) {
 	var buffer bytes.Buffer
 
 	switch t.Type {

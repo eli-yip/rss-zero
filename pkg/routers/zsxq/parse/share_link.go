@@ -15,7 +15,7 @@ const ZsxqShareLinkAPIBaseURL = "https://api.zsxq.com/v2/topics/%d/share_url"
 
 func (p *ParseService) shareLink(topicID int) (link string, err error) {
 	url := fmt.Sprintf(ZsxqShareLinkAPIBaseURL, topicID)
-	respByte, err := p.RequestService.WithLimiter(url)
+	respByte, err := p.Request.WithLimiter(url)
 	if err != nil {
 		return "", err
 	}

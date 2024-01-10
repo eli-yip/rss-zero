@@ -187,7 +187,7 @@ this is an answer
 	for _, c := range cases {
 		var text string
 		var err error
-		if text, err = MarkdownRenderService.RenderText(&c.topic); err != nil {
+		if text, err = MarkdownRenderService.ToText(&c.topic); err != nil {
 			t.Errorf("RenderMarkdown() error = %v", err)
 		}
 		if text != c.result {

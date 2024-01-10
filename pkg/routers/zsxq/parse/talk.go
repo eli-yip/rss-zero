@@ -47,11 +47,11 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 		}
 
 		objectKey := fmt.Sprintf("zsxq/%d-%s", file.FileID, file.Name)
-		resp, err := s.RequestService.WithLimiterStream(downloadLink)
+		resp, err := s.Request.WithLimiterStream(downloadLink)
 		if err != nil {
 			return err
 		}
-		if err = s.FileService.SaveHTTPStream(objectKey, resp.Body); err != nil {
+		if err = s.File.SaveHTTPStream(objectKey, resp.Body); err != nil {
 			return err
 		}
 
@@ -60,13 +60,13 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 			return err
 		}
 
-		if err = s.DBService.SaveObjectInfo(&dbModels.Object{
+		if err = s.DB.SaveObjectInfo(&dbModels.Object{
 			ID:              file.FileID,
 			TopicID:         topicID,
 			Time:            createTime,
 			Type:            "file",
 			ObjectKey:       objectKey,
-			StorageProvider: []string{s.FileService.GetAssetsDomain()},
+			StorageProvider: []string{s.File.GetAssetsDomain()},
 		}); err != nil {
 			return err
 		}

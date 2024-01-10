@@ -15,11 +15,11 @@ import (
 )
 
 type ParseService struct {
-	FileService    file.FileIface
-	RequestService request.Requester
-	DBService      db.DataBaseIface
-	AI             ai.AIIface
-	RenderService  render.MarkdownRenderer
+	File     file.FileIface
+	Request  request.Requester
+	DB       db.DataBaseIface
+	AI       ai.AIIface
+	Renderer render.MarkdownRenderer
 }
 
 func NewParseService(
@@ -29,10 +29,10 @@ func NewParseService(
 	aiService ai.AIIface,
 ) *ParseService {
 	return &ParseService{
-		FileService:    fileIface,
-		RequestService: requestService,
-		DBService:      dbService,
-		AI:             aiService,
+		File:    fileIface,
+		Request: requestService,
+		DB:      dbService,
+		AI:      aiService,
 	}
 }
 
@@ -74,7 +74,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	}
 
 	// Render topic to markdown text
-	if result.Text, err = s.RenderService.RenderText(&render.Topic{
+	if result.Text, err = s.Renderer.ToText(&render.Topic{
 		Type:       result.Topic.Type,
 		Talk:       result.Topic.Talk,
 		Question:   result.Topic.Question,
@@ -85,7 +85,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	}
 
 	// Save topic to database
-	if err = s.DBService.SaveTopic(&dbModels.Topic{
+	if err = s.DB.SaveTopic(&dbModels.Topic{
 		ID:        result.Topic.TopicID,
 		Time:      createTimeInTime,
 		GroupID:   result.Topic.Group.GroupID,
@@ -114,7 +114,7 @@ type FileDownload struct {
 func (s *ParseService) DownloadLink(fileID int) (link string, err error) {
 	url := fmt.Sprintf(ZsxqFileBaseURL, fileID)
 
-	resp, err := s.RequestService.WithLimiter(url)
+	resp, err := s.Request.WithLimiter(url)
 	if err != nil {
 		return "", err
 	}
