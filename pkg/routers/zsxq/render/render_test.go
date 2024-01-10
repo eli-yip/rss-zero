@@ -40,7 +40,7 @@ func (m *mockDBService) SaveLatestTime(groupID int, t time.Time) error {
 	return nil
 }
 
-func (m *mockDBService) GetLatestTopics(groupID, n int) ([]dbModels.Topic, error) {
+func (m *mockDBService) GetLatestNTopics(groupID, n int) ([]dbModels.Topic, error) {
 	return []dbModels.Topic{
 		{
 			ID:      1234567,

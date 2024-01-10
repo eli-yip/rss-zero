@@ -14,7 +14,7 @@ type DataBaseIface interface {
 	GetZsxqGroupIDs() ([]int, error)
 	GetLatestTopicTime(groupID int) (time.Time, error)
 	SaveLatestTime(groupID int, latestTime time.Time) error
-	GetLatestTopics(groupID, n int) ([]models.Topic, error)
+	GetLatestNTopics(groupID, n int) ([]models.Topic, error)
 	GetGroupName(id int) (string, error)
 }
 
@@ -68,9 +68,9 @@ func (s *ZsxqDBService) SaveLatestTime(groupID int, latestTime time.Time) error 
 	return s.db.Save(&group).Error
 }
 
-func (s *ZsxqDBService) GetLatestTopics(groupID, n int) (topics []models.Topic, err error) {
+func (s *ZsxqDBService) GetLatestNTopics(groupID, n int) (topics []models.Topic, err error) {
 	err = s.db.Where("group_id = ?", groupID).Order("time desc").Limit(n).Find(&topics).Error
-	return
+	return topics, err
 }
 
 func (s *ZsxqDBService) GetGroupName(id int) (name string, err error) {

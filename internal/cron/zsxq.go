@@ -119,7 +119,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 		// 1. Get top 20 topics from db
 		// 2. Check if the ealiest one is later than latestTopicTimeInDB
 		// 3. If not, get more topics from db
-		topics, err := dbService.GetLatestTopics(groupID, 20)
+		topics, err := dbService.GetLatestNTopics(groupID, 20)
 		if err != nil {
 			panic(err)
 		}
