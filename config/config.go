@@ -4,26 +4,61 @@ import (
 	"os"
 
 	"github.com/eli-yip/zsxq-parser/pkg/file"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	MinioConfig   file.MinioConfig
+	MinioConfig file.MinioConfig
+
 	OpenAIApiKey  string
 	OpenAIBaseURL string // e.g.: https://one-api.example.com/v1
+
+	DBHost     string
+	DBPort     string
+	DBUser     string
+	DBPassword string
+	DBName     string
+
+	RedisAddr     string
+	RedisPassword string
+	RedisDB       int
 }
 
 var C Config
 
 func InitConfig() {
-	C.MinioConfig = file.MinioConfig{
-		Endpoint:        os.Getenv("MINIO_ENDPOINT"),
-		AccessKeyID:     os.Getenv("MINIO_ACCESS_KEY_ID"),
-		SecretAccessKey: os.Getenv("MINIO_SECRET_ACCESS_KEY"),
-		UseSSL:          false,
-		BucketName:      os.Getenv("MINIO_BUCKET_NAME"),
-		AssetsDomain:    os.Getenv("MINIO_ASSETS_DOMAIN"),
+	err := godotenv.Load()
+	if err != nil {
+		panic("Error loading .env file")
 	}
 
-	C.OpenAIApiKey = os.Getenv("OPENAI_API_KEY")
-	C.OpenAIBaseURL = os.Getenv("OPENAI_BASE_URL")
+	C.MinioConfig = file.MinioConfig{
+		Endpoint:        getEnv("MINIO_ENDPOINT"),
+		AccessKeyID:     getEnv("MINIO_ACCESS_KEY_ID"),
+		SecretAccessKey: getEnv("MINIO_SECRET_ACCESS_KEY"),
+		UseSSL:          true,
+		BucketName:      getEnv("MINIO_BUCKET_NAME"),
+		AssetsDomain:    getEnv("MINIO_ASSETS_DOMAIN"),
+	}
+
+	C.OpenAIApiKey = getEnv("OPENAI_API_KEY")
+	C.OpenAIBaseURL = getEnv("OPENAI_BASE_URL")
+
+	C.DBHost = getEnv("DB_HOST")
+	C.DBPort = getEnv("DB_PORT")
+	C.DBUser = getEnv("DB_USER")
+	C.DBPassword = getEnv("DB_PASSWORD")
+	C.DBName = getEnv("DB_NAME")
+
+	C.RedisAddr = getEnv("REDIS_ADDR")
+	C.RedisPassword = getEnv("REDIS_PASSWORD")
+	C.RedisDB = 0
+}
+
+func getEnv(key string) string {
+
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	panic("Environment variable " + key + " not found")
 }

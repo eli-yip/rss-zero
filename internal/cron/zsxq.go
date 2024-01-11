@@ -54,9 +54,10 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 	requestService := request.NewRequestService(cookies, redisService)
 	fileService := file.NewFileServiceMinio(config.C.MinioConfig)
 	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+	renderer := render.NewMarkdownRenderService(dbService)
 	logService := log.NewLogger()
 
-	parseService := parse.NewParseService(fileService, requestService, dbService, aiService, logService)
+	parseService := parse.NewParseService(fileService, requestService, dbService, aiService, renderer, logService)
 
 	// Iterate group IDs
 	for _, groupID := range groupIDs {
@@ -64,6 +65,9 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 		latestTopicTimeInDB, err := dbService.GetLatestTopicTime(groupID)
 		if err != nil {
 			panic(err)
+		}
+		if latestTopicTimeInDB.IsZero() {
+			latestTopicTimeInDB, _ = time.Parse("2006-01-02 15:04:05", "2010-01-01 00:00:00")
 		}
 
 		var (
