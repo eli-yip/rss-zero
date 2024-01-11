@@ -11,23 +11,15 @@ import (
 const BookMarkUpPattern = `<e type="web" href="https?://[^"]*" title="([^"]+)" style="book" />`
 
 func replaceBookMarkUp(input string) (output string, err error) {
-	decodedInput, err := url.QueryUnescape(input)
-	if err != nil {
-		return "", err
-	}
 	re := regexp.MustCompile(BookMarkUpPattern)
-	return re.ReplaceAllString(decodedInput, "$1"), nil
+	return re.ReplaceAllString(input, "$1"), nil
 }
 
 const AnswerQuotoPattern = `<e type="web" href="([^"]+)" title="([^"]+)"( cache="")? />`
 
 func replaceAnswerQuoto(input string) (output string, err error) {
-	decodedInput, err := url.QueryUnescape(input)
-	if err != nil {
-		return "", err
-	}
 	re := regexp.MustCompile(AnswerQuotoPattern)
-	return re.ReplaceAllString(decodedInput, "[$2]($1)"), nil
+	return re.ReplaceAllString(input, "[$2]($1)"), nil
 }
 
 const HashTagPattern = `<e type="hashtag" hid="\d+" title="(.*?)" />`

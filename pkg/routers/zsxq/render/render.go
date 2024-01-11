@@ -40,6 +40,10 @@ func NewMarkdownRenderService(dbService db.DataBaseIface) *MarkdownRenderService
 	}
 }
 
+func (m *MarkdownRenderService) RenderFullMarkdown(*Topic) (string, error) {
+	return "", nil
+}
+
 func (m *MarkdownRenderService) ToText(t *Topic) (text string, err error) {
 	var buffer bytes.Buffer
 
