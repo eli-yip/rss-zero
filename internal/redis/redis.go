@@ -31,7 +31,7 @@ func NewRedisService(addr, password string, db int) (service *RedisService) {
 	if err != nil {
 		panic(err) // TODO: Handle error with zap.
 	}
-	return nil
+	return service
 }
 
 func (s *RedisService) Set(key string, value interface{}, duration time.Duration) (err error) {
