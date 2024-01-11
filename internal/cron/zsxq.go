@@ -24,6 +24,8 @@ const (
 	apiFetchURL = "%s&end_time=%s"
 )
 
+const defaultFetchCount = 20
+
 const (
 	rssPath = "zsxq_rss_%d"
 	rssTTL  = time.Hour * 2
@@ -111,18 +113,20 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 		}
 
 		// Output rss to redis
-
 		var rssTopics []render.RSSTopic
 		rssRenderer := render.NewRSSRenderService()
-		// FIXME: It only shows 20 topics,
-		// if there are more than 20 new topics, the old ones will be lost.
-		// It can be fixed by this:
-		// 1. Get top 20 topics from db
-		// 2. Check if the ealiest one is later than latestTopicTimeInDB
-		// 3. If not, get more topics from db
-		topics, err := dbService.GetLatestNTopics(groupID, 20)
+		topics, err := dbService.GetLatestNTopics(groupID, defaultFetchCount)
 		if err != nil {
 			panic(err)
+		}
+		fetchCount := defaultFetchCount
+		for topics[len(topics)-1].Time.After(latestTopicTimeInDB) && len(topics) == fetchCount {
+			fetchCount += 10 // 每次循环增加10
+			topics, err = dbService.GetLatestNTopics(groupID, fetchCount)
+			if err != nil {
+				// TODO: Handle error
+				break
+			}
 		}
 		groupName, err := dbService.GetGroupName(groupID)
 		if err != nil {
