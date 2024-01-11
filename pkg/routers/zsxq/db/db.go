@@ -44,6 +44,9 @@ func (s *ZsxqDBService) SaveTopic(t *models.Topic) error {
 func (s *ZsxqDBService) GetLatestTopicTime(gid int) (time.Time, error) {
 	var topic models.Topic
 	if err := s.db.Where("group_id = ?", gid).Order("time desc").First(&topic).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return time.Time{}, nil
+		}
 		return time.Time{}, err
 	}
 	return topic.Time, nil
