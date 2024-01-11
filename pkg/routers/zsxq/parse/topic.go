@@ -29,14 +29,16 @@ func NewParseService(
 	requestService request.Requester,
 	dbService db.DataBaseIface,
 	aiService ai.AIIface,
+	renderer render.MarkdownRenderer,
 	logger *zap.Logger,
 ) *ParseService {
 	return &ParseService{
-		File:    fileIface,
-		Request: requestService,
-		DB:      dbService,
-		AI:      aiService,
-		log:     logger,
+		File:     fileIface,
+		Request:  requestService,
+		DB:       dbService,
+		AI:       aiService,
+		Renderer: renderer,
+		log:      logger,
 	}
 }
 
