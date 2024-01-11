@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	zsxqDBModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -28,6 +29,17 @@ func NewDB(host, port, user, password, name string) (db *gorm.DB, err error) {
 	}); err != nil {
 		panic(err)
 	}
+
+	// migrate
+	if err = db.AutoMigrate(
+		&zsxqDBModels.Topic{},
+		&zsxqDBModels.Group{},
+		&zsxqDBModels.Author{},
+		&zsxqDBModels.Object{},
+	); err != nil {
+		panic(err)
+	}
+
 	mdb, _ := db.DB()
 	mdb.SetMaxIdleConns(20)
 	mdb.SetMaxOpenConns(100)
