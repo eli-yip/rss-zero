@@ -30,8 +30,6 @@ func (s *ParseService) parseTalk(topic *models.Topic) (authorID int, authorName 
 		return 0, "", err
 	}
 
-	// TODO: Render articals
-
 	return authorID, authorName, nil
 }
 

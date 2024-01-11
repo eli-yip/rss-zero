@@ -99,9 +99,13 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 		}
 	}
 
-	// TODO: Render articles
+	articalPart := ""
+	if talk.Artical != nil {
+		articalPart = fmt.Sprintf("这篇文章中包含有外部文章：[%s](%s)", talk.Artical.Title, talk.Artical.ArticalURL)
+		articalPart = trimRightSpace(articalPart)
+	}
 
-	text := md.Join(authorPart, textPart, filePart, imagePart)
+	text := md.Join(authorPart, textPart, filePart, imagePart, articalPart)
 	if _, err = writer.Write([]byte(text)); err != nil {
 		return err
 	}

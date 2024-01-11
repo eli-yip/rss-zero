@@ -134,6 +134,58 @@ test-text
 		},
 		{
 			topic: Topic{
+				Type:       "talk",
+				AuthorName: "test-user2",
+				Talk: &models.Talk{
+					Text: func(s string) *string { return &s }("test-text"),
+					Files: []models.File{
+						{
+							FileID: 1234567,
+							Name:   "test-file",
+						},
+						{
+							FileID: 1234568,
+							Name:   "test-file2",
+						},
+					},
+					Images: []models.Image{
+						{
+							ImageID: 1234567,
+							Type:    "image",
+						},
+						{
+							ImageID: 1234568,
+							Type:    "image",
+						},
+					},
+					Artical: &models.Artical{
+						Title:      "test-artical",
+						ArticalURL: "https://www.google.com",
+					},
+				},
+			},
+			result: `作者：test-user2
+
+test-text
+
+这篇文章的附件如下：
+
+第1个文件：[test-file](https://oss.momoai.me/12456-8888.jpg)
+
+第2个文件：[test-file2](https://oss.momoai.me/12456-8888.jpg)
+
+这篇文章的图片如下：
+
+第1张图片：![1234567](https://oss.momoai.me/12456-8888.jpg)
+
+第2张图片：![1234568](https://oss.momoai.me/12456-8888.jpg)
+
+这篇文章中包含有外部文章：[test-artical](https://www.google.com)
+
+`,
+		},
+		{
+			topic: Topic{
 				Type:       "q&a",
 				AuthorName: "test-user3",
 				Question: &models.Question{
