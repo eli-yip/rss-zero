@@ -11,6 +11,7 @@ require (
 	github.com/sashabaranov/go-openai v1.17.10
 	github.com/stretchr/testify v1.8.4
 	github.com/yuin/goldmark v1.6.0
+	go.uber.org/zap v1.26.0
 	golang.org/x/net v0.20.0
 	gorm.io/gorm v1.25.5
 )
@@ -35,6 +36,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc // indirect
 	golang.org/x/sys v0.16.0 // indirect

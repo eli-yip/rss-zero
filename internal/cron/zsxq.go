@@ -10,6 +10,7 @@ import (
 	"github.com/eli-yip/zsxq-parser/internal/redis"
 	"github.com/eli-yip/zsxq-parser/pkg/ai"
 	"github.com/eli-yip/zsxq-parser/pkg/file"
+	log "github.com/eli-yip/zsxq-parser/pkg/log"
 	zsxqDB "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
@@ -53,8 +54,9 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 	requestService := request.NewRequestService(cookies, redisService)
 	fileService := file.NewFileServiceMinio(config.C.MinioConfig)
 	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+	logService := log.NewLogger()
 
-	parseService := parse.NewParseService(fileService, requestService, dbService, aiService)
+	parseService := parse.NewParseService(fileService, requestService, dbService, aiService, logService)
 
 	// Iterate group IDs
 	for _, groupID := range groupIDs {

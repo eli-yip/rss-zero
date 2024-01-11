@@ -7,12 +7,14 @@ import (
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 	zsxqTime "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/time"
+	"go.uber.org/zap"
 )
 
 func (s *ParseService) parseQA(topic *models.Topic) (authorID int, authorName string, err error) {
 	question := topic.Question
 	answer := topic.Answer
 	if question == nil || answer == nil {
+		s.log.Info("No question or answer in this topic", zap.Int("topic_id", topic.TopicID))
 		return 0, "", nil
 	}
 
@@ -22,13 +24,17 @@ func (s *ParseService) parseQA(topic *models.Topic) (authorID int, authorName st
 	}
 
 	if err = s.parseImages(question.Images, topic.TopicID, topic.CreateTime); err != nil {
+		s.log.Error("Failed to parse images", zap.Error(err))
 		return 0, "", err
 	}
+
 	if err = s.parseImages(answer.Images, topic.TopicID, topic.CreateTime); err != nil {
+		s.log.Error("Failed to parse images", zap.Error(err))
 		return 0, "", err
 	}
 
 	if err = s.parseVoice(answer.Voice, topic.TopicID, topic.CreateTime); err != nil {
+		s.log.Error("Failed to parse voice", zap.Error(err))
 		return 0, "", err
 	}
 
