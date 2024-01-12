@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/http/cookiejar"
@@ -56,15 +57,22 @@ func NewRequestService(cookies string, redisService *redis.RedisService) *Reques
 
 func (r *RequestService) SetCookies(cookies string) {
 	r.cookies = cookies
-	u, _ := url.Parse("https://api.zsxq.com")
-	for _, cookieStr := range strings.SplitN(cookies, ";", -1) {
-		parts := strings.SplitN(strings.TrimSpace(cookieStr), "=", 2)
-		if len(parts) == 2 {
-			cookies := &http.Cookie{Name: parts[0], Value: parts[1]}
-			r.client.Jar.SetCookies(u, []*http.Cookie{cookies})
+
+	var domains []string = []string{
+		"articles.zsxq.com",
+		"api.zsxq.com",
+	}
+
+	for _, d := range domains {
+		u, _ := url.Parse("https://" + d)
+		for _, cookieStr := range strings.SplitN(cookies, ";", -1) {
+			parts := strings.SplitN(strings.TrimSpace(cookieStr), "=", 2)
+			if len(parts) == 2 {
+				cookies := &http.Cookie{Name: parts[0], Value: parts[1]}
+				r.client.Jar.SetCookies(u, []*http.Cookie{cookies})
+			}
 		}
 	}
-	// Set UA and Referer
 }
 
 func (r *RequestService) SetMaxRetry(maxRetryTimes int) { r.maxRetry = maxRetryTimes }
@@ -78,9 +86,34 @@ type OtherResp struct {
 	Code int `json:"code"` // 1059 for too many requests, 401 for invalid cookies
 }
 
-func (r *RequestService) WithLimiterRawData(string) ([]byte, error) {
-	// TODO: implement this
-	return nil, nil
+func (r *RequestService) WithLimiterRawData(targetURL string) (respByte []byte, err error) {
+	for i := 0; i < r.maxRetry; i++ {
+		<-r.limiter
+		req, err := http.NewRequest("GET", targetURL, nil)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+		req.Header.Set("Referer", "https://wx.zsxq.com/")
+		var resp *http.Response
+		resp, err = r.client.Do(req)
+		// When request failed or status code is not 200, error
+		if err != nil || resp.StatusCode != http.StatusOK {
+			if resp != nil && resp.Body != nil {
+				resp.Body.Close()
+			}
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			continue
+		}
+
+		return body, nil
+	}
+	return nil, err
 }
 
 func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err error) {
@@ -88,15 +121,17 @@ func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err err
 	for i := 0; i < r.maxRetry; i++ {
 		<-r.limiter
 		var resp *http.Response
-		resp, err = r.client.Get(targetURL)
+		req, err := http.NewRequest("GET", targetURL, nil)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+		req.Header.Set("Referer", "https://wx.zsxq.com/")
+		resp, err = r.client.Do(req)
 		// When request failed or status code is not 200, error.
 		if err != nil || resp.StatusCode != http.StatusOK {
 			if resp != nil && resp.Body != nil {
 				resp.Body.Close()
-			}
-			// If error is nil when status code is not 200, set it to ErrBadResponse.
-			if err == nil {
-				err = ErrBadResponse
 			}
 			continue
 		}
@@ -137,8 +172,18 @@ func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err err
 func (r *RequestService) WithLimiterStream(targetURL string) (resp *http.Response, err error) {
 	// TODO: Rewrite this function to stay same logic with WithLimiter
 	for i := 0; i < r.maxRetry; i++ {
-		resp, err = r.emptyClient.Get(targetURL)
+		req, err := http.NewRequest("GET", targetURL, nil)
 		if err != nil {
+			continue
+		}
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+		req.Header.Set("Referer", "https://wx.zsxq.com/")
+		resp, err = r.client.Do(req)
+		// When request failed or status code is not 200, error.
+		if err != nil || resp.StatusCode != http.StatusOK {
+			if resp != nil && resp.Body != nil {
+				resp.Body.Close()
+			}
 			continue
 		}
 
@@ -156,13 +201,16 @@ func (r *RequestService) WithLimiterStream(targetURL string) (resp *http.Respons
 func (r *RequestService) WithoutLimiter(targetURL string) (respByte []byte, err error) {
 	for i := 0; i < r.maxRetry; i++ {
 		var resp *http.Response
-		resp, err = r.emptyClient.Get(targetURL)
+		req, err := http.NewRequest("GET", targetURL, nil)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+		req.Header.Set("Referer", "https://wx.zsxq.com/")
+		resp, err = r.client.Do(req)
 		if err != nil || resp.StatusCode != http.StatusOK {
 			if resp != nil && resp.Body != nil {
 				resp.Body.Close()
-			}
-			if err == nil {
-				err = ErrBadResponse
 			}
 			continue
 		}
