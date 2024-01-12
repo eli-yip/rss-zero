@@ -35,6 +35,8 @@ func (s *ParseService) parseTalk(topic *models.Topic) (authorID int, authorName 
 		return 0, "", err
 	}
 
+	// Save artical to database, which will be used to generate full text.
+
 	return authorID, authorName, nil
 }
 

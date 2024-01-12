@@ -56,14 +56,6 @@ func (s *ParseService) SplitTopics(respBytes []byte) (rawTopics []json.RawMessag
 
 // ParseTopics parse the raw topics to topic parse result
 func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
-	// Generate share link
-	result.ShareLink, err = s.shareLink(result.Topic.TopicID)
-	if err != nil {
-		s.log.Error("Failed to generate share link", zap.Error(err))
-		return err
-	}
-	s.log.Info("Successfully generate share link", zap.String("share_link", result.ShareLink))
-
 	// Parse topic and set result
 	switch result.Topic.Type {
 	case "talk":
@@ -102,6 +94,14 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 		return err
 	}
 	s.log.Info("Successfully render topic to text")
+
+	// Generate share link
+	result.ShareLink, err = s.shareLink(result.Topic.TopicID)
+	if err != nil {
+		s.log.Error("Failed to generate share link", zap.Error(err))
+		return err
+	}
+	s.log.Info("Successfully generate share link", zap.String("share_link", result.ShareLink))
 
 	// Save topic to database
 	if err = s.DB.SaveTopic(&dbModels.Topic{
