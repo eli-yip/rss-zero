@@ -15,6 +15,11 @@ type DataBaseIface interface {
 	// Get latest n topics from zsxq_topic table
 	GetLatestNTopics(gid int, n int) (ts []models.Topic, err error)
 
+	// Save article to zsxq_article table
+	SaveArticle(a *models.Article) error
+	// Get article text by id from zsxq_article table
+	GetArticleText(aid string) (text string, err error)
+
 	// Save object info to zsxq_object table
 	SaveObjectInfo(o *models.Object) error
 	// Get object info from zsxq_object table
@@ -55,6 +60,18 @@ func (s *ZsxqDBService) GetLatestTopicTime(gid int) (time.Time, error) {
 func (s *ZsxqDBService) GetLatestNTopics(gid, n int) (ts []models.Topic, err error) {
 	err = s.db.Where("group_id = ?", gid).Order("time desc").Limit(n).Find(&ts).Error
 	return ts, err
+}
+
+func (s *ZsxqDBService) SaveArticle(a *models.Article) error {
+	return s.db.Save(a).Error
+}
+
+func (s *ZsxqDBService) GetArticleText(aid string) (string, error) {
+	var article models.Article
+	if err := s.db.First(&article, aid).Error; err != nil {
+		return "", err
+	}
+	return article.Text, nil
 }
 
 func (s *ZsxqDBService) SaveObjectInfo(o *models.Object) error {

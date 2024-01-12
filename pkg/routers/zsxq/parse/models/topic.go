@@ -31,14 +31,15 @@ type Topic struct {
 type Talk struct {
 	Owner   User     `json:"owner"`
 	Text    *string  `json:"text"`
-	Artical *Artical `json:"artical"`
+	Article *Article `json:"article"`
 	Files   []File   `json:"files"`
 	Images  []Image  `json:"images"`
 }
 
-type Artical struct {
+type Article struct {
 	Title      string `json:"title"`
-	ArticalURL string `json:"artical_url"`
+	AticalID   string `json:"article_id"`
+	ArticleURL string `json:"article_url"`
 }
 
 type File struct {

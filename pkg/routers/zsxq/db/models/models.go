@@ -22,6 +22,16 @@ type Topic struct {
 
 func (t *Topic) TableName() string { return "zsxq_topic" }
 
+type Article struct {
+	ID    string `gorm:"column:id;primary_key"`
+	URL   string `gorm:"column:url;type:text"`
+	Title string `gorm:"column:title;type:text"`
+	Text  string `gorm:"column:text;type:text"`
+	Raw   []byte `gorm:"column:raw;type:bytea"`
+}
+
+func (a *Article) TableName() string { return "zsxq_article" }
+
 type Object struct {
 	ID              int            `gorm:"column:id;primary_key"`
 	TopicID         int            `gorm:"column:topic_id"`

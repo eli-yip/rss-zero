@@ -2,6 +2,7 @@ package render
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 	"time"
 
@@ -60,6 +61,17 @@ func (m *mockDBService) SaveAuthorInfo(*dbModels.Author) error {
 
 func (m *mockDBService) GetAuthorName(id int) (string, error) {
 	return "test-user", nil
+}
+
+func (m *mockDBService) SaveArticle(*dbModels.Article) error {
+	return nil
+}
+
+func (m *mockDBService) GetArticleText(id string) (string, error) {
+	if id == "zsxq_article_test" {
+		return "test-text", nil
+	}
+	return "", nil
 }
 
 func NewMockDBService() *mockDBService {
@@ -158,10 +170,6 @@ test-text
 							Type:    "image",
 						},
 					},
-					Artical: &models.Artical{
-						Title:      "test-artical",
-						ArticalURL: "https://www.google.com",
-					},
 				},
 			},
 			result: `作者：test-user2
@@ -179,8 +187,6 @@ test-text
 第1张图片：![1234567](https://oss.momoai.me/12456-8888.jpg)
 
 第2张图片：![1234568](https://oss.momoai.me/12456-8888.jpg)
-
-这篇文章中包含有外部文章：[test-artical](https://www.google.com)
 
 `,
 		},
@@ -240,17 +246,76 @@ this is an answer
 
 `,
 		},
+		{
+			topic: Topic{
+				Type:       "talk",
+				AuthorName: "test-user2",
+				Talk: &models.Talk{
+					Text: func(s string) *string { return &s }("test-text"),
+					Files: []models.File{
+						{
+							FileID: 1234567,
+							Name:   "test-file",
+						},
+						{
+							FileID: 1234568,
+							Name:   "test-file2",
+						},
+					},
+					Images: []models.Image{
+						{
+							ImageID: 1234567,
+							Type:    "image",
+						},
+						{
+							ImageID: 1234568,
+							Type:    "image",
+						},
+					},
+					Article: &models.Article{
+						Title:      "test-article",
+						AticalID:   "zsxq_article_test",
+						ArticleURL: "https://www.google.com",
+					},
+				},
+			},
+			result: `作者：test-user2
+
+test-text
+
+这篇文章的附件如下：
+
+第1个文件：[test-file](https://oss.momoai.me/12456-8888.jpg)
+
+第2个文件：[test-file2](https://oss.momoai.me/12456-8888.jpg)
+
+这篇文章的图片如下：
+
+第1张图片：![1234567](https://oss.momoai.me/12456-8888.jpg)
+
+第2张图片：![1234568](https://oss.momoai.me/12456-8888.jpg)
+
+这篇文章中包含有外部文章：[test-article](https://www.google.com)
+
+文章内容如下：
+
+test-text
+
+`,
+		},
 	}
 
 	mockDBService := NewMockDBService()
 	MarkdownRenderService := NewMarkdownRenderService(mockDBService)
-	for _, c := range cases {
+	for i, c := range cases {
 		var text string
 		var err error
 		if text, err = MarkdownRenderService.ToText(&c.topic); err != nil {
+			t.Logf("testing %d failed", i)
 			t.Errorf("RenderMarkdown() error = %v", err)
 		}
 		if text != c.result {
+			t.Logf("testing %d failed", i)
 			t.Errorf("RenderMarkdown() got = %v, want %v", text, c.result)
 		}
 		// fmt.Printf("%s", text)
@@ -330,6 +395,6 @@ test-text
 		if buffer.String() != c.result {
 			t.Errorf("renderTalk() got = %v, want %v", buffer.String(), c.result)
 		}
-		// fmt.Printf("%s", buffer.String())
+		fmt.Printf("%s", buffer.String())
 	}
 }

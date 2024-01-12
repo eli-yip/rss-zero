@@ -35,9 +35,40 @@ func (s *ParseService) parseTalk(topic *models.Topic) (authorID int, authorName 
 		return 0, "", err
 	}
 
-	// Save artical to database, which will be used to generate full text.
+	if err = s.parseArticle(talk.Article); err != nil {
+		s.log.Error("Failed to parse articles", zap.Error(err))
+		return 0, "", err
+	}
 
 	return authorID, authorName, nil
+}
+
+func (s *ParseService) parseArticle(a *models.Article) (err error) {
+	if a == nil {
+		return nil
+	}
+
+	html, err := s.Request.WithLimiterRawData(a.ArticleURL)
+	if err != nil {
+		return err
+	}
+
+	text, err := s.Renderer.Article(string(html))
+	if err != nil {
+		return err
+	}
+
+	if err = s.DB.SaveArticle(&dbModels.Article{
+		ID:    a.AticalID,
+		URL:   a.ArticleURL,
+		Title: a.Title,
+		Text:  text,
+		Raw:   html,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeStr string) (err error) {

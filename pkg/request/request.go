@@ -6,6 +6,7 @@ import (
 
 type Requester interface {
 	WithLimiter(string) ([]byte, error)
+	WithLimiterRawData(string) ([]byte, error)
 	WithLimiterStream(string) (*http.Response, error)
 	WithoutLimiter(string) ([]byte, error)
 }

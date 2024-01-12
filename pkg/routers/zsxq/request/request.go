@@ -78,6 +78,11 @@ type OtherResp struct {
 	Code int `json:"code"` // 1059 for too many requests, 401 for invalid cookies
 }
 
+func (r *RequestService) WithLimiterRawData(string) ([]byte, error) {
+	// TODO: implement this
+	return nil, nil
+}
+
 func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err error) {
 	// TODO: Rewrite this function to check status code in resp
 	for i := 0; i < r.maxRetry; i++ {

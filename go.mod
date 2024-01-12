@@ -3,6 +3,8 @@ module github.com/eli-yip/zsxq-parser
 go 1.21
 
 require (
+	github.com/JohannesKaufmann/html-to-markdown v1.5.0
+	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/go-co-op/gocron/v2 v2.1.2
 	github.com/gorilla/feeds v1.1.2
@@ -10,7 +12,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/redis/go-redis/v9 v9.4.0
-	github.com/sashabaranov/go-openai v1.17.10
+	github.com/sashabaranov/go-openai v1.17.11
 	github.com/stretchr/testify v1.8.4
 	github.com/yuin/goldmark v1.6.0
 	go.uber.org/zap v1.26.0
@@ -20,6 +22,7 @@ require (
 )
 
 require (
+	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -45,7 +48,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc // indirect
+	golang.org/x/exp v0.0.0-20240110193028-0dcbfd608b1e // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

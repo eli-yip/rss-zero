@@ -7,7 +7,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/eli-yip/zsxq-parser/internal/md"
+	md "github.com/JohannesKaufmann/html-to-markdown"
+	"github.com/PuerkitoBio/goquery"
+	imd "github.com/eli-yip/zsxq-parser/internal/md"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
@@ -19,6 +21,7 @@ type Renderer interface {
 
 type MarkdownRenderer interface {
 	ToText(*Topic) (string, error)
+	Article(string) (string, error)
 	RenderFullMarkdown(*Topic) (string, error)
 }
 
@@ -62,7 +65,97 @@ func (m *MarkdownRenderService) ToText(t *Topic) (text string, err error) {
 	return buffer.String(), nil
 }
 
-func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, writer io.Writer) (err error) {
+func (m *MarkdownRenderService) Article(text string) (string, error) {
+	converter := md.NewConverter("", true, nil)
+	converter.AddRules(m.getMdRules()...)
+
+	text, err := converter.ConvertString(text)
+	if err != nil {
+		return "", err
+	}
+
+	return text, nil
+}
+
+func (m *MarkdownRenderService) getMdRules() []md.Rule {
+	head := md.Rule{
+		Filter: []string{"head"},
+		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
+			return md.String("")
+		},
+	}
+
+	h1 := md.Rule{
+		Filter: []string{"h1"},
+		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
+			if !selec.HasClass("title") {
+				return nil
+			}
+			return md.String("")
+		},
+	}
+
+	groupInfo := md.Rule{
+		Filter: []string{"div"},
+		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
+			if !selec.HasClass("group-info") {
+				return nil
+			}
+			return md.String("")
+		},
+	}
+
+	authorInfo := md.Rule{
+		Filter: []string{"div"},
+		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
+			if !selec.HasClass("author-info") {
+				return nil
+			}
+			return md.String("")
+		},
+	}
+
+	footer := md.Rule{
+		Filter: []string{"footer"},
+		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
+			return md.String("")
+		},
+	}
+
+	qrcodeContainer := md.Rule{
+		Filter: []string{"div"},
+		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
+			if !selec.HasClass("qrcode-container") {
+				return nil
+			}
+			return md.String("")
+		},
+	}
+
+	qrcodeURL := md.Rule{
+		Filter: []string{"div"},
+		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
+			if !selec.Is("div#qrcode-url") {
+				return nil
+			}
+			return md.String("")
+		},
+	}
+
+	return []md.Rule{
+		head,
+		h1,
+		groupInfo,
+		authorInfo,
+		footer,
+		qrcodeContainer,
+		qrcodeURL,
+	}
+}
+
+func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, writer io.Writer,
+) (err error) {
+	// TODO: title
 	if talk.Text == nil {
 		return errors.New("no text in talk")
 	}
@@ -85,7 +178,7 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d个文件：[%s](%s)", i+1, file.Name, uri)
-			filePart = trimRightSpace(md.Join(filePart, text))
+			filePart = trimRightSpace(imd.Join(filePart, text))
 		}
 	}
 
@@ -99,17 +192,27 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
-			imagePart = trimRightSpace(md.Join(imagePart, text))
+			imagePart = trimRightSpace(imd.Join(imagePart, text))
 		}
 	}
 
-	articalPart := ""
-	if talk.Artical != nil {
-		articalPart = fmt.Sprintf("这篇文章中包含有外部文章：[%s](%s)", talk.Artical.Title, talk.Artical.ArticalURL)
-		articalPart = trimRightSpace(articalPart)
+	articlePart := ""
+	if talk.Article != nil {
+		articleText, err := m.DBService.GetArticleText(talk.Article.AticalID)
+		if err != nil {
+			return err
+		}
+		articlePart = trimRightSpace(imd.Join(
+			articlePart,
+			fmt.Sprintf("这篇文章中包含有外部文章：[%s](%s)",
+				talk.Article.Title,
+				talk.Article.ArticleURL),
+			"文章内容如下：",
+			articleText,
+		))
 	}
 
-	text := md.Join(authorPart, textPart, filePart, imagePart, articalPart)
+	text := imd.Join(authorPart, textPart, filePart, imagePart, articlePart)
 	if _, err = writer.Write([]byte(text)); err != nil {
 		return err
 	}
@@ -133,13 +236,13 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
-			questionImagePart = trimRightSpace(md.Join(questionImagePart, text))
+			questionImagePart = trimRightSpace(imd.Join(questionImagePart, text))
 		}
 	}
 
-	questionPart = md.Quote(md.Join(questionPart, questionImagePart))
+	questionPart = imd.Quote(imd.Join(questionPart, questionImagePart))
 
-	answerPart := fmt.Sprintf("%s回答如下：", md.Bold(author))
+	answerPart := fmt.Sprintf("%s回答如下：", imd.Bold(author))
 
 	answerVoicePart := ""
 	if a.Voice != nil {
@@ -148,7 +251,7 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 			return err
 		}
 		uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
-		answerVoicePart = trimRightSpace(md.Join(answerVoicePart,
+		answerVoicePart = trimRightSpace(imd.Join(answerVoicePart,
 			fmt.Sprintf("这个[回答](%s)的语音转文字结果：", uri),
 			object.Transcript))
 	}
@@ -172,12 +275,12 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
-			answerImagePart = trimRightSpace(md.Join(answerImagePart, text))
+			answerImagePart = trimRightSpace(imd.Join(answerImagePart, text))
 		}
 	}
-	answerPart = trimRightSpace(md.Join(answerPart, answerVoicePart, answerText, answerImagePart))
+	answerPart = trimRightSpace(imd.Join(answerPart, answerVoicePart, answerText, answerImagePart))
 
-	text := md.Join(questionPart, answerPart)
+	text := imd.Join(questionPart, answerPart)
 	if _, err = writer.Write([]byte(text)); err != nil {
 		return err
 	}

@@ -36,6 +36,7 @@ func NewDB(host, port, user, password, name string) (db *gorm.DB, err error) {
 		&zsxqDBModels.Group{},
 		&zsxqDBModels.Author{},
 		&zsxqDBModels.Object{},
+		&zsxqDBModels.Article{},
 	); err != nil {
 		panic(err)
 	}

@@ -7,17 +7,12 @@ import (
 )
 
 type Topic struct {
-	// TopicID int
-	Type string
-	// CreateTime time.Time
-	// GroupName  string
-	// GroupID    int
+	Type       string
 	Talk       *models.Talk
 	Question   *models.Question
 	Answer     *models.Answer
 	AuthorName string
-	// Title      *string
-	// ShareLink  string
+	Title      *string
 }
 
 type RSSTopic struct {

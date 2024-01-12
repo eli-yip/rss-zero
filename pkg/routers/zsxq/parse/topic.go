@@ -85,6 +85,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	// Render topic to markdown text
 	if result.Text, err = s.Renderer.ToText(&render.Topic{
 		Type:       result.Topic.Type,
+		Title:      result.Topic.Title,
 		Talk:       result.Topic.Talk,
 		Question:   result.Topic.Question,
 		Answer:     result.Topic.Answer,
