@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"io"
+	"path/filepath"
 
+	gomime "github.com/cubewise-code/go-mime"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"go.uber.org/zap"
@@ -50,20 +52,27 @@ func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, si
 	}
 	defer stream.Close()
 
+	ext := filepath.Ext(objectKey)
+	contentType := gomime.TypeByExtension(ext)
+	if ext == "" {
+		contentType = "application/octet-stream"
+	}
+
 	var info minio.UploadInfo
 	info, err = s.minioClient.PutObject(context.Background(),
 		s.bucketName,
 		objectKey,
 		stream,
 		size,
-		minio.PutObjectOptions{ContentType: "application/octet-stream"},
+		minio.PutObjectOptions{ContentType: contentType},
 	)
 	if err != nil {
 		return err
 	}
-	s.logger.Info("Successfully uploaded bytes: ",
+	s.logger.Info("Successfully uploaded object to minio",
 		zap.String("bucket", info.Bucket),
 		zap.String("key", info.Key),
+		zap.String("type", contentType),
 		zap.Int64("size", info.Size),
 	)
 

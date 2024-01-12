@@ -3,6 +3,7 @@ module github.com/eli-yip/zsxq-parser
 go 1.21
 
 require (
+	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/go-co-op/gocron/v2 v2.1.2
 	github.com/gorilla/feeds v1.1.2
 	github.com/joho/godotenv v1.5.1
