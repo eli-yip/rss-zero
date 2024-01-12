@@ -27,19 +27,19 @@ const (
 
 func main() {
 	var err error
-	log := log.NewLogger()
+	logger := log.NewLogger()
 
 	config.InitConfig()
-	log.Info("Config initialized")
+	logger.Info("Config initialized")
 
 	db, err := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
 	if err != nil {
 		panic(err)
 	}
-	log.Info("Database connected")
+	logger.Info("Database connected")
 
 	redisService := redis.NewRedisService(config.C.RedisAddr, "", config.C.RedisDB)
-	log.Info("Redis connected")
+	logger.Info("Redis connected")
 
 	cookies, err := redisService.Get("zsxq_cookies")
 	if err != nil {
@@ -49,7 +49,7 @@ func main() {
 		}
 		panic(err)
 	}
-	log.Info("Cookies fetched")
+	logger.Info("Cookies fetched")
 
 	dbService := zsxqDB.NewZsxqDBService(db)
 	// Get group IDs from database, which is a list of int.
@@ -59,14 +59,17 @@ func main() {
 	}
 
 	requestService := request.NewRequestService(cookies, redisService)
-	fileService := file.NewFileServiceMinio(config.C.MinioConfig)
+	fileService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
+	if err != nil {
+		panic(err)
+	}
 	aiService := ai.NewAIService("", "")
 	renderer := render.NewMarkdownRenderService(dbService)
-	parseService := parse.NewParseService(fileService, requestService, dbService, aiService, renderer, log)
+	parseService := parse.NewParseService(fileService, requestService, dbService, aiService, renderer, logger)
 
 	// Iterate group IDs
 	for _, groupID := range groupIDs {
-		log.Info(fmt.Sprintf("Crawling group %d", groupID))
+		logger.Info(fmt.Sprintf("Crawling group %d", groupID))
 		// Get latest topic time from database
 		latestTopicTimeInDB, err := dbService.GetLatestTopicTime(groupID)
 		if err != nil {
@@ -75,7 +78,7 @@ func main() {
 		if latestTopicTimeInDB.IsZero() {
 			latestTopicTimeInDB, _ = time.Parse("2006-01-02 15:04:05", "2010-01-01 00:00:00")
 		}
-		log.Info(fmt.Sprintf("Latest topic time in database: %s", latestTopicTimeInDB.Format("2006-01-02 15:04:05")))
+		logger.Info(fmt.Sprintf("Latest topic time in database: %s", latestTopicTimeInDB.Format("2006-01-02 15:04:05")))
 
 		var (
 			finished  bool = false
@@ -89,7 +92,7 @@ func main() {
 				url = fmt.Sprintf(apiFetchURL, url, createTimeStr)
 			}
 			firstTime = false
-			log.Info(fmt.Sprintf("Crawling url: %s", url))
+			logger.Info(fmt.Sprintf("Crawling url: %s", url))
 			respByte, err := requestService.WithLimiter(url)
 			if err != nil {
 				panic(err)
@@ -106,7 +109,7 @@ func main() {
 				if err := json.Unmarshal(rawTopic, &result.Topic); err != nil {
 					panic(err)
 				}
-				log.Info(fmt.Sprintf("Crawling topic %d", result.Topic.TopicID))
+				logger.Info(fmt.Sprintf("Crawling topic %d", result.Topic.TopicID))
 
 				createTime, err = zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
 				if err != nil {

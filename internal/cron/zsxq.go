@@ -17,6 +17,7 @@ import (
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/render"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/request"
 	zsxqTime "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/time"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -33,6 +34,14 @@ const (
 )
 
 func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
+	// Init services
+	logger := log.NewLogger()
+	var err error
+	defer func() {
+		if err != nil {
+			logger.Error("CrawlZsxq() failed", zap.Error(err))
+		}
+	}()
 	// Get cookies from redis, if not exist, log an cookies error.
 	cookies, err := redisService.Get("zsxq_cookies")
 	if err != nil {
@@ -50,14 +59,15 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 		panic(err)
 	}
 
-	// Init services
 	requestService := request.NewRequestService(cookies, redisService)
-	fileService := file.NewFileServiceMinio(config.C.MinioConfig)
+	fileService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
+	if err != nil {
+		return
+	}
 	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
 	renderer := render.NewMarkdownRenderService(dbService)
-	logService := log.NewLogger()
 
-	parseService := parse.NewParseService(fileService, requestService, dbService, aiService, renderer, logService)
+	parseService := parse.NewParseService(fileService, requestService, dbService, aiService, renderer, logger)
 
 	// Iterate group IDs
 	for _, groupID := range groupIDs {
@@ -127,7 +137,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 		}
 		fetchCount := defaultFetchCount
 		for topics[len(topics)-1].Time.After(latestTopicTimeInDB) && len(topics) == fetchCount {
-			fetchCount += 10 // 每次循环增加10
+			fetchCount += 10
 			topics, err = dbService.GetLatestNTopics(groupID, fetchCount)
 			if err != nil {
 				// TODO: Handle error

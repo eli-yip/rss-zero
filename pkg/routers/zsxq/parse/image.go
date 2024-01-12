@@ -37,7 +37,7 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 		if err != nil {
 			return err
 		}
-		if err = s.File.SaveStream(objectKey, resp.Body); err != nil {
+		if err = s.File.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
 			return err
 		}
 
@@ -51,7 +51,7 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 			TopicID:         topicID,
 			Time:            createTime,
 			ObjectKey:       objectKey,
-			StorageProvider: []string{s.File.GetAssetsDomain()},
+			StorageProvider: []string{s.File.AssetsDomain()},
 			Type:            "image",
 		}); err != nil {
 			return err
