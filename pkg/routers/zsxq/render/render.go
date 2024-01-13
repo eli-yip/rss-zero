@@ -107,13 +107,14 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 
 	filePart := ""
 	if talk.Files != nil {
+		m.log.Info("this talk has files", zap.Int("n", len(talk.Files)))
 		filePart = "这篇文章的附件如下："
 		for i, file := range talk.Files {
 			object, err := m.db.GetObjectInfo(file.FileID)
 			if err != nil || object.StorageProvider == nil {
 				return err
 			}
-			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
+			uri := fmt.Sprintf("%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d个文件：[%s](%s)", i+1, file.Name, uri)
 			filePart = trimRightSpace(md.Join(filePart, text))
 		}
@@ -121,13 +122,14 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 
 	imagePart := ""
 	if talk.Images != nil {
+		m.log.Info("this talk has images", zap.Int("n", len(talk.Images)))
 		imagePart = "这篇文章的图片如下："
 		for i, image := range talk.Images {
 			object, err := m.db.GetObjectInfo(image.ImageID)
 			if err != nil || object.StorageProvider == nil {
 				return err
 			}
-			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
+			uri := fmt.Sprintf("%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
 			imagePart = trimRightSpace(md.Join(imagePart, text))
 		}
@@ -135,6 +137,7 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 
 	articlePart := ""
 	if talk.Article != nil {
+		m.log.Info("this talk has article", zap.String("article_id", talk.Article.AticalID))
 		articleText, err := m.db.GetArticleText(talk.Article.AticalID)
 		if err != nil {
 			return err
@@ -171,7 +174,7 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 			if err != nil || object.StorageProvider == nil {
 				return err
 			}
-			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
+			uri := fmt.Sprintf("%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
 			questionImagePart = trimRightSpace(md.Join(questionImagePart, text))
 		}
@@ -187,7 +190,7 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 		if err != nil || object.StorageProvider == nil {
 			return err
 		}
-		uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
+		uri := fmt.Sprintf("%s/%s", object.StorageProvider[0], object.ObjectKey)
 		answerVoicePart = trimRightSpace(md.Join(answerVoicePart,
 			fmt.Sprintf("这个[回答](%s)的语音转文字结果：", uri),
 			object.Transcript))
@@ -210,7 +213,7 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 			if err != nil || object.StorageProvider == nil {
 				return err
 			}
-			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
+			uri := fmt.Sprintf("%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
 			answerImagePart = trimRightSpace(md.Join(answerImagePart, text))
 		}

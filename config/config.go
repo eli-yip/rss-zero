@@ -38,7 +38,7 @@ func InitConfig() {
 		SecretAccessKey: getEnv("MINIO_SECRET_ACCESS_KEY"),
 		UseSSL:          true,
 		BucketName:      getEnv("MINIO_BUCKET_NAME"),
-		AssetsDomain:    getEnv("MINIO_ASSETS_DOMAIN"),
+		AssetsPrefix:    getEnv("MINIO_ASSETS_PREFIX"),
 	}
 
 	C.OpenAIApiKey = getEnv("OPENAI_API_KEY")

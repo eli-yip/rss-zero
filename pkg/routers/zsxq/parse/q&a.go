@@ -2,7 +2,6 @@ package parse
 
 import (
 	"fmt"
-	"strconv"
 
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
@@ -14,7 +13,7 @@ func (s *ParseService) parseQA(topic *models.Topic) (authorID int, authorName st
 	question := topic.Question
 	answer := topic.Answer
 	if question == nil || answer == nil {
-		s.log.Info("No question or answer in this topic", zap.Int("topic_id", topic.TopicID))
+		s.log.Info("no question or answer in this topic", zap.Int("topic_id", topic.TopicID))
 		return 0, "", nil
 	}
 
@@ -24,17 +23,17 @@ func (s *ParseService) parseQA(topic *models.Topic) (authorID int, authorName st
 	}
 
 	if err = s.parseImages(question.Images, topic.TopicID, topic.CreateTime); err != nil {
-		s.log.Error("Failed to parse images", zap.Error(err))
+		s.log.Error("failed to parse images", zap.Error(err))
 		return 0, "", err
 	}
 
 	if err = s.parseImages(answer.Images, topic.TopicID, topic.CreateTime); err != nil {
-		s.log.Error("Failed to parse images", zap.Error(err))
+		s.log.Error("failed to parse images", zap.Error(err))
 		return 0, "", err
 	}
 
 	if err = s.parseVoice(answer.Voice, topic.TopicID, topic.CreateTime); err != nil {
-		s.log.Error("Failed to parse voice", zap.Error(err))
+		s.log.Error("failed to parse voice", zap.Error(err))
 		return 0, "", err
 	}
 
@@ -54,10 +53,12 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 	if err = s.File.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
 		return err
 	}
+	s.log.Info("voice saved", zap.String("object_key", objectKey))
 
 	// Get voice stream from file service,
 	// then send it to ai service to get transcript
-	voiceStream, err := s.File.Get(strconv.Itoa(voice.VoiceID))
+	s.log.Info("get voice stream", zap.String("object_key", objectKey))
+	voiceStream, err := s.File.Get(objectKey)
 	if err != nil {
 		return err
 	}
@@ -67,6 +68,7 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 	if err != nil {
 		return err
 	}
+
 	polishedTranscript, err := s.AI.Polish(transcript)
 	if err != nil {
 		return err

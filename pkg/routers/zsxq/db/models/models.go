@@ -49,6 +49,7 @@ type Group struct {
 	Name       string    `gorm:"column:name;type:text"`
 	UpdateAt   time.Time `gorm:"column:update_at"`
 	ErrorTimes int       `gorm:"column:error_times;type:int"`
+	Finished   bool      `gorm:"column:finished;type:bool"`
 }
 
 func (g *Group) TableName() string { return "zsxq_group" }

@@ -13,7 +13,7 @@ import (
 )
 
 type FileServiceMinio struct {
-	minioClient  *minio.Client
+	MinioClient  *minio.Client
 	bucketName   string
 	assetsDomain string
 	logger       *zap.Logger
@@ -25,7 +25,7 @@ type MinioConfig struct {
 	SecretAccessKey string
 	UseSSL          bool
 	BucketName      string
-	AssetsDomain    string
+	AssetsPrefix    string
 }
 
 func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (*FileServiceMinio, error) {
@@ -39,9 +39,9 @@ func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (*FileServ
 	}
 
 	return &FileServiceMinio{
-		minioClient:  minioClient,
+		MinioClient:  minioClient,
 		bucketName:   minioConfig.BucketName,
-		assetsDomain: minioConfig.AssetsDomain,
+		assetsDomain: minioConfig.AssetsPrefix,
 		logger:       logger,
 	}, nil
 }
@@ -59,7 +59,7 @@ func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, si
 	}
 
 	var info minio.UploadInfo
-	info, err = s.minioClient.PutObject(context.Background(),
+	info, err = s.MinioClient.PutObject(context.Background(),
 		s.bucketName,
 		objectKey,
 		stream,
@@ -80,8 +80,12 @@ func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, si
 }
 
 func (s *FileServiceMinio) Get(objectKey string) (stream io.ReadCloser, err error) {
-	o, err := s.minioClient.GetObject(context.Background(), s.bucketName, objectKey, minio.GetObjectOptions{})
-	return o, err
+	ctx := context.Background()
+	o, err := s.MinioClient.GetObject(ctx, s.bucketName, objectKey, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
 }
 
 func (s *FileServiceMinio) AssetsDomain() (url string) { return s.assetsDomain }

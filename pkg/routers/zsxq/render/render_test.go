@@ -25,7 +25,7 @@ func (m *mockDBService) GetObjectInfo(id int) (*dbModels.Object, error) {
 	return &dbModels.Object{
 		ID:              1234567,
 		ObjectKey:       "12456-8888.jpg",
-		StorageProvider: []string{"oss.momoai.me"},
+		StorageProvider: []string{"https://oss.momoai.me"},
 		Transcript:      "test-transcript",
 	}, nil
 }
@@ -50,6 +50,18 @@ func (m *mockDBService) GetLatestNTopics(groupID, n int) ([]dbModels.Topic, erro
 			Type:    "talk",
 		},
 	}, nil
+}
+
+func (m *mockDBService) GetEarliestTopicTime(groupID int) (time.Time, error) {
+	return time.Time{}, nil
+}
+
+func (m *mockDBService) GetCrawlStatus(groupID int) (bool, error) {
+	return false, nil
+}
+
+func (m *mockDBService) SaveCrawlStatus(groupID int, finished bool) error {
+	return nil
 }
 
 func (m *mockDBService) GetGroupName(id int) (string, error) {
@@ -320,7 +332,6 @@ test-text
 			t.Logf("testing %d failed", i)
 			t.Errorf("RenderMarkdown() got = %v, want %v", text, c.result)
 		}
-		// fmt.Printf("%s", text)
 	}
 }
 

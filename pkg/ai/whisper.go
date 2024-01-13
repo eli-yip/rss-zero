@@ -11,8 +11,9 @@ func (a *AIService) Text(stream io.Reader) (text string, err error) {
 	ctx := context.Background()
 
 	req := openai.AudioRequest{
-		Model:  openai.Whisper1,
-		Reader: stream,
+		Model:    openai.Whisper1,
+		FilePath: "voice.wav",
+		Reader:   stream,
 	}
 
 	resp, err := a.client.CreateTranscription(ctx, req)

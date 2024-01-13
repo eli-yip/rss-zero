@@ -5,11 +5,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Go: Test Package",
+      "name": "Go: Test File",
       "type": "go",
       "request": "launch",
-      "mode": "test",
-      "program": "${fileDirname}",
+      "mode": "debug",
+      "program": "${file}",
       "envFile": "${workspaceFolder}/.env",
     },
   ]
