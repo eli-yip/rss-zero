@@ -8,9 +8,12 @@ import (
 	"strings"
 
 	gomd "github.com/JohannesKaufmann/html-to-markdown"
+	"github.com/Kunde21/markdownfmt/v3/markdown"
 	"github.com/eli-yip/zsxq-parser/internal/md"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
 	"go.uber.org/zap"
 )
 
@@ -27,7 +30,8 @@ type MarkdownRenderer interface {
 
 type MarkdownRenderService struct {
 	db          db.DataBaseIface
-	converter   *gomd.Converter
+	converter   *gomd.Converter // Used to convert html to markdown
+	mdFormatter goldmark.Markdown
 	formatFuncs []func(string) (string, error)
 	log         *zap.Logger
 }
@@ -42,9 +46,22 @@ func NewMarkdownRenderService(dbService db.DataBaseIface, logger *zap.Logger) *M
 	}
 	logger.Info("add n rules to markdown converter", zap.Int("n", len(rules)))
 
+	mr := markdown.NewRenderer()
+	gm := goldmark.New(
+		goldmark.WithRenderer(mr),
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.NewCJK(
+				extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksCSS3Draft),
+				extension.WithEscapedSpace(),
+			),
+		),
+	)
+
 	s := &MarkdownRenderService{
-		db:        dbService,
-		converter: converter,
+		db:          dbService,
+		converter:   converter,
+		mdFormatter: gm,
 		formatFuncs: []func(string) (string, error){
 			replaceBookMarkUp,
 			replaceAnswerQuoto,
@@ -88,7 +105,11 @@ func (m *MarkdownRenderService) Article(text string) (string, error) {
 		return "", err
 	}
 
-	return text, nil
+	bytes, err := m.FormatMarkdown([]byte(text))
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
 }
 
 func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, writer io.Writer,

@@ -23,7 +23,7 @@ func NewRSSRenderService() *RSSRenderService {
 		goldmark.WithExtensions(
 			extension.GFM,
 			extension.NewCJK(
-				extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksSimple),
+				extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksCSS3Draft),
 				extension.WithEscapedSpace(),
 			)),
 	)}
