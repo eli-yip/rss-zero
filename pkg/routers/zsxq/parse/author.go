@@ -3,6 +3,7 @@ package parse
 import (
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
+	"go.uber.org/zap"
 )
 
 func (s *ParseService) parseAuthor(u *models.User) (id int, name string, err error) {
@@ -13,7 +14,7 @@ func (s *ParseService) parseAuthor(u *models.User) (id int, name string, err err
 			Alias: u.Alias,
 		})
 		if err != nil {
-			// TODO: log error
+			s.log.Error("save author info failed", zap.Error(err))
 			return
 		}
 	}(u)

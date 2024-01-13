@@ -60,7 +60,10 @@ func main() {
 	}
 	logger.Info("database connected")
 
-	redisService := redis.NewRedisService(config.C.RedisAddr, "", config.C.RedisDB)
+	redisService, err := redis.NewRedisService(config.C.RedisAddr, "", config.C.RedisDB)
+	if err != nil {
+		logger.Fatal("failed to connect to redis", zap.Error(err))
+	}
 	logger.Info("redis connected")
 
 	cookies, err := redisService.Get("zsxq_cookies")
@@ -187,7 +190,7 @@ func main() {
 		if err != nil {
 			logger.Fatal("failed to get crawl status", zap.Error(err))
 		}
-		// HACK: Use ealiestTopicTimeInDB as createTime to start backtracking
+		// NOTE: Use ealiestTopicTimeInDB as createTime to start backtracking
 		createTime = earliestTopicTimeInDB
 		for !finished {
 			url := fmt.Sprintf(apiBaseURL, groupID)

@@ -15,7 +15,7 @@ type RedisService struct {
 	ctx    context.Context
 }
 
-func NewRedisService(addr, password string, db int) (service *RedisService) {
+func NewRedisService(addr, password string, db int) (service *RedisService, err error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: password,
@@ -27,11 +27,11 @@ func NewRedisService(addr, password string, db int) (service *RedisService) {
 		ctx:    context.Background(),
 	}
 
-	_, err := service.client.Ping(service.ctx).Result()
+	_, err = service.client.Ping(service.ctx).Result()
 	if err != nil {
-		panic(err) // TODO: Handle error with zap.
+		return nil, err
 	}
-	return service
+	return service, nil
 }
 
 func (s *RedisService) Set(key string, value interface{}, duration time.Duration) (err error) {

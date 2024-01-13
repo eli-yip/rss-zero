@@ -117,7 +117,6 @@ func (r *RequestService) WithLimiterRawData(targetURL string) (respByte []byte, 
 }
 
 func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err error) {
-	// TODO: Rewrite this function to check status code in resp
 	for i := 0; i < r.maxRetry; i++ {
 		<-r.limiter
 		var resp *http.Response
@@ -170,7 +169,6 @@ func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err err
 }
 
 func (r *RequestService) WithLimiterStream(targetURL string) (resp *http.Response, err error) {
-	// TODO: Rewrite this function to stay same logic with WithLimiter
 	for i := 0; i < r.maxRetry; i++ {
 		req, err := http.NewRequest("GET", targetURL, nil)
 		if err != nil {
