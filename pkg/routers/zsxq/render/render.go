@@ -7,11 +7,11 @@ import (
 	"io"
 	"strings"
 
-	md "github.com/JohannesKaufmann/html-to-markdown"
-	"github.com/PuerkitoBio/goquery"
-	imd "github.com/eli-yip/zsxq-parser/internal/md"
+	gomd "github.com/JohannesKaufmann/html-to-markdown"
+	"github.com/eli-yip/zsxq-parser/internal/md"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
+	"go.uber.org/zap"
 )
 
 type Renderer interface {
@@ -26,21 +26,36 @@ type MarkdownRenderer interface {
 }
 
 type MarkdownRenderService struct {
-	DBService db.DataBaseIface
-
+	db          db.DataBaseIface
+	converter   *gomd.Converter
 	formatFuncs []func(string) (string, error)
+	log         *zap.Logger
 }
 
-func NewMarkdownRenderService(dbService db.DataBaseIface) *MarkdownRenderService {
-	return &MarkdownRenderService{
-		DBService: dbService,
+func NewMarkdownRenderService(dbService db.DataBaseIface, logger *zap.Logger) *MarkdownRenderService {
+	logger.Info("creating markdown render service")
+	converter := gomd.NewConverter("", true, nil)
+	rules := getArticleRules()
+	for _, rule := range rules {
+		converter.AddRules(rule.rule)
+		logger.Info("add article render rule", zap.String("name", rule.name))
+	}
+	logger.Info("add n rules to markdown converter", zap.Int("n", len(rules)))
+
+	s := &MarkdownRenderService{
+		db:        dbService,
+		converter: converter,
 		formatFuncs: []func(string) (string, error){
 			replaceBookMarkUp,
 			replaceAnswerQuoto,
 			replaceHashTags,
 			removeSpaces,
 		},
+		log: logger,
 	}
+	logger.Info("created markdown render service")
+
+	return s
 }
 
 func (m *MarkdownRenderService) RenderFullMarkdown(*Topic) (string, error) {
@@ -48,6 +63,7 @@ func (m *MarkdownRenderService) RenderFullMarkdown(*Topic) (string, error) {
 }
 
 func (m *MarkdownRenderService) ToText(t *Topic) (text string, err error) {
+	m.log.Info("render topic to text", zap.Int("topic_id", t.ID), zap.String("type", t.Type))
 	var buffer bytes.Buffer
 
 	switch t.Type {
@@ -62,14 +78,12 @@ func (m *MarkdownRenderService) ToText(t *Topic) (text string, err error) {
 	default:
 	}
 
+	m.log.Info("render topic to text successfully", zap.Int("topic_id", t.ID), zap.String("type", t.Type))
 	return buffer.String(), nil
 }
 
 func (m *MarkdownRenderService) Article(text string) (string, error) {
-	converter := md.NewConverter("", true, nil)
-	converter.AddRules(m.getMdRules()...)
-
-	text, err := converter.ConvertString(text)
+	text, err := m.converter.ConvertString(text)
 	if err != nil {
 		return "", err
 	}
@@ -77,85 +91,8 @@ func (m *MarkdownRenderService) Article(text string) (string, error) {
 	return text, nil
 }
 
-func (m *MarkdownRenderService) getMdRules() []md.Rule {
-	head := md.Rule{
-		Filter: []string{"head"},
-		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
-			return md.String("")
-		},
-	}
-
-	h1 := md.Rule{
-		Filter: []string{"h1"},
-		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
-			if !selec.HasClass("title") {
-				return nil
-			}
-			return md.String("")
-		},
-	}
-
-	groupInfo := md.Rule{
-		Filter: []string{"div"},
-		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
-			if !selec.HasClass("group-info") {
-				return nil
-			}
-			return md.String("")
-		},
-	}
-
-	authorInfo := md.Rule{
-		Filter: []string{"div"},
-		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
-			if !selec.HasClass("author-info") {
-				return nil
-			}
-			return md.String("")
-		},
-	}
-
-	footer := md.Rule{
-		Filter: []string{"footer"},
-		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
-			return md.String("")
-		},
-	}
-
-	qrcodeContainer := md.Rule{
-		Filter: []string{"div"},
-		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
-			if !selec.HasClass("qrcode-container") {
-				return nil
-			}
-			return md.String("")
-		},
-	}
-
-	qrcodeURL := md.Rule{
-		Filter: []string{"div"},
-		Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
-			if !selec.Is("div#qrcode-url") {
-				return nil
-			}
-			return md.String("")
-		},
-	}
-
-	return []md.Rule{
-		head,
-		h1,
-		groupInfo,
-		authorInfo,
-		footer,
-		qrcodeContainer,
-		qrcodeURL,
-	}
-}
-
 func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, writer io.Writer,
 ) (err error) {
-	// TODO: title
 	if talk.Text == nil {
 		return errors.New("no text in talk")
 	}
@@ -172,13 +109,13 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 	if talk.Files != nil {
 		filePart = "这篇文章的附件如下："
 		for i, file := range talk.Files {
-			object, err := m.DBService.GetObjectInfo(file.FileID)
+			object, err := m.db.GetObjectInfo(file.FileID)
 			if err != nil || object.StorageProvider == nil {
 				return err
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d个文件：[%s](%s)", i+1, file.Name, uri)
-			filePart = trimRightSpace(imd.Join(filePart, text))
+			filePart = trimRightSpace(md.Join(filePart, text))
 		}
 	}
 
@@ -186,23 +123,23 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 	if talk.Images != nil {
 		imagePart = "这篇文章的图片如下："
 		for i, image := range talk.Images {
-			object, err := m.DBService.GetObjectInfo(image.ImageID)
+			object, err := m.db.GetObjectInfo(image.ImageID)
 			if err != nil || object.StorageProvider == nil {
 				return err
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
-			imagePart = trimRightSpace(imd.Join(imagePart, text))
+			imagePart = trimRightSpace(md.Join(imagePart, text))
 		}
 	}
 
 	articlePart := ""
 	if talk.Article != nil {
-		articleText, err := m.DBService.GetArticleText(talk.Article.AticalID)
+		articleText, err := m.db.GetArticleText(talk.Article.AticalID)
 		if err != nil {
 			return err
 		}
-		articlePart = trimRightSpace(imd.Join(
+		articlePart = trimRightSpace(md.Join(
 			articlePart,
 			fmt.Sprintf("这篇文章中包含有外部文章：[%s](%s)",
 				talk.Article.Title,
@@ -212,7 +149,7 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 		))
 	}
 
-	text := imd.Join(authorPart, textPart, filePart, imagePart, articlePart)
+	text := md.Join(authorPart, textPart, filePart, imagePart, articlePart)
 	if _, err = writer.Write([]byte(text)); err != nil {
 		return err
 	}
@@ -230,28 +167,28 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 	if q.Images != nil {
 		questionImagePart = "这个提问的图片如下："
 		for i, image := range q.Images {
-			object, err := m.DBService.GetObjectInfo(image.ImageID)
+			object, err := m.db.GetObjectInfo(image.ImageID)
 			if err != nil || object.StorageProvider == nil {
 				return err
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
-			questionImagePart = trimRightSpace(imd.Join(questionImagePart, text))
+			questionImagePart = trimRightSpace(md.Join(questionImagePart, text))
 		}
 	}
 
-	questionPart = imd.Quote(imd.Join(questionPart, questionImagePart))
+	questionPart = md.Quote(md.Join(questionPart, questionImagePart))
 
-	answerPart := fmt.Sprintf("%s回答如下：", imd.Bold(author))
+	answerPart := fmt.Sprintf("%s回答如下：", md.Bold(author))
 
 	answerVoicePart := ""
 	if a.Voice != nil {
-		object, err := m.DBService.GetObjectInfo(a.Voice.VoiceID)
+		object, err := m.db.GetObjectInfo(a.Voice.VoiceID)
 		if err != nil || object.StorageProvider == nil {
 			return err
 		}
 		uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
-		answerVoicePart = trimRightSpace(imd.Join(answerVoicePart,
+		answerVoicePart = trimRightSpace(md.Join(answerVoicePart,
 			fmt.Sprintf("这个[回答](%s)的语音转文字结果：", uri),
 			object.Transcript))
 	}
@@ -269,18 +206,18 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 	if a.Images != nil {
 		answerImagePart = "这个回答的图片如下："
 		for i, image := range a.Images {
-			object, err := m.DBService.GetObjectInfo(image.ImageID)
+			object, err := m.db.GetObjectInfo(image.ImageID)
 			if err != nil || object.StorageProvider == nil {
 				return err
 			}
 			uri := fmt.Sprintf("https://%s/%s", object.StorageProvider[0], object.ObjectKey)
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
-			answerImagePart = trimRightSpace(imd.Join(answerImagePart, text))
+			answerImagePart = trimRightSpace(md.Join(answerImagePart, text))
 		}
 	}
-	answerPart = trimRightSpace(imd.Join(answerPart, answerVoicePart, answerText, answerImagePart))
+	answerPart = trimRightSpace(md.Join(answerPart, answerVoicePart, answerText, answerImagePart))
 
-	text := imd.Join(questionPart, answerPart)
+	text := md.Join(questionPart, answerPart)
 	if _, err = writer.Write([]byte(text)); err != nil {
 		return err
 	}

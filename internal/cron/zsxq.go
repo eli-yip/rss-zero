@@ -65,7 +65,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 		return
 	}
 	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
-	renderer := render.NewMarkdownRenderService(dbService)
+	renderer := render.NewMarkdownRenderService(dbService, logger)
 
 	parseService := parse.NewParseService(fileService, requestService, dbService, aiService, renderer, logger)
 

@@ -7,12 +7,12 @@ import (
 )
 
 type Topic struct {
+	ID         int // Used to id trace
 	Type       string
 	Talk       *models.Talk
 	Question   *models.Question
 	Answer     *models.Answer
 	AuthorName string
-	Title      *string
 }
 
 type RSSTopic struct {

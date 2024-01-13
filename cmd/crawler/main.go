@@ -64,7 +64,7 @@ func main() {
 		panic(err)
 	}
 	aiService := ai.NewAIService("", "")
-	renderer := render.NewMarkdownRenderService(dbService)
+	renderer := render.NewMarkdownRenderService(dbService, logger)
 	parseService := parse.NewParseService(fileService, requestService, dbService, aiService, renderer, logger)
 
 	// Iterate group IDs

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/eli-yip/zsxq-parser/pkg/log"
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
@@ -306,7 +307,8 @@ test-text
 	}
 
 	mockDBService := NewMockDBService()
-	MarkdownRenderService := NewMarkdownRenderService(mockDBService)
+	logger := log.NewLogger()
+	MarkdownRenderService := NewMarkdownRenderService(mockDBService, logger)
 	for i, c := range cases {
 		var text string
 		var err error
@@ -386,7 +388,8 @@ test-text
 	}
 
 	mockDBService := NewMockDBService()
-	MarkdownRenderService := NewMarkdownRenderService(mockDBService)
+	logger := log.NewLogger()
+	MarkdownRenderService := NewMarkdownRenderService(mockDBService, logger)
 	for _, c := range cases {
 		var buffer bytes.Buffer
 		if err := MarkdownRenderService.renderTalk(&c.talk, c.author, &buffer); err != nil {
