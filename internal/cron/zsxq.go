@@ -59,7 +59,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 		panic(err)
 	}
 
-	requestService := request.NewRequestService(cookies, redisService)
+	requestService := request.NewRequestService(cookies, redisService, logger)
 	fileService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
 	if err != nil {
 		return

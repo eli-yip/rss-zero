@@ -61,6 +61,10 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	case "talk":
 		s.log.Info("this topic is a talk")
 		if result.AuthorID, result.AuthorName, err = s.parseTalk(&result.Topic); err != nil {
+			if err == ErrNoText {
+				s.log.Info("this topic is a talk without text")
+				return nil
+			}
 			s.log.Info("Failed to parse talk", zap.Error(err))
 			return err
 		}

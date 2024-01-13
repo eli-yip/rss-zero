@@ -78,7 +78,7 @@ func main() {
 	dbService := zsxqDB.NewZsxqDBService(db)
 	logger.Info("database service initialized")
 
-	requestService := request.NewRequestService(cookies, redisService)
+	requestService := request.NewRequestService(cookies, redisService, logger)
 	logger.Info("request service initialized")
 
 	fileService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
