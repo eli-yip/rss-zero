@@ -38,6 +38,10 @@ func (m *mockDBService) GetLatestTopicTime(groupID int) (time.Time, error) {
 	return time.Time{}, nil
 }
 
+func (m *mockDBService) FetchNTopicsBeforeTime(groupID, n int, t time.Time) ([]dbModels.Topic, error) {
+	return nil, nil
+}
+
 func (m *mockDBService) UpdateCrawlTime(groupID int, t time.Time) error {
 	return nil
 }

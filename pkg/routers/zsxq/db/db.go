@@ -16,6 +16,8 @@ type DataBaseIface interface {
 	GetEarliestTopicTime(tid int) (t time.Time, err error)
 	// Get latest n topics from zsxq_topic table
 	GetLatestNTopics(gid int, n int) (ts []models.Topic, err error)
+	// Fetch n topics before time from zsxq_topic table
+	FetchNTopicsBeforeTime(gid int, n int, t time.Time) (ts []models.Topic, err error)
 
 	// Save article to zsxq_article table
 	SaveArticle(a *models.Article) error
@@ -76,6 +78,11 @@ func (s *ZsxqDBService) GetEarliestTopicTime(gid int) (time.Time, error) {
 
 func (s *ZsxqDBService) GetLatestNTopics(gid, n int) (ts []models.Topic, err error) {
 	err = s.db.Where("group_id = ?", gid).Order("time desc").Limit(n).Find(&ts).Error
+	return ts, err
+}
+
+func (s *ZsxqDBService) FetchNTopicsBeforeTime(gid, n int, t time.Time) (ts []models.Topic, err error) {
+	err = s.db.Where("group_id = ? and time < ?", gid, t).Order("time desc").Limit(n).Find(&ts).Error
 	return ts, err
 }
 
