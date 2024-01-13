@@ -2,55 +2,68 @@ package render
 
 import (
 	"bufio"
-	"bytes"
 	"net/url"
 	"regexp"
 	"strings"
 )
 
-const BookMarkUpPattern = `<e type="web" href="https?://[^"]*" title="([^"]+)" style="book" />`
+// replaceBookMarkup replace book info
+//
+// more info: format_funcs_test.go
+func replaceBookMarkUp(input string) (string, error) {
+	const bookMarkUpPattern = `<e type="web" href="(https?://|https?%3A%2F%2F)[^"]*" title="([^"]+)" style="book" />`
+	re := regexp.MustCompile(bookMarkUpPattern)
 
-func replaceBookMarkUp(input string) (output string, err error) {
-	re := regexp.MustCompile(BookMarkUpPattern)
-	return re.ReplaceAllString(input, "$1"), nil
+	replaceFunc := func(s string) string {
+		matches := re.FindStringSubmatch(s)
+		if len(matches) < 3 {
+			return s
+		}
+
+		decodedTitle, err := url.QueryUnescape(matches[2])
+		if err != nil {
+			return s
+		}
+		return decodedTitle
+	}
+
+	return re.ReplaceAllStringFunc(input, replaceFunc), nil
 }
 
-const AnswerQuotoPattern = `<e type="web" href="([^"]+)" title="([^"]+)"( cache="")? />`
-
+// replaceAnswerQuoto replace answer quoto
+//
+// more info: format_funcs_test.go
 func replaceAnswerQuoto(input string) (output string, err error) {
+	const AnswerQuotoPattern = `<e type="web" href="([^"]+)" title="([^"]+)"( cache="")? />`
 	re := regexp.MustCompile(AnswerQuotoPattern)
+
 	return re.ReplaceAllString(input, "[$2]($1)"), nil
 }
 
-const HashTagPattern = `<e type="hashtag" hid="\d+" title="(.*?)" />`
-
-func replaceHashTags(input string) (output string, err error) {
+// replaceHashTags replace hash tags
+//
+// more info: format_funcs_test.go
+func replaceHashTags(input string) (string, error) {
+	const HashTagPattern = `<e type="hashtag" hid="\d+" title="(.*?)" />`
 	re := regexp.MustCompile(HashTagPattern)
-	buffer := bytes.NewBufferString("")
 
-	lastIndex := 0
-	var processError error
+	replaceFunc := func(s string) string {
+		matches := re.FindStringSubmatch(s)
+		if len(matches) < 2 {
+			return s
+		}
 
-	for _, match := range re.FindAllStringSubmatchIndex(input, -1) {
-		buffer.WriteString(input[lastIndex:match[0]])
-		lastIndex = match[1]
-
-		title, err := url.QueryUnescape(input[match[2]:match[3]])
+		title, err := url.QueryUnescape(matches[1])
 		if err != nil {
-			processError = err
-			buffer.WriteString(input[match[0]:match[1]])
-			continue
+			return s
 		}
 		if len(title) > 0 && title[len(title)-1] == '#' {
 			title = title[:len(title)-1]
 		}
-
-		buffer.WriteString(title)
+		return title
 	}
 
-	buffer.WriteString(input[lastIndex:])
-
-	return buffer.String(), processError
+	return re.ReplaceAllStringFunc(input, replaceFunc), nil
 }
 
 func removeSpaces(text string) (string, error) {
@@ -73,4 +86,43 @@ func removeSpaces(text string) (string, error) {
 	}
 
 	return w.String(), nil
+}
+
+func processMention(text string) (string, error) {
+	// <e type="mention" uid="585248841522544" title="%40Y.Z" />
+	const mentionPattern = `<e type="mention" uid="\d+" title="([^"]+)" />`
+	re := regexp.MustCompile(mentionPattern)
+
+	replaceFunc := func(s string) string {
+		matches := re.FindStringSubmatch(s)
+		if len(matches) < 2 {
+			return s
+		}
+
+		decodedName, err := url.QueryUnescape(matches[1])
+		if err != nil {
+			return s
+		}
+
+		return decodedName
+	}
+
+	return re.ReplaceAllStringFunc(text, replaceFunc), nil
+}
+
+const percentEncodePattern = `%[0-9a-fA-F]+`
+
+// replacePercentEncodedChars
+func replacePercentEncodedChars(input string) (string, error) {
+	re := regexp.MustCompile(percentEncodePattern)
+
+	replaceFunc := func(s string) string {
+		decodedChar, err := url.QueryUnescape(s)
+		if err != nil {
+			return s
+		}
+		return decodedChar
+	}
+
+	return re.ReplaceAllStringFunc(input, replaceFunc), nil
 }

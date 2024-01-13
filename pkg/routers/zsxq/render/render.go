@@ -67,6 +67,8 @@ func NewMarkdownRenderService(dbService db.DataBaseIface, logger *zap.Logger) *M
 			replaceAnswerQuoto,
 			replaceHashTags,
 			removeSpaces,
+			processMention,
+			replacePercentEncodedChars,
 		},
 		log: logger,
 	}
