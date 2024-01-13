@@ -8,6 +8,9 @@ import (
 
 func TestWithLimiterRawData(t *testing.T) {
 	cookies := os.Getenv("COOKIES")
+	if cookies == "" {
+		t.Fatal("env COOKIES is empty")
+	}
 	t.Log(cookies)
 	rs := NewRequestService(cookies, nil)
 	u := "https://articles.zsxq.com/id_wsktlsarlkes.html"

@@ -47,8 +47,8 @@ func NewRequestService(cookies string, redisService *redis.RedisService) *Reques
 
 	go func() {
 		for {
-			time.Sleep(time.Duration(7+rand.Intn(6)) * time.Second)
 			s.limiter <- struct{}{}
+			time.Sleep(time.Duration(7+rand.Intn(6)) * time.Second)
 		}
 	}()
 
