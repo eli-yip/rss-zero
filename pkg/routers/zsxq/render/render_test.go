@@ -11,11 +11,159 @@ import (
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
 
-func TestRenderMarkdown(t *testing.T) {
-	type testStruct struct {
-		topic  Topic
-		result string
+type testStruct struct {
+	name   string
+	topic  Topic
+	result string
+}
+
+func TestToFullText(t *testing.T) {
+	cases := []testStruct{
+		{
+			name: "basic test",
+			topic: Topic{
+				ID:        1234567,
+				Title:     nil,
+				Digested:  false,
+				Time:      time.Date(2020, 1, 1, 23, 0, 0, 0, time.UTC),
+				ShareLink: "https://www.google.com",
+				Text:      "test-text",
+			},
+			result: `# 1234567
+
+时间：2020年1月2日
+
+链接：[https://www.google.com](https://www.google.com)
+
+test-text
+`,
+		},
+		{
+			name: "basic test with digested",
+			topic: Topic{
+				ID:        1234567,
+				Title:     nil,
+				Digested:  true,
+				Time:      time.Date(2020, 1, 1, 23, 0, 0, 0, time.UTC),
+				ShareLink: "https://www.google.com",
+				Text:      "test-text",
+			},
+			result: `# [精华]1234567
+
+时间：2020年1月2日
+
+链接：[https://www.google.com](https://www.google.com)
+
+test-text
+`,
+		},
+		{
+			name: "basic test with digested and title",
+			topic: Topic{
+				ID:        1234567,
+				Title:     func(s string) *string { return &s }("test-title"),
+				Digested:  true,
+				Time:      time.Date(2020, 1, 1, 23, 0, 0, 0, time.UTC),
+				ShareLink: "https://www.google.com",
+				Text:      "test-text",
+			},
+			result: `# [精华]test-title
+
+时间：2020年1月2日
+
+链接：[https://www.google.com](https://www.google.com)
+
+test-text
+`,
+		},
+		{
+			name: "basic test with title",
+			topic: Topic{
+				ID:        1234567,
+				Title:     func(s string) *string { return &s }("test-title"),
+				Digested:  false,
+				Time:      time.Date(2020, 1, 1, 23, 0, 0, 0, time.UTC),
+				ShareLink: "https://www.google.com",
+				Text:      "test-text",
+			},
+			result: `# test-title
+
+时间：2020年1月2日
+
+链接：[https://www.google.com](https://www.google.com)
+
+test-text
+`,
+		},
+		{
+			name: "complex test with title",
+			topic: Topic{
+				ID:        1234567,
+				Title:     func(s string) *string { return &s }("test-title"),
+				Digested:  false,
+				Time:      time.Date(2020, 1, 1, 23, 0, 0, 0, time.UTC),
+				ShareLink: "https://www.google.com",
+				Text: `作者：test-user2
+
+test-text
+
+这篇文章的附件如下：
+
+第1个文件：[test-file](https://oss.momoai.me/12456-8888.jpg)
+
+第2个文件：[test-file2](https://oss.momoai.me/12456-8888.jpg)
+
+这篇文章的图片如下：
+
+第1张图片：![1234567](https://oss.momoai.me/12456-8888.jpg)
+
+第2张图片：![1234568](https://oss.momoai.me/12456-8888.jpg)
+`,
+			},
+			result: `# test-title
+
+时间：2020年1月2日
+
+链接：[https://www.google.com](https://www.google.com)
+
+作者：test-user2
+
+test-text
+
+这篇文章的附件如下：
+
+第1个文件：[test-file](https://oss.momoai.me/12456-8888.jpg)
+
+第2个文件：[test-file2](https://oss.momoai.me/12456-8888.jpg)
+
+这篇文章的图片如下：
+
+第1张图片：![1234567](https://oss.momoai.me/12456-8888.jpg)
+
+第2张图片：![1234568](https://oss.momoai.me/12456-8888.jpg)
+`,
+		},
 	}
+
+	mockDBService := NewMockDBService()
+	logger := log.NewLogger()
+	MarkdownRenderService := NewMarkdownRenderService(mockDBService, logger)
+
+	for i, c := range cases {
+		var text []byte
+		var err error
+		if text, err = MarkdownRenderService.ToFullText(&c.topic); err != nil {
+			t.Logf("testing %d failed", i)
+			t.Errorf("RenderMarkdown() error = %v", err)
+		}
+		if string(text) != c.result {
+			t.Logf("testing %d failed", i)
+			t.Errorf("RenderMarkdown() got =\n%q, want\n%q", string(text), c.result)
+		}
+	}
+}
+
+func TestToText(t *testing.T) {
 	cases := []testStruct{
 		{
 			topic: Topic{
@@ -28,7 +176,6 @@ func TestRenderMarkdown(t *testing.T) {
 			result: `作者：test-user
 
 test-text
-
 `,
 		},
 		{
@@ -74,7 +221,6 @@ test-text
 第1张图片：![1234567](https://oss.momoai.me/12456-8888.jpg)
 
 第2张图片：![1234568](https://oss.momoai.me/12456-8888.jpg)
-
 `,
 		},
 		{
@@ -120,7 +266,6 @@ test-text
 第1张图片：![1234567](https://oss.momoai.me/12456-8888.jpg)
 
 第2张图片：![1234568](https://oss.momoai.me/12456-8888.jpg)
-
 `,
 		},
 		{
@@ -156,11 +301,11 @@ test-text
 				},
 			},
 			result: `> this is a question
-> 
+>
 > 这个提问的图片如下：
-> 
+>
 > 第1张图片：![1234567](https://oss.momoai.me/12456-8888.jpg)
-> 
+>
 > 第2张图片：![1234568](https://oss.momoai.me/12456-8888.jpg)
 
 **test-user3**回答如下：
@@ -176,7 +321,6 @@ this is an answer
 第1张图片：![1234567](https://oss.momoai.me/12456-8888.jpg)
 
 第2张图片：![1234568](https://oss.momoai.me/12456-8888.jpg)
-
 `,
 		},
 		{
@@ -233,7 +377,6 @@ test-text
 文章内容如下：
 
 test-text
-
 `,
 		},
 	}
@@ -250,7 +393,7 @@ test-text
 		}
 		if string(text) != c.result {
 			t.Logf("testing %d failed", i)
-			t.Errorf("RenderMarkdown() got = %v, want %v", text, c.result)
+			t.Errorf("RenderMarkdown() got =\n%q, want\n%q", string(text), c.result)
 		}
 	}
 }
@@ -327,7 +470,7 @@ test-text
 			t.Errorf("renderTalk() error = %v", err)
 		}
 		if buffer.String() != c.result {
-			t.Errorf("renderTalk() got = %v, want %v", buffer.String(), c.result)
+			t.Errorf("renderTalk() got =\n%q, want\n%q", buffer.String(), c.result)
 		}
 		fmt.Printf("%s", buffer.String())
 	}

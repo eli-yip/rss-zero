@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	gomd "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/eli-yip/zsxq-parser/internal/md"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
+	zsxqTime "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/time"
 	"github.com/yuin/goldmark"
 	"go.uber.org/zap"
 )
@@ -53,9 +55,36 @@ func NewMarkdownRenderService(dbService db.DataBaseIface, logger *zap.Logger) *M
 	return s
 }
 
-func (m *MarkdownRenderService) ToFullText(t *Topic) (text []byte, err error) {
-	// TODO: implement this
-	return nil, nil
+func (m *MarkdownRenderService) ToFullText(t *Topic) ([]byte, error) {
+	titlePart := ""
+	if t.Title == nil {
+		titlePart = strconv.Itoa(t.ID)
+	} else {
+		titlePart = *t.Title
+	}
+	if t.Digested {
+		titlePart = fmt.Sprintf("[%s]%s", "精华", titlePart)
+	}
+	titlePart = md.H1(titlePart)
+
+	titlePart = trimRightSpace(titlePart)
+
+	timeStr, err := zsxqTime.FormatTimeForRead(t.Time)
+	if err != nil {
+		return nil, err
+	}
+	timePart := fmt.Sprintf("时间：%s", timeStr)
+
+	linkPart := trimRightSpace(fmt.Sprintf("链接：[%s](%s)", t.ShareLink, t.ShareLink))
+
+	text := md.Join(titlePart, timePart, linkPart, t.Text)
+
+	bytes, err := m.FormatMarkdown([]byte(text))
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
 }
 
 func (m *MarkdownRenderService) ToText(t *Topic) (text []byte, err error) {

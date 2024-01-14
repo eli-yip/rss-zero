@@ -6,12 +6,23 @@ import (
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
 
+// Topic is the struct used to render a topic
+//
+// Not every field is used in every render method.
+//
+// e.g.: Time, Digested, ShareLink, Title, Text is only used
+// in ToFullText method.
 type Topic struct {
-	ID         int // Used to id trace
+	ID         int // Used for id trace
+	Time       time.Time
 	Type       string
+	Digested   bool
 	Talk       *models.Talk
 	Question   *models.Question
 	Answer     *models.Answer
+	ShareLink  string
+	Title      *string
+	Text       string
 	AuthorName string
 }
 

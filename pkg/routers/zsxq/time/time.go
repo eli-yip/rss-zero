@@ -65,15 +65,10 @@ func DecodeStringToTime(decTimeStr string) (result time.Time, err error) {
 
 const ZsxqTimeLayoutForRead = "2006年1月2日"
 
-// FormatTimeForRead format Zhishixingqiu time string to "2006年1月2日".
-func FormatTimeForRead(timestr string) (string, error) {
-	date, err := time.Parse(zsxqTimeLayout, timestr)
-	if err != nil {
-		return "", err
-	}
-
-	// Convert to local timezone (if it's not already)
-	date = date.Local()
-
-	return date.Format(ZsxqTimeLayoutForRead), nil
+// FormatTimeForRead format time.Time to "2006年1月2日".
+func FormatTimeForRead(t time.Time) (string, error) {
+	location, _ := time.LoadLocation("Asia/Shanghai")
+	// set location to China
+	t = t.In(location)
+	return t.Format(ZsxqTimeLayoutForRead), nil
 }
