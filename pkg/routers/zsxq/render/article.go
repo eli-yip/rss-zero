@@ -1,6 +1,8 @@
 package render
 
 import (
+	"strings"
+
 	gomd "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/PuerkitoBio/goquery"
 )
@@ -11,6 +13,17 @@ type articleRule struct {
 }
 
 func getArticleRules() []articleRule {
+	cjk := articleRule{
+		name: "cjk",
+		rule: gomd.Rule{
+			Filter: []string{"strong"},
+			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
+				content = strings.TrimSpace(content)
+				return gomd.String("**" + content + "**")
+			},
+		},
+	}
+
 	head := articleRule{
 		name: "head",
 		rule: gomd.Rule{
@@ -97,6 +110,7 @@ func getArticleRules() []articleRule {
 	}
 
 	return []articleRule{
+		cjk,
 		head,
 		h1,
 		groupInfo,

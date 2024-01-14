@@ -16,11 +16,15 @@ type DataBaseIface interface {
 	GetEarliestTopicTime(tid int) (t time.Time, err error)
 	// Get latest n topics from zsxq_topic table
 	GetLatestNTopics(gid int, n int) (ts []models.Topic, err error)
+	// Get All ids from zsxq_topic table
+	GetAllTopicIDs(gid int) (ids []int, err error)
 	// Fetch n topics before time from zsxq_topic table
 	FetchNTopicsBeforeTime(gid int, n int, t time.Time) (ts []models.Topic, err error)
 
 	// Save article to zsxq_article table
 	SaveArticle(a *models.Article) error
+	// Get article
+	GetArticle(aid string) (a *models.Article, err error)
 	// Get article text by id from zsxq_article table
 	GetArticleText(aid string) (text string, err error)
 
@@ -86,6 +90,17 @@ func (s *ZsxqDBService) FetchNTopicsBeforeTime(gid, n int, t time.Time) (ts []mo
 	return ts, err
 }
 
+func (s *ZsxqDBService) GetAllTopicIDs(gid int) (ids []int, err error) {
+	var topics []models.Topic
+	if err := s.db.Where("group_id = ?", gid).Order("time desc").Find(&topics).Error; err != nil {
+		return nil, err
+	}
+	for _, topic := range topics {
+		ids = append(ids, topic.ID)
+	}
+	return ids, nil
+}
+
 func (s *ZsxqDBService) SaveArticle(a *models.Article) error {
 	return s.db.Save(a).Error
 }
@@ -112,6 +127,14 @@ func (s *ZsxqDBService) GetObjectInfo(oid int) (*models.Object, error) {
 
 func (s *ZsxqDBService) SaveAuthorInfo(a *models.Author) error {
 	return s.db.Save(a).Error
+}
+
+func (s *ZsxqDBService) GetArticle(aid string) (*models.Article, error) {
+	var article models.Article
+	if err := s.db.Where("id = ?", aid).First(&article).Error; err != nil {
+		return nil, err
+	}
+	return &article, nil
 }
 
 func (s *ZsxqDBService) GetAuthorName(aid int) (string, error) {

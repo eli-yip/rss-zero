@@ -38,7 +38,7 @@ type Talk struct {
 
 type Article struct {
 	Title      string `json:"title"`
-	AticalID   string `json:"article_id"`
+	ArticleID  string `json:"article_id"`
 	ArticleURL string `json:"article_url"`
 }
 

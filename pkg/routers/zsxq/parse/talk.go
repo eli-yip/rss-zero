@@ -59,7 +59,7 @@ func (s *ParseService) parseArticle(a *models.Article) (err error) {
 	}
 
 	if err = s.DB.SaveArticle(&dbModels.Article{
-		ID:    a.AticalID,
+		ID:    a.ArticleID,
 		URL:   a.ArticleURL,
 		Title: a.Title,
 		Text:  text,

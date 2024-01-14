@@ -24,7 +24,6 @@ func NewRSSRenderService() *RSSRenderService {
 			extension.GFM,
 			extension.NewCJK(
 				extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksCSS3Draft),
-				extension.WithEscapedSpace(),
 			)),
 	)}
 }

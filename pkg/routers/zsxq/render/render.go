@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	gomd "github.com/JohannesKaufmann/html-to-markdown"
+	gomdPlugin "github.com/JohannesKaufmann/html-to-markdown/plugin"
 	"github.com/Kunde21/markdownfmt/v3/markdown"
 	"github.com/eli-yip/zsxq-parser/internal/md"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
@@ -44,6 +45,7 @@ func NewMarkdownRenderService(dbService db.DataBaseIface, logger *zap.Logger) *M
 		converter.AddRules(rule.rule)
 		logger.Info("add article render rule", zap.String("name", rule.name))
 	}
+	converter.Use(gomdPlugin.GitHubFlavored())
 	logger.Info("add n rules to markdown converter", zap.Int("n", len(rules)))
 
 	mr := markdown.NewRenderer()
@@ -52,8 +54,7 @@ func NewMarkdownRenderService(dbService db.DataBaseIface, logger *zap.Logger) *M
 		goldmark.WithExtensions(
 			extension.GFM,
 			extension.NewCJK(
-				extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksCSS3Draft),
-				extension.WithEscapedSpace(),
+				extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksSimple),
 			),
 		),
 	)
@@ -97,8 +98,13 @@ func (m *MarkdownRenderService) ToText(t *Topic) (text string, err error) {
 	default:
 	}
 
+	bytes, err := m.FormatMarkdown(buffer.Bytes())
+	if err != nil {
+		return "", err
+	}
+
 	m.log.Info("render topic to text successfully", zap.Int("topic_id", t.ID), zap.String("type", t.Type))
-	return buffer.String(), nil
+	return string(bytes), nil
 }
 
 func (m *MarkdownRenderService) Article(text string) (string, error) {
@@ -111,6 +117,7 @@ func (m *MarkdownRenderService) Article(text string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return string(bytes), nil
 }
 
@@ -120,13 +127,7 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 		return errors.New("no text in talk")
 	}
 	authorPart := fmt.Sprintf("作者：%s", author)
-	textPart := *talk.Text
-	for _, f := range m.formatFuncs {
-		if textPart, err = f(textPart); err != nil {
-			return err
-		}
-	}
-	textPart = trimRightSpace(textPart)
+	textPart := trimRightSpace(*talk.Text)
 
 	filePart := ""
 	if talk.Files != nil {
@@ -160,8 +161,8 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 
 	articlePart := ""
 	if talk.Article != nil {
-		m.log.Info("this talk has article", zap.String("article_id", talk.Article.AticalID))
-		articleText, err := m.db.GetArticleText(talk.Article.AticalID)
+		m.log.Info("this talk has article", zap.String("article_id", talk.Article.ArticleID))
+		articleText, err := m.db.GetArticleText(talk.Article.ArticleID)
 		if err != nil {
 			return err
 		}

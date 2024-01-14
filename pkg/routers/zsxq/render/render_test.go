@@ -11,90 +11,6 @@ import (
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
 
-type mockDBService struct{}
-
-func (m *mockDBService) SaveTopic(*dbModels.Topic) error {
-	return nil
-}
-
-func (m *mockDBService) SaveObjectInfo(*dbModels.Object) error {
-	return nil
-}
-
-func (m *mockDBService) GetObjectInfo(id int) (*dbModels.Object, error) {
-	return &dbModels.Object{
-		ID:              1234567,
-		ObjectKey:       "12456-8888.jpg",
-		StorageProvider: []string{"https://oss.momoai.me"},
-		Transcript:      "test-transcript",
-	}, nil
-}
-
-func (m *mockDBService) GetZsxqGroupIDs() ([]int, error) {
-	return []int{1234567}, nil
-}
-
-func (m *mockDBService) GetLatestTopicTime(groupID int) (time.Time, error) {
-	return time.Time{}, nil
-}
-
-func (m *mockDBService) FetchNTopicsBeforeTime(groupID, n int, t time.Time) ([]dbModels.Topic, error) {
-	return nil, nil
-}
-
-func (m *mockDBService) UpdateCrawlTime(groupID int, t time.Time) error {
-	return nil
-}
-
-func (m *mockDBService) GetLatestNTopics(groupID, n int) ([]dbModels.Topic, error) {
-	return []dbModels.Topic{
-		{
-			ID:      1234567,
-			GroupID: 1234567,
-			Type:    "talk",
-		},
-	}, nil
-}
-
-func (m *mockDBService) GetEarliestTopicTime(groupID int) (time.Time, error) {
-	return time.Time{}, nil
-}
-
-func (m *mockDBService) GetCrawlStatus(groupID int) (bool, error) {
-	return false, nil
-}
-
-func (m *mockDBService) SaveCrawlStatus(groupID int, finished bool) error {
-	return nil
-}
-
-func (m *mockDBService) GetGroupName(id int) (string, error) {
-	return "test-group", nil
-}
-
-func (m *mockDBService) SaveAuthorInfo(*dbModels.Author) error {
-	return nil
-}
-
-func (m *mockDBService) GetAuthorName(id int) (string, error) {
-	return "test-user", nil
-}
-
-func (m *mockDBService) SaveArticle(*dbModels.Article) error {
-	return nil
-}
-
-func (m *mockDBService) GetArticleText(id string) (string, error) {
-	if id == "zsxq_article_test" {
-		return "test-text", nil
-	}
-	return "", nil
-}
-
-func NewMockDBService() *mockDBService {
-	return &mockDBService{}
-}
-
 func TestRenderMarkdown(t *testing.T) {
 	type testStruct struct {
 		topic  Topic
@@ -291,7 +207,7 @@ this is an answer
 					},
 					Article: &models.Article{
 						Title:      "test-article",
-						AticalID:   "zsxq_article_test",
+						ArticleID:  "zsxq_article_test",
 						ArticleURL: "https://www.google.com",
 					},
 				},
@@ -415,4 +331,96 @@ test-text
 		}
 		fmt.Printf("%s", buffer.String())
 	}
+}
+
+type mockDBService struct{}
+
+func (m *mockDBService) SaveTopic(*dbModels.Topic) error {
+	return nil
+}
+
+func (m *mockDBService) SaveObjectInfo(*dbModels.Object) error {
+	return nil
+}
+
+func (m *mockDBService) GetObjectInfo(id int) (*dbModels.Object, error) {
+	return &dbModels.Object{
+		ID:              1234567,
+		ObjectKey:       "12456-8888.jpg",
+		StorageProvider: []string{"https://oss.momoai.me"},
+		Transcript:      "test-transcript",
+	}, nil
+}
+
+func (m *mockDBService) GetZsxqGroupIDs() ([]int, error) {
+	return []int{1234567}, nil
+}
+
+func (m *mockDBService) GetLatestTopicTime(groupID int) (time.Time, error) {
+	return time.Time{}, nil
+}
+
+func (m *mockDBService) FetchNTopicsBeforeTime(groupID, n int, t time.Time) ([]dbModels.Topic, error) {
+	return nil, nil
+}
+
+func (m *mockDBService) UpdateCrawlTime(groupID int, t time.Time) error {
+	return nil
+}
+
+func (m *mockDBService) GetLatestNTopics(groupID, n int) ([]dbModels.Topic, error) {
+	return []dbModels.Topic{
+		{
+			ID:      1234567,
+			GroupID: 1234567,
+			Type:    "talk",
+		},
+	}, nil
+}
+
+func (m *mockDBService) GetEarliestTopicTime(groupID int) (time.Time, error) {
+	return time.Time{}, nil
+}
+
+func (m *mockDBService) GetCrawlStatus(groupID int) (bool, error) {
+	return false, nil
+}
+
+func (m *mockDBService) SaveCrawlStatus(groupID int, finished bool) error {
+	return nil
+}
+
+func (m *mockDBService) GetGroupName(id int) (string, error) {
+	return "test-group", nil
+}
+
+func (m *mockDBService) SaveAuthorInfo(*dbModels.Author) error {
+	return nil
+}
+
+func (m *mockDBService) GetAuthorName(id int) (string, error) {
+	return "test-user", nil
+}
+
+func (m *mockDBService) SaveArticle(*dbModels.Article) error {
+	return nil
+}
+
+func (m *mockDBService) GetArticle(id string) (*dbModels.Article, error) {
+	return nil, nil
+}
+
+func (m *mockDBService) GetArticleText(id string) (string, error) {
+	if id == "zsxq_article_test" {
+		return "test-text", nil
+	}
+	return "", nil
+}
+
+func (m *mockDBService) GetAllTopicIDs(id int) ([]int, error) {
+	return nil, nil
+}
+
+func NewMockDBService() *mockDBService {
+	return &mockDBService{}
 }
