@@ -35,13 +35,13 @@ func TestHTML2Md(t *testing.T) {
 		logger := log.NewLogger()
 		mr := NewMarkdownRenderService(nil, logger)
 		data, _ := io.ReadAll(file)
-		markdown, err := mr.Article(string(data))
+		markdown, err := mr.Article(data)
 		if err != nil {
 			t.Fatal(err)
 		}
-		fmt.Println("md ->\n", markdown)
+		fmt.Println("md ->\n", string(markdown))
 
-		err = os.WriteFile(c.output, []byte(markdown), 0644)
+		err = os.WriteFile(c.output, markdown, 0644)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -62,13 +62,13 @@ func TestHTMLRaw2Md(t *testing.T) {
 	for _, c := range cases {
 		logger := log.NewLogger()
 		mr := NewMarkdownRenderService(nil, logger)
-		markdown, err := mr.Article(c.input)
+		markdown, err := mr.Article([]byte(c.input))
 		if err != nil {
 			t.Fatal(err)
 		}
 		fmt.Println("md ->\n", markdown)
 
-		if markdown != c.output {
+		if string(markdown) != c.output {
 			t.Fatal("output not match")
 		}
 	}

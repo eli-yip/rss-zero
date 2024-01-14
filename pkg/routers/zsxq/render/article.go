@@ -4,12 +4,28 @@ import (
 	"strings"
 
 	gomd "github.com/JohannesKaufmann/html-to-markdown"
+	gomdPlugin "github.com/JohannesKaufmann/html-to-markdown/plugin"
 	"github.com/PuerkitoBio/goquery"
+	"go.uber.org/zap"
 )
 
 type articleRule struct {
 	name string
 	rule gomd.Rule
+}
+
+func newHTML2MdConverter(logger *zap.Logger) *gomd.Converter {
+	converter := gomd.NewConverter("", true, nil)
+	rules := getArticleRules()
+	for _, rule := range rules {
+		converter.AddRules(rule.rule)
+		logger.Info("add article render rule", zap.String("name", rule.name))
+	}
+	converter.Use(gomdPlugin.GitHubFlavored())
+	tagsToRemove := []string{"head", "footer"}
+	converter.Remove(tagsToRemove...)
+	logger.Info("add n rules to markdown converter", zap.Int("n", len(rules)+len(tagsToRemove)))
+	return converter
 }
 
 func getArticleRules() []articleRule {
@@ -20,16 +36,6 @@ func getArticleRules() []articleRule {
 			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
 				content = strings.TrimSpace(content)
 				return gomd.String("**" + content + "**")
-			},
-		},
-	}
-
-	head := articleRule{
-		name: "head",
-		rule: gomd.Rule{
-			Filter: []string{"head"},
-			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
-				return gomd.String("")
 			},
 		},
 	}
@@ -73,16 +79,6 @@ func getArticleRules() []articleRule {
 		},
 	}
 
-	footer := articleRule{
-		name: "footer",
-		rule: gomd.Rule{
-			Filter: []string{"footer"},
-			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
-				return gomd.String("")
-			},
-		},
-	}
-
 	qrcodeContainer := articleRule{
 		name: "qrcode-container",
 		rule: gomd.Rule{
@@ -111,11 +107,9 @@ func getArticleRules() []articleRule {
 
 	return []articleRule{
 		cjk,
-		head,
 		h1,
 		groupInfo,
 		authorInfo,
-		footer,
 		qrcodeContainer,
 		qrcodeURL,
 	}

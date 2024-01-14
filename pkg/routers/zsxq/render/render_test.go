@@ -242,13 +242,13 @@ test-text
 	logger := log.NewLogger()
 	MarkdownRenderService := NewMarkdownRenderService(mockDBService, logger)
 	for i, c := range cases {
-		var text string
+		var text []byte
 		var err error
 		if text, err = MarkdownRenderService.ToText(&c.topic); err != nil {
 			t.Logf("testing %d failed", i)
 			t.Errorf("RenderMarkdown() error = %v", err)
 		}
-		if text != c.result {
+		if string(text) != c.result {
 			t.Logf("testing %d failed", i)
 			t.Errorf("RenderMarkdown() got = %v, want %v", text, c.result)
 		}

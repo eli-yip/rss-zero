@@ -2,7 +2,26 @@ package render
 
 import (
 	"bytes"
+
+	"github.com/Kunde21/markdownfmt/v3/markdown"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
 )
+
+func newMdFormatter() goldmark.Markdown {
+	mr := markdown.NewRenderer()
+	gm := goldmark.New(
+		goldmark.WithRenderer(mr),
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.NewCJK(
+				extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksSimple),
+			),
+		),
+	)
+
+	return gm
+}
 
 func (m *MarkdownRenderService) FormatMarkdown(text []byte) ([]byte, error) {
 	textStr := string(text)

@@ -93,7 +93,7 @@ func main() {
 						if err != nil {
 							logger.Fatal("failed to get article", zap.Error(err))
 						}
-						text, err := mdRender.Article(string(article.Raw))
+						text, err := mdRender.Article(article.Raw)
 						if err != nil {
 							logger.Fatal("failed to render article", zap.Error(err))
 						}
@@ -101,7 +101,7 @@ func main() {
 							ID:    article.ID,
 							URL:   article.URL,
 							Title: article.Title,
-							Text:  text,
+							Text:  string(text),
 							Raw:   article.Raw,
 						}); err != nil {
 							logger.Fatal("failed to update article", zap.Error(err))
@@ -139,7 +139,7 @@ func main() {
 						AuthorID:  topic.AuthorID,
 						ShareLink: topic.ShareLink,
 						Title:     topic.Title,
-						Text:      text,
+						Text:      string(text),
 						Raw:       topic.Raw,
 					}); err != nil {
 						logger.Fatal("failed to update topic", zap.Error(err))

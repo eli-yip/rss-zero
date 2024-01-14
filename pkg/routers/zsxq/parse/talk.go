@@ -53,7 +53,7 @@ func (s *ParseService) parseArticle(a *models.Article) (err error) {
 		return err
 	}
 
-	text, err := s.Renderer.Article(string(html))
+	text, err := s.Renderer.Article(html)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (s *ParseService) parseArticle(a *models.Article) (err error) {
 		ID:    a.ArticleID,
 		URL:   a.ArticleURL,
 		Title: a.Title,
-		Text:  text,
+		Text:  string(text),
 		Raw:   html,
 	}); err != nil {
 		return err

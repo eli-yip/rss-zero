@@ -7,6 +7,17 @@ import (
 	"strings"
 )
 
+func getFormatFuncs() []func(string) (string, error) {
+	return []func(string) (string, error){
+		replaceBookMarkUp,
+		replaceAnswerQuoto,
+		replaceHashTags,
+		removeSpaces,
+		processMention,
+		replacePercentEncodedChars,
+	}
+}
+
 // replaceBookMarkup replace book info
 //
 // more info: format_funcs_test.go
