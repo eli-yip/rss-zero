@@ -69,7 +69,7 @@ func replaceHashTags(input string) (string, error) {
 			return s
 		}
 		if len(title) > 0 && title[len(title)-1] == '#' {
-			title = title[:len(title)-1]
+			title = "\\" + title[:len(title)-1]
 		}
 		return title
 	}

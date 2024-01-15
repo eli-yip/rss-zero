@@ -49,6 +49,7 @@ func main() {
 		}
 		// add 1 second to lastTime to avoid result missing
 		lastTime = lastTime.Add(time.Second)
+		wg := sync.WaitGroup{}
 		for {
 			if lastTime.Before(time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)) {
 				logger.Info("reach end")
@@ -66,14 +67,13 @@ func main() {
 			}
 			logger.Info("fetch topics", zap.Int("count", len(topics)))
 
-			wg := sync.WaitGroup{}
 			for i, topic := range topics {
 				wg.Add(1)
 				topic := topic
 				mySet.Add(topic.ID)
+				lastTime = topic.Time
 				go func(i int, topic *zsxqDBModels.Topic) {
 					defer wg.Done()
-					lastTime = topic.Time
 					atomic.AddInt64(&count, 1)
 					if topic.Type != "talk" && topic.Type != "q&a" {
 						return
@@ -148,9 +148,9 @@ func main() {
 
 					logger.Info("topic formatted", zap.Int("index", i), zap.Int("topic_id", topic.ID))
 				}(i, &topic)
-				wg.Wait()
 			}
 		}
+		wg.Wait()
 
 		// get topicIDs in db
 		idInDB, err := dbService.GetAllTopicIDs(gid)
