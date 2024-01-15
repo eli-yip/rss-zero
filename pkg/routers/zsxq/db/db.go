@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
+	"gorm.io/gorm"
 )
 
 type DataBaseIface interface {
@@ -68,3 +69,7 @@ type DatabaseGroup interface {
 	// Save crawl status to zsxq_group table
 	SaveCrawlStatus(gid int, finished bool) (err error)
 }
+
+type ZsxqDBService struct{ db *gorm.DB }
+
+func NewZsxqDBService(db *gorm.DB) *ZsxqDBService { return &ZsxqDBService{db: db} }
