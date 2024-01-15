@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/eli-yip/zsxq-parser/pkg/log"
+	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
 	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
 )
@@ -561,6 +562,14 @@ func (m *mockDBService) GetArticleText(id string) (string, error) {
 }
 
 func (m *mockDBService) GetAllTopicIDs(id int) ([]int, error) {
+	return nil, nil
+}
+
+func (m *mockDBService) GetAuthorID(name string) (int, error) {
+	return 1234567, nil
+}
+
+func (m *mockDBService) FetchNTopics(n int, opt db.Options) (ts []dbModels.Topic, err error) {
 	return nil, nil
 }
 
