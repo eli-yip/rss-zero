@@ -6,6 +6,18 @@ CURRENT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 .PHONY: all
 all: run
 
+.PHONY: zsxq-crawler
+zsxq-crawler:
+	$(GOCMD) build -o zsxq-crawler cmd/crawler/main.go
+
+.PHONY: zsxq-fmt
+zsxq-fmt:
+	$(GOCMD) build -o zsxq-fmt cmd/zsxq-formatter/main.go
+
+.PHONY: zsxq-re-fmt
+zsxq-re-fmt:
+	$(GOCMD) build -o zsxq-re-fmt cmd/re-fmt/main.go
+
 .PHONY: lint
 lint:
 	$(GOLINT_CONTAINER_CMD) golangci-lint run -v --timeout 5m

@@ -1,6 +1,9 @@
 .env
 test
 test/
+zsxq-crawler
+zsxq-fmt
+zsxq-re-fmt
 test-crawler
 test-fmt
 test-refmt
