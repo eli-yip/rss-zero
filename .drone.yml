@@ -1,0 +1,39 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: build
+    image: golang:1.21.6-alpine3.19
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - go build -o release/crawler cmd/crawler/main.go
+
+  - name: gitea_release
+    image: plugins/gitea-release
+    settings:
+      api_key:
+        from_secret: gitea_api_key
+      base_url:
+        from_secret: gitea_url
+      files:
+        - release/*
+      prerelease: false
+      draft: true
+    depends_on:
+      - build
+    when:
+      event:
+        - tag
+
+volumes:
+  - name: deps
+    temp: {}
+
+trigger:
+  event:
+    - tag
+  branch:
+    - master
