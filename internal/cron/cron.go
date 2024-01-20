@@ -1,32 +1,39 @@
 package cron
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
+	"go.uber.org/zap"
 )
 
 type CronService struct {
-	s *gocron.Scheduler
+	s      gocron.Scheduler
+	logger *zap.Logger
 }
 
-func NewCronService() *CronService {
-	s, err := gocron.NewScheduler(gocron.WithLocation(time.Local))
+func NewCronService(logger *zap.Logger) (*CronService, error) {
+	location, _ := time.LoadLocation("Asia/Shanghai")
+	s, err := gocron.NewScheduler(gocron.WithLocation(location))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+	s.Start()
 
-	j, err := s.NewJob(
-		gocron.DurationJob(time.Hour),
-		gocron.NewTask(func() {}),
+	return &CronService{s: s, logger: logger}, nil
+}
+
+func (c *CronService) AddJob(f func()) (err error) {
+	j, err := c.s.NewJob(
+		gocron.DurationJob(time.Hour*1),
+		gocron.NewTask(f),
 		gocron.WithSingletonMode(gocron.LimitModeReschedule),
 	)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	fmt.Println(j.ID())
-	s.Start()
 
-	return &CronService{s: &s}
+	c.logger.Info("add job", zap.Any("job", j.ID()))
+
+	return nil
 }

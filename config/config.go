@@ -27,11 +27,22 @@ type Config struct {
 var C Config
 
 func InitConfig() {
+	loadEnv()
+	readEnv()
+}
+
+func InitConfigForTest() {
+	readEnv()
+}
+
+func loadEnv() {
 	err := godotenv.Load()
 	if err != nil {
 		panic("Error loading .env file")
 	}
+}
 
+func readEnv() {
 	C.MinioConfig = file.MinioConfig{
 		Endpoint:        getEnv("MINIO_ENDPOINT"),
 		AccessKeyID:     getEnv("MINIO_ACCESS_KEY_ID"),

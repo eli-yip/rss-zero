@@ -5,6 +5,7 @@ import (
 
 	middleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/cron"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/log"
@@ -34,10 +35,24 @@ func main() {
 		logger.Fatal("db init failed", zap.Error(err))
 	}
 
+	setupCron(logger, redisService, db)
+
 	app := setupApp(redisService, db, logger)
 	err = app.Listen(":8080", iris.WithLowercaseRouting)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func setupCron(logger *zap.Logger, redis *redis.RedisService, db *gorm.DB) {
+	s, err := cron.NewCronService(logger)
+	if err != nil {
+		logger.Fatal("cron service init failed", zap.Error(err))
+	}
+
+	err = s.AddJob(cron.CrawlZsxq(redis, db))
+	if err != nil {
+		logger.Fatal("add job failed", zap.Error(err))
 	}
 }
 

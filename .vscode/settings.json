@@ -4,5 +4,5 @@
     "titleBar.activeBackground": "#084B14",
     "titleBar.activeForeground": "#F1FDF3"
   },
-  "go.testEnvFile": "${workspaceFolder}/test/test.env",
+  "go.testEnvFile": "${workspaceFolder}/.env",
 }
