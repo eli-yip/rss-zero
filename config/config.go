@@ -3,7 +3,7 @@ package config
 import (
 	"os"
 
-	"github.com/eli-yip/zsxq-parser/pkg/file"
+	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/joho/godotenv"
 )
 

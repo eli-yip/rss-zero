@@ -1,6 +1,6 @@
 package db
 
-import "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
+import "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 
 func (s *ZsxqDBService) SaveObjectInfo(o *models.Object) error {
 	return s.db.Save(o).Error

@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	gomd "github.com/JohannesKaufmann/html-to-markdown"
-	"github.com/eli-yip/zsxq-parser/internal/md"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
-	zsxqTime "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/time"
+	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
+	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
 	"github.com/yuin/goldmark"
 	"go.uber.org/zap"
 )

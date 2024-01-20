@@ -3,7 +3,7 @@ package render
 import (
 	"time"
 
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 )
 
 // Topic is the struct used to render a topic

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/eli-yip/zsxq-parser/pkg/log"
+	"github.com/eli-yip/rss-zero/pkg/log"
 )
 
 func TestNewFileServiceMinio(t *testing.T) {

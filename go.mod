@@ -1,4 +1,4 @@
-module github.com/eli-yip/zsxq-parser
+module github.com/eli-yip/rss-zero
 
 go 1.21
 
@@ -8,13 +8,13 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.6.0
-	github.com/go-co-op/gocron/v2 v2.1.2
+	github.com/go-co-op/gocron/v2 v2.2.0
 	github.com/gorilla/feeds v1.1.2
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/redis/go-redis/v9 v9.4.0
-	github.com/sashabaranov/go-openai v1.17.11
+	github.com/sashabaranov/go-openai v1.18.3
 	github.com/stretchr/testify v1.8.4
 	github.com/yuin/goldmark v1.6.0
 	go.uber.org/zap v1.26.0
@@ -52,7 +52,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
+	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	zsxqDBModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
+	zsxqDBModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

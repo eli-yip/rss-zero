@@ -7,13 +7,13 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/eli-yip/zsxq-parser/config"
-	"github.com/eli-yip/zsxq-parser/internal/db"
-	"github.com/eli-yip/zsxq-parser/pkg/log"
-	zsxqDB "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
-	zsxqDBModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/render"
+	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/db"
+	"github.com/eli-yip/rss-zero/pkg/log"
+	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	zsxqDBModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"go.uber.org/zap"
 )
 

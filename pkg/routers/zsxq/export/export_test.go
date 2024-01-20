@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eli-yip/zsxq-parser/internal/db"
-	log "github.com/eli-yip/zsxq-parser/pkg/log"
-	zsxqDB "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
-	render "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/render"
+	"github.com/eli-yip/rss-zero/internal/db"
+	log "github.com/eli-yip/rss-zero/pkg/log"
+	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	render "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"github.com/joho/godotenv"
 )
 

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eli-yip/zsxq-parser/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/redis"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
 )

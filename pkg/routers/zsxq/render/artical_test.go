@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	log "github.com/eli-yip/zsxq-parser/pkg/log"
+	log "github.com/eli-yip/rss-zero/pkg/log"
 )
 
 func TestHTML2Md(t *testing.T) {

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
-	zsxqTime "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/time"
+	dbModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
+	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
 	"go.uber.org/zap"
 )
 
