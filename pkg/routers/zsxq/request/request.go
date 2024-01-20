@@ -146,7 +146,7 @@ func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err err
 				continue
 			case 401:
 				r.log.Error("invalid cookies, clear cookies in i time", zap.Int("i", i))
-				r.redisService.Set("cookies", "", 0)
+				_ = r.redisService.Set("cookies", "", 0)
 				return nil, ErrInvalidCookie
 			default:
 				continue

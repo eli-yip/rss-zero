@@ -3,11 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
-	"os"
-	"runtime"
-	"runtime/pprof"
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -33,23 +29,6 @@ const (
 func main() {
 	var err error
 	logger := log.NewLogger()
-
-	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
-	memprofile := flag.String("memprofile", "", "write memory profile to file")
-
-	flag.Parse()
-
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			logger.Fatal("could not create CPU profile: ", zap.Error(err))
-		}
-		defer f.Close()
-		if err := pprof.StartCPUProfile(f); err != nil {
-			logger.Fatal("could not start CPU profile: ", zap.Error(err))
-		}
-		defer pprof.StopCPUProfile()
-	}
 
 	config.InitConfig()
 	logger.Info("config initialized")
@@ -231,7 +210,6 @@ func main() {
 			if len(rawTopics) < 20 {
 				finished = true
 				logger.Info("finished crawling as earliest time in zsxq has been reached")
-				break
 			}
 		}
 
@@ -240,17 +218,5 @@ func main() {
 			logger.Fatal("failed to save crawl status", zap.Error(err))
 		}
 		logger.Info("finished crawling group")
-	}
-
-	if *memprofile != "" {
-		f, err := os.Create(*memprofile)
-		if err != nil {
-			logger.Fatal("could not create memory profile: ", zap.Error(err))
-		}
-		defer f.Close()
-		runtime.GC()
-		if err := pprof.WriteHeapProfile(f); err != nil {
-			logger.Fatal("could not write memory profile: ", zap.Error(err))
-		}
 	}
 }

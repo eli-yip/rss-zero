@@ -3,6 +3,14 @@ type: docker
 name: default
 
 steps:
+  - name: lint
+    image: golangci/golangci-lint:v1.55-alpine
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - golangci-lint run -v --timeout 5m
+
   - name: build
     image: golang:1.21.6-alpine3.19
     volumes:
@@ -10,6 +18,9 @@ steps:
         path: /go
     commands:
       - go build -o release/crawler cmd/crawler/main.go
+    when:
+      event:
+        - tag
 
   - name: gitea_release
     image: plugins/gitea-release
@@ -31,7 +42,3 @@ steps:
 volumes:
   - name: deps
     temp: {}
-
-trigger:
-  event:
-    - tag
