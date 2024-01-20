@@ -164,7 +164,6 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 
 		// Output rss to redis
 		var rssTopics []render.RSSTopic
-		rssRenderer := render.NewRSSRenderService()
 		topics, err := dbService.GetLatestNTopics(groupID, defaultFetchCount)
 		if err != nil {
 			logger.Error("failed to get latest topics from database", zap.Error(err))
@@ -203,13 +202,14 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) {
 				CreateTime: topic.Time,
 				Text:       topic.Text,
 			})
-			result, err := rssRenderer.RenderRSS(rssTopics)
-			if err != nil {
-				logger.Error("failed to render rss", zap.Error(err))
-			}
-			if err := redisService.Set(fmt.Sprintf(rssPath, groupID), result, rssTTL); err != nil {
-				logger.Error("failed to set rss to redis", zap.Error(err))
-			}
+		}
+		rssRenderer := render.NewRSSRenderService()
+		result, err := rssRenderer.RenderRSS(rssTopics)
+		if err != nil {
+			logger.Error("failed to render rss", zap.Error(err))
+		}
+		if err := redisService.Set(fmt.Sprintf(rssPath, groupID), result, rssTTL); err != nil {
+			logger.Error("failed to set rss to redis", zap.Error(err))
 		}
 	}
 }

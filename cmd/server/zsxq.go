@@ -1,0 +1,180 @@
+package main
+
+import (
+	"fmt"
+	"regexp"
+	"strconv"
+	"time"
+
+	"github.com/eli-yip/rss-zero/internal/redis"
+	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
+	"github.com/kataras/iris/v12"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+)
+
+type ZsxqHandler struct {
+	Redis  *redis.RedisService
+	db     *gorm.DB
+	logger *zap.Logger
+	taskCh chan task
+}
+
+func NewZsxqHandler(redis *redis.RedisService, db *gorm.DB, logger *zap.Logger) *ZsxqHandler {
+	h := &ZsxqHandler{
+		Redis:  redis,
+		db:     db,
+		logger: logger,
+		taskCh: make(chan task, 100),
+	}
+	go h.processTask()
+	return h
+}
+
+func (h *ZsxqHandler) Get(ctx iris.Context) {
+	logger := ctx.Values().Get("logger").(*zap.Logger)
+
+	groupIDStr := ctx.Params().GetString("id")
+	groupID, err := h.extractGroupIDFromParams(groupIDStr)
+	if err != nil {
+		logger.Error("invalid group id",
+			zap.String("group_id_param", groupIDStr),
+			zap.Error(err))
+		ctx.StopWithText(iris.StatusBadRequest, "invalid group id")
+	}
+	logger.Info("group id extracted", zap.Int("group_id", groupID))
+
+	const rssPath = "zsxq_rss_%d"
+
+	rss, err := h.getRSSContent(fmt.Sprintf(rssPath, groupID), logger)
+	if err != nil {
+		ctx.StopWithText(iris.StatusInternalServerError, "failed to get rss from redis")
+	}
+	logger.Info("rss content retrieved")
+
+	_, _ = ctx.Text(rss)
+}
+
+type task struct {
+	textCh chan string
+	errCh  chan error
+}
+
+func (h *ZsxqHandler) getRSSContent(key string, logger *zap.Logger) (content string, err error) {
+	task := task{textCh: make(chan string), errCh: make(chan error)}
+	defer close(task.textCh)
+	defer close(task.errCh)
+	defer logger.Info("task channel closed")
+
+	h.taskCh <- task
+	task.textCh <- key
+	logger.Info("task sent to task channel", zap.String("key", key))
+
+	select {
+	case content := <-task.textCh:
+		return content, nil
+	case err := <-task.errCh:
+		return "", err
+	}
+}
+
+func (h *ZsxqHandler) processTask() {
+	for {
+		task := <-h.taskCh
+		key := <-task.textCh
+		content, err := h.Redis.Get(key)
+		if err != nil {
+			if err == redis.ErrKeyNotExist {
+				content, err = h.generateRSS(key)
+				if err != nil {
+					task.errCh <- err
+					continue
+				}
+				task.textCh <- content
+				continue
+			} else {
+				task.errCh <- err
+				continue
+			}
+		}
+		task.textCh <- content
+	}
+}
+
+func (h *ZsxqHandler) generateRSS(key string) (content string, err error) {
+	gid, err := h.extractGroupIDFromKey(key)
+	if err != nil {
+		return "", err
+	}
+
+	const defaultFetchCount = 20
+	zsxqDB := zsxqDB.NewZsxqDBService(h.db)
+	topics, err := zsxqDB.GetLatestNTopics(gid, defaultFetchCount)
+	if err != nil {
+		return "", err
+	}
+
+	groupName, err := zsxqDB.GetGroupName(gid)
+	if err != nil {
+		return
+	}
+
+	var rssTopics []render.RSSTopic
+	for _, topic := range topics {
+		var authorName string
+		if authorName, err = zsxqDB.GetAuthorName(topic.AuthorID); err != nil {
+			return "", err
+		}
+
+		rssTopics = append(rssTopics, render.RSSTopic{
+			TopicID:    topic.ID,
+			GroupName:  groupName,
+			GroupID:    topic.GroupID,
+			Title:      topic.Title,
+			AuthorName: authorName,
+			ShareLink:  topic.ShareLink,
+			CreateTime: topic.Time,
+			Text:       topic.Text,
+		})
+	}
+
+	rssRenderer := render.NewRSSRenderService()
+	result, err := rssRenderer.RenderRSS(rssTopics)
+	if err != nil {
+		return "", err
+	}
+
+	const rssTTL = time.Hour * 2
+	if err := h.Redis.Set(key, result, rssTTL); err != nil {
+		return "", err
+	}
+
+	return result, nil
+}
+
+func (h *ZsxqHandler) extractGroupIDFromParams(s string) (gid int, err error) {
+	re := regexp.MustCompile(`\d+`)
+	numbers := re.FindAllString(s, -1)
+
+	result := ""
+	for _, number := range numbers {
+		result += number
+	}
+
+	resultInt, err := strconv.Atoi(result)
+	if err != nil {
+		return 0, err
+	}
+
+	return resultInt, nil
+}
+
+func (h *ZsxqHandler) extractGroupIDFromKey(key string) (groupID int, err error) {
+	re := regexp.MustCompile(`zsxq_rss_(\d+)`)
+	matches := re.FindStringSubmatch(key)
+	if len(matches) < 2 {
+		return 0, fmt.Errorf("no number found in string")
+	}
+	return strconv.Atoi(matches[1])
+}

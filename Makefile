@@ -3,20 +3,26 @@ GORUN=$(GOCMD) run
 GOLINT_CONTAINER_CMD=docker run -t --rm -v $(shell pwd):/app -w /app golangci/golangci-lint:latest
 CURRENT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 
+CURRENT_DIR := $(CURDIR)
+
 .PHONY: all
 all: run
 
+.PHONY: server
+server:
+	$(GOCMD) build -o server ${CURRENT_DIR}/cmd/server
+
 .PHONY: zsxq-crawler
 zsxq-crawler:
-	$(GOCMD) build -o zsxq-crawler cmd/crawler/main.go
+	$(GOCMD) build -o zsxq-crawler ${CURRENT_DIR}/cmd/crawler/main.go
 
 .PHONY: zsxq-fmt
 zsxq-fmt:
-	$(GOCMD) build -o zsxq-fmt cmd/zsxq-formatter/main.go
+	$(GOCMD) build -o zsxq-fmt ${CURRENT_DIR}/cmd/zsxq-formatter/main.go
 
 .PHONY: zsxq-re-fmt
 zsxq-re-fmt:
-	$(GOCMD) build -o zsxq-re-fmt cmd/re-fmt/main.go
+	$(GOCMD) build -o zsxq-re-fmt ${CURRENT_DIR}/cmd/re-fmt/main.go
 
 .PHONY: lint
 lint:
