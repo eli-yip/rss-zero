@@ -13,7 +13,10 @@ type CronService struct {
 }
 
 func NewCronService(logger *zap.Logger) (*CronService, error) {
-	location, _ := time.LoadLocation("Asia/Shanghai")
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		return nil, err
+	}
 	s, err := gocron.NewScheduler(gocron.WithLocation(location))
 	if err != nil {
 		return nil, err

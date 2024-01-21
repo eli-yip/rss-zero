@@ -8,13 +8,17 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o server ./cmd/server
+RUN go build -tags="timetzdata" -o server ./cmd/server
 
 FROM alpine:3.19
 
 WORKDIR /app
 
 COPY --from=builder /app/server .
+
+RUN apk add --no-cache -U tzdata
+
+ENV TZ=Asia/Shanghai
 
 EXPOSE 8080
 
