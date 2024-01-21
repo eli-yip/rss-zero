@@ -22,6 +22,8 @@ type Config struct {
 	RedisAddr     string
 	RedisPassword string
 	RedisDB       int
+
+	BarkURL string
 }
 
 var C Config
@@ -64,6 +66,8 @@ func readEnv() {
 	C.RedisAddr = getEnv("REDIS_ADDR")
 	C.RedisPassword = getEnv("REDIS_PASSWORD")
 	C.RedisDB = 0
+
+	C.BarkURL = getEnv("BARK_URL")
 }
 
 func getEnv(key string) string {
