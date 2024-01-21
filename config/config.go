@@ -24,6 +24,8 @@ type Config struct {
 	RedisDB       int
 
 	BarkURL string
+
+	ZsxqTestURL string
 }
 
 var C Config
@@ -68,6 +70,8 @@ func readEnv() {
 	C.RedisDB = 0
 
 	C.BarkURL = getEnv("BARK_URL")
+
+	C.ZsxqTestURL = getEnv("ZSXQ_TEST_URL")
 }
 
 func getEnv(key string) string {

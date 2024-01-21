@@ -15,6 +15,8 @@ type RedisService struct {
 	ctx    context.Context
 }
 
+const Forever = 0
+
 func NewRedisService(addr, password string, db int) (service *RedisService, err error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     addr,
