@@ -1,8 +1,8 @@
 package parse
 
 import (
-	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
+	dbModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	"go.uber.org/zap"
 )
 

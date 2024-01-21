@@ -1,19 +1,19 @@
 package ai
 
 import (
-	"fmt"
-	"os"
 	"testing"
+
+	"github.com/eli-yip/rss-zero/config"
 )
 
 func TestBaseURL(t *testing.T) {
-	apiKey := os.Getenv("API_KEY")
-	baseURL := os.Getenv("BASE_URL")
-	fmt.Println(apiKey, baseURL)
-	ai := NewAIService(apiKey, baseURL)
+	config.InitConfigFromEnv()
+	t.Logf("API: %s\nBaseURL: %s\n", config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+
+	ai := NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
 	result, err := ai.Polish("test")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	fmt.Println(result)
+	t.Log(result)
 }

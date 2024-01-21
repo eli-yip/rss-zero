@@ -1,7 +1,7 @@
 #!/bin/bash
 
-OLD_MODULE="github.com/eli-yip/zsxq-parser/pkg/zsxq"
-NEW_MODULE="github.com/eli-yip/zsxq-parser/pkg/routers/zsxq"
+OLD_MODULE="github.com/eli-yip/zsxq-parser"
+NEW_MODULE="github.com/eli-yip/rss-zero"
 
 # 检测操作系统并设置相应的 sed 命令
 if [[ "$OSTYPE" == "darwin"* ]]; then

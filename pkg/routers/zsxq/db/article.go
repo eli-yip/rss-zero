@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 )
 
 func (s *ZsxqDBService) SaveArticle(a *models.Article) error {

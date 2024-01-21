@@ -3,7 +3,7 @@ package config
 import (
 	"os"
 
-	"github.com/eli-yip/zsxq-parser/pkg/file"
+	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/joho/godotenv"
 )
 
@@ -22,16 +22,31 @@ type Config struct {
 	RedisAddr     string
 	RedisPassword string
 	RedisDB       int
+
+	BarkURL string
+
+	ZsxqTestURL string
 }
 
 var C Config
 
-func InitConfig() {
+func InitConfigFromFile() {
+	loadEnv()
+	readEnv()
+}
+
+func InitConfigFromEnv() {
+	readEnv()
+}
+
+func loadEnv() {
 	err := godotenv.Load()
 	if err != nil {
 		panic("Error loading .env file")
 	}
+}
 
+func readEnv() {
 	C.MinioConfig = file.MinioConfig{
 		Endpoint:        getEnv("MINIO_ENDPOINT"),
 		AccessKeyID:     getEnv("MINIO_ACCESS_KEY_ID"),
@@ -53,6 +68,10 @@ func InitConfig() {
 	C.RedisAddr = getEnv("REDIS_ADDR")
 	C.RedisPassword = getEnv("REDIS_PASSWORD")
 	C.RedisDB = 0
+
+	C.BarkURL = getEnv("BARK_URL")
+
+	C.ZsxqTestURL = getEnv("ZSXQ_TEST_URL")
 }
 
 func getEnv(key string) string {

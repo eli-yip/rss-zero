@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eli-yip/zsxq-parser/pkg/log"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
-	dbModels "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db/models"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
+	"github.com/eli-yip/rss-zero/pkg/log"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	dbModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 )
 
 type testStruct struct {

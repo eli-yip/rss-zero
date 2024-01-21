@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eli-yip/zsxq-parser/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/redis"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
 )
@@ -146,7 +146,7 @@ func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err err
 				continue
 			case 401:
 				r.log.Error("invalid cookies, clear cookies in i time", zap.Int("i", i))
-				r.redisService.Set("cookies", "", 0)
+				_ = r.redisService.Set("cookies", "", 0)
 				return nil, ErrInvalidCookie
 			default:
 				continue

@@ -3,25 +3,21 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
-	"os"
-	"runtime"
-	"runtime/pprof"
 	"time"
 
-	"github.com/eli-yip/zsxq-parser/config"
-	"github.com/eli-yip/zsxq-parser/internal/db"
-	"github.com/eli-yip/zsxq-parser/internal/redis"
-	"github.com/eli-yip/zsxq-parser/pkg/ai"
-	"github.com/eli-yip/zsxq-parser/pkg/file"
-	"github.com/eli-yip/zsxq-parser/pkg/log"
-	zsxqDB "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/parse/models"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/render"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/request"
-	zsxqTime "github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/time"
+	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/db"
+	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/ai"
+	"github.com/eli-yip/rss-zero/pkg/file"
+	"github.com/eli-yip/rss-zero/pkg/log"
+	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
+	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
 	"go.uber.org/zap"
 )
 
@@ -34,24 +30,7 @@ func main() {
 	var err error
 	logger := log.NewLogger()
 
-	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to file")
-	memprofile := flag.String("memprofile", "", "write memory profile to file")
-
-	flag.Parse()
-
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			logger.Fatal("could not create CPU profile: ", zap.Error(err))
-		}
-		defer f.Close()
-		if err := pprof.StartCPUProfile(f); err != nil {
-			logger.Fatal("could not start CPU profile: ", zap.Error(err))
-		}
-		defer pprof.StopCPUProfile()
-	}
-
-	config.InitConfig()
+	config.InitConfigFromFile()
 	logger.Info("config initialized")
 
 	db, err := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
@@ -231,7 +210,6 @@ func main() {
 			if len(rawTopics) < 20 {
 				finished = true
 				logger.Info("finished crawling as earliest time in zsxq has been reached")
-				break
 			}
 		}
 
@@ -240,17 +218,5 @@ func main() {
 			logger.Fatal("failed to save crawl status", zap.Error(err))
 		}
 		logger.Info("finished crawling group")
-	}
-
-	if *memprofile != "" {
-		f, err := os.Create(*memprofile)
-		if err != nil {
-			logger.Fatal("could not create memory profile: ", zap.Error(err))
-		}
-		defer f.Close()
-		runtime.GC()
-		if err := pprof.WriteHeapProfile(f); err != nil {
-			logger.Fatal("could not write memory profile: ", zap.Error(err))
-		}
 	}
 }

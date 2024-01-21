@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/eli-yip/zsxq-parser/pkg/log"
+	"github.com/eli-yip/rss-zero/pkg/log"
 )
 
 func TestFormatTags(t *testing.T) {

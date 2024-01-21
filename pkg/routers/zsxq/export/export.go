@@ -5,8 +5,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/db"
-	"github.com/eli-yip/zsxq-parser/pkg/routers/zsxq/render"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"gorm.io/gorm"
 )
 
