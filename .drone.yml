@@ -12,12 +12,46 @@ steps:
       - golangci-lint run -v --timeout 5m
 
   - name: build
-    image: golang:1.21.6-alpine3.19
+    image: docker:24.0.7-cli
     volumes:
-      - name: deps
-        path: /go
+      - name: dockersock
+        path: /var/run
+    environment:
+      DOCKER_REPO:
+        from_secret: docker_repo
+      DOCKER_USERNAME:
+        from_secret: docker_username
+      DOCKER_PASSWORD:
+        from_secret: docker_password
     commands:
-      - go build -o release/crawler cmd/crawler/main.go
+      - export TAG=${DRONE_TAG#v}
+      - docker build -t $DOCKER_REPO/rss-zero:$TAG -f docker/Dockerfile.server .
+      - docker tag $DOCKER_REPO/rss-zero:$TAG $DOCKER_REPO/rss-zero:latest
+      - echo $DOCKER_PASSWORD | docker login $REPO_HOST -u $DOCKER_USERNAME --password-stdin
+      - docker run -v /var/run/docker.sock:/var/run/docker.sock $DOCKER_REPO/slim:1.40.10 build --tag $DOCKER_REPO/rss-zero:TAG-slim --http-probe=false --target $DOCKER_REPO/rss-zero:$TAG
+      - docker tag $DOCKER_REPO/rss-zero:$TAG-slim $DOCKER_REPO/rss-zero:latest-slim
+    when:
+      event:
+        - tag
+
+  - name: publish
+    image: docker:24.0.7-cli
+    volumes:
+      - name: dockersock
+        path: /var/run
+    environment:
+      DOCKER_REPO:
+        from_secret: docker_repo
+      DOCKER_USERNAME:
+        from_secret: docker_username
+      DOCKER_PASSWORD:
+        from_secret: docker_password
+    commands:
+      - echo $DOCKER_PASSWORD | docker login $REPO_HOST -u $DOCKER_USERNAME --password-stdin
+      - |
+        docker images $DOCKER_REPO/rss-zero --format "{{.Repository}}:{{.Tag}}" | while read image; do
+          docker push "$image"
+        done
     when:
       event:
         - tag
@@ -29,8 +63,6 @@ steps:
         from_secret: gitea_api_key
       base_url:
         from_secret: gitea_url
-      files:
-        - release/*
       prerelease: false
       draft: true
     depends_on:
@@ -39,6 +71,14 @@ steps:
       event:
         - tag
 
+services:
+  - name: docker
+    image: docker:24.0.7-dind
+    privileged: true
+    volumes:
+      - name: dockersock
+        path: /var/run
+
 volumes:
-  - name: deps
+  - name: dockersock
     temp: {}
