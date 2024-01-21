@@ -39,6 +39,12 @@ func main() {
 	setupCron(logger, redisService, db)
 
 	app := setupApp(redisService, db, logger)
+
+	routes := app.GetRoutes()
+	for _, r := range routes {
+		logger.Info("route registered", zap.String("method", r.Method), zap.String("path", r.Path))
+	}
+
 	err = app.Listen(":8080", iris.WithLowercaseRouting)
 	if err != nil {
 		panic(err)
