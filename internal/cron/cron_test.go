@@ -14,7 +14,7 @@ import (
 
 func TestZsxq(t *testing.T) {
 	t.Log("TestZsxq")
-	config.InitConfigForTest()
+	config.InitConfigFromEnv()
 
 	redisService, _ := redis.NewRedisService(config.C.RedisAddr, "", 0)
 	db, _ := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)

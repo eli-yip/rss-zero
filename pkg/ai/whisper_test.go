@@ -4,10 +4,14 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/eli-yip/rss-zero/config"
 )
 
 func TestWhisper(t *testing.T) {
-	s := NewAIService(os.Getenv("OPENAI_API_KEY"), os.Getenv("OPENAI_BASE_URL"))
+	config.InitConfigFromEnv()
+
+	s := NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
 
 	path := filepath.Join("testdata", "voice.wav")
 	file, err := os.Open(path)

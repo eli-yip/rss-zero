@@ -9,17 +9,10 @@ import (
 	log "github.com/eli-yip/rss-zero/pkg/log"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	render "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
-	"github.com/joho/godotenv"
 )
 
 func TestExport(t *testing.T) {
 	t.Log("TestExport")
-
-	err := godotenv.Load("../../../../.env")
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	db, err := db.NewDB(
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
