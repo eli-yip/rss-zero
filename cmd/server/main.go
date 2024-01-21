@@ -7,6 +7,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/cron"
 	"github.com/eli-yip/rss-zero/internal/db"
+	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/log"
 	"github.com/kataras/iris/v12"
@@ -50,7 +51,8 @@ func setupCron(logger *zap.Logger, redis *redis.RedisService, db *gorm.DB) {
 		logger.Fatal("cron service init failed", zap.Error(err))
 	}
 
-	err = s.AddJob(cron.CrawlZsxq(redis, db))
+	bark := notify.NewBarkNotifier(config.C.BarkURL)
+	err = s.AddJob(cron.CrawlZsxq(redis, db, bark))
 	if err != nil {
 		logger.Fatal("add job failed", zap.Error(err))
 	}

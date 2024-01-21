@@ -1,11 +1,13 @@
 package cron
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/db"
+	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/log"
 	"github.com/go-co-op/gocron/v2"
@@ -20,7 +22,8 @@ func TestZsxq(t *testing.T) {
 	db, _ := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
 
 	logger := log.NewLogger()
-	zsxqCrawler := CrawlZsxq(redisService, db)
+	bark := notify.NewBarkNotifier(os.Getenv("BARK_URL"))
+	zsxqCrawler := CrawlZsxq(redisService, db, bark)
 
 	location, _ := time.LoadLocation("Asia/Shanghai")
 	s, err := gocron.NewScheduler(gocron.WithLocation(location))

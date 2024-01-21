@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
@@ -33,7 +34,7 @@ const (
 	rssTTL  = time.Hour * 2
 )
 
-func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) func() {
+func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		// Init services
 		logger := log.NewLogger()
@@ -51,7 +52,8 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB) func() {
 		cookies, err := redisService.Get("zsxq_cookies")
 		if err != nil {
 			if errors.Is(err, redis.ErrKeyNotExist) {
-				logger.Error("cookies not found in redis")
+				logger.Error("cookies not found in redis, notify user")
+				notifier.Notify("No cookies for zsxq", "not found in redis")
 			}
 			logger.Error("failed to get cookies from redis", zap.Error(err))
 			return
