@@ -27,14 +27,14 @@ func (h *CookiesHandler) UpdateZsxqCookies(ctx iris.Context) {
 
 	var req SetCookiesRequest
 	if err := ctx.ReadJSON(&req); err != nil {
-		ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{"error": err.Error()})
+		_ = ctx.StopWithJSON(iris.StatusBadRequest, iris.Map{"error": err.Error()})
 		logger.Info("update zsxq cookies failed", zap.Error(err))
 		return
 	}
 	logger.Info("get zsxq cookies", zap.String("cookies", req.Cookies))
 
 	if err := h.redis.Set("zsxq_cookies", req.Cookies, redis.Forever); err != nil {
-		ctx.StopWithJSON(iris.StatusInternalServerError, iris.Map{"error": err.Error()})
+		_ = ctx.StopWithJSON(iris.StatusInternalServerError, iris.Map{"error": err.Error()})
 		logger.Info("update zsxq cookies failed", zap.Error(err))
 		return
 	}
@@ -43,11 +43,11 @@ func (h *CookiesHandler) UpdateZsxqCookies(ctx iris.Context) {
 	const invalidCookies = "invalid cookies"
 	if _, err := requestService.WithLimiter(config.C.ZsxqTestURL); err != nil {
 		err = fmt.Errorf("%s: %s", invalidCookies, err.Error())
-		ctx.StopWithJSON(iris.StatusInternalServerError,
+		_ = ctx.StopWithJSON(iris.StatusInternalServerError,
 			iris.Map{"error": err.Error()})
 		logger.Info("update zsxq cookies failed", zap.Error(err))
 		return
 	}
 
-	ctx.StopWithJSON(iris.StatusOK, iris.Map{"message": "update zsxq cookies success"})
+	_ = ctx.StopWithJSON(iris.StatusOK, iris.Map{"message": "update zsxq cookies success"})
 }
