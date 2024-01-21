@@ -86,9 +86,8 @@ func setupApp(redisService *redis.RedisService,
 	zsxq.Get("/{id:string}", zsxqHandler.Get)
 
 	cookies := app.Party("/cookies")
-	zsxqCookies := cookies.Party("/zsxq")
 	zsxqCookiesHandler := NewCookiesHandler(redisService)
-	zsxqCookies.Post("", zsxqCookiesHandler.UpdateZsxqCookies)
+	cookies.Post("/zsxq", zsxqCookiesHandler.UpdateZsxqCookies)
 
 	return app
 }

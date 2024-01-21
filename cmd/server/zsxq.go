@@ -53,7 +53,7 @@ func (h *ZsxqHandler) Get(ctx iris.Context) {
 	}
 	logger.Info("rss content retrieved")
 
-	_, _ = ctx.Text(rss)
+	ctx.StopWithText(iris.StatusOK, rss)
 }
 
 type task struct {
