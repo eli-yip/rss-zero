@@ -36,9 +36,10 @@ func main() {
 		logger.Fatal("db init failed", zap.Error(err))
 	}
 
-	setupCron(logger, redisService, db)
+	bark := notify.NewBarkNotifier(config.C.BarkURL)
+	setupCron(logger, redisService, db, bark)
 
-	app := setupApp(redisService, db, logger)
+	app := setupApp(redisService, db, bark, logger)
 
 	routes := app.GetRoutes()
 	for _, r := range routes {
@@ -51,14 +52,13 @@ func main() {
 	}
 }
 
-func setupCron(logger *zap.Logger, redis *redis.RedisService, db *gorm.DB) {
+func setupCron(logger *zap.Logger, redis *redis.RedisService, db *gorm.DB, notifier notify.Notifier) {
 	s, err := cron.NewCronService(logger)
 	if err != nil {
 		logger.Fatal("cron service init failed", zap.Error(err))
 	}
 
-	bark := notify.NewBarkNotifier(config.C.BarkURL)
-	err = s.AddJob(cron.CrawlZsxq(redis, db, bark))
+	err = s.AddJob(cron.CrawlZsxq(redis, db, notifier))
 	if err != nil {
 		logger.Fatal("add job failed", zap.Error(err))
 	}
@@ -66,6 +66,7 @@ func setupCron(logger *zap.Logger, redis *redis.RedisService, db *gorm.DB) {
 
 func setupApp(redisService *redis.RedisService,
 	db *gorm.DB,
+	notifier notify.Notifier,
 	logger *zap.Logger) (app *iris.Application) {
 	app = iris.New()
 
@@ -94,6 +95,10 @@ func setupApp(redisService *redis.RedisService,
 	cookies := app.Party("/cookies")
 	zsxqCookiesHandler := NewCookiesHandler(redisService)
 	cookies.Post("/zsxq", zsxqCookiesHandler.UpdateZsxqCookies)
+
+	refmt := app.Party("/refmt")
+	refmtHandler := NewRefmtHandler(db, notifier)
+	refmt.Post("/zsxq", refmtHandler.Post)
 
 	return app
 }
