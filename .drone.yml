@@ -5,8 +5,24 @@ name: default
 steps:
   - name: lint
     image: golangci/golangci-lint:v1.55-alpine
+    environment:
+      GOCACHE: /cache
+      GOLANGCI_LINT_CACHE: /cache
+      GOMODCACHE: /cache/mod
+      GOPATH: /go
+    volumes:
+      - name: gocache
+        path: /cache
     commands:
+      - go env -w GO111MODULE=on
+      - go env -w GOPROXY=https://goproxy.cn,direct
+      - go mod download
       - golangci-lint run -v --timeout 5m
+    when:
+      event:
+        exclude:
+          - pull_request
+          - tag
 
   - name: test
     image: docker:24.0.7-cli
@@ -92,7 +108,13 @@ services:
     volumes:
       - name: dockersock
         path: /var/run
+    when:
+      event:
+        - tag
 
 volumes:
   - name: dockersock
     temp: {}
+  - name: gocache
+    host:
+      path: /var/lib/cache/gocache

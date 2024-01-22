@@ -1,6 +1,6 @@
 GOCMD=go
 GORUN=$(GOCMD) run
-GOLINT_CONTAINER_CMD=docker run -t --rm -v $(shell pwd):/app -w /app golangci/golangci-lint:latest
+GOLINT_CONTAINER_CMD=docker run -t --rm -w /app -v $(shell pwd):/app -v $(shell go env GOCACHE):/cache/go -e GOLANGCI_LINT_CACHE=/cache/go -v ${GOPATH}/pkg:/go/pkg -e GOCACHE=/cache/go golangci/golangci-lint:v1.55-alpine
 CURRENT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 
 CURRENT_DIR := $(CURDIR)
