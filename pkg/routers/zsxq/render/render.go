@@ -69,7 +69,7 @@ func (m *MarkdownRenderService) ToFullText(t *Topic) ([]byte, error) {
 
 	titlePart = trimRightSpace(titlePart)
 
-	timeStr, err := zsxqTime.FormatTimeForRead(t.Time)
+	timeStr, err := zsxqTime.FmtForRead(t.Time)
 	if err != nil {
 		return nil, err
 	}

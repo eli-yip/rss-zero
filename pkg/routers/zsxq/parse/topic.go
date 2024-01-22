@@ -79,7 +79,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	}
 	s.log.Info("successfully parse topic struct")
 
-	createTimeInTime, err := zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
+	createTimeInTime, err := zsxqTime.DecodeZsxqAPITime(result.Topic.CreateTime)
 	if err != nil {
 		s.log.Error("failed to decode create time", zap.Error(err))
 		return err

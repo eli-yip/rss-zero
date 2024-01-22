@@ -115,7 +115,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.No
 			for !finished {
 				url := fmt.Sprintf(apiBaseURL, groupID)
 				if !firstTime {
-					createTimeStr := zsxqTime.EncodeTimeToString(createTime)
+					createTimeStr := zsxqTime.EncodeTimeForQuery(createTime)
 					url = fmt.Sprintf(apiFetchURL, url, createTimeStr)
 				}
 				firstTime = false
@@ -141,7 +141,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.No
 						return
 					}
 
-					createTime, err = zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
+					createTime, err = zsxqTime.DecodeZsxqAPITime(result.Topic.CreateTime)
 					if err != nil {
 						logger.Error("failed to decode create time", zap.Error(err))
 						return

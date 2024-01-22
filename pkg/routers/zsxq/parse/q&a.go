@@ -74,7 +74,7 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 		return err
 	}
 
-	createTime, err := zsxqTime.DecodeStringToTime(createTimeStr)
+	createTime, err := zsxqTime.DecodeZsxqAPITime(createTimeStr)
 	if err != nil {
 		return err
 	}

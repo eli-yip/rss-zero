@@ -41,7 +41,7 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 			return err
 		}
 
-		createTime, err := zsxqTime.DecodeStringToTime(createTimeStr)
+		createTime, err := zsxqTime.DecodeZsxqAPITime(createTimeStr)
 		if err != nil {
 			return err
 		}

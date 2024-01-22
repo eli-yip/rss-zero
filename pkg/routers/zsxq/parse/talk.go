@@ -91,7 +91,7 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 			return err
 		}
 
-		createTime, err := zsxqTime.DecodeStringToTime(createTimeStr)
+		createTime, err := zsxqTime.DecodeZsxqAPITime(createTimeStr)
 		if err != nil {
 			return err
 		}

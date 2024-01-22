@@ -109,7 +109,7 @@ func main() {
 		for !finished {
 			url := fmt.Sprintf(apiBaseURL, groupID)
 			if !firstTime {
-				createTimeStr := zsxqTime.EncodeTimeForQuery(zsxqTime.EncodeTimeToString(createTime))
+				createTimeStr := zsxqTime.EncodeTimeForQuery(createTime)
 				url = fmt.Sprintf(apiFetchURL, url, createTimeStr)
 			}
 			firstTime = false
@@ -133,7 +133,7 @@ func main() {
 				}
 				logger.Info(fmt.Sprintf("current topic id: %d", result.Topic.TopicID))
 
-				createTime, err = zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
+				createTime, err = zsxqTime.DecodeZsxqAPITime(result.Topic.CreateTime)
 				if err != nil {
 					logger.Fatal("failed to decode create time", zap.Error(err))
 				}
@@ -173,7 +173,7 @@ func main() {
 		createTime = earliestTopicTimeInDB
 		for !finished {
 			url := fmt.Sprintf(apiBaseURL, groupID)
-			createTimeStr := zsxqTime.EncodeTimeForQuery(zsxqTime.EncodeTimeToString(createTime))
+			createTimeStr := zsxqTime.EncodeTimeForQuery(createTime)
 			url = fmt.Sprintf(apiFetchURL, url, createTimeStr)
 			logger.Info("requesting", zap.String("url", url))
 
@@ -196,7 +196,7 @@ func main() {
 				logger.Info(fmt.Sprintf("current topic id: %d", result.Topic.TopicID))
 
 				// crateTime here is for next request url generation
-				createTime, err = zsxqTime.DecodeStringToTime(result.Topic.CreateTime)
+				createTime, err = zsxqTime.DecodeZsxqAPITime(result.Topic.CreateTime)
 				if err != nil {
 					logger.Fatal("failed to decode create time", zap.Error(err))
 				}
