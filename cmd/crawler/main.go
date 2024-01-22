@@ -115,7 +115,7 @@ func main() {
 			firstTime = false
 			logger.Info("requesting", zap.String("url", url))
 
-			respByte, err := requestService.WithLimiter(url)
+			respByte, err := requestService.Limit(url)
 			if err != nil {
 				logger.Fatal("failed to request", zap.String("url", url), zap.Error(err))
 			}
@@ -177,7 +177,7 @@ func main() {
 			url = fmt.Sprintf(apiFetchURL, url, createTimeStr)
 			logger.Info("requesting", zap.String("url", url))
 
-			respByte, err := requestService.WithLimiter(url)
+			respByte, err := requestService.Limit(url)
 			if err != nil {
 				logger.Fatal("failed to request", zap.String("url", url), zap.Error(err))
 			}

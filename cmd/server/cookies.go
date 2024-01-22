@@ -41,7 +41,7 @@ func (h *CookiesHandler) UpdateZsxqCookies(ctx iris.Context) {
 
 	requestService := zsxqRequest.NewRequestService(req.Cookies, h.redis, logger)
 	const invalidCookies = "invalid cookies"
-	if _, err := requestService.WithLimiter(config.C.ZsxqTestURL); err != nil {
+	if _, err := requestService.Limit(config.C.ZsxqTestURL); err != nil {
 		err = fmt.Errorf("%s: %s", invalidCookies, err.Error())
 		_ = ctx.StopWithJSON(iris.StatusInternalServerError,
 			iris.Map{"error": err.Error()})

@@ -48,7 +48,7 @@ func (s *ParseService) parseArticle(a *models.Article) (err error) {
 		return nil
 	}
 
-	html, err := s.Request.WithLimiterRawData(a.ArticleURL)
+	html, err := s.Request.LimitRaw(a.ArticleURL)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 		}
 
 		objectKey := fmt.Sprintf("zsxq/%d-%s", file.FileID, file.Name)
-		resp, err := s.Request.WithLimiterStream(downloadLink)
+		resp, err := s.Request.LimitStream(downloadLink)
 		if err != nil {
 			return err
 		}

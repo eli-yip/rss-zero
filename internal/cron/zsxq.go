@@ -121,7 +121,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.No
 				firstTime = false
 				logger.Info("requesting", zap.String("url", url))
 
-				respByte, err := requestService.WithLimiter(url)
+				respByte, err := requestService.Limit(url)
 				if err != nil {
 					logger.Error("failed to request", zap.String("url", url), zap.Error(err))
 					return

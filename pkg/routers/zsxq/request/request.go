@@ -22,10 +22,9 @@ var (
 	ErrMaxRetry      = errors.New("max retry")
 )
 
-const UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 type RequestService struct {
-	cookies      string
 	client       *http.Client
 	emptyClient  *http.Client
 	limiter      chan struct{}
@@ -34,12 +33,11 @@ type RequestService struct {
 	log          *zap.Logger
 }
 
-const defaultMaxRetry = 5
-
 func NewRequestService(cookies string, redisService *redis.RedisService,
 	logger *zap.Logger) *RequestService {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 
+	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:       &http.Client{Jar: jar},
 		emptyClient:  &http.Client{},
@@ -61,9 +59,7 @@ func NewRequestService(cookies string, redisService *redis.RedisService,
 	return s
 }
 
-func (r *RequestService) SetCookies(cookies string) {
-	r.cookies = cookies
-
+func (r *RequestService) SetCookies(c string) {
 	var domains []string = []string{
 		"articles.zsxq.com",
 		"api.zsxq.com",
@@ -71,120 +67,127 @@ func (r *RequestService) SetCookies(cookies string) {
 
 	for _, d := range domains {
 		u, _ := url.Parse("https://" + d)
-		for _, cookieStr := range strings.SplitN(cookies, ";", -1) {
-			parts := strings.SplitN(strings.TrimSpace(cookieStr), "=", 2)
-			if len(parts) == 2 {
-				cookies := &http.Cookie{Name: parts[0], Value: parts[1]}
+		// split cookies by ";" into cookie parts
+		for _, cp := range strings.SplitN(c, ";", -1) {
+			if n, v, ok := strings.Cut(strings.TrimSpace(cp), "="); ok {
+				cookies := &http.Cookie{Name: n, Value: v}
 				r.client.Jar.SetCookies(u, []*http.Cookie{cookies})
 			}
 		}
-		r.log.Info("set cookies", zap.String("cookies", cookies), zap.String("domain", d))
+		r.log.Info("set cookies successfully", zap.String("cookies", c), zap.String("domain", d))
 	}
 }
 
-// Commented out because it's not used.
-// func (r *RequestService) SetMaxRetry(maxRetryTimes int) { r.maxRetry = maxRetryTimes }
-
-// Resp is the typical response of zsxq api
-type Resp struct {
+// apiResp is the typical response of zsxq api
+type apiResp struct {
 	Succeeded bool `json:"succeeded"`
 }
 
-// OtherResp is the response of zsxq api when error
-type OtherResp struct {
+// badAPIResp zsxq api bad response
+type badAPIResp struct {
 	// - 1059 for too many requests
 	//
 	// - 401 for invalid cookies
 	Code int `json:"code"`
 }
 
-func (r *RequestService) WithLimiter(targetURL string) (respByte []byte, err error) {
-	r.log.Info("with limiter", zap.String("url", targetURL))
+// Send request with limiter, used for zsxq api.
+func (r *RequestService) Limit(u string) (respByte []byte, err error) {
+	logger := r.log.With(zap.String("url", u))
+
+	logger.Info("start to get zsxq API response with limit", zap.String("url", u))
 	for i := 0; i < r.maxRetry; i++ {
-		<-r.limiter
-		var resp *http.Response
-		req, err := http.NewRequest("GET", targetURL, nil)
+		logger := logger.With(zap.Int("index", i))
+		<-r.limiter // block until get a token
+
+		req, err := r.setReq(u)
 		if err != nil {
-			r.log.Error("new request error in i time", zap.Error(err), zap.Int("i", i))
+			logger.Error("fail to new a request", zap.Error(err))
 			continue
 		}
-		req.Header.Set("User-Agent", UserAgent)
-		req.Header.Set("Referer", "https://wx.zsxq.com/")
-		resp, err = r.client.Do(req)
-		// Close response body when error.
+
+		resp, err := r.client.Do(req)
 		if err != nil || resp.StatusCode != http.StatusOK {
 			if resp != nil && resp.Body != nil {
+				// Close response body when error.
 				resp.Body.Close()
 			}
-			r.log.Error("request error in i time", zap.Error(err), zap.Int("i", i))
+			logger.Error("fail to request url", zap.Error(err))
 			continue
 		}
 
 		bytes, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
-			r.log.Error("read response body in i time", zap.Error(err), zap.Int("i", i))
+			logger.Error("fail to read response body", zap.Error(err))
 			continue
 		}
-		var respData Resp
+
+		var respData apiResp
 		if err := json.Unmarshal(bytes, &respData); err != nil {
-			r.log.Error("unmarshal response body in i time", zap.Error(err), zap.Int("i", i))
+			logger.Error("fail to unmarshal response", zap.Error(err))
 			continue
 		}
+
 		if respData.Succeeded {
 			return bytes, nil
-		} else {
-			var otherResp OtherResp
-			if err := json.Unmarshal(bytes, &otherResp); err != nil {
-				r.log.Error("unmarshal other response body in i time", zap.Error(err), zap.Int("i", i))
-				continue
-			}
-			switch otherResp.Code {
-			case 1059:
-				r.log.Error("too many requests, sleep 10s in i time", zap.Int("i", i))
-				time.Sleep(time.Second * 10)
-				continue
-			case 401:
-				r.log.Error("invalid cookies, clear cookies in i time", zap.Int("i", i))
-				_ = r.redisService.Set("cookies", "", 0)
-				return nil, ErrInvalidCookie
-			default:
-				continue
-			}
+		}
+
+		var badResp badAPIResp
+		if err := json.Unmarshal(bytes, &badResp); err != nil {
+			logger.Error("fail to unmarshal bad resp", zap.Error(err), zap.Any("badResp", badResp))
+			continue
+		}
+		switch badResp.Code {
+		case 401:
+			logger.Error("invalid cookies, clear cookies in i time")
+			_ = r.redisService.Set("cookies", "", 0)
+			return nil, ErrInvalidCookie
+		case 1059:
+			logger.Error("too many requests, sleep 10s")
+			time.Sleep(time.Second * 10)
+			continue
+		default:
+			logger.Error("unknown bad response", zap.Int("status_code", badResp.Code))
+			continue
 		}
 	}
 
 	if err == nil {
 		err = ErrMaxRetry
 	}
+	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
 
-func (r *RequestService) WithLimiterRawData(targetURL string) (respByte []byte, err error) {
-	r.log.Info("with limiter raw data", zap.String("url", targetURL))
+// Send request with limiter, used for zsxq article
+func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
+	logger := r.log.With(zap.String("url", u))
+	logger.Info("request with limiter for raw data", zap.String("url", u))
+
 	for i := 0; i < r.maxRetry; i++ {
+		logger := logger.With(zap.Int("index", i))
 		<-r.limiter
-		req, err := http.NewRequest("GET", targetURL, nil)
+
+		req, err := r.setReq(u)
 		if err != nil {
-			r.log.Error("new request error in i time", zap.Error(err), zap.Int("i", i))
+			logger.Error("fail to new a request", zap.Error(err))
 			continue
 		}
-		req.Header.Set("User-Agent", UserAgent)
-		req.Header.Set("Referer", "https://wx.zsxq.com/")
-		var resp *http.Response
-		resp, err = r.client.Do(req)
+
+		resp, err := r.client.Do(req)
 		if err != nil || resp.StatusCode != http.StatusOK {
 			if resp != nil && resp.Body != nil {
 				resp.Body.Close()
 			}
-			r.log.Error("request error in i time", zap.Error(err), zap.Int("i", i))
+			logger.Error("fail to request url", zap.Error(err))
 			continue
 		}
 
 		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
-			r.log.Error("read response body in i time", zap.Error(err), zap.Int("i", i))
+			logger.Error("fail to read response body", zap.Error(err))
 			continue
 		}
 		return body, nil
@@ -193,26 +196,32 @@ func (r *RequestService) WithLimiterRawData(targetURL string) (respByte []byte, 
 	if err == nil {
 		err = ErrMaxRetry
 	}
+	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
 
-func (r *RequestService) WithLimiterStream(targetURL string) (resp *http.Response, err error) {
-	r.log.Info("with limiter", zap.String("url", targetURL))
+// Send request with limiter and get a stream result,
+// used for zsxq voices
+func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) {
+	logger := r.log.With(zap.String("url", u))
+	logger.Info("request with limiter for stream")
+
 	for i := 0; i < r.maxRetry; i++ {
-		req, err := http.NewRequest("GET", targetURL, nil)
+		logger := logger.With(zap.Int("index", i))
+
+		req, err := r.setReq(u)
 		if err != nil {
-			r.log.Error("new request error in i time", zap.Error(err), zap.Int("i", i))
+			logger.Error("fail to new a request", zap.Error(err))
 			continue
 		}
-		req.Header.Set("User-Agent", UserAgent)
-		req.Header.Set("Referer", "https://wx.zsxq.com/")
+
 		resp, err = r.client.Do(req)
 		// When request failed or status code is not 200, error.
 		if err != nil || resp.StatusCode != http.StatusOK {
 			if resp != nil && resp.Body != nil {
 				resp.Body.Close()
 			}
-			r.log.Error("request error in i time", zap.Error(err), zap.Int("i", i))
+			logger.Error("fail to request url", zap.Error(err))
 			continue
 		}
 
@@ -222,26 +231,29 @@ func (r *RequestService) WithLimiterStream(targetURL string) (resp *http.Respons
 	if err == nil {
 		err = ErrMaxRetry
 	}
+	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
 
-func (r *RequestService) WithoutLimiter(targetURL string) (respByte []byte, err error) {
-	r.log.Info("without limiter", zap.String("url", targetURL))
+// Send request without limiter, used for zsxq cdn
+func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
+	logger := r.log.With(zap.String("url", u))
+	logger.Info("without limiter", zap.String("url", u))
 	for i := 0; i < r.maxRetry; i++ {
-		var resp *http.Response
-		req, err := http.NewRequest("GET", targetURL, nil)
+		logger := logger.With(zap.Int("index", i))
+
+		req, err := r.setReq(u)
 		if err != nil {
-			r.log.Error("new request error in i time", zap.Error(err), zap.Int("i", i))
+			logger.Error("fail to new a request", zap.Error(err))
 			continue
 		}
-		req.Header.Set("User-Agent", UserAgent)
-		req.Header.Set("Referer", "https://wx.zsxq.com/")
-		resp, err = r.client.Do(req)
+
+		resp, err := r.client.Do(req)
 		if err != nil || resp.StatusCode != http.StatusOK {
 			if resp != nil && resp.Body != nil {
 				resp.Body.Close()
 			}
-			r.log.Error("request error in i time", zap.Error(err), zap.Int("i", i))
+			r.log.Error("fail to request url", zap.Error(err))
 			continue
 		}
 
@@ -255,5 +267,17 @@ func (r *RequestService) WithoutLimiter(targetURL string) (respByte []byte, err 
 	if err == nil {
 		err = ErrMaxRetry
 	}
+	logger.Error("fail to get zsxq API response without limit", zap.Error(err))
 	return nil, err
+}
+
+// Set request header and method
+func (r *RequestService) setReq(u string) (req *http.Request, err error) {
+	req, err = http.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("Referer", "https://wx.zsxq.com/")
+	return req, nil
 }

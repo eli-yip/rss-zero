@@ -46,7 +46,7 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 	}
 
 	objectKey := fmt.Sprintf("zsxq/%d.%s", voice.VoiceID, "wav")
-	resp, err := s.Request.WithLimiterStream(voice.URL)
+	resp, err := s.Request.LimitStream(voice.URL)
 	if err != nil {
 		return err
 	}

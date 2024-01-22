@@ -143,7 +143,7 @@ func (s *ParseService) DownloadLink(fileID int) (link string, err error) {
 	url := fmt.Sprintf(ZsxqFileBaseURL, fileID)
 	s.log.Info("Start get download link", zap.String("url", url))
 
-	resp, err := s.Request.WithLimiter(url)
+	resp, err := s.Request.Limit(url)
 	if err != nil {
 		s.log.Error("Failed to get download link", zap.Error(err))
 		return "", err
