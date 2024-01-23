@@ -55,6 +55,7 @@ func (s *ZsxqDBService) GetAllTopicIDs(gid int) (ids []int, err error) {
 }
 
 type Options struct {
+	GroupID   int
 	Type      *string
 	Aid       *int
 	Digested  *bool
@@ -65,7 +66,7 @@ type Options struct {
 func (s *ZsxqDBService) FetchNTopics(n int, opt Options) (ts []models.Topic, err error) {
 	ts = make([]models.Topic, 0, n)
 
-	query := s.db.Limit(n)
+	query := s.db.Limit(n).Where("group_id = ?", opt.GroupID)
 
 	if opt.Type != nil {
 		query = query.Where("type = ?", *opt.Type)

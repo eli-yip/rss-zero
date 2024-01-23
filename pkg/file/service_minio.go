@@ -47,6 +47,7 @@ func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (*FileServ
 }
 
 func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, size int64) (err error) {
+	s.logger.Info("Start to save stream to minio", zap.String("key", objectKey))
 	if stream == nil {
 		return errors.New("no body")
 	}

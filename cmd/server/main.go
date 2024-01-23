@@ -100,5 +100,9 @@ func setupApp(redisService *redis.RedisService,
 	refmtHandler := NewRefmtHandler(db, notifier)
 	refmt.Post("/zsxq", refmtHandler.Post)
 
+	export := app.Party("/export")
+	exportHandler := NewExportHandler(db, logger, notifier)
+	export.Post("/zsxq", exportHandler.ExportZsxq)
+
 	return app
 }
