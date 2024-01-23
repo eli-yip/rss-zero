@@ -7,8 +7,10 @@ import (
 	"strings"
 )
 
-func getFormatFuncs() []func(string) (string, error) {
-	return []func(string) (string, error){
+type formatFunc func(string) (string, error)
+
+func getFormatFuncs() []formatFunc {
+	return []formatFunc{
 		replaceBookMarkUp,
 		replaceAnswerQuoto,
 		replaceHashTags,

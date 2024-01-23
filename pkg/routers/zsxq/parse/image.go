@@ -33,7 +33,7 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 			url = image.Original.URL
 		}
 		objectKey := fmt.Sprintf("zsxq/%d.%s", image.ImageID, image.Type)
-		resp, err := s.Request.WithLimiterStream(url)
+		resp, err := s.Request.LimitStream(url)
 		if err != nil {
 			return err
 		}
@@ -41,7 +41,7 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 			return err
 		}
 
-		createTime, err := zsxqTime.DecodeStringToTime(createTimeStr)
+		createTime, err := zsxqTime.DecodeZsxqAPITime(createTimeStr)
 		if err != nil {
 			return err
 		}

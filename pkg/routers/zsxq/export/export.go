@@ -11,6 +11,7 @@ import (
 )
 
 type Options struct {
+	GroupID    int
 	Type       *string
 	Digested   *bool
 	AuthorName *string
@@ -38,6 +39,8 @@ var (
 
 func (s *ExportService) Export(writer io.Writer, opt Options) error {
 	var queryOpt db.Options
+
+	queryOpt.GroupID = opt.GroupID
 
 	if opt.Type != nil {
 		queryOpt.Type = opt.Type

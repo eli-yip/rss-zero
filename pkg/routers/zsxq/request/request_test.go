@@ -10,7 +10,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/log"
 )
 
-func TestWithLimiterRawData(t *testing.T) {
+func TestLimitRaw(t *testing.T) {
 	cookies := os.Getenv("COOKIES")
 	if cookies == "" {
 		t.Fatal("env COOKIES is empty")
@@ -19,7 +19,7 @@ func TestWithLimiterRawData(t *testing.T) {
 	log := log.NewLogger()
 	rs := NewRequestService(cookies, nil, log)
 	u := "https://articles.zsxq.com/id_wsktlsarlkes.html"
-	bytes, err := rs.WithLimiterRawData(u)
+	bytes, err := rs.LimitRaw(u)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestInvalidCookies(t *testing.T) {
     "error": "内部错误（勿告知用户、仅内部交流：签名校验未通过）"
 }`)
 
-	var respData Resp
+	var respData apiResp
 	if err := json.Unmarshal(respBytes, &respData); err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestInvalidCookies(t *testing.T) {
 	if respData.Succeeded {
 		t.Fatal("should not be succeeded")
 	} else {
-		var otherResp OtherResp
+		var otherResp badAPIResp
 		if err := json.Unmarshal(respBytes, &otherResp); err != nil {
 			t.Fatal(err)
 		}
@@ -80,7 +80,7 @@ func TestTooManyRequests(t *testing.T) {
     "error": "内部错误（勿告知用户、仅内部交流：签名校验未通过）"
 }`)
 
-	var respData Resp
+	var respData apiResp
 	if err := json.Unmarshal(respBytes, &respData); err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestTooManyRequests(t *testing.T) {
 	if respData.Succeeded {
 		t.Fatal("should not be succeeded")
 	} else {
-		var otherResp OtherResp
+		var otherResp badAPIResp
 		if err := json.Unmarshal(respBytes, &otherResp); err != nil {
 			t.Fatal(err)
 		}

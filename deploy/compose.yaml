@@ -6,26 +6,5 @@ services:
     image: ${IMAGE}
     container_name: rss-zero
     restart: always
-    expose:
-      - 8080
-    networks:
-      - traefik
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik"
-
-      - "traefik.http.routers.rss-zero-http.entrypoints=http"
-      - "traefik.http.routers.rss-zero-http.middlewares=http-to-https@docker"
-      - "traefik.http.routers.rss-zero-http.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.rss-zero-http.service=noop@internal"
-
-      - "traefik.http.routers.rss-zero-https.entrypoints=https"
-      - "traefik.http.routers.rss-zero-https.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.rss-zero-https.service=rss-zero-backend"
-
-      - "traefik.http.services.rss-zero-backend.loadbalancer.server.scheme=http"
-      - "traefik.http.services.rss-zero-backend.loadbalancer.server.port=8080"
-
-networks:
-  traefik:
-    external: true
+    ports:
+      - 8080:8080

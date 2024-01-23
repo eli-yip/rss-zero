@@ -9,55 +9,55 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *ParseService) parseQA(topic *models.Topic) (authorID int, authorName string, err error) {
+func (s *ParseService) parseQA(logger *zap.Logger, topic *models.Topic) (authorID int, authorName string, err error) {
 	question := topic.Question
 	answer := topic.Answer
 	if question == nil || answer == nil {
-		s.log.Info("no question or answer in this topic", zap.Int("topic_id", topic.TopicID))
+		logger.Info("no question or answer in this topic", zap.Int("topic_id", topic.TopicID))
 		return 0, "", nil
 	}
 
-	authorID, authorName, err = s.parseAuthor(&answer.Answerer)
+	authorID, authorName, err = s.parseAuthor(logger, &answer.Answerer)
 	if err != nil {
 		return 0, "", err
 	}
 
 	if err = s.parseImages(question.Images, topic.TopicID, topic.CreateTime); err != nil {
-		s.log.Error("failed to parse images", zap.Error(err))
+		logger.Error("failed to parse images", zap.Error(err))
 		return 0, "", err
 	}
 
 	if err = s.parseImages(answer.Images, topic.TopicID, topic.CreateTime); err != nil {
-		s.log.Error("failed to parse images", zap.Error(err))
+		logger.Error("failed to parse images", zap.Error(err))
 		return 0, "", err
 	}
 
-	if err = s.parseVoice(answer.Voice, topic.TopicID, topic.CreateTime); err != nil {
-		s.log.Error("failed to parse voice", zap.Error(err))
+	if err = s.parseVoice(logger, answer.Voice, topic.TopicID, topic.CreateTime); err != nil {
+		logger.Error("failed to parse voice", zap.Error(err))
 		return 0, "", err
 	}
 
 	return authorID, authorName, nil
 }
 
-func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeStr string) (err error) {
+func (s *ParseService) parseVoice(logger *zap.Logger, voice *models.Voice, topicID int, createTimeStr string) (err error) {
 	if voice == nil {
 		return nil
 	}
 
 	objectKey := fmt.Sprintf("zsxq/%d.%s", voice.VoiceID, "wav")
-	resp, err := s.Request.WithLimiterStream(voice.URL)
+	resp, err := s.Request.LimitStream(voice.URL)
 	if err != nil {
 		return err
 	}
 	if err = s.File.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
 		return err
 	}
-	s.log.Info("voice saved", zap.String("object_key", objectKey))
+	logger.Info("voice saved", zap.String("object_key", objectKey))
 
 	// Get voice stream from file service,
 	// then send it to ai service to get transcript
-	s.log.Info("get voice stream", zap.String("object_key", objectKey))
+	logger.Info("get voice stream", zap.String("object_key", objectKey))
 	voiceStream, err := s.File.Get(objectKey)
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func (s *ParseService) parseVoice(voice *models.Voice, topicID int, createTimeSt
 		return err
 	}
 
-	createTime, err := zsxqTime.DecodeStringToTime(createTimeStr)
+	createTime, err := zsxqTime.DecodeZsxqAPITime(createTimeStr)
 	if err != nil {
 		return err
 	}

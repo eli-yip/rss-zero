@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *ParseService) parseAuthor(u *models.User) (id int, name string, err error) {
+func (s *ParseService) parseAuthor(logger *zap.Logger, u *models.User) (id int, name string, err error) {
 	go func(u *models.User) {
 		err = s.DB.SaveAuthorInfo(&dbModels.Author{
 			ID:    u.UserID,
@@ -14,7 +14,7 @@ func (s *ParseService) parseAuthor(u *models.User) (id int, name string, err err
 			Alias: u.Alias,
 		})
 		if err != nil {
-			s.log.Error("save author info failed", zap.Error(err))
+			logger.Error("save author info failed", zap.Error(err))
 			return
 		}
 	}(u)

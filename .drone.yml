@@ -6,14 +6,13 @@ steps:
   - name: lint
     image: golangci/golangci-lint:v1.55-alpine
     environment:
-      GOCACHE: /cache/gocache
-      GOLANGCI_LINT_CACHE: /cache/gocache
+      GOCACHE: /cache
+      GOLANGCI_LINT_CACHE: /cache
+      GOMODCACHE: /cache/mod
       GOPATH: /go
     volumes:
       - name: gocache
-        path: /cache/gocache
-      - name: gopkg
-        path: /go/pkg
+        path: /cache
     commands:
       - go env -w GO111MODULE=on
       - go env -w GOPROXY=https://goproxy.cn,direct
@@ -118,7 +117,4 @@ volumes:
     temp: {}
   - name: gocache
     host:
-      path: /tmp/cache/gocache
-  - name: gopkg
-    host:
-      path: /tmp/cache/gopkg
+      path: /var/lib/cache/gocache
