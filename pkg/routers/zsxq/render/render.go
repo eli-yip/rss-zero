@@ -10,7 +10,7 @@ import (
 
 	gomd "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/eli-yip/rss-zero/internal/md"
-	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
 	"github.com/yuin/goldmark"
@@ -23,34 +23,36 @@ type Renderer interface {
 }
 
 type MarkdownRenderer interface {
-	// ToText converts a topic to markdown main body, which include
-	// author name, text, files(image/voice), images, article.
+	// ToText converts a render.topic to markdown main body, which include
+	// author name, text, files(image/voice), images, article
 	ToText(*Topic) ([]byte, error)
 	// Article converts a article html to markdown
 	Article([]byte) ([]byte, error)
-	// ToFullText converts a topic to markdown full text, which include everything.
-	// The result can be used to generate a pdf file.
+	// ToFullText converts a topic to markdown full text, which include everything
+	//
+	// The result can be used to generate a pdf file
 	ToFullText(*Topic) ([]byte, error)
 }
 
 type MarkdownRenderService struct {
-	db          db.DataBaseIface
+	db          zsxqDB.DataBaseIface
 	converter   *gomd.Converter // Used to convert html to markdown
 	mdFormatter goldmark.Markdown
-	formatFuncs []func(string) (string, error)
-	log         *zap.Logger
+	formatFuncs []formatFunc
+	logger      *zap.Logger
 }
 
-func NewMarkdownRenderService(dbService db.DataBaseIface, logger *zap.Logger) *MarkdownRenderService {
-	logger.Info("creating markdown render service")
+func NewMarkdownRenderService(dbService zsxqDB.DataBaseIface, logger *zap.Logger) *MarkdownRenderService {
+	logger.Info("start to create markdown render service")
+
 	s := &MarkdownRenderService{
 		db:          dbService,
 		converter:   newHTML2MdConverter(logger),
 		mdFormatter: newMdFormatter(),
 		formatFuncs: getFormatFuncs(),
-		log:         logger,
+		logger:      logger,
 	}
-	logger.Info("created markdown render service")
+	logger.Info("create markdown render service successfully")
 
 	return s
 }
@@ -65,9 +67,7 @@ func (m *MarkdownRenderService) ToFullText(t *Topic) ([]byte, error) {
 	if t.Digested {
 		titlePart = fmt.Sprintf("[%s]%s", "精华", titlePart)
 	}
-	titlePart = md.H1(titlePart)
-
-	titlePart = trimRightSpace(titlePart)
+	titlePart = trimRightSpace(md.H1(titlePart))
 
 	timeStr, err := zsxqTime.FmtForRead(t.Time)
 	if err != nil {
@@ -78,19 +78,14 @@ func (m *MarkdownRenderService) ToFullText(t *Topic) ([]byte, error) {
 	linkPart := trimRightSpace(fmt.Sprintf("链接：[%s](%s)", t.ShareLink, t.ShareLink))
 
 	text := md.Join(titlePart, timePart, linkPart, t.Text)
-
-	bytes, err := m.FormatMarkdown([]byte(text))
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
+	return m.FormatMarkdown([]byte(text))
 }
 
 func (m *MarkdownRenderService) ToText(t *Topic) (text []byte, err error) {
+	logger := m.logger.With(zap.Int("topic_id", t.ID))
+	logger.Info("start to render topic to text", zap.String("type", t.Type))
 	var buffer bytes.Buffer
 
-	m.log.Info("begin: render topic to text", zap.Int("topic_id", t.ID), zap.String("type", t.Type))
 	switch t.Type {
 	case "talk":
 		if err = m.renderTalk(t.Talk, t.AuthorName, &buffer); err != nil {
@@ -102,48 +97,48 @@ func (m *MarkdownRenderService) ToText(t *Topic) (text []byte, err error) {
 		}
 	default:
 	}
-	m.log.Info("end: render topic to text(unformatted)", zap.Int("topic_id", t.ID))
+	logger.Info("render topic to unformatted text successfully")
 
-	m.log.Info("begin: format text", zap.Int("topic_id", t.ID))
+	logger.Info("start to format text")
 	bytes, err := m.FormatMarkdown(buffer.Bytes())
 	if err != nil {
 		return nil, err
 	}
-	m.log.Info("end: format text", zap.Int("topic_id", t.ID))
-
-	m.log.Info("render topic to formatted text successfully", zap.Int("topic_id", t.ID))
+	logger.Info("format text successfully")
 	return bytes, nil
 }
 
 func (m *MarkdownRenderService) Article(text []byte) ([]byte, error) {
-	m.log.Info("begin: render article to text")
+	m.logger.Info("start to render article to text")
 	text, err := m.converter.ConvertBytes(text)
 	if err != nil {
 		return nil, err
 	}
-	m.log.Info("end: render article to text")
+	m.logger.Info("render article to text successfully")
 
-	m.log.Info("begin: format text")
+	m.logger.Info("start to format text")
 	text, err = m.FormatMarkdown(text)
 	if err != nil {
 		return nil, err
 	}
-	m.log.Info("end: format text")
-
+	m.logger.Info("format text successfully")
 	return text, nil
 }
+
+var ErrNoText = errors.New("no text in topic")
 
 func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, writer io.Writer,
 ) (err error) {
 	if talk.Text == nil {
-		return errors.New("no text in talk")
+		return ErrNoText
 	}
+
 	authorPart := fmt.Sprintf("作者：%s", author)
 	textPart := trimRightSpace(*talk.Text)
 
 	filePart := ""
 	if talk.Files != nil {
-		m.log.Info("this talk has files", zap.Int("n", len(talk.Files)))
+		m.logger.Info("this talk has files", zap.Int("n", len(talk.Files)))
 		filePart = "这篇文章的附件如下："
 		for i, file := range talk.Files {
 			object, err := m.db.GetObjectInfo(file.FileID)
@@ -158,7 +153,7 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 
 	imagePart := ""
 	if talk.Images != nil {
-		m.log.Info("this talk has images", zap.Int("n", len(talk.Images)))
+		m.logger.Info("this talk has images", zap.Int("n", len(talk.Images)))
 		imagePart = "这篇文章的图片如下："
 		for i, image := range talk.Images {
 			object, err := m.db.GetObjectInfo(image.ImageID)
@@ -173,7 +168,7 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 
 	articlePart := ""
 	if talk.Article != nil {
-		m.log.Info("this talk has article", zap.String("article_id", talk.Article.ArticleID))
+		m.logger.Info("this talk has article", zap.String("article_id", talk.Article.ArticleID))
 		articleText, err := m.db.GetArticleText(talk.Article.ArticleID)
 		if err != nil {
 			return err
@@ -192,7 +187,6 @@ func (m *MarkdownRenderService) renderTalk(talk *models.Talk, author string, wri
 	if _, err = writer.Write([]byte(text)); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -265,6 +259,4 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 	return nil
 }
 
-func trimRightSpace(text string) string {
-	return strings.TrimRight(text, " \n")
-}
+func trimRightSpace(text string) string { return strings.TrimRight(text, " \n") }
