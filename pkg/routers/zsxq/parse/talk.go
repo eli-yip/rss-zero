@@ -12,31 +12,31 @@ import (
 
 var ErrNoText = errors.New("no text in this topic")
 
-func (s *ParseService) parseTalk(topic *models.Topic) (authorID int, authorName string, err error) {
+func (s *ParseService) parseTalk(logger *zap.Logger, topic *models.Topic) (authorID int, authorName string, err error) {
 	talk := topic.Talk
 	if talk == nil || talk.Text == nil {
-		s.log.Info("no text in this topic", zap.Int("topic_id", topic.TopicID))
+		logger.Info("no text in this topic", zap.Int("topic_id", topic.TopicID))
 		return 0, "", ErrNoText
 	}
 
-	authorID, authorName, err = s.parseAuthor(&talk.Owner)
+	authorID, authorName, err = s.parseAuthor(logger, &talk.Owner)
 	if err != nil {
 		return 0, "", err
 	}
-	s.log.Info("successfully parsed author", zap.Int("author_id", authorID), zap.String("author_name", authorName))
+	logger.Info("successfully parsed author", zap.Int("author_id", authorID), zap.String("author_name", authorName))
 
 	if err = s.parseFiles(talk.Files, topic.TopicID, topic.CreateTime); err != nil {
-		s.log.Error("failed to parse files", zap.Error(err))
+		logger.Error("failed to parse files", zap.Error(err))
 		return 0, "", err
 	}
 
 	if err = s.parseImages(talk.Images, topic.TopicID, topic.CreateTime); err != nil {
-		s.log.Error("failed to parse images", zap.Error(err))
+		logger.Error("failed to parse images", zap.Error(err))
 		return 0, "", err
 	}
 
 	if err = s.parseArticle(talk.Article); err != nil {
-		s.log.Error("failed to parse articles", zap.Error(err))
+		logger.Error("failed to parse articles", zap.Error(err))
 		return 0, "", err
 	}
 
