@@ -89,7 +89,11 @@ func (h *ExportHandler) ExportZsxq(ctx iris.Context) {
 			_ = h.notifier.Notify("fail to save stream", err.Error())
 			return
 		}
-		_ = h.notifier.Notify("export successfully", fileName)
+		err = h.notifier.Notify("export successfully", fileName)
+		if err != nil {
+			logger.Error("fail to notify", zap.Error(err))
+		}
+		logger.Info("export successfully")
 	}()
 
 	_ = ctx.StopWithJSON(iris.StatusOK, iris.Map{
