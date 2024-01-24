@@ -58,10 +58,11 @@ func (h *ExportHandler) ExportZsxq(ctx iris.Context) {
 	mdRender := render.NewMarkdownRenderService(zsxqDBService, logger)
 	exportService := zsxqExport.NewExportService(zsxqDBService, mdRender)
 
+	fileName := h.zsxqFileName(options)
 	go func() {
-		pr, pw := io.Pipe()
-		fileName := h.zsxqFileName(options)
 		logger.Info("start to export", zap.String("file_name", fileName))
+
+		pr, pw := io.Pipe()
 
 		go func() {
 			defer pw.Close()
@@ -91,7 +92,11 @@ func (h *ExportHandler) ExportZsxq(ctx iris.Context) {
 		_ = h.notifier.Notify("export successfully", fileName)
 	}()
 
-	ctx.StopWithText(iris.StatusOK, "start to export")
+	_ = ctx.StopWithJSON(iris.StatusOK, iris.Map{
+		"message":   "start to export, you'll be notified when it's done",
+		"file_name": fileName,
+		"url":       config.C.MinioConfig.AssetsPrefix + "/" + fileName,
+	})
 }
 
 var ErrGroupIDEmpty = errors.New("group id is empty")
