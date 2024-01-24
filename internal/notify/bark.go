@@ -3,6 +3,7 @@ package notify
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type Notifier interface {
@@ -16,9 +17,13 @@ func NewBarkNotifier(url string) *BarkNotifier {
 }
 
 func (b *BarkNotifier) Notify(title, content string) error {
-	const url = "%s/%s/%s?group=RSS-Zero"
-	u := fmt.Sprintf(url, b.url, title, content)
+	const urlLayout = "%s/%s/%s?group=RSS-Zero"
+	u := fmt.Sprintf(urlLayout, b.url, url.QueryEscape(title), url.QueryEscape(content))
 
-	_, err := http.Get(u)
+	resp, err := http.Get(u)
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("status code: %d", resp.StatusCode)
+	}
+
 	return err
 }
