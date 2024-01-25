@@ -40,8 +40,17 @@ type Object struct {
 	ContentType     int            `gorm:"column:content_type;type:int"`
 	ContentID       int            `gorm:"column:content_id;type:int"`
 	ObjectKey       string         `gorm:"column:object_key;type:text"`
+	URL             string         `gorm:"column:url;type:text"`
 	StorageProvider pq.StringArray `gorm:"column:storage_provider;type:text[]"`
 }
+
+const (
+	ObjectImageType = iota
+)
+
+const (
+	ContentTypeAnswer = iota
+)
 
 func (o *Object) TableName() string { return "zhihu_object" }
 

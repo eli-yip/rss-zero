@@ -1,4 +1,4 @@
-package apiModel
+package apiModels
 
 // XMLInitalState represents json from xml <body><script id="js-initialData" type="text/json">...</script></body>
 type XmlInitalData struct {

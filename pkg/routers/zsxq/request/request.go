@@ -281,3 +281,8 @@ func (r *RequestService) setReq(u string) (req *http.Request, err error) {
 	req.Header.Set("Referer", "https://wx.zsxq.com/")
 	return req, nil
 }
+
+// Zsxq api does not support no limit stream
+func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error) {
+	return nil, nil
+}

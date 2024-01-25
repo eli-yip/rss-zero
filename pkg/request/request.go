@@ -15,4 +15,6 @@ type Requester interface {
 	LimitStream(string) (*http.Response, error)
 	// NoLimit requests to the given url without limiter
 	NoLimit(string) ([]byte, error)
+	// NoLimitRaw requests to the given url without limiter and returns raw data,
+	NoLimitStream(string) (*http.Response, error)
 }

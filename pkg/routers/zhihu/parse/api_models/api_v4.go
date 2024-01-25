@@ -1,8 +1,8 @@
-package apiModel
+package apiModels
 
 // V4InitalState represents json from appview/api/v4/answers/{answerId}
 type V4Answer struct {
-	ID          string   `json:"id"`
+	ID          int      `json:"id"`
 	CreatedTime int      `json:"created_time"`
 	Content     string   `json:"content"`
 	Author      Author   `json:"author"`
