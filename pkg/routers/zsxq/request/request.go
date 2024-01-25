@@ -95,7 +95,7 @@ type badAPIResp struct {
 func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 	logger := r.log.With(zap.String("url", u))
 
-	logger.Info("start to get zsxq API response with limit", zap.String("url", u))
+	logger.Info("start to get zsxq API response with limit")
 	for i := 0; i < r.maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
 		<-r.limiter // block until get a token

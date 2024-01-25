@@ -3,6 +3,7 @@ package parse
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
@@ -18,7 +19,35 @@ func (p *V4Parser) ParseAnswer(content []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(content))
+
+	if err = p.db.SaveAuthor(&db.Author{
+		ID:   answer.Author.ID,
+		Name: answer.Author.Name,
+	}); err != nil {
+		return err
+	}
+
+	if err = p.db.SaveQuestion(&db.Question{
+		ID:          answer.Question.ID,
+		CreatedTime: time.Unix(int64(answer.Question.CreatedTime), 0),
+		Title:       answer.Question.Title,
+	}); err != nil {
+		return err
+	}
+
+	if err = p.db.SaveAnswer(&db.Answer{
+		ID:          answer.ID,
+		QuestionID:  answer.Question.ID,
+		AuthorID:    answer.Author.ID,
+		CreatedTime: time.Unix(int64(answer.CreatedTime), 0),
+		Text:        string(content),
+		Raw: func() []byte {
+			raw, _ := json.Marshal(answer)
+			return raw
+		}(),
+	}); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -33,6 +62,7 @@ func (p *V4Parser) parserContent(content []byte, ansID int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return []byte(text), nil
 }
 

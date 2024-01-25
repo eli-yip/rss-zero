@@ -29,7 +29,6 @@ type Question struct {
 	ID          int       `gorm:"column:id;type:int;primary_key"`
 	CreatedTime time.Time `gorm:"column:created_time;type:timestamp"`
 	Title       string    `gorm:"column:title;type:text"`
-	Raw         []byte    `gorm:"column:raw;type:bytea"`
 }
 
 func (q *Question) TableName() string { return "zhihu_question" }

@@ -11,7 +11,7 @@ type V4Answer struct {
 
 // Author is shared by V4Answer and XmlAnswer
 type Author struct {
-	ID   string `json:"id"`
+	ID   string `json:"url_token"`
 	Name string `json:"name"`
 }
 
