@@ -46,12 +46,6 @@ func NewRequestService(logger *zap.Logger) *RequestService {
 	return s
 }
 
-// type resp405 struct {
-// 	Error struct {
-// 		Code int `json:"code"`
-// 	} `json:"error"`
-// }
-
 // Send request with limiter with error check
 func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 	logger := r.log.With(zap.String("url", u))
@@ -87,7 +81,7 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 		}
 
 		if resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusNotFound {
-			logger.Error("this resource is unreachable by public", zap.Error(ErrUnreachable))
+			// NOTE: this error will be logged in the caller
 			return nil, ErrUnreachable
 		}
 		return bytes, nil

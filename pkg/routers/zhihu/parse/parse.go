@@ -34,7 +34,8 @@ func NewV4Parser(htmlToMarkdown render.HTMLToMarkdownConverter,
 	}
 }
 
-func strToInt(str string) int {
+// urlToID converts a string to an int by hashing it.
+func urlToID(str string) int {
 	h := fnv.New32a()
 	h.Write([]byte(str))
 	return int(h.Sum32())

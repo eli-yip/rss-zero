@@ -113,6 +113,7 @@ func main() {
 			resp, err := requestService.Limit(u)
 			if err != nil {
 				if err == request.ErrUnreachable {
+					logger.Error("answer is unreachable in public, updaate status to unreachable", zap.Error(err))
 					if err = zhihuDBService.UpdateAnswerStatus(a.ID, zhihuDB.AnswerStatusUnreachable); err != nil {
 						logger.Fatal("fail to update answer status", zap.Error(err))
 					}

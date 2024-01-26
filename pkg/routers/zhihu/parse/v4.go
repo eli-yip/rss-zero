@@ -18,7 +18,7 @@ func (p *V4Parser) ParseAnswer(content []byte) (err error) {
 	logger := p.logger.With(zap.Int("answer_id", answer.ID))
 	logger.Info("unmarshal answer successfully")
 
-	contentStr, err := p.parserContent([]byte(answer.Content), answer.ID)
+	contentStr, err := p.parserContent([]byte(answer.Content), answer.ID, logger)
 	if err != nil {
 		return err
 	}
@@ -30,9 +30,7 @@ func (p *V4Parser) ParseAnswer(content []byte) (err error) {
 	}); err != nil {
 		return err
 	}
-	logger.Info("save author successfully",
-		zap.String("author_id", answer.Author.ID),
-		zap.String("author_name", answer.Author.Name))
+	logger.Info("save author successfully")
 
 	if err = p.db.SaveQuestion(&db.Question{
 		ID:          answer.Question.ID,
@@ -41,9 +39,7 @@ func (p *V4Parser) ParseAnswer(content []byte) (err error) {
 	}); err != nil {
 		return err
 	}
-	logger.Info("save question successfully",
-		zap.Int("question_id", answer.Question.ID),
-		zap.String("question_title", answer.Question.Title))
+	logger.Info("save question successfully")
 
 	if err = p.db.SaveAnswer(&db.Answer{
 		ID:          answer.ID,
@@ -64,13 +60,14 @@ func (p *V4Parser) ParseAnswer(content []byte) (err error) {
 	return nil
 }
 
-func (p *V4Parser) parserContent(content []byte, ansID int) (string, error) {
+func (p *V4Parser) parserContent(content []byte, ansID int, logger *zap.Logger) (string, error) {
 	result, err := p.htmlToMarkdown.Convert(content)
 	if err != nil {
 		return "", err
 	}
+	logger.Info("convert html to markdown successfully")
 
-	text, err := p.parseImages(string(result), ansID)
+	text, err := p.parseImages(string(result), ansID, logger)
 	if err != nil {
 		return "", err
 	}
@@ -80,20 +77,24 @@ func (p *V4Parser) parserContent(content []byte, ansID int) (string, error) {
 
 // Note: it should have been implemented in render/html.go,
 // in that case we must use go routine and add a db to render.
-func (p *V4Parser) parseImages(content string, ansID int) (result string, err error) {
+func (p *V4Parser) parseImages(content string, ansID int, logger *zap.Logger) (result string, err error) {
 	links := findImageLinks(content)
 	for _, l := range links {
-		id := strToInt(l)
+		logger := logger.With(zap.String("url", l))
+		id := urlToID(l) // generate a unique int id from url by hash
 
 		resp, err := p.request.NoLimitStream(l)
 		if err != nil {
 			return "", err
 		}
+		logger.Info("get image stream succussfully", zap.String("url", l))
+
 		const zhihuImageObjectKeyLayout = "zhihu/%d.jpg"
 		objectKey := fmt.Sprintf(zhihuImageObjectKeyLayout, id)
 		if err = p.file.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
 			return "", err
 		}
+		logger.Info("save image to minio successfully", zap.String("object_key", objectKey))
 
 		if err = p.db.SaveObjectInfo(&db.Object{
 			ID:              id,
@@ -106,9 +107,11 @@ func (p *V4Parser) parseImages(content string, ansID int) (result string, err er
 		}); err != nil {
 			return "", err
 		}
+		logger.Info("save object info successfully")
 
 		objectURL := fmt.Sprintf("%s/%s", p.file.AssetsDomain(), objectKey)
 		content = replaceImageLinks(content, objectKey, l, objectURL)
+		logger.Info("replace image link successfully", zap.String("object_url", objectURL))
 	}
 	return content, nil
 }

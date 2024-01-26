@@ -13,27 +13,26 @@ type HTMLToMarkdownConverter interface {
 	Convert([]byte) ([]byte, error)
 }
 
-type HTMLToMarkdownService struct {
-	converter *gomd.Converter
-}
+type HTMLToMarkdownService struct{ converter *gomd.Converter }
 
 func NewHTMLToMarkdownService(logger *zap.Logger) *HTMLToMarkdownService {
-	return &HTMLToMarkdownService{
-		converter: newHTML2MdConverter(logger),
-	}
+	return &HTMLToMarkdownService{converter: newHTMLToMdConverter(logger)}
 }
 
-func newHTML2MdConverter(logger *zap.Logger) *gomd.Converter {
+func newHTMLToMdConverter(logger *zap.Logger) *gomd.Converter {
 	opts := &gomd.Options{EmDelimiter: "*"}
 	converter := gomd.NewConverter("", true, opts)
+
 	rules := getHtmlRules()
 	for _, rule := range rules {
 		converter.AddRules(rule.rule)
 		logger.Info("add article render rule", zap.String("name", rule.name))
 	}
+
 	converter.Use(gomdPlugin.GitHubFlavored())
-	tagsToRemove := []string{"head", "footer"}
-	converter.Remove(tagsToRemove...)
+
+	converter.Remove([]string{"head", "footer"}...)
+
 	return converter
 }
 
