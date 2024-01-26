@@ -113,7 +113,9 @@ func main() {
 			resp, err := requestService.Limit(u)
 			if err != nil {
 				if err == request.ErrUnreachable {
-					zhihuDBService.UpdateAnswerStatus(a.ID, zhihuDB.AnswerStatusUnreachable)
+					if err = zhihuDBService.UpdateAnswerStatus(a.ID, zhihuDB.AnswerStatusUnreachable); err != nil {
+						logger.Fatal("fail to update answer status", zap.Error(err))
+					}
 					continue
 				} else {
 					logger.Fatal("fail to request zhihu api", zap.Error(err))
