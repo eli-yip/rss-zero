@@ -134,6 +134,9 @@ func (h *ExportHandler) parseOption(req *ExportRequest) (zsxqExport.Options, err
 	}
 
 	if req.Digest != nil {
+		if !*req.Digest {
+			return zsxqExport.Options{}, errors.New("digest must be true or nil")
+		}
 		opts.Digested = req.Digest
 	}
 
@@ -147,17 +150,26 @@ func (h *ExportHandler) parseOption(req *ExportRequest) (zsxqExport.Options, err
 func (h *ExportHandler) zsxqFileName(opts zsxqExport.Options) string {
 	var parts []string
 
-	parts = append(parts, fmt.Sprintf("zsxq/export/%d", opts.GroupID))
+	parts = append(parts, fmt.Sprintf("export/zsxq/%d", opts.GroupID))
 
 	if opts.Type != nil {
 		parts = append(parts, *opts.Type)
 	}
+
 	if opts.Digested != nil {
-		parts = append(parts, fmt.Sprintf("%v", *opts.Digested))
+		parts = append(parts, func() string {
+			if *opts.Digested {
+				return "digest"
+			} else {
+				return "all"
+			}
+		}())
 	}
+
 	if opts.AuthorName != nil {
 		parts = append(parts, *opts.AuthorName)
 	}
+
 	const timeLayout = "2006-01-02"
 	if !opts.StartTime.IsZero() {
 		parts = append(parts, opts.StartTime.Format(timeLayout))
