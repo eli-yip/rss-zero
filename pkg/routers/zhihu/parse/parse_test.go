@@ -1,6 +1,8 @@
 package parse
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestStrToInt(t *testing.T) {
 	var tests = []string{
@@ -36,6 +38,13 @@ func TestReplaceImageLinks(t *testing.T) {
 			from:    `http://abc.com`,
 			to:      `https://abc.com`,
 			result:  `![image](https://abc.com)`,
+		},
+		{
+			content: `![zhihu/271262920.jpg](/zhihu/271262920.jpg)![](https://pic2.zhimg.com/50/v2-f629e22932891930f8ca4a81181f19d1_b.jpg)`,
+			name:    `zhihu/2872088069.jpg`,
+			from:    `https://pic2.zhimg.com/50/v2-f629e22932891930f8ca4a81181f19d1_b.jpg`,
+			to:      `/zhihu/2872088069.jpg`,
+			result:  `![zhihu/271262920.jpg](/zhihu/271262920.jpg)![zhihu/2872088069.jpg](/zhihu/2872088069.jpg)`,
 		},
 	}
 

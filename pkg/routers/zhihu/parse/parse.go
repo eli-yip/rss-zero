@@ -11,11 +11,11 @@ import (
 	"go.uber.org/zap"
 )
 
-type Parser interface {
+type ParserIface interface {
 	ParseAnswer(content []byte) error
 }
 
-type V4Parser struct {
+type Parser struct {
 	htmlToMarkdown render.HTMLToMarkdownConverter
 	request        request.Requester
 	file           file.FileIface
@@ -24,9 +24,9 @@ type V4Parser struct {
 	mdfmt          *render.MarkdownFormatter
 }
 
-func NewV4Parser(htmlToMarkdown render.HTMLToMarkdownConverter,
-	r request.Requester, f file.FileIface, db db.DB, logger *zap.Logger) *V4Parser {
-	return &V4Parser{
+func NewParser(htmlToMarkdown render.HTMLToMarkdownConverter,
+	r request.Requester, f file.FileIface, db db.DB, logger *zap.Logger) *Parser {
+	return &Parser{
 		htmlToMarkdown: htmlToMarkdown,
 		request:        r,
 		file:           f,
@@ -56,7 +56,7 @@ func findImageLinks(content string) (links []string) {
 }
 
 func replaceImageLinks(content, name, from, to string) (result string) {
-	re := regexp.MustCompile(`!\[.*?\]\(` + regexp.QuoteMeta(from) + `\)`)
+	re := regexp.MustCompile(`!\[[^\]]*\]\(` + regexp.QuoteMeta(from) + `\)`)
 	result = re.ReplaceAllString(content, `![`+name+`](`+to+`)`)
 	return result
 }

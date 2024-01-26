@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (p *V4Parser) ParsePosts(content []byte) (err error) {
+func (p *Parser) ParsePosts(content []byte) (err error) {
 	initialData, err := p.getInitialData(content)
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func (p *V4Parser) ParsePosts(content []byte) (err error) {
 	for _, a := range htmlPost.InitialState.Entities.Articles {
 		logger := p.logger.With(zap.Int("post_id", a.ID))
 
-		text, err := p.parserContent([]byte(a.Content), a.ID, logger)
+		text, err := p.parseContent([]byte(a.Content), a.ID, logger)
 		if err != nil {
 			return err
 		}
@@ -50,7 +50,7 @@ func (p *V4Parser) ParsePosts(content []byte) (err error) {
 		if err = p.db.SavePost(&db.Post{
 			ID:          a.ID,
 			Title:       a.Title,
-			Content:     string(content),
+			Text:        string(content),
 			AuthorID:    a.Author.ID,
 			CreatedTime: time.Unix(int64(a.CreatedTime), 0),
 			Raw:         func() []byte { b, _ := json.Marshal(a); return b }(),
@@ -63,7 +63,7 @@ func (p *V4Parser) ParsePosts(content []byte) (err error) {
 	return nil
 }
 
-func (p *V4Parser) getInitialData(content []byte) (initialData string, err error) {
+func (p *Parser) getInitialData(content []byte) (initialData string, err error) {
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(content))
 	if err != nil {
 		return "", err

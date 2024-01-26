@@ -1,13 +1,11 @@
 package parse
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/eli-yip/rss-zero/pkg/log"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -15,25 +13,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func TestInitialData(t *testing.T) {
-	path := filepath.Join("examples", "posts.html")
-
-	file, err := os.Open(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer file.Close()
-
-	doc, err := goquery.NewDocumentFromReader(file)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	scriptContent := doc.Find("body script#js-initialData").Text()
-	fmt.Println("Script Content:", scriptContent)
-}
-
-func TestParsePosts(t *testing.T) {
+func TestParsePins(t *testing.T) {
 	logger := log.NewLogger()
 	htmlToMarkdown := render.NewHTMLToMarkdownService(logger)
 	requester := request.NewRequestService(logger)
@@ -42,7 +22,7 @@ func TestParsePosts(t *testing.T) {
 
 	parser := NewParser(htmlToMarkdown, requester, fileService, db, logger)
 
-	path := filepath.Join("examples", "posts.html")
+	path := filepath.Join("examples", "pins.html")
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -54,7 +34,7 @@ func TestParsePosts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := parser.ParsePosts(content); err != nil {
+	if err := parser.ParsePins(content); err != nil {
 		t.Fatal(err)
 	}
 }

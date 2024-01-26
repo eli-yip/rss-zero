@@ -62,8 +62,17 @@ type Post struct {
 	AuthorID    string    `gorm:"column:author_id;type:text"`
 	CreatedTime time.Time `gorm:"column:created_time;type:timestamp"`
 	Title       string    `gorm:"column:title;type:text"`
-	Content     string    `gorm:"column:content;type:text"`
+	Text        string    `gorm:"column:text;type:text"`
 	Raw         []byte    `gorm:"column:raw;type:bytea"`
 }
 
 func (p *Post) TableName() string { return "zhihu_post" }
+
+type Pin struct {
+	ID          int       `gorm:"column:id;type:int;primary_key"`
+	AuthorID    string    `gorm:"column:author_id;type:string"`
+	CreatedTime time.Time `gorm:"column:created_time;type:timestamp"`
+	Text        string    `gorm:"column:text;type:text"`
+}
+
+func (p *Pin) TableName() string { return "zhihu_pin" }

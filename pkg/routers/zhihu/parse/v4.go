@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (p *V4Parser) ParseAnswer(content []byte) (err error) {
+func (p *Parser) ParseAnswer(content []byte) (err error) {
 	var answer apiModels.V4Answer
 	if err = json.Unmarshal(content, &answer); err != nil {
 		return err
@@ -18,7 +18,7 @@ func (p *V4Parser) ParseAnswer(content []byte) (err error) {
 	logger := p.logger.With(zap.Int("answer_id", answer.ID))
 	logger.Info("unmarshal answer successfully")
 
-	contentStr, err := p.parserContent([]byte(answer.Content), answer.ID, logger)
+	contentStr, err := p.parseContent([]byte(answer.Content), answer.ID, logger)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (p *V4Parser) ParseAnswer(content []byte) (err error) {
 	return nil
 }
 
-func (p *V4Parser) parserContent(content []byte, ansID int, logger *zap.Logger) (string, error) {
+func (p *Parser) parseContent(content []byte, ansID int, logger *zap.Logger) (string, error) {
 	result, err := p.htmlToMarkdown.Convert(content)
 	if err != nil {
 		return "", err
@@ -83,7 +83,7 @@ func (p *V4Parser) parserContent(content []byte, ansID int, logger *zap.Logger) 
 
 // Note: it should have been implemented in render/html.go,
 // in that case we must use go routine and add a db to render.
-func (p *V4Parser) parseImages(content string, ansID int, logger *zap.Logger) (result string, err error) {
+func (p *Parser) parseImages(content string, ansID int, logger *zap.Logger) (result string, err error) {
 	links := findImageLinks(content)
 	for _, l := range links {
 		logger := logger.With(zap.String("url", l))
@@ -93,7 +93,7 @@ func (p *V4Parser) parseImages(content string, ansID int, logger *zap.Logger) (r
 		if err != nil {
 			return "", err
 		}
-		logger.Info("get image stream succussfully", zap.String("url", l))
+		logger.Info("get image stream succussfully")
 
 		const zhihuImageObjectKeyLayout = "zhihu/%d.jpg"
 		objectKey := fmt.Sprintf(zhihuImageObjectKeyLayout, id)

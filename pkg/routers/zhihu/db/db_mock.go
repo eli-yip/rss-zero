@@ -33,3 +33,15 @@ func (d *MockDB) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, err e
 func (d *MockDB) UpdateAnswerStatus(id int, status int) error {
 	return nil
 }
+
+func (d *MockDB) SavePin(p *Pin) error {
+	return nil
+}
+
+func (d *MockDB) GetAuthorName(string) (string, error) {
+	return "", nil
+}
+
+func (d *MockDB) CheckAuthorExist(string) (bool, error) {
+	return true, nil
+}

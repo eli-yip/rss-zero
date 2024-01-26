@@ -85,7 +85,7 @@ func main() {
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
 	logger.Info("init html to markdown service successfully")
 
-	answerParser := parse.NewV4Parser(htmlToMarkdownService, requestService, minioService, zhihuDBService, logger)
+	answerParser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, logger)
 	logger.Info("init answer parser successfully")
 
 	opts := zhihuDB.FetchAnswerOption{Text: func() *string { s := ""; return &s }()} // Get texts that are not generated
