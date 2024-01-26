@@ -56,3 +56,14 @@ type Sub struct {
 }
 
 func (s *Sub) TableName() string { return "zhihu_sub" }
+
+type Post struct {
+	ID          int       `gorm:"column:id;type:int;primary_key"`
+	AuthorID    string    `gorm:"column:author_id;type:text"`
+	CreatedTime time.Time `gorm:"column:created_time;type:timestamp"`
+	Title       string    `gorm:"column:title;type:text"`
+	Content     string    `gorm:"column:content;type:text"`
+	Raw         []byte    `gorm:"column:raw;type:bytea"`
+}
+
+func (p *Post) TableName() string { return "zhihu_post" }

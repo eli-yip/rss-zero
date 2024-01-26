@@ -5,6 +5,7 @@ import "gorm.io/gorm"
 type DB interface {
 	DataBaseAnswer
 	DataBaseQuestion
+	DataBasePost
 	DataBaseAuthor
 	DataBaseObject
 }
@@ -26,10 +27,18 @@ type DataBaseObject interface {
 	GetObjectInfo(oid int) (o *Object, err error)
 }
 
+type DataBasePost interface {
+	SavePost(p *Post) error
+}
+
 type DBService struct{ *gorm.DB }
 
 func NewDBService(db *gorm.DB) *DBService {
 	return &DBService{db}
+}
+
+func (d *DBService) SavePost(p *Post) error {
+	return d.Save(p).Error
 }
 
 func (d *DBService) SaveQuestion(q *Question) error {
