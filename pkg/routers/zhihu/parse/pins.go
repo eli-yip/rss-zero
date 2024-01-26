@@ -2,8 +2,6 @@ package parse
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -58,15 +56,6 @@ func (p *Parser) ParsePins(content []byte) (err error) {
 		}); err != nil {
 			return err
 		}
-
-		path := filepath.Join("examples", pin.ID+".md")
-
-		file, err := os.Create(path)
-		if err != nil {
-			panic("q3e")
-		}
-
-		_, _ = file.Write(content)
 	}
 
 	return nil
