@@ -4,15 +4,19 @@ GOLINT_CONTAINER_CMD=docker run -t --rm -w /app -v $(shell pwd):/app -v ${GOPATH
 CURRENT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 CURRENT_DIR := $(CURDIR)
 
+.PHONY: server
 server:
 	$(GOCMD) build -o server ${CURRENT_DIR}/cmd/server
 
+.PHONY: zhihu-crawler
 zhihu-crawler:
 	$(GOCMD) build -o zhihu-crawler ${CURRENT_DIR}/cmd/zhihu/crawler
 
+.PHONY: zsxq-crawler
 zsxq-crawler:
 	$(GOCMD) build -o zsxq-crawler ${CURRENT_DIR}/cmd/zsxq/crawler
 
+.PHONY: zsxq-re-fmt
 zsxq-re-fmt:
 	$(GOCMD) build -o zsxq-re-fmt ${CURRENT_DIR}/cmd/zsxq/re-fmt
 

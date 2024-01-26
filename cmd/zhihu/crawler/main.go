@@ -88,7 +88,8 @@ func main() {
 	answerParser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, logger)
 	logger.Info("init answer parser successfully")
 
-	opts := zhihuDB.FetchAnswerOption{Text: func() *string { s := ""; return &s }()} // Get texts that are not generated
+	opts := zhihuDB.FetchAnswerOption{Text: func() *string { s := ""; return &s }(),
+		Status: func() *int { status := zhihuDB.AnswerStatusUncompleted; return &status }()} // Get texts that are not generated
 	for {
 		logger.Info("start to parse answers from db")
 
