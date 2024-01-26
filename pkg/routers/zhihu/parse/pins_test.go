@@ -34,7 +34,12 @@ func TestParsePins(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := parser.ParsePins(content); err != nil {
+	pins, err := parser.SplitPins(content)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := parser.ParsePins(pins); err != nil {
 		t.Fatal(err)
 	}
 }

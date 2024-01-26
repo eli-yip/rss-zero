@@ -11,20 +11,29 @@ import (
 	"go.uber.org/zap"
 )
 
-func (p *Parser) ParsePosts(content []byte) (err error) {
+func (p *Parser) SplitPosts(content []byte) (posts []apiModels.Article, err error) {
 	initialData, err := p.getInitialData(content)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	p.logger.Info("get initial data successfully")
 
 	var htmlPost apiModels.HTMLPost
 	if err = json.Unmarshal([]byte(initialData), &htmlPost); err != nil {
-		return err
+		return nil, err
 	}
 	p.logger.Info("unmarshal initial data successfully")
 
 	for _, a := range htmlPost.InitialState.Entities.Articles {
+		posts = append(posts, a)
+	}
+
+	return posts, nil
+}
+
+func (p *Parser) ParsePosts(articles []apiModels.Article) (err error) {
+	var content []byte
+	for _, a := range articles {
 		logger := p.logger.With(zap.Int("post_id", a.ID))
 
 		text, err := p.parseContent([]byte(a.Content), a.ID, logger)

@@ -10,20 +10,28 @@ import (
 	"go.uber.org/zap"
 )
 
-func (p *Parser) ParsePins(content []byte) (err error) {
+func (p *Parser) SplitPins(content []byte) ([]apiModels.Pin, error) {
 	initialData, err := p.getInitialData(content)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	p.logger.Info("get initial data successfully")
 
 	var htmlPin apiModels.HTMLPin
 	if err = json.Unmarshal([]byte(initialData), &htmlPin); err != nil {
-		return err
+		return nil, err
 	}
 	p.logger.Info("unmarshal initial data successfully")
 
+	pins := make([]apiModels.Pin, len(htmlPin.InitialState.Entities.Pins))
 	for _, pin := range htmlPin.InitialState.Entities.Pins {
+		pins = append(pins, pin)
+	}
+	return pins, nil
+}
+
+func (p *Parser) ParsePins(pins []apiModels.Pin) (err error) {
+	for _, pin := range pins {
 		pinID, err := strconv.Atoi(pin.ID)
 		if err != nil {
 			return err

@@ -54,7 +54,12 @@ func TestParsePosts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := parser.ParsePosts(content); err != nil {
+	posts, err := parser.SplitPosts(content)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := parser.ParsePosts(posts); err != nil {
 		t.Fatal(err)
 	}
 }
