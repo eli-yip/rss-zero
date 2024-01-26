@@ -89,7 +89,7 @@ func (p *V4Parser) parseImages(content string, ansID int) (result string, err er
 		if err != nil {
 			return "", err
 		}
-		const zhihuImageObjectKeyLayout = "rss/zhihu/%d.jpg"
+		const zhihuImageObjectKeyLayout = "zhihu/%d.jpg"
 		objectKey := fmt.Sprintf(zhihuImageObjectKeyLayout, id)
 		if err = p.file.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
 			return "", err
@@ -107,7 +107,8 @@ func (p *V4Parser) parseImages(content string, ansID int) (result string, err er
 			return "", err
 		}
 
-		content = replaceImageLinks(content, objectKey, l, p.file.AssetsDomain()+objectKey)
+		objectURL := fmt.Sprintf("%s/%s", p.file.AssetsDomain(), objectKey)
+		content = replaceImageLinks(content, objectKey, l, objectURL)
 	}
 	return content, nil
 }
