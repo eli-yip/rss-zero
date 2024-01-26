@@ -12,7 +12,7 @@ import (
 )
 
 func TestV4ParserUnmarshal(t *testing.T) {
-	v4Parser := NewV4Parser(nil, nil, nil, nil)
+	v4Parser := NewV4Parser(nil, nil, nil, nil, nil)
 	paths := []string{filepath.Join("examples", "answer_apiv4_resp.json")}
 
 	for _, path := range paths {
@@ -36,7 +36,7 @@ func TestV4ParserUnmarshal(t *testing.T) {
 func TestV4ParseContent(t *testing.T) {
 	logger := log.NewLogger()
 	htmlToMarkdown := render.NewHTMLToMarkdownService(logger)
-	v4Parser := NewV4Parser(htmlToMarkdown, nil, nil, nil)
+	v4Parser := NewV4Parser(htmlToMarkdown, nil, nil, nil, nil)
 
 	paths := []string{
 		filepath.Join("examples", "answer_content.html"),
@@ -55,10 +55,11 @@ func TestV4ParseContent(t *testing.T) {
 			t.Error(err)
 		}
 
-		if content, err = v4Parser.parserContent(content, 1); err != nil {
+		var contentStr string
+		if contentStr, err = v4Parser.parserContent(content, 1); err != nil {
 			t.Error(err)
 		}
-		fmt.Println(string(content))
+		fmt.Println(string(contentStr))
 		fmt.Println("=====================================")
 	}
 }
@@ -66,7 +67,7 @@ func TestV4ParseContent(t *testing.T) {
 func TestV4ParserFindImageLinks(t *testing.T) {
 	logger := log.NewLogger()
 	htmlToMarkdown := render.NewHTMLToMarkdownService(logger)
-	v4Parser := NewV4Parser(htmlToMarkdown, nil, nil, nil)
+	v4Parser := NewV4Parser(htmlToMarkdown, nil, nil, nil, nil)
 
 	paths := []string{
 		filepath.Join("examples", "answer_content.html"),
@@ -85,45 +86,12 @@ func TestV4ParserFindImageLinks(t *testing.T) {
 			t.Error(err)
 		}
 
-		if content, err = v4Parser.parserContent(content, 1); err != nil {
+		var contentStr string
+		if contentStr, err = v4Parser.parserContent(content, 1); err != nil {
 			t.Error(err)
 		}
-		links := findImageLinks(string(content))
+		links := findImageLinks(contentStr)
 		fmt.Println(links)
 		fmt.Println("=====================================")
-	}
-}
-
-func TestReplaceImageLinks(t *testing.T) {
-	type cases struct {
-		content string
-		name    string
-		from    string
-		to      string
-		result  string
-	}
-
-	casesList := []cases{
-		{
-			content: `![image](http`,
-			name:    `image`,
-			from:    `http`,
-			to:      `https`,
-			result:  `![image](http`,
-		},
-		{
-			content: `![image](http://abc.com)`,
-			name:    `image`,
-			from:    `http://abc.com`,
-			to:      `https://abc.com`,
-			result:  `![image](https://abc.com)`,
-		},
-	}
-
-	for _, c := range casesList {
-		result := replaceImageLinks(c.content, c.name, c.from, c.to)
-		if result != c.result {
-			t.Errorf("expected %s, got %s", c.result, result)
-		}
 	}
 }

@@ -24,7 +24,8 @@ func NewHTMLToMarkdownService(logger *zap.Logger) *HTMLToMarkdownService {
 }
 
 func newHTML2MdConverter(logger *zap.Logger) *gomd.Converter {
-	converter := gomd.NewConverter("", true, nil)
+	opts := &gomd.Options{EmDelimiter: "*"}
+	converter := gomd.NewConverter("", true, opts)
 	rules := getHtmlRules()
 	for _, rule := range rules {
 		converter.AddRules(rule.rule)
