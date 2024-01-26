@@ -24,6 +24,12 @@ func (p *V4Parser) ParseAnswer(content []byte) (err error) {
 	}
 	logger.Info("parse content successfully")
 
+	content, err = p.mdfmt.Format([]byte(contentStr))
+	if err != nil {
+		return err
+	}
+	logger.Info("format content successfully")
+
 	if err = p.db.SaveAuthor(&db.Author{
 		ID:   answer.Author.ID,
 		Name: answer.Author.Name,
@@ -46,7 +52,7 @@ func (p *V4Parser) ParseAnswer(content []byte) (err error) {
 		QuestionID:  answer.Question.ID,
 		AuthorID:    answer.Author.ID,
 		CreatedTime: time.Unix(int64(answer.CreatedTime), 0),
-		Text:        contentStr,
+		Text:        string(content),
 		Raw: func() []byte {
 			raw, _ := json.Marshal(answer)
 			return raw

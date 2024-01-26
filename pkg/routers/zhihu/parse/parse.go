@@ -21,6 +21,7 @@ type V4Parser struct {
 	file           file.FileIface
 	db             db.DB
 	logger         *zap.Logger
+	mdfmt          *render.MarkdownFormatter
 }
 
 func NewV4Parser(htmlToMarkdown render.HTMLToMarkdownConverter,
@@ -31,6 +32,7 @@ func NewV4Parser(htmlToMarkdown render.HTMLToMarkdownConverter,
 		file:           f,
 		db:             db,
 		logger:         logger,
+		mdfmt:          render.NewMarkdownFormatter(),
 	}
 }
 
