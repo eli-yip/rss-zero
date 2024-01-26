@@ -55,6 +55,7 @@ func (p *V4Parser) ParseAnswer(content []byte) (err error) {
 			raw, _ := json.Marshal(answer)
 			return raw
 		}(),
+		Status: db.AnswerStatusCompleted,
 	}); err != nil {
 		return err
 	}

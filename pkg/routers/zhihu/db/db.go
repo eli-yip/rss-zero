@@ -9,18 +9,6 @@ type DB interface {
 	DataBaseObject
 }
 
-type DataBaseAnswer interface {
-	// Save answer info to zhihu_answer table
-	SaveAnswer(a *Answer) error
-	// FetchNAnswers get n answers from zhihu_answer table,
-	// then return the answers for text generating.
-	FetchNAnswer(int, FetchAnswerOption) ([]Answer, error)
-}
-
-type FetchAnswerOption struct {
-	Text *string
-}
-
 type DataBaseQuestion interface {
 	// Save question info to zhihu_question table
 	SaveQuestion(q *Question) error
@@ -42,26 +30,6 @@ type DBService struct{ *gorm.DB }
 
 func NewDBService(db *gorm.DB) *DBService {
 	return &DBService{db}
-}
-
-func (d *DBService) SaveAnswer(a *Answer) error {
-	return d.Save(a).Error
-}
-
-func (d *DBService) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, err error) {
-	as = make([]Answer, 0, n)
-
-	query := d.Limit(n)
-
-	if opts.Text != nil {
-		query = query.Where("text = ?", *opts.Text)
-	}
-
-	if err := query.Order("created_time asc").Find(&as).Error; err != nil {
-		return nil, err
-	}
-
-	return as, nil
 }
 
 func (d *DBService) SaveQuestion(q *Question) error {

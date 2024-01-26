@@ -1,0 +1,1892 @@
+{
+  "paging": {
+    "is_end": false,
+    "totals": 3796,
+    "previous": "http://www.zhihu.com/api/v4/members/canglimo/answers?sort_by=created&include=data%5B%2A%5D.is_normal%2Cadmin_closed_comment%2Creward_info%2Cis_collapsed%2Cannotation_action%2Cannotation_detail%2Ccollapse_reason%2Ccollapsed_by%2Csuggest_edit%2Ccomment_count%2Ccan_comment%2Ccontent%2Ceditable_content%2Cattachment%2Cvoteup_count%2Creshipment_settings%2Ccomment_permission%2Ccreated_time%2Cupdated_time%2Creview_info%2Cexcerpt%2Cpaid_info%2Creaction_instruction%2Cis_labeled%2Clabel_info%2Crelationship.is_authorized%2Cvoting%2Cis_author%2Cis_thanked%2Cis_nothelp%3Bdata%5B%2A%5D.vessay_info%3Bdata%5B%2A%5D.author.badge%5B%3F%28type%3Dbest_answerer%29%5D.topics%3Bdata%5B%2A%5D.author.vip_info%3Bdata%5B%2A%5D.question.has_publishing_draft%2Crelationship&limit=20&offset=3720",
+    "is_start": false,
+    "next": "http://www.zhihu.com/api/v4/members/canglimo/answers?sort_by=created&include=data%5B%2A%5D.is_normal%2Cadmin_closed_comment%2Creward_info%2Cis_collapsed%2Cannotation_action%2Cannotation_detail%2Ccollapse_reason%2Ccollapsed_by%2Csuggest_edit%2Ccomment_count%2Ccan_comment%2Ccontent%2Ceditable_content%2Cattachment%2Cvoteup_count%2Creshipment_settings%2Ccomment_permission%2Ccreated_time%2Cupdated_time%2Creview_info%2Cexcerpt%2Cpaid_info%2Creaction_instruction%2Cis_labeled%2Clabel_info%2Crelationship.is_authorized%2Cvoting%2Cis_author%2Cis_thanked%2Cis_nothelp%3Bdata%5B%2A%5D.vessay_info%3Bdata%5B%2A%5D.author.badge%5B%3F%28type%3Dbest_answerer%29%5D.topics%3Bdata%5B%2A%5D.author.vip_info%3Bdata%5B%2A%5D.question.has_publishing_draft%2Crelationship&limit=20&offset=3760"
+  },
+  "data": [
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "前三十年中国没有资格改革开放。 也绝对不应该改革开放。 回头看历史，用事后诸葛亮的方式去评判，我们发现，当年： 1，文盲率极高，没有基础教育支撑下无法产生足够合格的技术工人 2，基建很烂，天灾人祸不断，物流成本极高 3，工业需求的基础没有，冶炼、化工等几乎为零，而开放的话意味着苏联不会再支援基建的工业项目，所以配套产业链完全不存在。 4，没有工业基础的改开，意味着作为原料、劳力的输出低和工业品的进口地，这…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1495182220,
+      "id": 171688998,
+      "voteup_count": 240,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1493557749,
+        "url": "http://www.zhihu.com/api/v4/questions/59216611",
+        "title": "假设没有前三十年的社会主义建设，直接进入改革开放，中国会怎么样？",
+        "updated_time": 1506052158,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 59216611
+      },
+      "content": "<p data-pid=\"8nZOj5oZ\">前三十年中国没有资格改革开放。</p><p data-pid=\"yRyldmR8\">也绝对不应该改革开放。</p><p data-pid=\"atBIcScm\">回头看历史，用事后诸葛亮的方式去评判，我们发现，当年：</p><p data-pid=\"PGsr-x1i\">1，文盲率极高，没有基础教育支撑下无法产生足够合格的技术工人</p><p data-pid=\"Dw2fypRT\">2，基建很烂，天灾人祸不断，物流成本极高</p><p data-pid=\"hc3YxnpB\">3，工业需求的基础没有，冶炼、化工等几乎为零，而开放的话意味着苏联不会再支援基建的工业项目，所以配套产业链完全不存在。</p><p data-pid=\"x7aWb5aa\">4，没有工业基础的改开，意味着作为原料、劳力的输出低和工业品的进口地，这个剪刀差比计划经济下的工农剪刀差要大，而且积累都被外国资本拿走了。</p><p data-pid=\"FyBg7zFN\">所以那时候改开，现在的中国很可能：</p><p data-pid=\"Dht2YG__\">1，利益集团垄断了国外的买办生意并占有绝大部分资产；</p><p data-pid=\"Gyb1dXIw\">2，工业基本上都是代工，并且控制在国外资本手里；</p><p data-pid=\"Rjc_HFHA\">3，按照某些逻辑，造不如买买不如租，估计别说原子弹，化肥能自产就不错了；</p><p data-pid=\"a9IjcZDM\">4，出口还包括粮食等等，稀土是大头，出口工业品基本为低级工业品，丰收也会饿死人；</p><p data-pid=\"WtYgAG5B\">5，教育很早被产业化，阶层很早就固化了；</p><p data-pid=\"760KSCAW\">6，大量输出中国佣人；</p><p data-pid=\"HPiuVxqz\">7，科研是垃圾，但在IT行业可以靠外包吹牛赚钱；</p><p data-pid=\"Dz29z8tv\">8，没有墙了，所以没有百度腾讯阿里知乎。</p><p data-pid=\"q-ErDsw8\">可以参照的原型是印度、巴西、阿根廷、泰国、菲律宾。</p>",
+      "comment_count": 60,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/171688998",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1495361524,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "问这个问题很奇怪。 过去5000年，我们有90%时间是世界最强。 在中世纪欧洲人不洗澡的时候，我们有百万人的不夜城。 无数蛮族入侵过我们，但他们从未辉煌百年以上，都成为一个历史名词。 在我们祖先起步的时候，我们周围有大量的白人混居，然后他们都被消灭了。 在西方列强的祖先高卢人、日尔曼人等被罗马人视为天生的奴隶种时，我们动员几个仆从国的军队就击杀敌国的君主。 当我们每次面临绝望，都会产生伟大的英雄人物。 摧锋于…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1494066178,
+      "id": 165627034,
+      "voteup_count": 1388,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1429473459,
+        "url": "http://www.zhihu.com/api/v4/questions/29707017",
+        "title": "为什么部分人认为中国因有大国梦就要事事争世界第一？",
+        "updated_time": 1494132798,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 29707017
+      },
+      "content": "<p data-pid=\"9XcXVvR8\">问这个问题很奇怪。</p><p data-pid=\"hGUf1xZ9\">过去5000年，我们有90%时间是世界最强。</p><p data-pid=\"iPVkbA5o\">在中世纪欧洲人不洗澡的时候，我们有百万人的不夜城。</p><p data-pid=\"IVBLxHRF\">无数蛮族入侵过我们，但他们从未辉煌百年以上，都成为一个历史名词。</p><p data-pid=\"G8G8uBXi\">在我们祖先起步的时候，我们周围有大量的白人混居，然后他们都被消灭了。</p><p data-pid=\"NUnPRaKL\">在西方列强的祖先高卢人、日尔曼人等被罗马人视为天生的奴隶种时，我们动员几个仆从国的军队就击杀敌国的君主。</p><p data-pid=\"LSfBoH7X\">当我们每次面临绝望，都会产生伟大的英雄人物。</p><p data-pid=\"X4VvoA0r\">摧锋于正锐。</p><p data-pid=\"-vtrboOr\">华夏贵胄，生来就是做第一的。</p><p data-pid=\"l0Ne9TkP\">————————————————————————</p><p data-pid=\"BL6L3-gj\">有些人跪的久了，见不得别人站着；</p><p data-pid=\"c-UuVdI3\">有些人头上的鞭子剪了，心里的鞭子还在野蛮生长；</p><p data-pid=\"kq9oWWdM\">有些人入夷久了，就宣扬蛮夷胜过华夏；</p><p data-pid=\"b73SKJCx\">有些人把自己的不幸和无能归结于祖宗和同胞；</p><p data-pid=\"WILcx8j5\">赛里斯人在看着你。</p>",
+      "comment_count": 457,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/165627034",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1494220639,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "先说结论，你没资格怀念民国。 珍惜现在吧。 ——— 外祖父是当地有名的文化人，上高小是骑自行车的，十二大洋的美国进口货。 他的舅舅在奉天开百货商场，卖欧洲货和美国货为主，外祖父去帮忙练就熟练日语。 他姥姥家是当地数一数二的大地主。 他面对扫荡日军，靠嘴皮子救了全村的房子。 他参与TG主办的地下学校，多次被日伪搜查，命大。 他WG期间被迫躲回老家。 这样一个人，怀念民国吗？不，憎恨。 ———…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1492229928,
+      "id": 157321819,
+      "voteup_count": 394,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1426259747,
+        "url": "http://www.zhihu.com/api/v4/questions/28742239",
+        "title": "民国是否值得怀念？",
+        "updated_time": 1478532904,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 28742239
+      },
+      "content": "<p data-pid=\"EK_JONNs\">先说结论，你没资格怀念民国。</p><p data-pid=\"8UpFG5Ca\">珍惜现在吧。</p><p data-pid=\"svB1BMHu\">————————</p><p data-pid=\"4X8AxDur\">外祖父是当地有名的文化人，上高小是骑自行车的，十二大洋的美国进口货。</p><p data-pid=\"5bJo0BFe\">他的舅舅在奉天开百货商场，卖欧洲货和美国货为主，外祖父去帮忙练就熟练日语。</p><p data-pid=\"VHcTqYQE\">他姥姥家是当地数一数二的大地主。</p><p data-pid=\"7Y0P020t\">他面对扫荡日军，靠嘴皮子救了全村的房子。</p><p data-pid=\"hnRSrkyV\">他参与TG主办的地下学校，多次被日伪搜查，命大。</p><p data-pid=\"Q5Vh0d1h\">他WG期间被迫躲回老家。</p><p data-pid=\"ze_p-5_R\">这样一个人，怀念民国吗？不，憎恨。</p><p data-pid=\"1TsO2Pp_\">————————</p><p data-pid=\"R4V-O9Nc\">说个怀念民国的。</p><p data-pid=\"1GY20YLO\">祖父白手起家，从学徒做起，后来在大连、烟台做的不错，跟伪市长啥的都是把兄弟；</p><p data-pid=\"M2m8If3W\">自己的厂子偷偷通过以前的学徒师兄弟，给TG造手榴弹壳，走私青霉素什么的；</p><p data-pid=\"H07hdzj2\">然后老姑姑们小时候是经常打网球的，家里有网球场。</p><p data-pid=\"IY23Jc30\">所以老姑姑们偶尔还在怀念民国 </p><p data-pid=\"4wwrHZO1\">的网球场。</p><p data-pid=\"ysrRuuc5\">————————</p><p data-pid=\"RtdyXQZ9\">你家至少有个网球场再来谈怀念吧</p><p data-pid=\"9PlupQq3\">好玩的事情是，现在怀念民国的粉丝往往都是祖上八辈子贫农，你真的没资格怀念民国，如果没有TG，你可能连识字的机会都没有，你可能注定营养不了，你可能已经被人卖到窑子了。</p><br><p data-pid=\"4f66IC_b\">民国是华夏文明史上最黑暗的第三名。</p>",
+      "comment_count": 93,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/157321819",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1492229928,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "首先，不是只有中国人这么觉得。 日本现在“嫌韩”的风潮很大。 韩国的地缘政治格局决定了韩国人的性格。 大家经常看到韩国历史作假的新闻，其实这个对于韩国不是新闻，在古代它们的很多史官就是这么玩的，比如诋毁壬辰之战中的明军，比如自称与元朝进行了艰苦的作战之类的。历史发明家是祖传的。 原因很简单，越自卑的人越需要靠吹牛逼维持表面的尊严。 自卑的来源也很简单，因为有史以来一直是东亚的一个贫瘠的毫无存在感的边…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1490539085,
+      "id": 153737667,
+      "voteup_count": 787,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1490370753,
+        "url": "http://www.zhihu.com/api/v4/questions/57574786",
+        "title": "为什么韩国国家形象差？",
+        "updated_time": 1589302422,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 57574786
+      },
+      "content": "<p data-pid=\"VnVGJg0m\">首先，不是只有中国人这么觉得。</p><p data-pid=\"vmPRBmso\">日本现在“嫌韩”的风潮很大。</p><p data-pid=\"ScQ9RUpx\">韩国的地缘政治格局决定了韩国人的性格。</p><p data-pid=\"SwVZakRs\">大家经常看到韩国历史作假的新闻，其实这个对于韩国不是新闻，在古代它们的很多史官就是这么玩的，比如诋毁壬辰之战中的明军，比如自称与元朝进行了艰苦的作战之类的。历史发明家是祖传的。</p><p data-pid=\"o_i2Mh90\">原因很简单，越自卑的人越需要靠吹牛逼维持表面的尊严。</p><p data-pid=\"mBQFwNFq\">自卑的来源也很简单，因为有史以来一直是东亚的一个贫瘠的毫无存在感的边缘之地，边缘到中央王朝懒得征服。</p><p data-pid=\"1N24wy6V\">在一轮一轮的被中央王朝虐被游牧民族虐的过程中，真的清醒的志士要么牺牲，要么郁郁而终，上千年的逆淘汰造成的结果，就是剩下来的人毫无骨气地活着，为活着而活着，为了安慰自己搞出伟大史诗，为了活着成为最好的伪军和奴才。</p><p data-pid=\"JHnAbXMv\">这是小国寡民不得已的选择，也是地缘政治造成的逆向淘汰。</p><p data-pid=\"F-_5Exfz\">对这样一个国家恐怕她自己清醒的国民都不喜欢，只是不能承认罢了。</p><p data-pid=\"cblfJ_iC\">可怜的很。</p>",
+      "comment_count": 45,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/153737667",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1490539085,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "说我黑山大的，告诉你们我就山大毕业的，你们还真觉得我说山大不如清华是黑山大？你们还真能骗自己是世界一流大学？醒醒吧。 谁说学历不值钱？真的信的话让你家孩子辍学啊? 从统计学上来说，北清创业成功的屌丝一定比山大创业成功的屌丝更成功。因为在能力一致的情况下，他的同学圈的价值一定大于山大的同学圈。 从个体上说，北清混的最差的人可能跟一个二本混的最差的人差不多。 学历不值钱的假象源于人们急功急利的去评判，比…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1490193451,
+      "id": 153036607,
+      "voteup_count": 528,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1489389879,
+        "url": "http://www.zhihu.com/api/v4/questions/57040157",
+        "title": "为什么学历不值钱但学区房值钱？",
+        "updated_time": 1501480120,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 57040157
+      },
+      "content": "<p data-pid=\"EqVvHubh\">说我黑山大的，告诉你们我就山大毕业的，你们还真觉得我说山大不如清华是黑山大？你们还真能骗自己是世界一流大学？醒醒吧。</p><br><p data-pid=\"hEMKBdn1\">谁说学历不值钱？真的信的话让你家孩子辍学啊?</p><p data-pid=\"4UthH9HT\">从统计学上来说，北清创业成功的屌丝一定比山大创业成功的屌丝更成功。因为在能力一致的情况下，他的同学圈的价值一定大于山大的同学圈。</p><p data-pid=\"GQgbCtUg\">从个体上说，北清混的最差的人可能跟一个二本混的最差的人差不多。</p><p data-pid=\"5BCxKien\">学历不值钱的假象源于人们急功急利的去评判，比如：</p><p data-pid=\"lZkeHQPA\">1，用学历高群体中较差的人去比较学历低中最有才干的人；</p><p data-pid=\"vFjjqO1K\">2，用需要很久才能积累获得财富的专业去比较卖青春的低学历者；比如科研人员去跟模特比；</p><p data-pid=\"cmra3_Iz\">3，用稳定收益去跟投机成功者对比，完全忽略了投机成功者背后的百倍的投机死亡者。</p><p data-pid=\"FcK4-hlS\">BAT创始人都是高学历，为什么？</p><p data-pid=\"r6f5pIgR\">你怎么不拿李彦宏去跟那些文盲暴发户比？</p><p data-pid=\"nYjVnyIa\">学历只是提供你的发展上限，你不努力，你天天泡妞打LOL抄袭论文，然后你抱怨你没有特别努力的快递员挣得多，是，给了你100亿的上限，你浪费了啊。</p><p data-pid=\"SdseTVj1\">所以，学历的价值，是给你提供更多可能性，是给你提供更有效的朋友圈子，是给你有不使用体力去换取报酬的资格；是让你能不被收智商税的门票。</p><p data-pid=\"0sm01Sjq\">给了你这些还不够值钱？</p><p data-pid=\"zHi4skYD\">再说学区房，学区房贵吗？你买个房子让孩子上最好的学校，等学籍定了，过几年把学区房卖了，你会赔钱？</p><p data-pid=\"hWPUqVXi\">现在人是不是已经习惯于理解不超过50个字的短句，一点思考能力都没有？？</p><br><p data-pid=\"2qYdvzo8\">如果懒的思考，你有学区房有学历有钱，也是屌丝。</p><p data-pid=\"OS8nCyxU\">别骗自己学历不值钱了，当然，如果这样想能让你觉得自己不那么失败，那你就继续忽悠自己吧。</p>",
+      "comment_count": 203,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/153036607",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1490590256,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "从工作开始我一直觉得自己挺努力挺聪明的，直到有一天认识了一个人。 这个人我们姑且代号称为S君。 认识S君且熟识互为好友之后，我终于明白自己不过就是中人之姿，实在算不得什么精明人物。 S君初次创业大概是11年，人手不多，也没太多钱，主要做小app。 S君先做了国内首个算命的app，应该是几个哥们三五天做完的，抄网上流行的算命网页的算法。 做过app的人都知道当年的时候收费有多艰难，于是，当用户算命算出凶，S君独到的卖…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1489895374,
+      "id": 152383848,
+      "voteup_count": 238,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1477837035,
+        "url": "http://www.zhihu.com/api/v4/questions/52133029",
+        "title": "你见过最厉害的人是什么样的？",
+        "updated_time": 1513580179,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 52133029
+      },
+      "content": "<p data-pid=\"0On6dWC_\">从工作开始我一直觉得自己挺努力挺聪明的，直到有一天认识了一个人。</p><p data-pid=\"QE5npn0T\">这个人我们姑且代号称为S君。</p><p data-pid=\"HJoPo90o\">认识S君且熟识互为好友之后，我终于明白自己不过就是中人之姿，实在算不得什么精明人物。</p><p data-pid=\"E3TXQSQe\">S君初次创业大概是11年，人手不多，也没太多钱，主要做小app。</p><br><p data-pid=\"GSOqaKeD\">S君先做了国内首个算命的app，应该是几个哥们三五天做完的，抄网上流行的算命网页的算法。</p><p data-pid=\"LZ3nW-8x\">做过app的人都知道当年的时候收费有多艰难，于是，当用户算命算出凶，S君独到的卖这个：</p><br><figure><noscript><img src=\"https://picx.zhimg.com/50/v2-ec1a08c5e64e2340a4e4f65476287170_720w.png?source=c8b7c179\" data-rawwidth=\"382\" data-rawheight=\"662\" data-original-token=\"v2-ec1a08c5e64e2340a4e4f65476287170\" class=\"content_image\" width=\"382\"></noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='382'%20height='662'&gt;&lt;/svg&gt;\" data-rawwidth=\"382\" data-rawheight=\"662\" data-original-token=\"v2-ec1a08c5e64e2340a4e4f65476287170\" class=\"content_image lazy\" width=\"382\" data-actualsrc=\"https://picx.zhimg.com/50/v2-ec1a08c5e64e2340a4e4f65476287170_720w.png?source=c8b7c179\"></figure><p data-pid=\"F9EixIlc\">注意：<b>卖的不是实物，而是图片</b>，开运的开光玉坠，分为6元、60元、128元、648元几档。</p><p data-pid=\"Wt4XEDeb\">然后，你们去APP store搜一下，现在很多效仿者还在用这个主意赚钱。</p><p data-pid=\"Oe9IrY2q\">这是第一桶金。</p><br><p data-pid=\"r6zV5UBH\">后来日本福岛核电站危机，S君和他的小团队熬夜进行了一系列降维攻击：</p><p data-pid=\"enQTZt49\">1：末日不可缺的必需品哔哔小子：</p><figure><noscript><img src=\"https://picx.zhimg.com/50/v2-e4d52d07440295ce57442ca59a5355b4_720w.png?source=c8b7c179\" data-rawwidth=\"417\" data-rawheight=\"233\" data-original-token=\"v2-e4d52d07440295ce57442ca59a5355b4\" class=\"content_image\" width=\"417\"></noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='417'%20height='233'&gt;&lt;/svg&gt;\" data-rawwidth=\"417\" data-rawheight=\"233\" data-original-token=\"v2-e4d52d07440295ce57442ca59a5355b4\" class=\"content_image lazy\" width=\"417\" data-actualsrc=\"https://picx.zhimg.com/50/v2-e4d52d07440295ce57442ca59a5355b4_720w.png?source=c8b7c179\"></figure><p data-pid=\"47GPEi6Y\">实际上这app叫“盖革计数器”，<b>号称可以实时测出环境辐射</b>，长得类似这样：</p><figure><noscript><img src=\"https://pica.zhimg.com/50/v2-9348d2a7990560a6db3250c2d52ef42f_720w.png?source=c8b7c179\" data-rawwidth=\"465\" data-rawheight=\"266\" data-original-token=\"v2-9348d2a7990560a6db3250c2d52ef42f\" class=\"origin_image zh-lightbox-thumb\" width=\"465\" data-original=\"https://pic1.zhimg.com/v2-9348d2a7990560a6db3250c2d52ef42f_r.jpg?source=c8b7c179\"></noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='465'%20height='266'&gt;&lt;/svg&gt;\" data-rawwidth=\"465\" data-rawheight=\"266\" data-original-token=\"v2-9348d2a7990560a6db3250c2d52ef42f\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"465\" data-original=\"https://pic1.zhimg.com/v2-9348d2a7990560a6db3250c2d52ef42f_r.jpg?source=c8b7c179\" data-actualsrc=\"https://pica.zhimg.com/50/v2-9348d2a7990560a6db3250c2d52ef42f_720w.png?source=c8b7c179\"></figure><p data-pid=\"ETvXooZj\">下载6美金一个，然后日本区APPstore三榜第一。</p><p data-pid=\"GhmzATBY\">在这个app的说明中，写明了“<b>仅供娱乐，无实际效果</b>”。</p><p data-pid=\"Ze7XnuW3\">2，“切尔诺贝利事件回顾”日文电子书上下两册，每一本6美金。</p><p data-pid=\"aD8svQ7G\">应该是销售了十几万套吧。</p><p data-pid=\"mXMKfssQ\">该app图文来源于日文维基百科。</p><p data-pid=\"uOkZx471\">3，一个叫“希望”的app，用于日本停电后的家庭，长这样：</p><figure><noscript><img src=\"https://picx.zhimg.com/50/v2-ce82a8975ccdbe76fe267150a331e55d_720w.png?source=c8b7c179\" data-rawwidth=\"361\" data-rawheight=\"490\" data-original-token=\"v2-ce82a8975ccdbe76fe267150a331e55d\" class=\"content_image\" width=\"361\"></noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='361'%20height='490'&gt;&lt;/svg&gt;\" data-rawwidth=\"361\" data-rawheight=\"490\" data-original-token=\"v2-ce82a8975ccdbe76fe267150a331e55d\" class=\"content_image lazy\" width=\"361\" data-actualsrc=\"https://picx.zhimg.com/50/v2-ce82a8975ccdbe76fe267150a331e55d_720w.png?source=c8b7c179\"></figure><p data-pid=\"MH2o75nU\">也是6美金，10万下载。</p><p data-pid=\"CcaVVKR9\"><b>停电后大家开着手机看着蜡烛，觉得生活还是有希望的。</b></p><br><p data-pid=\"95wvc0EK\"><b>然后S君把公司卖给了某上市公司。</b></p><br><p data-pid=\"woZ5W3oM\"><b>然后S君现在又在创业了。前阵子随便给我出了一个主意，搞了一个大生意，马上要开动了。</b></p><br><p data-pid=\"IttmciwG\"><b>不夸张的说，这人真的是我见到的商业第一奇才，难得的是还能亲力亲为执行力超高。</b></p><br><p data-pid=\"tAJOgIXS\"><b>还很低调</b></p><p data-pid=\"RMjv-WBh\"><b>还喜欢古典交响乐</b></p><p data-pid=\"iSrEUT4-\"><b>还仗义。</b></p><br><p data-pid=\"reZ49QRm\"><b>牛逼啊，自愧不如。</b></p>",
+      "comment_count": 45,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "https://picx.zhimg.com/v2-ec1a08c5e64e2340a4e4f65476287170_qhd.jpg?source=c8b7c179",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/152383848",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1489895374,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "泻药。就应该这么干，反对这么干的人要么傻要么坏。 这几天朋友圈一堆人问这个问题。 我想请问一下对此困惑不解替韩国人叫屈的人们。 为何美国全面制裁古巴那么多年不直接全面制裁苏联？ 因为超级霸主之间竞争的烈度需要被人为控制。 而且超级霸主之间的斗争往往先从打击外围小弟开始。 春秋时代晋国与楚国争霸，打了100多年，几乎每次的冲突都是惩戒郑国这个搅屎棍，郑国倒向谁，另一方必然召集盟友讨伐。 超级霸主的胜势需要死…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1489037768,
+      "id": 150630648,
+      "voteup_count": 54,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1488246041,
+        "url": "http://www.zhihu.com/api/v4/questions/56413402",
+        "title": "为什么是美国部署萨德大家不抵制美国却要抵制韩国？",
+        "updated_time": 1489497560,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 56413402
+      },
+      "content": "<p data-pid=\"eEm17EFL\">泻药。就应该这么干，反对这么干的人要么傻要么坏。</p><p data-pid=\"w3uHVjwH\">这几天朋友圈一堆人问这个问题。</p><p data-pid=\"3m7TGGjh\">我想请问一下对此困惑不解替韩国人叫屈的人们。</p><p data-pid=\"ya7gmq_7\">为何美国全面制裁古巴那么多年不直接全面制裁苏联？</p><p data-pid=\"yqTcBRPc\">因为超级霸主之间竞争的烈度需要被人为控制。</p><p data-pid=\"IAFDR0d1\">而且超级霸主之间的斗争往往先从打击外围小弟开始。</p><p data-pid=\"repnaeVd\">春秋时代晋国与楚国争霸，打了100多年，几乎每次的冲突都是惩戒郑国这个搅屎棍，郑国倒向谁，另一方必然召集盟友讨伐。</p><p data-pid=\"VjibrU50\">超级霸主的胜势需要死心塌地的小弟，谁能保护小弟，谁能更有力量的制约背叛的地缘小国，谁就能增加地缘优势和取得战略的相对胜势。</p><p data-pid=\"cheRB6vx\">抵制韩国，核心是让韩国人和其他美国小弟知道，跟着美国来遏制中国是代价巨大的。也许美国能够承担，但你一小国绝对承担不起。</p><p data-pid=\"qUQSUuR5\">必须抵制甚至经济上打死，这样未来30年除了日本，没人敢跟着美国来找茬。</p><p data-pid=\"vqj9ntfn\">中国需要的是时间，在这个时间内，美国的传统盟友能够骑墙就很好了。</p><p data-pid=\"MWbEHl9R\">30年后就没骑墙的机会了。</p><p data-pid=\"gJaGmAos\">至于朝鲜核试验，反对的人都被洗脑了，一主权国家凭啥不让人家效仿中国？</p>",
+      "comment_count": 23,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/150630648",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1489037768,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "昨儿跟几个兄弟谈到三体，大家都在讨论黑暗森林如何如何。 我跟他们说的是：看毛选，看中国近代史。 《三体》本质上在为太祖爷鸣冤。 用整个宇宙的尺度演绎达尔文主义，在一个生态位上只有一个种群可以存活。在宇宙尺度这是幼稚的，在地缘政治上这是血淋淋的事实。 关键点对应关系如下： 宇宙中的资源有限：地球上资源有限； 危机纪元时人类高层的绝望：解放前中国精英的绝望； 大低谷时期：建国后工业化的代价 震慑纪元：有核国…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1488691681,
+      "id": 149855338,
+      "voteup_count": 118,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1374768354,
+        "url": "http://www.zhihu.com/api/v4/questions/21385514",
+        "title": "《三体》讲述了怎样的故事？",
+        "updated_time": 1436165720,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 21385514
+      },
+      "content": "<p data-pid=\"Lga18jbD\">昨儿跟几个兄弟谈到三体，大家都在讨论黑暗森林如何如何。</p><p data-pid=\"LT7ZD6Lu\">我跟他们说的是：看毛选，看中国近代史。</p><p data-pid=\"qBpNCntb\">《三体》本质上在为太祖爷鸣冤。</p><p data-pid=\"iVDHIAta\">用整个宇宙的尺度演绎达尔文主义，在一个生态位上只有一个种群可以存活。在宇宙尺度这是幼稚的，在地缘政治上这是血淋淋的事实。</p><p data-pid=\"-gHqcYHm\">关键点对应关系如下：</p><p data-pid=\"A8WBSzdv\">宇宙中的资源有限：地球上资源有限；<br>危机纪元时人类高层的绝望：解放前中国精英的绝望；<br>大低谷时期：建国后工业化的代价<br>震慑纪元：有核国家之间互相毁灭的震慑平衡；<br>程心：戈尔巴乔夫及中国的类似人物<br>虫子：东亚病夫<br>地球三体组织：公知、带路党、逆向民族主义者（如袁明星）<br>大低谷后的繁荣时期：全球化造成的伪发达国家（例如阿根廷）<br>万有引力号：二次核打击能力<br>反射文化：美国文化<br>智子封锁：国外技术封锁<br>水滴：武器代差</p><br><p data-pid=\"JU4oiKFS\">今天中国的成就（减少贫困，人均寿命，国际地位，人民生活水平），不仅仅是三十年改开的成绩，而是有三个基本的前提，否则中国目前之状况与印度和南美不会有本质区别。</p><p data-pid=\"iG7ms938\">1，改开之前，具备低效但完整的工业体系，在工业体系上没有战略缺失；<br>2，教育体系的完备，从解放初识字率4%左右提升到80%以上，积累了大量能够进行工业劳动和科研的人力资源；<br>3，氢弹震慑在这三十年多次使得敌对势力无法下定决心进行对中国的硬性遏制。</p><p data-pid=\"uEKBS24l\">这些都是太祖时代的基础。</p><p data-pid=\"zIows5V0\">如果考虑到太祖的多生人口，向外移民，再来一次农村包围城市的战略（如果实施的话一带一路就太简单了）。</p><p data-pid=\"lsELRGAp\">有些事情，想明白了才知道，是有能看到150年未来的贤者存在的。<br>而群众正因为3年5年的饥饿和牺牲在诅咒贤者。</p><p data-pid=\"mlAVDOcv\">看看罗辑的待遇，是不是很像？</p>",
+      "comment_count": 12,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/149855338",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1488691681,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "昨儿跟几个兄弟谈到三体，大家都在讨论黑暗森林如何如何。 我跟他们说的是：看看中国近代史。 用整个宇宙的尺度演绎达尔文主义，在一个生态位上只有一个种群可以存活。在宇宙尺度这是幼稚的，在地缘政治上这是血淋淋的事实。 关键点对应关系如下： 宇宙中的资源有限：地球上资源有限； 危机纪元时人类高层的绝望：解放前中国精英的绝望； 大低谷时期：建国后工业化的代价 震慑纪元：有核国家之间互相毁灭的震慑平衡； 程心：戈尔…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1488691657,
+      "id": 149855282,
+      "voteup_count": 1891,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1393349018,
+        "url": "http://www.zhihu.com/api/v4/questions/22855640",
+        "title": "《三体》中有哪些细思恐极的细节？",
+        "updated_time": 1503187235,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 22855640
+      },
+      "content": "<p data-pid=\"nxcUQmyV\">昨儿跟几个兄弟谈到三体，大家都在讨论黑暗森林如何如何。</p><p data-pid=\"xx-4F8jt\">我跟他们说的是：看看中国近代史。</p><p data-pid=\"H6Au27Mv\">用整个宇宙的尺度演绎达尔文主义，在一个生态位上只有一个种群可以存活。在宇宙尺度这是幼稚的，在地缘政治上这是血淋淋的事实。</p><p data-pid=\"Bf3gS2QR\">关键点对应关系如下：</p><p data-pid=\"eWLRBpug\">宇宙中的资源有限：地球上资源有限；<br>危机纪元时人类高层的绝望：解放前中国精英的绝望；<br>大低谷时期：建国后工业化的代价<br>震慑纪元：有核国家之间互相毁灭的震慑平衡；<br>程心：戈尔巴乔夫及中国的某位犹太后裔<br>虫子：东亚病夫<br>地球三体组织：公知、带路党、逆向民族主义者（如袁明星）<br>大低谷后的繁荣时期：全球化造成的伪发达国家（例如阿根廷）<br>万有引力号：二次核打击能力<br>反射文化：美国文化<br>智子封锁：国外技术封锁<br>水滴：武器代差</p><p><br></p><p data-pid=\"uuX7wHTu\">今天中国的成就（减少贫困，人均寿命，国际地位，人民生活水平），不仅仅是三十年改开的成绩，而是有三个基本的前提，否则中国目前之状况与印度和南美不会有本质区别。</p><p data-pid=\"A89SX6QN\">1，改开之前，具备低效但完整的工业体系，在工业体系上没有战略缺失；<br>2，教育体系的完备，从解放初识字率4%左右提升到80%以上，积累了大量能够进行工业劳动和科研的人力资源；<br>3，氢弹震慑在这三十年多次使得敌对势力无法下定决心进行对中国的硬性遏制。</p><p data-pid=\"l6ifLHJU\">这些都是改开之前时代的基础。</p><p data-pid=\"WNES4KEI\">如果考虑到多生人口，向外移民，再来一次农村包围城市的战略（如果实施的话一带一路就太简单了）。</p><p data-pid=\"AVlx88_s\">有些事情，想明白了才知道，是有能看到150年未来的贤者存在的。<br>而群众正因为一些“过失”在诅咒贤者。</p><p data-pid=\"oRnc68a8\">看看罗辑的待遇，是不是很像？</p>",
+      "comment_count": 337,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/149855282",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1603375990,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "看看评论的很有意思，是否独立思考，是否允许异见发声，赤裸裸的带路党和反智主义，好玩 ——— 昨儿跟几个兄弟谈到三体，大家都在讨论黑暗森林如何如何。 我跟他们说的是：看毛选，看中国近代史。 《三体》本质上在为太祖爷鸣冤。 用整个宇宙的尺度演绎达尔文主义，在一个生态位上只有一个种群可以存活。在宇宙尺度这是幼稚的，在地缘政治上这是血淋淋…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1488600142,
+      "id": 149672596,
+      "voteup_count": 528,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1440472968,
+        "url": "http://www.zhihu.com/api/v4/questions/34998482",
+        "title": "《三体》讲了个什么故事？",
+        "updated_time": 1441242708,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 34998482
+      },
+      "content": "<p data-pid=\"AvSDhlWq\">看看评论的很有意思，是否独立思考，是否允许异见发声，赤裸裸的带路党和反智主义，好玩</p><p data-pid=\"xmImn4lH\">——————————————————————————————————————</p><p data-pid=\"umkwln65\">昨儿跟几个兄弟谈到三体，大家都在讨论黑暗森林如何如何。</p><p data-pid=\"EBijMbAU\">我跟他们说的是：看毛选，看中国近代史。</p><p data-pid=\"6q8Dj0Cl\">《三体》本质上在为太祖爷鸣冤。</p><p data-pid=\"WY3pBDBY\"><b>用整个宇宙的尺度演绎达尔文主义，在一个生态位上只有一个种群可以存活。在宇宙尺度这是幼稚的，在地缘政治上这是血淋淋的事实。</b></p><p data-pid=\"D3WsOaM6\">关键点对应关系如下：</p><p data-pid=\"8I77Z5F-\">宇宙中的资源有限：地球上资源有限；</p><p data-pid=\"ewVRJe8E\">危机纪元时人类高层的绝望：解放前中国精英的绝望；</p><p data-pid=\"HVeBK_3h\">大低谷时期：建国后工业化的代价</p><p data-pid=\"dOHsNiki\">震慑纪元：有核国家之间互相毁灭的震慑平衡；</p><p data-pid=\"5DA3fj6q\">程心：戈尔巴乔夫及中国的类似人物</p><p data-pid=\"GZamJmRJ\">虫子：东亚病夫</p><p data-pid=\"FdY_4zD3\">地球三体组织：公知、带路党、逆向民族主义者（如袁明星）</p><p data-pid=\"a1EOPomJ\">大低谷后的繁荣时期：全球化造成的伪发达国家（例如阿根廷）</p><p data-pid=\"A-dkZXKv\">万有引力号：二次核打击能力</p><p data-pid=\"LksJcGuj\">反射文化：美国文化</p><p data-pid=\"wxu29V1W\">智子封锁：国外技术封锁</p><p data-pid=\"lrJD5tk5\">水滴：武器代差</p><br><p data-pid=\"uGeoAKfx\">今天中国的成就（减少贫困，人均寿命，国际地位，人民生活水平），不仅仅是三十年改开的成绩，而是有三个基本的前提，否则中国目前之状况与印度和南美不会有本质区别。</p><p data-pid=\"NH2Jycu2\">1，改开之前，具备低效但完整的工业体系，在工业体系上没有战略缺失；</p><p data-pid=\"vQX4poBi\">2，教育体系的完备，从解放初识字率4%左右提升到80%以上，积累了大量能够进行工业劳动和科研的人力资源；</p><p data-pid=\"0fADzBjY\">3，氢弹震慑在这三十年多次使得敌对势力无法下定决心进行对中国的硬性遏制。</p><p data-pid=\"NNvJAzbT\">这些都是太祖时代的基础。</p><p data-pid=\"kjnh4c4Z\">如果考虑到太祖的多生人口，向外移民，再来一次农村包围城市的战略（如果实施的话一带一路就太简单了）。</p><p data-pid=\"gihBFxTh\">有些事情，想明白了才知道，是有能看到150年未来的贤者存在的。</p><p data-pid=\"JTaa0526\">而群众正因为3年5年的饥饿和牺牲在诅咒贤者。</p><p data-pid=\"6vZHGOGC\">看看罗辑的待遇，是不是很像？</p><p data-pid=\"nwUeB-zT\">这位朋友的评论很有深度，感谢支持！</p><a href=\"http://www.zhihu.com/people/yu-zi-jiang-an-zhi\" class=\"internal\">鱼子酱安之</a>",
+      "comment_count": 200,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/149672596",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1488896850,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "如果这个比例是100%我都没什么可吃惊的。 很有几个不错的日本朋友，从个体上都很nice，也讨厌谈论政治啊什么的，没觉出来他们讨厌中国。 但日本人的整体是一个高度一元价值观的国家，所以经济好的时候，从首相到派遣工都狂妄自大不知节制；经济不好的时候从财阀到农民都认命。 这是一个没有独立见解传播空间的国家。 类似于中国的清朝。 所以在当下的时候，像树袋熊一样认为能守住日本市场就可以的精英大有人在。像鸵鸟一样认为…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1487654316,
+      "id": 147649417,
+      "voteup_count": 644,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1431315713,
+        "url": "http://www.zhihu.com/api/v4/questions/30271679",
+        "title": "如何看待报道「93% 的日本人讨厌中国」？",
+        "updated_time": 1548955503,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 30271679
+      },
+      "content": "<p data-pid=\"KJ66hI9P\">如果这个比例是100%我都没什么可吃惊的。</p><p data-pid=\"y0Rqkwbo\">很有几个不错的日本朋友，从个体上都很nice，也讨厌谈论政治啊什么的，没觉出来他们讨厌中国。</p><p data-pid=\"kij-qZ3_\">但日本人的整体是一个高度一元价值观的国家，所以经济好的时候，从首相到派遣工都狂妄自大不知节制；经济不好的时候从财阀到农民都认命。</p><p data-pid=\"C5Oxe2Zl\">这是一个没有独立见解传播空间的国家。</p><p data-pid=\"y0gnm19h\">类似于中国的清朝。</p><p data-pid=\"shxeQ_WC\">所以在当下的时候，像树袋熊一样认为能守住日本市场就可以的精英大有人在。像鸵鸟一样认为日本还是遥遥领先的人大有人在。</p><p data-pid=\"o39iLt_7\">更重要的是，日本人觉得只要严格按照流程和纸上作业和规范做事，自己就是一个对社会贡献很大的人，结果？没那么重要。</p><p data-pid=\"aoX8Dw2M\">所以工匠精神有了，但完全没有战略能力和避险能力。</p><p data-pid=\"RIbRZ_PY\">在一个这样的国家，所有人都顺着媒体去自我安慰自己，会贬低中国；</p><p data-pid=\"q5BupFEn\">在一个这样的国家，一些中国人的个性和张扬会被视为另类，所有人都要表达出对这种张扬的不屑。</p><p data-pid=\"3QeX89BP\">但实际上你看看《半泽直树》的收视率，就知道日本人内心意淫的自己，就是个敢作敢当爱恨分明的汉子，类似中国爷们。</p>",
+      "comment_count": 66,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/147649417",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1487654316,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "中日之间的宿愿和冲突都是表象。 日本是美国的卫星国，不是完全行为国家。 中日冲突就是中美间接冲突。美国不支持的日本首相都干不了几天。 文明诞生以来，中小国家生存的要点无非一条： 事大。 事大。 事大。 只有在大国内乱的时候中小国家才能有机会变成大国。日本现在是美国的小弟。未来如果有一天美国大哥靠不住了，衰落了，日本找了新的大哥，咬美国会更狠。 所以大家好好努力让孩子们也好好努力，中日亲如一家的前提是： …",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1487516484,
+      "id": 147358180,
+      "voteup_count": 20,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1358857854,
+        "url": "http://www.zhihu.com/api/v4/questions/20734909",
+        "title": "中国和日本怎样才能在保持平等的同时消弭百年来的宿怨？",
+        "updated_time": 1565956635,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 20734909
+      },
+      "content": "<p data-pid=\"RBP3RQKi\">中日之间的宿愿和冲突都是表象。</p><p data-pid=\"StmsxRbY\">日本是美国的卫星国，不是完全行为国家。</p><p data-pid=\"VANGDeT3\">中日冲突就是中美间接冲突。美国不支持的日本首相都干不了几天。</p><br><p data-pid=\"-wzJ9XOJ\">文明诞生以来，中小国家生存的要点无非一条：</p><p data-pid=\"34xAiUbr\">事大。</p><p data-pid=\"QAdOqhBo\">事大。</p><p data-pid=\"kTNg6o7c\">事大。</p><p data-pid=\"i6UyRqEt\">只有在大国内乱的时候中小国家才能有机会变成大国。日本现在是美国的小弟。未来如果有一天美国大哥靠不住了，衰落了，日本找了新的大哥，咬美国会更狠。</p><p data-pid=\"nTI2nHRP\">所以大家好好努力让孩子们也好好努力，中日亲如一家的前提是：</p><p data-pid=\"T4fb7u8n\">咱真的复兴了。</p>",
+      "comment_count": 4,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/147358180",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1487516484,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "国家强大跟你没关系，前提是你是整个国家前万分之一富裕的阶层。 越底层关系就越大了。 1，国家穷，没钱搞义务教育，穷人不识字，然后各种交识字税被剥削，祖祖辈辈穷。参见印度。 2，国家有钱但不独立，外国驻军没事搞个殴打轮奸啥的，人家还有治外法权，参见之前的韩国和日本。 3，国家没工业，火柴叫洋火，还有一堆洋这洋那，发达国家跟你玩一辈子剪刀差，只有买办资本挣钱，想创个业，发现国内的税比进口货还高，参见民国； …",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1486302946,
+      "id": 144628486,
+      "voteup_count": 2385,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1413982985,
+        "url": "http://www.zhihu.com/api/v4/questions/26163800",
+        "title": "如何看待「国家强大和我有什么关系」的论调？",
+        "updated_time": 1531137320,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 26163800
+      },
+      "content": "<p data-pid=\"eNXb0YDl\">国家强大跟你没关系，前提是你是整个国家前万分之一富裕的阶层。</p><p data-pid=\"ERI3k_Ci\">越底层关系就越大了。</p><p data-pid=\"gPHJVAog\">1，国家穷，没钱搞义务教育，穷人不识字，然后各种交识字税被剥削，祖祖辈辈穷。参见印度。</p><p data-pid=\"eoOybnfy\">2，国家有钱但不独立，外国驻军没事搞个殴打轮奸啥的，人家还有治外法权，参见之前的韩国和日本。</p><p data-pid=\"_WeexU3L\">3，国家没工业，火柴叫洋火，还有一堆洋这洋那，发达国家跟你玩一辈子剪刀差，只有买办资本挣钱，想创个业，发现国内的税比进口货还高，参见民国；</p><p data-pid=\"OSqbVk4q\">4，国家基础设施差，公路破旧，铁路每小时40公里，啥物产都运不出去，北方人冬天就只能吃大白菜土豆，一辈子没见过香蕉，一年吃一次肉，参见民国</p><p data-pid=\"C1bKS3i1\">5，国家弱，被人揍了，胡乱拉壮丁，营养不良毫无训练，非战斗减员就得到30%，对了，拉的壮丁都是老百姓。</p><p data-pid=\"dk2Y9tAm\">6，治安很差，土匪满街都是，别随便离开家，都是PK区；</p><p data-pid=\"JZNwGr-J\">7，没有粮食储备，没外汇买粮食，没能力修水利，没能力造化肥，很容易饿死人，参见民国印度；</p><p data-pid=\"IM9KpeY3\">8，卫生差，医生水平烂，婴儿死亡率是强国的N倍，看到这个帖子你应该庆幸自己生在强国，要不很可能1级就挂了。</p><p data-pid=\"HiYrNemz\">类似的例子太多了。</p><p data-pid=\"bUdmNVfO\">觉得国家强大跟你没关系的朋友，建议移民去柬埔寨啊孟加拉国啊啥的。</p><p data-pid=\"8oSMMWmJ\">——————————————————————————————————</p><p data-pid=\"eJWWleta\">这么多赞没想到啊。</p><p data-pid=\"zGk_8hyn\">说点题外话：</p><p data-pid=\"B-PvwLzC\">其实这个问题本身未来就不是问题了。可能也不会有人这么提问了。</p><p data-pid=\"7GtkwlqJ\">过年时候问孩子，现在哪个国家最强大？</p><p data-pid=\"dpBVmApw\">中国。</p><p data-pid=\"iKGWQwyD\">应该是美国最强大吧？</p><p data-pid=\"Rvk8XqvN\">我们这代人长大了肯定是中国最强大。</p><p data-pid=\"yva57eQJ\">确定吗？</p><p data-pid=\"MeHQRodU\">你放心吧，我们这代人会让中国成为巅峰的。</p><p data-pid=\"WB6bCxZ4\">7岁孩子。</p><p data-pid=\"Pbv5DrBJ\">突然觉得现在00后好牛逼。</p>",
+      "comment_count": 225,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/144628486",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1486382464,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "说人家跪舔咱的别在这意淫行不？ 此为晏婴“二桃杀三士”故技也。 以下为百度百科内容： 晏子设了一个局：让齐景公把三位勇士请来，要赏赐他们三位两颗珍贵的桃子；而三个人无法平分两颗桃子，晏子便提出协调办法——三人比功劳，功劳大的就可以取一颗桃。公孙接与田开疆都先报出他们自己的功绩，分别各拿了一个桃子。这时，古冶子认为自己功劳更大，气得拔剑指责前二者；而公孙接与田开疆听到古冶子报出自己的功劳之后，也自觉…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1485319579,
+      "id": 142719988,
+      "voteup_count": 92,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1485248231,
+        "url": "http://www.zhihu.com/api/v4/questions/55090056",
+        "title": "如何看待澳大利亚希望中国加入TPP？",
+        "updated_time": 1485248425,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 55090056
+      },
+      "content": "<p data-pid=\"jKFTl8XB\">说人家跪舔咱的别在这意淫行不？</p><br><p data-pid=\"VacM1Vjs\">此为晏婴“二桃杀三士”故技也。</p><p data-pid=\"cV3AgObO\">以下为百度百科内容：</p><p data-pid=\"n3tvirFs\">晏子设了一个局：让齐景公把三位勇士请来，要赏赐他们三位两颗珍贵的桃子；而三个人无法平分两颗桃子，晏子便提出协调办法——三人比功劳，功劳大的就可以取一颗桃。公孙接与田开疆都先报出他们自己的功绩，分别各拿了一个桃子。这时，古冶子认为自己功劳更大，气得拔剑指责前二者；而公孙接与田开疆听到古冶子报出自己的功劳之后，也自觉不如，羞愧之余便将桃子让出并自尽。尽管如此，古冶子却对先前羞辱别人吹捧自己以及让别人为自己牺牲的丑态感到羞耻，因此也拔剑自刎——就这样，只靠着两颗桃子，兵不血刃地去掉三个威胁。</p><br><p data-pid=\"PunJn_ND\">TPP本身是用来围堵中国的，老美不玩了之后，小弟们急了，因为只有在老大们互相对抗的时候，小弟们被拉拢的价值高所以能获取巨大利益；如果按照最早美国G2的规划，中美两国剥削全世界，小弟弟们都得永远供血。</p><p data-pid=\"iCPlsqhO\">所以美国不玩了，拉中国玩，如果TG想真的玩一下，老美可能不得不继续来玩。</p><p data-pid=\"uckVp7fu\">小弟们可以继续待价而沽。</p><p data-pid=\"RrUiId1e\">当年核聚变，老美不玩了，中国加入，老美立刻又玩了，积极的很。</p>",
+      "comment_count": 8,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/142719988",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1485420497,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "在这里要批评一下战忽局的同志了，创新自主性下降了啊。 从上世纪90年代，一直讲“中国崩溃”这个词，讲的大家都没感觉了，你看上面一堆答案，都总结出“持续30年崩溃”了，这说明连吃瓜群众都忽悠不了啊。 建议局座和各位领导想出新理论新词汇，来进行未来5年战略忽悠2.0的升级工作。 例如： 1，老龄化停滞论； 2，GDP增速下降导致竞争力下降论； 3，工业5.0中国没资格参加论； 4，00后懒惰导致中国南欧化论； 5，印度未来5年碾…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1484119161,
+      "id": 140382699,
+      "voteup_count": 1078,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1483611507,
+        "url": "http://www.zhihu.com/api/v4/questions/54438911",
+        "title": "欧美媒体和各路分析师几乎于可预见地即将猛喊中国2018年崩溃, 你们怎么看?",
+        "updated_time": 1513321679,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 54438911
+      },
+      "content": "<p data-pid=\"g0XB7-QU\">在这里要批评一下战忽局的同志了，创新自主性下降了啊。</p><p data-pid=\"BtKz6MNP\">从上世纪90年代，一直讲“中国崩溃”这个词，讲的大家都没感觉了，你看上面一堆答案，都总结出“持续30年崩溃”了，这说明连吃瓜群众都忽悠不了啊。</p><p data-pid=\"eb7SiIBx\">建议局座和各位领导想出新理论新词汇，来进行未来5年战略忽悠2.0的升级工作。</p><p data-pid=\"WkXLAver\">例如：</p><p data-pid=\"X4nxUd-n\">1，老龄化停滞论；</p><p data-pid=\"i3Jyyiy5\">2，GDP增速下降导致竞争力下降论；</p><p data-pid=\"5jh6feCE\">3，工业5.0中国没资格参加论；</p><p data-pid=\"hEYTVPfe\">4，00后懒惰导致中国南欧化论；</p><p data-pid=\"iq3NQ1FJ\">5，印度未来5年碾压中国论；</p><p data-pid=\"NoUb6C9n\">6，美国再工业化制霸论；</p><p data-pid=\"02mjJsHr\">7，雾霾雪崩论；</p><p data-pid=\"UR0u0ZCR\">8，未来全世界不需要工业论；</p><p data-pid=\"SLyjVxNj\">9，玩游戏宅男毁灭中国论；</p><p data-pid=\"DQBpir1K\">点个赞，证明你一直默默的为战略忽悠事业添砖加瓦。</p>",
+      "comment_count": 69,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/140382699",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1484375196,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "前事不忘后事之师。 日本人选择忘记前事或者不忘记，关我们P事？犯得着天天气自己吗？ 他们不去历史中获得教训，改变自己，我们有义务教育他们？ 1，我们自己别忘了：落后就要挨打； 2，我们自己别忘了：国民党政府是傻逼，根本保护不了国民； 3，我们自己别忘了：没有大国崛起就没有小民尊严； 有跟日本人较真那个时间，大家好好奋斗，争取过十年之后： 1，让日本人和全世界都买我们的产品，让我们的产品比他们的好； 2，让我们…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1482315468,
+      "id": 136980792,
+      "voteup_count": 38,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1331441672,
+        "url": "http://www.zhihu.com/api/v4/questions/20113566",
+        "title": "为什么部分日本民众不承认南京大屠杀？",
+        "updated_time": 1499684320,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 20113566
+      },
+      "content": "<p data-pid=\"o_0G2SUG\">前事不忘后事之师。</p><p data-pid=\"E7HhY9rS\">日本人选择忘记前事或者不忘记，关我们P事？犯得着天天气自己吗？</p><p data-pid=\"yyc79PbV\">他们不去历史中获得教训，改变自己，我们有义务教育他们？</p><p data-pid=\"K9VO9Z34\">1，我们自己别忘了：落后就要挨打；</p><p data-pid=\"6AyFh5Yr\">2，我们自己别忘了：国民党政府是傻逼，根本保护不了国民；</p><p data-pid=\"zmkU8cOP\">3，我们自己别忘了：没有大国崛起就没有小民尊严；</p><p data-pid=\"6EIPw4Kc\">有跟日本人较真那个时间，大家好好奋斗，争取过十年之后：</p><p data-pid=\"fyX56EZ7\">1，让日本人和全世界都买我们的产品，让我们的产品比他们的好；</p><p data-pid=\"4Mcj9FRQ\">2，让我们的年轻人比他们的年轻人有理想有希望；</p><p data-pid=\"q9RE8aq2\">3，让我们的公务员比他们廉洁、高效；</p><p data-pid=\"-3RJpoEB\">4，让我们的企业比他们的更全球化更赚钱；</p><p data-pid=\"OTg92Lkl\">5，让我们的环境比他们的更优质；</p><p data-pid=\"PFW_82Kp\">6，让我们的工作更加专业更加有竞争力；</p><p data-pid=\"cXtcdBfH\">7，让我们的人均寿命和生活质量超过他们；</p><p data-pid=\"lXUUK2qs\">有多少事可以干，值得干，你现在跟我说要去教育日本人明白事理？</p><p data-pid=\"U0k0zu8H\">你有病吧？</p><p data-pid=\"CZ5OyGIe\">嘴炮卖国贼！</p>",
+      "comment_count": 5,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/136980792",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1482315469,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "谢邀。 答案高票的分析：维护“刑不上大夫”，然后才能保护美式民主，这个真心无法赞同。 如果依照最阴谋论的观点，奥克集团已经是叛国集团的话，不调查不深挖，等着他们拖后腿反攻倒算吗？ “刑不上大夫”不能维持政治的稳定性，反而会使既得利益者肆无忌惮的腐败和卖国。所以中国过去有段期间是这样，而现在已经实现在党纪国法前人人平等。 斗而不破适合的是在既定规则下的党争，在有卖国可能有严重的批量杀人嫌疑的状态下，还…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1482034742,
+      "id": 136406712,
+      "voteup_count": 98,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1481856667,
+        "url": "http://www.zhihu.com/api/v4/questions/53694688",
+        "title": "如何看待马里科帕县警长领衔的调查团队发布声明称奥巴马的出生证明系伪造？",
+        "updated_time": 1481970584,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 53694688
+      },
+      "content": "<p data-pid=\"amTMuWtg\">谢邀。</p><p data-pid=\"Ys0fuve-\">答案高票的分析：维护“刑不上大夫”，然后才能保护美式民主，这个真心无法赞同。</p><p data-pid=\"QTeA0Gya\">如果依照最阴谋论的观点，奥克集团已经是叛国集团的话，不调查不深挖，等着他们拖后腿反攻倒算吗？</p><p data-pid=\"qxYpE8cH\">“刑不上大夫”不能维持政治的稳定性，反而会使既得利益者肆无忌惮的腐败和卖国。所以中国过去有段期间是这样，而现在已经实现在党纪国法前人人平等。</p><p data-pid=\"a0qLx7B6\">斗而不破适合的是在既定规则下的党争，在有卖国可能有严重的批量杀人嫌疑的状态下，还斗而不破，是要美国人都等死吗？</p><p data-pid=\"X-nTAJ7O\">一边喊着法制民主，一边喊着贵族不能被审判啊，有些左派的精神分裂症真的深入骨髓。</p><p data-pid=\"6aChLMGF\">问问班加西大使，他同意吗？</p>",
+      "comment_count": 38,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/136406712",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1482034859,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "当一个地区开始衰落的时候，普通民众往往依赖过去的优越感麻痹自己，忽视自己周围的落败。台湾因为媒体的堕落和对民众的无限制的讨好，这一情况更严重一些。 所以仅仅是为了不被排斥，了解大陆的台湾人也很难在台湾告诉大家真相，没人想听——把别人从迷梦中喊醒不仅艰难，而且危险。 这也是我们在接触日本人和台湾人时感受的不同。日本的媒体虽然也对大陆带有优越感，但更多的在提醒民众去应对中国崛起的心理准备（并且希望能搭…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1481819737,
+      "id": 136060516,
+      "voteup_count": 1108,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1441900914,
+        "url": "http://www.zhihu.com/api/v4/questions/35528204",
+        "title": "台湾人对大陆（人）有哪些误会或偏见？",
+        "updated_time": 1507142315,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 35528204
+      },
+      "content": "<p data-pid=\"Z1CSLepM\">当一个地区开始衰落的时候，普通民众往往依赖过去的优越感麻痹自己，忽视自己周围的落败。台湾因为媒体的堕落和对民众的无限制的讨好，这一情况更严重一些。</p><p data-pid=\"2hy0S-yi\">所以仅仅是为了不被排斥，了解大陆的台湾人也很难在台湾告诉大家真相，没人想听——把别人从迷梦中喊醒不仅艰难，而且危险。</p><p data-pid=\"ziuRWpP6\">这也是我们在接触日本人和台湾人时感受的不同。日本的媒体虽然也对大陆带有优越感，但更多的在提醒民众去应对中国崛起的心理准备（并且希望能搭上这班车）。</p><p data-pid=\"qi0csKpb\">在媒体毫无专业精神，迎合和跪舔民众喜好的时候，在整个政界毫无战略眼光，忽悠一届算一届的时候，台湾民众除非与大陆有深刻交集，否则真的很难不产生偏见。</p><p data-pid=\"REfFoyjj\">日本政客战略不足，是被美国设计的战后宪法所束缚，大多精力用于内斗；台湾政客战略不足，实在是有战略眼光的无法作政客，或者说体制就无法产生战略家。</p><p data-pid=\"sBY8Jp7_\">讲点例子：</p><p data-pid=\"E3Ns4DbU\">1，一位大哥，很资深，00年来大陆奋斗，前两年回台休息了一阵子，很不适应，因为感觉完全没有朝气。前阵子同学聚会，老同学们问大哥在大陆的薪水，大哥说几万块，老同学们说哎呀大陆现在了不起，薪水基本跟台北差不多了，然后大哥说，是几万块人民币。然后集体失声。</p><p data-pid=\"EbovA4K1\">其实大部分人对大陆的工作收入、环境、优势行业完全不知道。</p><p data-pid=\"a6Mesq0n\">2，接待一位大马的合作商，这哥们台大毕业的华裔，经常去台湾，第一次来大陆，属于心理上倾向于台湾蓝营的，聊了一阵子：</p><p data-pid=\"F48axS68\">他：都说大陆有上千颗飞弹瞄准台湾，好厉害！</p><p data-pid=\"4SZAhxOM\">我：其实飞弹不一定用得上，我们的火箭炮射程就450公里。</p><p data-pid=\"pyzKoU6o\">他：……</p><p data-pid=\"5mWTJwlJ\">他：你们在大陆是很有钱的人了吧。</p><p data-pid=\"eVrF1CnV\">我：算是一般人中偏下收入一点的。</p><p data-pid=\"37M26PPu\">他：……</p><p data-pid=\"neBAV7Gt\">总之是真的什么也不知道。</p>",
+      "comment_count": 190,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/136060516",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1481819737,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "editable_content": "",
+      "excerpt": "最近忙没时间写太多了。 写重点吧。看不懂的不理解的别喷我。真没空长篇大论。 1，川普作为商人和总统选举人，战术上都是采取不按照常理出牌的策略来谋求优势。所以这次蔡通话时间不是一时兴起，是他博弈的一贯策略。 2，闹事儿的目的是要在上台后的谈判中获得优势并且试探TG反应；装傻充愣来看对方的底线，是不是敢开枪。是不是愿意拿很大代价去买。 3，之前川没选上的时候我就说过这人不好对付，但最终无论交易上的战术川普是…",
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "created_time": 1481093359,
+      "id": 134748646,
+      "voteup_count": 149,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "gender": 1,
+        "user_type": "people",
+        "id": "00a69a0323d435435c7bbd0f1bd535e5",
+        "vip_info": {
+          "is_vip": true
+        },
+        "is_advertiser": false,
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "type": "people",
+        "badge": [],
+        "url_token": "canglimo",
+        "is_org": false
+      },
+      "question": {
+        "relationship": {},
+        "created": 1480903893,
+        "url": "http://www.zhihu.com/api/v4/questions/53304776",
+        "title": "特朗普最近几天对中国频频发难究竟是为了什么？",
+        "updated_time": 1481182511,
+        "has_publishing_draft": false,
+        "question_type": "normal",
+        "type": "question",
+        "id": 53304776
+      },
+      "content": "<p data-pid=\"8qIYQq1H\">最近忙没时间写太多了。</p><p data-pid=\"RRNg0x66\">写重点吧。看不懂的不理解的别喷我。真没空长篇大论。</p><p data-pid=\"2uLcuweX\">1，川普作为商人和总统选举人，战术上都是采取不按照常理出牌的策略来谋求优势。所以这次蔡通话时间不是一时兴起，是他博弈的一贯策略。</p><p data-pid=\"f9is_ke7\">2，闹事儿的目的是要在上台后的谈判中获得优势并且试探TG反应；装傻充愣来看对方的底线，是不是敢开枪。是不是愿意拿很大代价去买。</p><p data-pid=\"8IJwptH2\">3，之前川没选上的时候我就说过这人不好对付，但最终无论交易上的战术川普是否成功，都改变不了中美力量对比扭转的态势。</p><p data-pid=\"CNxTkiGU\">4，台湾一帮绿营傻鸟在那高潮，其实这种事儿最终结果无论中美谁占上峰，台湾都是被割肉的一方。卖了你你还数钱叫爸爸，贱。</p><p data-pid=\"0xert8Xc\">5，我的预感是战略收缩之前，会把台湾卖个大价钱，往后看吧，现在不卖，过20年TG可能不愿花钱了买，直接强上了，目前出手美国比较划算。</p><p data-pid=\"S6UzTBwq\">6，侃价的是真顾客，嚷嚷的越多证明交易的期望越大。</p>",
+      "comment_count": 38,
+      "reshipment_settings": "allowed",
+      "attachment": {
+        "attachment_id": "",
+        "type": "answer"
+      },
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "vessay_info": {
+        "enable_video_translate": false
+      },
+      "annotation_action": [],
+      "collapsed_by": "nobody",
+      "is_copyable": true,
+      "is_collapsed": false,
+      "url": "http://www.zhihu.com/api/v4/answers/134748646",
+      "comment_permission": "all",
+      "reaction_instruction": {},
+      "updated_time": 1481093413,
+      "extras": "",
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "is_normal": true
+    }
+  ]
+}

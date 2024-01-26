@@ -14,6 +14,7 @@ var (
 	ErrBadResponse   = errors.New("bad response")
 	ErrInvalidCookie = errors.New("invalid cookie")
 	ErrMaxRetry      = errors.New("max retry")
+	ErrUnreachable   = errors.New("unreachable")
 )
 
 const userAgent = "ZhihuHybrid com.zhihu.android/Futureve/6.59.0 Mozilla/5.0 (Linux; Android 10; GM1900 Build/QKQ1.190716.003; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/85.0.4183.127 Mobile Safari/537.36"
@@ -45,9 +46,58 @@ func NewRequestService(logger *zap.Logger) *RequestService {
 	return s
 }
 
-// Send request with limiter with error check, not used
+// type resp405 struct {
+// 	Error struct {
+// 		Code int `json:"code"`
+// 	} `json:"error"`
+// }
+
+// Send request with limiter with error check
 func (r *RequestService) Limit(u string) (respByte []byte, err error) {
-	return nil, nil
+	logger := r.log.With(zap.String("url", u))
+
+	logger.Info("start to get zhihu API response with limit")
+	for i := 0; i < r.maxRetry; i++ {
+		logger := logger.With(zap.Int("index", i))
+		<-r.limiter
+
+		req, err := r.setReq(u)
+		if err != nil {
+			logger.Error("fail to new a request", zap.Error(err))
+			continue
+		}
+
+		resp, err := r.client.Do(req)
+		if err != nil || (resp.StatusCode != http.StatusOK &&
+			resp.StatusCode != http.StatusMethodNotAllowed &&
+			resp.StatusCode != http.StatusNotFound) {
+			if resp != nil && resp.Body != nil {
+				// Close response body when error.
+				resp.Body.Close()
+			}
+			logger.Error("fail to request url", zap.Error(err))
+			continue
+		}
+
+		bytes, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			logger.Error("fail to read response body", zap.Error(err))
+			continue
+		}
+
+		if resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusNotFound {
+			logger.Error("this resource is unreachable by public", zap.Error(ErrUnreachable))
+			return nil, ErrUnreachable
+		}
+		return bytes, nil
+	}
+
+	if err == nil {
+		err = ErrMaxRetry
+	}
+	logger.Error("fail to get zhihu API response with limit", zap.Error(err))
+	return nil, err
 }
 
 // Send request with limiter, used for zhihu
