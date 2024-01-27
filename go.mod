@@ -8,6 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.6.0
+	github.com/dop251/goja v0.0.0-20231027120936-b396bb4c349d
 	github.com/go-co-op/gocron/v2 v2.2.1
 	github.com/gorilla/feeds v1.1.2
 	github.com/joho/godotenv v1.5.1
@@ -15,6 +16,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/redis/go-redis/v9 v9.4.0
+	github.com/robertkrimen/otto v0.3.0
 	github.com/rs/cors v1.10.1
 	github.com/sashabaranov/go-openai v1.18.3
 	github.com/stretchr/testify v1.8.4
@@ -23,6 +25,7 @@ require (
 	golang.org/x/net v0.20.0
 	gorm.io/driver/postgres v1.5.4
 	gorm.io/gorm v1.25.6
+	rogchap.com/v8go v0.9.0
 )
 
 require (
@@ -37,11 +40,14 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2/v4 v4.0.2 // indirect
+	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47 // indirect
+	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/iris-contrib/schema v0.0.6 // indirect
@@ -91,6 +97,7 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
