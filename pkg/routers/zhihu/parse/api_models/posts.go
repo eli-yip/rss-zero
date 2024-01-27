@@ -9,9 +9,14 @@ type HTMLPost struct {
 }
 
 type Article struct {
-	ID          int    `json:"id"`
-	Author      Author `json:"author"`
-	CreatedTime int    `json:"created"`
-	Title       string `json:"title"`
-	Content     string `json:"content"`
+	ID          int        `json:"id"`
+	Author      PostAuthor `json:"author"`
+	CreatedTime int        `json:"created"`
+	Title       string     `json:"title"`
+	Content     string     `json:"content"`
+}
+
+type PostAuthor struct {
+	ID   string `json:"urlToken"`
+	Name string `json:"name"`
 }

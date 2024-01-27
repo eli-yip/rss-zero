@@ -59,7 +59,9 @@ func TestParsePosts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := parser.ParsePosts(posts); err != nil {
-		t.Fatal(err)
+	for _, p := range posts {
+		if err := parser.ParsePosts(p); err != nil {
+			t.Fatal(err)
+		}
 	}
 }

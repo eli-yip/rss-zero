@@ -43,6 +43,9 @@ func NewDB(host, port, user, password, name string) (db *gorm.DB, err error) {
 		&zhihuDB.Question{},
 		&zhihuDB.Author{},
 		&zhihuDB.Object{},
+
+		&zhihuDB.Post{},
+		&zhihuDB.Pin{},
 	); err != nil {
 		return nil, err
 	}

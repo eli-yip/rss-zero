@@ -34,10 +34,11 @@ func main() {
 	zhihuDBService := zhihuDB.NewDBService(db)
 	logger.Info("init zhihu db service successfully")
 
-	parseHomepage := false
-	flag.BoolVar(&parseHomepage, "homepage", false, "parse homepage")
+	parseHomepage := flag.Bool("homepage", false, "parse homepage")
+	parseAnswer := flag.Bool("answer", false, "parse answer")
 	flag.Parse()
-	if parseHomepage {
+
+	if *parseHomepage {
 		logger.Info("start to parse homepage")
 
 		homepageParser := parse.NewHomepageParser(zhihuDBService)
@@ -85,54 +86,87 @@ func main() {
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
 	logger.Info("init html to markdown service successfully")
 
-	answerParser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, logger)
-	logger.Info("init answer parser successfully")
+	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, logger)
 
-	opts := zhihuDB.FetchAnswerOption{Text: func() *string { s := ""; return &s }(),
-		Status: func() *int { status := zhihuDB.AnswerStatusUncompleted; return &status }()} // Get texts that are not generated
-	for {
-		logger.Info("start to parse answers from db")
+	if *parseAnswer {
+		logger.Info("start to parse answer from db")
 
-		as, err := zhihuDBService.FetchNAnswer(20, opts)
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
+		opts := zhihuDB.FetchAnswerOption{Text: func() *string { s := ""; return &s }(),
+			Status: func() *int { status := zhihuDB.AnswerStatusUncompleted; return &status }()} // Get texts that are not generated
+		for {
+			logger.Info("start to parse answers from db")
+
+			as, err := zhihuDBService.FetchNAnswer(20, opts)
+			if err != nil {
+				if err == gorm.ErrRecordNotFound {
+					break
+				}
+				logger.Fatal("fail to fetch answers from db", zap.Error(err))
+			}
+			if len(as) == 0 {
 				break
 			}
-			logger.Fatal("fail to fetch answers from db", zap.Error(err))
-		}
-		if len(as) == 0 {
-			break
-		}
 
-		for _, a := range as {
-			logger := logger.With(zap.Int("id", a.ID))
+			for _, a := range as {
+				logger := logger.With(zap.Int("id", a.ID))
 
-			const zhihuAnswerAPI = "https://api.zhihu.com/appview/api/v4/answers/%d?include=content&is_appview=true"
-			u := fmt.Sprintf(zhihuAnswerAPI, a.ID)
-			logger.Info("parsing answer", zap.String("url", u))
+				const zhihuAnswerAPI = "https://api.zhihu.com/appview/api/v4/answers/%d?include=content&is_appview=true"
+				u := fmt.Sprintf(zhihuAnswerAPI, a.ID)
+				logger.Info("parsing answer", zap.String("url", u))
 
-			resp, err := requestService.Limit(u)
-			if err != nil {
-				if err == request.ErrUnreachable {
-					logger.Error("answer is unreachable in public, updaate status to unreachable", zap.Error(err))
-					if err = zhihuDBService.UpdateAnswerStatus(a.ID, zhihuDB.AnswerStatusUnreachable); err != nil {
-						logger.Fatal("fail to update answer status", zap.Error(err))
+				resp, err := requestService.Limit(u)
+				if err != nil {
+					if err == request.ErrUnreachable {
+						logger.Error("answer is unreachable in public, updaate status to unreachable", zap.Error(err))
+						if err = zhihuDBService.UpdateAnswerStatus(a.ID, zhihuDB.AnswerStatusUnreachable); err != nil {
+							logger.Fatal("fail to update answer status", zap.Error(err))
+						}
+						continue
+					} else {
+						logger.Fatal("fail to request zhihu api", zap.Error(err))
 					}
-					continue
-				} else {
-					logger.Fatal("fail to request zhihu api", zap.Error(err))
 				}
-			}
-			logger.Info("request zhihu api successfully")
+				logger.Info("request zhihu api successfully")
 
-			if err = answerParser.ParseAnswer(resp); err != nil {
-				logger.Fatal("fail to parse answer", zap.Error(err))
+				if err = parser.ParseAnswer(resp); err != nil {
+					logger.Fatal("fail to parse answer", zap.Error(err))
+				}
+				logger.Info("parse answer successfully")
 			}
-			logger.Info("parse answer successfully")
+
+			logger.Info("parse answers from db successfully", zap.Int("count", len(as)))
 		}
-
-		logger.Info("parse answers from db successfully", zap.Int("count", len(as)))
 	}
+
+	// Not used, it need encryption signature
+	// if *parsePost {
+	// 	logger.Info("start to parse posts")
+
+	// 	const url = "https://www.zhihu.com/people/canglimo/posts?page=%d"
+	// 	for i := 1; ; i++ {
+	// 		logger := logger.With(zap.Int("page", i))
+
+	// 		u := fmt.Sprintf(url, i)
+	// 		resp, err := requestService.LimitRaw(u)
+	// 		if err != nil {
+	// 			logger.Fatal("fail to request zhihu api", zap.Error(err))
+	// 		}
+
+	// 		posts, err := parser.SplitPosts(resp)
+	// 		if err != nil {
+	// 			logger.Fatal("fail to split posts", zap.Error(err))
+	// 		}
+	// 		fmt.Println(len(posts))
+	// 		if len(posts) == 0 {
+	// 			break
+	// 		}
+
+	// 		for _, p := range posts {
+	// 			fmt.Println(p.ID)
+	// 			fmt.Println(p.Title)
+	// 		}
+	// 	}
+	// }
 
 	logger.Info("done!")
 }

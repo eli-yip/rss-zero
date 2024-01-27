@@ -31,43 +31,41 @@ func (p *Parser) SplitPosts(content []byte) (posts []apiModels.Article, err erro
 	return posts, nil
 }
 
-func (p *Parser) ParsePosts(articles []apiModels.Article) (err error) {
+func (p *Parser) ParsePosts(a apiModels.Article) (err error) {
 	var content []byte
-	for _, a := range articles {
-		logger := p.logger.With(zap.Int("post_id", a.ID))
+	logger := p.logger.With(zap.Int("post_id", a.ID))
 
-		text, err := p.parseContent([]byte(a.Content), a.ID, logger)
-		if err != nil {
-			return err
-		}
-		logger.Info("parse content successfully")
-
-		content, err = p.mdfmt.Format([]byte(text))
-		if err != nil {
-			return err
-		}
-		logger.Info("format content successfully")
-
-		if err = p.db.SaveAuthor(&db.Author{
-			ID:   a.Author.ID,
-			Name: a.Author.Name,
-		}); err != nil {
-			return err
-		}
-		logger.Info("save author successfully")
-
-		if err = p.db.SavePost(&db.Post{
-			ID:          a.ID,
-			Title:       a.Title,
-			Text:        string(content),
-			AuthorID:    a.Author.ID,
-			CreatedTime: time.Unix(int64(a.CreatedTime), 0),
-			Raw:         func() []byte { b, _ := json.Marshal(a); return b }(),
-		}); err != nil {
-			return err
-		}
-		logger.Info("save post successfully")
+	text, err := p.parseContent([]byte(a.Content), a.ID, logger)
+	if err != nil {
+		return err
 	}
+	logger.Info("parse content successfully")
+
+	content, err = p.mdfmt.Format([]byte(text))
+	if err != nil {
+		return err
+	}
+	logger.Info("format content successfully")
+
+	if err = p.db.SaveAuthor(&db.Author{
+		ID:   a.Author.ID,
+		Name: a.Author.Name,
+	}); err != nil {
+		return err
+	}
+	logger.Info("save author successfully")
+
+	if err = p.db.SavePost(&db.Post{
+		ID:          a.ID,
+		Title:       a.Title,
+		Text:        string(content),
+		AuthorID:    a.Author.ID,
+		CreatedTime: time.Unix(int64(a.CreatedTime), 0),
+		Raw:         func() []byte { b, _ := json.Marshal(a); return b }(),
+	}); err != nil {
+		return err
+	}
+	logger.Info("save post successfully")
 
 	return nil
 }
