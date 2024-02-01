@@ -20,7 +20,10 @@ func TestAnswerList(t *testing.T) {
 	config.InitConfigFromEnv()
 
 	logger := log.NewLogger()
-	requestService := zhihuRequest.NewRequestService(logger)
+	requestService, err := zhihuRequest.NewRequestService(logger)
+	if err != nil {
+		t.Fatal(err)
+	}
 	bytes, err := requestService.LimitRaw(u)
 	if err != nil {
 		t.Fatal(err)

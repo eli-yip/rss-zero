@@ -37,7 +37,10 @@ func TestPin(t *testing.T) {
 	mockFileService := file.MockMinio{}
 	mockDBService := zhihuDB.MockDB{}
 	logger := log.NewLogger()
-	requester := request.NewRequestService(logger)
+	requester, err := request.NewRequestService(logger)
+	if err != nil {
+		t.Fatal(err)
+	}
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
 	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, logger)
 	text, err := parser.ParsePin(bytes)

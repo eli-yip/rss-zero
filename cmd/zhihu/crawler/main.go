@@ -22,7 +22,10 @@ func main() {
 	config.InitConfigFromEnv()
 	logger.Info("init config successfully")
 
-	requestService := request.NewRequestService(logger)
+	requestService, err := request.NewRequestService(logger)
+	if err != nil {
+		logger.Fatal("fail to init request service", zap.Error(err))
+	}
 	logger.Info("init request service successfully")
 
 	db, err := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
