@@ -24,29 +24,24 @@ func (h *ZsxqController) UpdateZsxqCookies(c echo.Context) (err error) {
 
 	var req SetCookieReq
 	if err = c.Bind(&req); err != nil {
-		_ = c.JSON(http.StatusBadRequest, &SetCookieResp{Message: err.Error()})
 		logger.Error("update zsxq cookies failed", zap.Error(err))
-		return
+		return c.JSON(http.StatusBadRequest, &SetCookieResp{Message: err.Error()})
 	}
 	logger.Info("get zsxq cookies", zap.String("cookies", req.Cookies))
 
 	if err = h.redis.Set("zsxq_cookies", req.Cookies, redis.Forever); err != nil {
-		_ = c.JSON(http.StatusInternalServerError, &SetCookieResp{Message: err.Error()})
 		logger.Error("update zsxq cookies failed", zap.Error(err))
-		return
+		return c.JSON(http.StatusInternalServerError, &SetCookieResp{Message: err.Error()})
 	}
 
 	requestService := zsxqRequest.NewRequestService(req.Cookies, h.redis, logger)
 	const invalidCookies = "invalid cookies"
 	if _, err = requestService.Limit(config.C.ZsxqTestURL); err != nil {
 		err = fmt.Errorf("%s: %s", invalidCookies, err.Error())
-		_ = c.JSON(http.StatusInternalServerError,
-			&SetCookieResp{Message: err.Error()})
 		logger.Error("update zsxq cookies failed", zap.Error(err))
-		return
+		return c.JSON(http.StatusInternalServerError,
+			&SetCookieResp{Message: err.Error()})
 	}
 
-	_ = c.JSON(http.StatusOK, &SetCookieResp{Message: "update zsxq cookies success"})
-
-	return nil
+	return c.JSON(http.StatusOK, &SetCookieResp{Message: "update zsxq cookies success"})
 }

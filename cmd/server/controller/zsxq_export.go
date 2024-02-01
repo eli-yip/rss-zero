@@ -38,15 +38,13 @@ func (h *ZsxqController) ExportZsxq(c echo.Context) (err error) {
 	var req ExportReq
 	if err = c.Bind(&req); err != nil {
 		logger.Error("read json error", zap.Error(err))
-		_ = c.String(http.StatusBadRequest, err.Error())
-		return
+		return c.String(http.StatusBadRequest, err.Error())
 	}
 
 	options, err := h.parseOption(&req)
 	if err != nil {
 		logger.Error("parse option error", zap.Error(err))
-		_ = c.String(http.StatusBadRequest, err.Error())
-		return
+		return c.String(http.StatusBadRequest, err.Error())
 	}
 
 	zsxqDBService := zsxqDB.NewZsxqDBService(h.db)
@@ -91,13 +89,11 @@ func (h *ZsxqController) ExportZsxq(c echo.Context) (err error) {
 		logger.Info("export successfully")
 	}()
 
-	_ = c.JSON(http.StatusOK, &ExportResp{
+	return c.JSON(http.StatusOK, &ExportResp{
 		Message:  "start to export, you'll be notified when it's done",
 		FileName: fileName,
 		URL:      config.C.MinioConfig.AssetsPrefix + "/" + fileName,
 	})
-
-	return nil
 }
 
 var ErrGroupIDEmpty = errors.New("group id is empty")

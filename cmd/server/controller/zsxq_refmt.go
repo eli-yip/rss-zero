@@ -25,9 +25,8 @@ func (h *ZsxqController) Refmt(c echo.Context) (err error) {
 
 	var req RefmtReq
 	if err = c.Bind(&req); err != nil {
-		_ = c.JSON(http.StatusBadRequest, &ZsxqResp{Message: failedToReFmt})
 		logger.Error(failedToReFmt, zap.Error(err))
-		return
+		return c.JSON(http.StatusBadRequest, &ZsxqResp{Message: failedToReFmt})
 	}
 	logger.Info("get re-fmt request", zap.Int("group_id", req.GroupID))
 
@@ -37,6 +36,5 @@ func (h *ZsxqController) Refmt(c echo.Context) (err error) {
 		h.notifier)
 	go refmtService.ReFmt(req.GroupID)
 
-	_ = c.JSON(http.StatusOK, &ZsxqResp{Message: "re-fmt started"})
-	return nil
+	return c.JSON(http.StatusOK, &ZsxqResp{Message: "re-fmt started"})
 }

@@ -45,7 +45,7 @@ func (h *ZsxqController) Get(c echo.Context) (err error) {
 		logger.Error("invalid group id",
 			zap.String("group_id_param", groupIDStr),
 			zap.Error(err))
-		_ = c.String(http.StatusBadRequest, "invalid group id")
+		return c.String(http.StatusBadRequest, "invalid group id")
 	}
 	logger.Info("group id extracted", zap.Int("group_id", groupID))
 
@@ -53,12 +53,11 @@ func (h *ZsxqController) Get(c echo.Context) (err error) {
 
 	rss, err := h.getRSSContent(fmt.Sprintf(rssPath, groupID), logger)
 	if err != nil {
-		_ = c.String(http.StatusInternalServerError, "failed to get rss from redis")
+		return c.String(http.StatusInternalServerError, "failed to get rss from redis")
 	}
 	logger.Info("rss content retrieved")
 
-	_ = c.String(http.StatusOK, rss)
-	return nil
+	return c.String(http.StatusOK, rss)
 }
 
 type task struct {
