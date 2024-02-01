@@ -77,7 +77,7 @@ func main() {
 				u := fmt.Sprintf(zhihuAnswerAPI, a.ID)
 				logger.Info("parsing answer", zap.String("url", u))
 
-				resp, err := requestService.Limit(u)
+				resp, err := requestService.Limit(u) // FIXME: Limit has been deprecated
 				if err != nil {
 					if err == request.ErrUnreachable {
 						logger.Error("answer is unreachable in public, updaate status to unreachable", zap.Error(err))

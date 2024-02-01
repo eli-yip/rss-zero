@@ -16,16 +16,21 @@ var (
 	ErrInvalidCookie = errors.New("invalid cookie")
 	ErrMaxRetry      = errors.New("max retry")
 	ErrUnreachable   = errors.New("unreachable")
+	ErrGetXZSE96     = errors.New("fail to get x-zse-96")
+	ErrNewRequest    = errors.New("fail to new a request")
 )
 
-const userAgent = "ZhihuHybrid com.zhihu.android/Futureve/6.59.0 Mozilla/5.0 (Linux; Android 10; GM1900 Build/QKQ1.190716.003; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/85.0.4183.127 Mobile Safari/537.36"
+const (
+	userAgent    = "ZhihuHybrid com.zhihu.android/Futureve/6.59.0 Mozilla/5.0 (Linux; Android 10; GM1900 Build/QKQ1.190716.003; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/85.0.4183.127 Mobile Safari/537.36"
+	apiUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75"
+)
 
 type RequestService struct {
 	client   *http.Client
 	limiter  chan struct{}
-	maxRetry int
-	dC0      string
-	cookies  string
+	maxRetry int    // default 5
+	dC0      string // d_c0 cookie, initilized when new RequestService
+	cookies  string // all cookies, initilized when new RequestService
 	log      *zap.Logger
 }
 
@@ -42,20 +47,19 @@ func NewRequestService(logger *zap.Logger) (*RequestService, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.cookies = encrypt.CookiesToString(cookies)
+
 	found := false
 	for _, c := range cookies {
 		if c.Name == "d_c0" {
-			logger.Info("get d_c0 cookie", zap.String("value", c.Value))
+			logger.Info("get d_c0 cookie successfully", zap.String("value", c.Value))
 			s.dC0 = c.Value
 			found = true
 		}
 	}
 	if !found {
-		return nil, errors.New("d_c0 cookie not found")
+		return nil, errors.New("fail to find d_c0 cookie")
 	}
-
-	cookieStr := encrypt.CookiesToString(cookies)
-	s.cookies = cookieStr
 
 	go func() {
 		for {
@@ -70,54 +74,10 @@ func NewRequestService(logger *zap.Logger) (*RequestService, error) {
 // Send request with limiter with error check
 // Now it's only used with api.zhihu.com v4 answer api
 func (r *RequestService) Limit(u string) (respByte []byte, err error) {
-	logger := r.log.With(zap.String("url", u))
-
-	logger.Info("start to get zhihu API response with limit")
-	for i := 0; i < r.maxRetry; i++ {
-		logger := logger.With(zap.Int("index", i))
-		<-r.limiter
-
-		req, err := r.setReq(u)
-		if err != nil {
-			logger.Error("fail to new a request", zap.Error(err))
-			continue
-		}
-
-		resp, err := r.client.Do(req)
-		if err != nil || (resp.StatusCode != http.StatusOK &&
-			resp.StatusCode != http.StatusMethodNotAllowed &&
-			resp.StatusCode != http.StatusNotFound) {
-			if resp != nil && resp.Body != nil {
-				// Close response body when error.
-				resp.Body.Close()
-			}
-			logger.Error("fail to request url", zap.Error(err))
-			continue
-		}
-
-		bytes, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			logger.Error("fail to read response body", zap.Error(err))
-			continue
-		}
-
-		if resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusNotFound {
-			// NOTE: this error will be logged in the caller
-			return nil, ErrUnreachable
-		}
-		return bytes, nil
-	}
-
-	if err == nil {
-		err = ErrMaxRetry
-	}
-	logger.Error("fail to get zhihu API response with limit", zap.Error(err))
-	return nil, err
+	return nil, nil
 }
 
-// Send request with limiter, used for zhihu
-// Now it's only used with api.zhihu.com answers api
+// Send request with limiter, used for all zhihu api requests
 func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 	logger := r.log.With(zap.String("url", u))
 	logger.Info("request with limiter for raw data")
@@ -126,22 +86,18 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 		logger := logger.With(zap.Int("index", i))
 		<-r.limiter
 
-		req, err := r.setReq(u)
+		req, err := r.setAPIReq(u)
 		if err != nil {
-			logger.Error("fail to new a request", zap.Error(err))
+			if err != nil {
+				if errors.Is(err, ErrGetXZSE96) {
+					logger.Error("fail to get x-zse-96", zap.Error(err))
+				} else {
+					logger.Error("fail to new a request", zap.Error(err))
+				}
+				continue
+			}
 			continue
 		}
-
-		xzse96, err := encrypt.GetXZSE96(u, r.dC0)
-		if err != nil {
-			logger.Error("fail to get xzse96", zap.Error(err))
-			continue
-		}
-
-		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75")
-		req.Header.Set("x-zse-93", "101_3_3.0")
-		req.Header.Set("x-zse-96", xzse96)
-		req.Header.Set("cookie", r.cookies)
 
 		resp, err := r.client.Do(req)
 		if err != nil || resp.StatusCode != http.StatusOK {
@@ -210,6 +166,23 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 	}
 	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
+}
+
+func (r *RequestService) setAPIReq(u string) (req *http.Request, err error) {
+	req, err = http.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, errors.Join(ErrNewRequest, err)
+	}
+	xzse96, err := encrypt.GetXZSE96(u, r.dC0)
+	if err != nil {
+		return nil, errors.Join(ErrGetXZSE96, err)
+	}
+	req.Header.Set("User-Agent", apiUserAgent)
+	req.Header.Set("x-zse-93", "101_3_3.0")
+	req.Header.Set("x-zse-96", xzse96)
+	req.Header.Set("cookie", r.cookies)
+	req.Header.Set("User-Agent", apiUserAgent)
+	return req, nil
 }
 
 // Set request header and method
