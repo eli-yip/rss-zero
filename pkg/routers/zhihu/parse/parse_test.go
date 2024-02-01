@@ -49,7 +49,7 @@ func TestReplaceImageLinks(t *testing.T) {
 	}
 
 	for _, c := range casesList {
-		result := replaceImageLinks(c.content, c.name, c.from, c.to)
+		result := replaceImageLink(c.content, c.name, c.from, c.to)
 		if result != c.result {
 			t.Errorf("expected %s, got %s", c.result, result)
 		}

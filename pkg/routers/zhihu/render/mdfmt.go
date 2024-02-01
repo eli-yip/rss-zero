@@ -29,12 +29,12 @@ func newMdFormatter() goldmark.Markdown {
 	return gm
 }
 
-func (m *MarkdownFormatter) Format(src []byte) ([]byte, error) {
+func (m *MarkdownFormatter) FormatStr(src string) (string, error) {
 	var buf bytes.Buffer
-	err := m.formatter.Convert(src, &buf)
+	err := m.formatter.Convert([]byte(src), &buf)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return buf.Bytes(), nil
+	return buf.String(), nil
 }

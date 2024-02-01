@@ -1,18 +1,15 @@
 package apiModels
 
-// XMLInitalState represents json from xml <body><script id="js-initialData" type="text/json">...</script></body>
-type XmlInitalData struct {
-	InitialState struct {
-		Entities struct {
-			Answers map[string]XmlAnswer `json:"answers"`
-		} `json:"entities"`
-	} `json:"initialState"`
+type Answer struct {
+	ID       int      `json:"id"`
+	CreateAt int64    `json:"created_time"`
+	Author   Author   `json:"author"`
+	Question Question `json:"question"`
+	HTML     string   `json:"content"`
 }
 
-type XmlAnswer struct {
-	ID          int      `json:"id"`
-	Content     string   `json:"content"`
-	CreatedTime int      `json:"createdTime"`
-	Author      Author   `json:"author"`
-	Question    Question `json:"question"`
+type Question struct {
+	ID       int    `json:"id"`
+	CreateAt int64  `json:"created"`
+	Title    string `json:"title"`
 }
