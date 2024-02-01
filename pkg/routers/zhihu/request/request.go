@@ -122,7 +122,7 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 // Now it's only used with api.zhihu.com answers api
 func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 	logger := r.log.With(zap.String("url", u))
-	logger.Info("request with limiter for raw data", zap.String("url", u))
+	logger.Info("request with limiter for raw data")
 
 	for i := 0; i < r.maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
@@ -139,8 +139,8 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			logger.Error("fail to get xzse96", zap.Error(err))
 			continue
 		}
+
 		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75")
-		req.Header.Set("x-api-version", "3.0.91")
 		req.Header.Set("x-zse-93", "101_3_3.0")
 		req.Header.Set("x-zse-96", xzse96)
 		req.Header.Set("cookie", r.cookies)
