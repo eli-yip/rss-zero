@@ -3,7 +3,7 @@ package main
 import (
 	"net"
 
-	"github.com/eli-yip/rss-zero/cmd/server/handler"
+	"github.com/eli-yip/rss-zero/cmd/server/controller"
 	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/cron"
@@ -60,7 +60,7 @@ func setupEcho(redisService *redis.RedisService,
 	e.Use(middleware.RequestID(), middleware.Recover(),
 		myMiddleware.LogRequest(logger), myMiddleware.InjectLogger(logger))
 
-	zsxqHandler := handler.NewZsxqHandler(redisService, db, notifier, logger)
+	zsxqHandler := controller.NewZsxqHandler(redisService, db, notifier, logger)
 
 	rssGroup := e.Group("/rss")
 	rssZsxq := rssGroup.GET("/zsxq/:id", zsxqHandler.Get)

@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (
 	"net/http"
@@ -20,7 +20,7 @@ type ZsxqResp struct {
 
 var failedToReFmt = "failed to re-format"
 
-func (h *ZsxqHandler) Refmt(c echo.Context) (err error) {
+func (h *ZsxqController) Refmt(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req RefmtReq

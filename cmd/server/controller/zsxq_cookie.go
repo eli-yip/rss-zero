@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type SetCookieResp struct {
 	Message string `json:"message"`
 }
 
-func (h *ZsxqHandler) UpdateZsxqCookies(c echo.Context) (err error) {
+func (h *ZsxqController) UpdateZsxqCookies(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req SetCookieReq

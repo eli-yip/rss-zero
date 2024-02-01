@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type ZsxqHandler struct {
+type ZsxqController struct {
 	redis    *redis.RedisService
 	db       *gorm.DB
 	logger   *zap.Logger
@@ -24,8 +24,8 @@ type ZsxqHandler struct {
 	notifier notify.Notifier
 }
 
-func NewZsxqHandler(redis *redis.RedisService, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *ZsxqHandler {
-	h := &ZsxqHandler{
+func NewZsxqHandler(redis *redis.RedisService, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *ZsxqController {
+	h := &ZsxqController{
 		redis:    redis,
 		db:       db,
 		logger:   logger,
@@ -36,7 +36,7 @@ func NewZsxqHandler(redis *redis.RedisService, db *gorm.DB, notifier notify.Noti
 	return h
 }
 
-func (h *ZsxqHandler) Get(c echo.Context) (err error) {
+func (h *ZsxqController) Get(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	groupIDStr := c.Param("id")
@@ -66,7 +66,7 @@ type task struct {
 	errCh  chan error
 }
 
-func (h *ZsxqHandler) getRSSContent(key string, logger *zap.Logger) (content string, err error) {
+func (h *ZsxqController) getRSSContent(key string, logger *zap.Logger) (content string, err error) {
 	task := task{textCh: make(chan string), errCh: make(chan error)}
 	defer close(task.textCh)
 	defer close(task.errCh)
@@ -84,7 +84,7 @@ func (h *ZsxqHandler) getRSSContent(key string, logger *zap.Logger) (content str
 	}
 }
 
-func (h *ZsxqHandler) processTask() {
+func (h *ZsxqController) processTask() {
 	for {
 		task := <-h.taskCh
 		key := <-task.textCh
@@ -107,7 +107,7 @@ func (h *ZsxqHandler) processTask() {
 	}
 }
 
-func (h *ZsxqHandler) generateRSS(key string) (content string, err error) {
+func (h *ZsxqController) generateRSS(key string) (content string, err error) {
 	gid, err := h.extractGroupIDFromKey(key)
 	if err != nil {
 		return "", err
@@ -158,7 +158,7 @@ func (h *ZsxqHandler) generateRSS(key string) (content string, err error) {
 	return result, nil
 }
 
-func (h *ZsxqHandler) extractGroupIDFromParams(s string) (gid int, err error) {
+func (h *ZsxqController) extractGroupIDFromParams(s string) (gid int, err error) {
 	re := regexp.MustCompile(`\d+`)
 	numbers := re.FindAllString(s, -1)
 
@@ -175,7 +175,7 @@ func (h *ZsxqHandler) extractGroupIDFromParams(s string) (gid int, err error) {
 	return resultInt, nil
 }
 
-func (h *ZsxqHandler) extractGroupIDFromKey(key string) (groupID int, err error) {
+func (h *ZsxqController) extractGroupIDFromKey(key string) (groupID int, err error) {
 	re := regexp.MustCompile(`zsxq_rss_(\d+)`)
 	matches := re.FindStringSubmatch(key)
 	if len(matches) < 2 {

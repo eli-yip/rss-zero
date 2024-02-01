@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (
 	"errors"
@@ -32,7 +32,7 @@ type ExportResp struct {
 	URL      string `json:"url"`
 }
 
-func (h *ZsxqHandler) ExportZsxq(c echo.Context) (err error) {
+func (h *ZsxqController) ExportZsxq(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req ExportReq
@@ -102,7 +102,7 @@ func (h *ZsxqHandler) ExportZsxq(c echo.Context) (err error) {
 
 var ErrGroupIDEmpty = errors.New("group id is empty")
 
-func (h *ZsxqHandler) parseOption(req *ExportReq) (zsxqExport.Options, error) {
+func (h *ZsxqController) parseOption(req *ExportReq) (zsxqExport.Options, error) {
 	var opts zsxqExport.Options
 
 	if req.GroupID == 0 {
@@ -144,7 +144,7 @@ func (h *ZsxqHandler) parseOption(req *ExportReq) (zsxqExport.Options, error) {
 	return opts, nil
 }
 
-func (h *ZsxqHandler) zsxqFileName(opts zsxqExport.Options) string {
+func (h *ZsxqController) zsxqFileName(opts zsxqExport.Options) string {
 	var parts []string
 
 	parts = append(parts, fmt.Sprintf("export/zsxq/%d", opts.GroupID))
@@ -178,7 +178,7 @@ func (h *ZsxqHandler) zsxqFileName(opts zsxqExport.Options) string {
 	return fmt.Sprintf("%s.%s", strings.Join(parts, "-"), "md")
 }
 
-func (h *ZsxqHandler) parseTime(s string) (time.Time, error) {
+func (h *ZsxqController) parseTime(s string) (time.Time, error) {
 	const timeLayout = "2006-01-02"
 	return time.Parse(timeLayout, s)
 }
