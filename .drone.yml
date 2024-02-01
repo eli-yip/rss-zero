@@ -24,7 +24,7 @@ steps:
           - pull_request
           - tag
 
-  - name: test
+  - name: wait-for-dind
     image: docker:24.0.7-cli
     volumes:
       - name: dockersock
@@ -51,13 +51,17 @@ steps:
       DOCKER_PASSWORD:
         from_secret: docker_password
     commands:
+      - echo $DOCKER_PASSWORD | docker login $${DOCKER_REPO} -u $DOCKER_USERNAME --password-stdin
       - docker build -t "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}" -f docker/Dockerfile.server .
       - docker tag "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}" $${DOCKER_REPO}/rss-zero:latest
-      - echo $DOCKER_PASSWORD | docker login $${DOCKER_REPO} -u $DOCKER_USERNAME --password-stdin
       - docker run -v /var/run/docker.sock:/var/run/docker.sock $${DOCKER_REPO}/slim:1.40.10 build --tag "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}-slim" --http-probe=false --target "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}"
       - docker tag "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}-slim" $${DOCKER_REPO}/rss-zero:latest-slim
+      - docker build -t "$${DOCKER_REPO}/rss-zhihu-encrypt:${DRONE_TAG##v}" -f docker/Dockerfile.zhihu .
+      - docker tag "$${DOCKER_REPO}/rss-zhihu-encrypt:${DRONE_TAG##v}" $${DOCKER_REPO}/rss-zhihu-encrypt:latest
+      - docker run -v /var/run/docker.sock:/var/run/docker.sock $${DOCKER_REPO}/slim:1.40.10 build --tag "$${DOCKER_REPO}/rss-zhihu-encrypt:${DRONE_TAG##v}-slim" --http-probe=false --target "$${DOCKER_REPO}/rss-zhihu-encrypt:${DRONE_TAG##v}"
+      - docker tag "$${DOCKER_REPO}/rss-zhihu-encrypt:${DRONE_TAG##v}-slim" $${DOCKER_REPO}/rss-zhihu-encrypt:latest-slim
     depends_on:
-      - test
+      - wait-for-dind
     when:
       event:
         - tag
@@ -78,6 +82,10 @@ steps:
       - echo $DOCKER_PASSWORD | docker login $${DOCKER_REPO} -u $DOCKER_USERNAME --password-stdin
       - |
         docker images $${DOCKER_REPO}/rss-zero --format "{{.Repository}}:{{.Tag}}" | while read image; do
+          docker push "$image"
+        done
+      - |
+        docker images $${DOCKER_REPO}/rss-zhihu-encrypt --format "{{.Repository}}:{{.Tag}}" | while read image; do
           docker push "$image"
         done
     depends_on:

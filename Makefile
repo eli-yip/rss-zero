@@ -20,6 +20,10 @@ zsxq-crawler:
 zsxq-re-fmt:
 	$(GOCMD) build -o zsxq-re-fmt ${CURRENT_DIR}/cmd/zsxq/re-fmt
 
+.PHONY: zhihu-encrypt
+zhihu-encrypt:
+	node cmd/zhihu_encrypt/server.js
+
 .PHONY: lint
 lint:
 	$(GOLINT_CONTAINER_CMD) golangci-lint run -v --timeout 5m

@@ -1,0 +1,11 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY cmd/zhihu_encrypt .
+
+RUN npm install
+
+EXPOSE 3000
+
+ENTRYPOINT ["node", "server.js"]
