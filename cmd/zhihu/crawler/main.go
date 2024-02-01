@@ -88,7 +88,7 @@ func main() {
 				}
 				logger.Info("request zhihu api successfully")
 
-				if err = parser.ParseAnswer(resp); err != nil {
+				if _, err = parser.ParseAnswer(resp); err != nil {
 					logger.Fatal("fail to parse answer", zap.Error(err))
 				}
 				logger.Info("parse answer successfully")

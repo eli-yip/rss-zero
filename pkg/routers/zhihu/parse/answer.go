@@ -10,23 +10,23 @@ import (
 )
 
 // ParseAnswer receives api.zhihu.com resp and parse it
-func (p *Parser) ParseAnswer(content []byte) (err error) {
+func (p *Parser) ParseAnswer(content []byte) (text string, err error) {
 	answer := apiModels.Answer{}
 	if err = json.Unmarshal(content, &answer); err != nil {
-		return err
+		return "", err
 	}
 	logger := p.logger.With(zap.Int("answer_id", answer.ID))
 	logger.Info("unmarshal answer successfully")
 
-	text, err := p.parseHTML(answer.HTML, answer.ID, logger)
+	text, err = p.parseHTML(answer.HTML, answer.ID, logger)
 	if err != nil {
-		return err
+		return "", err
 	}
 	logger.Info("parse html content successfully")
 
 	formattedText, err := p.mdfmt.FormatStr(text)
 	if err != nil {
-		return err
+		return "", err
 	}
 	logger.Info("format markdown content successfully")
 
@@ -34,7 +34,7 @@ func (p *Parser) ParseAnswer(content []byte) (err error) {
 		ID:   answer.Author.ID,
 		Name: answer.Author.Name,
 	}); err != nil {
-		return err
+		return "", err
 	}
 	logger.Info("save author to db successfully")
 
@@ -43,7 +43,7 @@ func (p *Parser) ParseAnswer(content []byte) (err error) {
 		CreateAt: time.Unix(answer.Question.CreateAt, 0),
 		Title:    answer.Question.Title,
 	}); err != nil {
-		return err
+		return "", err
 	}
 	logger.Info("save question to db successfully")
 
@@ -56,9 +56,9 @@ func (p *Parser) ParseAnswer(content []byte) (err error) {
 		Raw:        content,
 		Status:     db.AnswerStatusCompleted,
 	}); err != nil {
-		return err
+		return "", err
 	}
 	logger.Info("save answer to db successfully")
 
-	return nil
+	return formattedText, nil
 }

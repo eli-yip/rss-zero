@@ -11,27 +11,27 @@ import (
 )
 
 // ParsePin parses the zhihu.com/api/v4 resp
-func (p *Parser) ParsePin(content []byte) (err error) {
+func (p *Parser) ParsePin(content []byte) (text string, err error) {
 	pin := apiModels.Pin{}
 	if err = json.Unmarshal(content, &pin); err != nil {
-		return err
+		return "", err
 	}
 	pinID, err := strconv.Atoi(pin.ID)
 	if err != nil {
-		return err
+		return "", err
 	}
 	logger := p.logger.With(zap.Int("pin_id", pinID))
 	logger.Info("unmarshal pin successfully")
 
-	text, err := p.parseHTML(pin.HTML, pinID, logger)
+	text, err = p.parseHTML(pin.HTML, pinID, logger)
 	if err != nil {
-		return err
+		return "", err
 	}
 	logger.Info("parse html successfully")
 
 	formattedText, err := p.mdfmt.FormatStr(text)
 	if err != nil {
-		return err
+		return "", err
 	}
 	logger.Info("format markdown text successfully")
 
@@ -39,7 +39,7 @@ func (p *Parser) ParsePin(content []byte) (err error) {
 		ID:   pin.Author.ID,
 		Name: pin.Author.Name,
 	}); err != nil {
-		return err
+		return "", err
 	}
 	logger.Info("save author to db successfully")
 
@@ -50,8 +50,8 @@ func (p *Parser) ParsePin(content []byte) (err error) {
 		Text:     formattedText,
 		Raw:      content,
 	}); err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return formattedText, nil
 }
