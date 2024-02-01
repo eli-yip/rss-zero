@@ -35,7 +35,7 @@ func TestRealReq(t *testing.T) {
 	req.Header.Set("x-api-version", "3.0.91")
 	req.Header.Set("x-zse-93", "101_3_3.0")
 	req.Header.Set("x-zse-96", xzse96)
-	req.Header.Set("cookie", cookiesToString(cookies))
+	req.Header.Set("cookie", CookiesToString(cookies))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -116,7 +116,7 @@ func TestCookieToString(t *testing.T) {
 		{Name: "cookie2", Value: "value2"},
 	}
 
-	cookieStr := cookiesToString(cookies)
+	cookieStr := CookiesToString(cookies)
 
 	t.Log(cookieStr)
 }

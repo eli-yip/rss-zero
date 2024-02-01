@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/eli-yip/rss-zero/config"
 )
 
 func GetCookies() (cookies []*http.Cookie, err error) {
@@ -62,7 +64,7 @@ func GetXZSE96(url, dC0 string) (xzse96 string, err error) {
 		return "", err
 	}
 
-	req, err := http.NewRequest("POST", "http://localhost:3000/encrypt", bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest("POST", config.C.ZhihuEncryptionURL, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return "", err
 	}
@@ -100,7 +102,11 @@ func getPath(path string) (result string, err error) {
 	}
 
 	if u.RawQuery != "" {
-		result = fmt.Sprintf("%s?%s", u.Path, u.RawQuery)
+		unescapedQuery, err := url.QueryUnescape(u.RawQuery)
+		if err != nil {
+			return "", err
+		}
+		result = fmt.Sprintf("%s?%s", u.Path, unescapedQuery)
 	} else {
 		result = u.Path
 	}
@@ -108,7 +114,7 @@ func getPath(path string) (result string, err error) {
 	return result, nil
 }
 
-func cookiesToString(cookies []*http.Cookie) string {
+func CookiesToString(cookies []*http.Cookie) string {
 	var sb strings.Builder
 
 	for i, cookie := range cookies {

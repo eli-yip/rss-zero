@@ -1,0 +1,96 @@
+{
+  "admin_closed_comment": false,
+  "annotation_action": null,
+  "answer_type": "normal",
+  "author": {
+    "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=2c26e567",
+    "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=2c26e567",
+    "badge": [],
+    "badge_v2": {
+      "detail_badges": [],
+      "icon": "",
+      "merged_badges": [],
+      "night_icon": "",
+      "title": ""
+    },
+    "gender": 1,
+    "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+    "id": "00a69a0323d435435c7bbd0f1bd535e5",
+    "is_advertiser": false,
+    "is_followed": false,
+    "is_org": false,
+    "is_privacy": false,
+    "name": "墨苍离",
+    "type": "people",
+    "url": "https://api.zhihu.com/people/00a69a0323d435435c7bbd0f1bd535e5",
+    "url_token": "canglimo",
+    "user_type": "people"
+  },
+  "biz_ext": {},
+  "can_comment": {
+    "reason": "",
+    "status": true
+  },
+  "collapse_reason": "",
+  "collapsed_by": "nobody",
+  "comment_count": 13,
+  "comment_permission": "all",
+  "content": "\u003cp data-pid=\"zHRndNIa\"\u003e巧妇难为无米之炊。\u003c/p\u003e\u003cp data-pid=\"Zvh46s7J\"\u003e即使你是真的智者（这大概率也是可疑的）。\u003c/p\u003e\u003cp data-pid=\"8O1wGWxS\"\u003e没有基础资源也做不了任何事情。\u003c/p\u003e",
+  "created_time": 1706159189,
+  "editable_content": "",
+  "extras": "",
+  "id": 3375497152,
+  "is_collapsed": false,
+  "is_copyable": false,
+  "is_jump_native": false,
+  "is_normal": true,
+  "is_sticky": false,
+  "mark_infos": [],
+  "question": {
+    "answer_count": 892,
+    "created": 1704325321,
+    "detail": "",
+    "excerpt": "",
+    "follower_count": 916,
+    "id": 637930430,
+    "is_labeled": false,
+    "question_type": "normal",
+    "relationship": {
+      "is_author": false,
+      "voting": 0
+    },
+    "title": "求智者解答，我读了许多书，有一定的思考能力，我能理解这世上的幸与不幸，为什么却解答不了我的现实困境？",
+    "type": "question",
+    "updated_time": 1704325321,
+    "url": "https://api.zhihu.com/questions/637930430"
+  },
+  "relationship": {
+    "upvoted_followees": []
+  },
+  "reshipment_settings": "disallowed",
+  "reward_info": {
+    "can_open_reward": false,
+    "is_rewardable": true,
+    "reward_member_count": 0,
+    "reward_total_money": 0,
+    "tagline": "真诚赞赏，手留余香"
+  },
+  "suggest_edit": {
+    "reason": "",
+    "status": false,
+    "tip": "",
+    "title": "",
+    "unnormal_details": {
+      "description": "",
+      "note": "",
+      "reason": "",
+      "reason_id": 0,
+      "status": ""
+    },
+    "url": ""
+  },
+  "type": "answer",
+  "updated_time": 1706159189,
+  "url": "https: //api.zhihu.com/answers/3375497152",
+  "voteup_count": 115
+}

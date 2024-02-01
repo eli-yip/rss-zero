@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/encrypt"
 	"go.uber.org/zap"
 )
 
@@ -23,11 +24,12 @@ type RequestService struct {
 	client   *http.Client
 	limiter  chan struct{}
 	maxRetry int
+	dC0      string
+	cookies  string
 	log      *zap.Logger
 }
 
 func NewRequestService(logger *zap.Logger) *RequestService {
-
 	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:   &http.Client{},
@@ -35,6 +37,27 @@ func NewRequestService(logger *zap.Logger) *RequestService {
 		maxRetry: defaultMaxRetry,
 		log:      logger,
 	}
+
+	cookies, err := encrypt.GetCookies()
+	if err != nil {
+		// TODO: Add error check for this
+		logger.Fatal("fail to get cookies", zap.Error(err))
+	}
+	found := false
+	for _, c := range cookies {
+		if c.Name == "d_c0" {
+			logger.Info("get d_c0 cookie", zap.String("value", c.Value))
+			s.dC0 = c.Value
+			found = true
+		}
+	}
+	if !found {
+		// TODO: Add error check for this
+		logger.Fatal("fail to find d_c0 cookie")
+	}
+
+	cookieStr := encrypt.CookiesToString(cookies)
+	s.cookies = cookieStr
 
 	go func() {
 		for {
@@ -47,6 +70,7 @@ func NewRequestService(logger *zap.Logger) *RequestService {
 }
 
 // Send request with limiter with error check
+// Now it's only used with api.zhihu.com v4 answer api
 func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 	logger := r.log.With(zap.String("url", u))
 
@@ -95,6 +119,7 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 }
 
 // Send request with limiter, used for zhihu
+// Now it's only used with api.zhihu.com answers api
 func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 	logger := r.log.With(zap.String("url", u))
 	logger.Info("request with limiter for raw data", zap.String("url", u))
@@ -108,6 +133,17 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			logger.Error("fail to new a request", zap.Error(err))
 			continue
 		}
+
+		xzse96, err := encrypt.GetXZSE96(u, r.dC0)
+		if err != nil {
+			logger.Error("fail to get xzse96", zap.Error(err))
+			continue
+		}
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75")
+		req.Header.Set("x-api-version", "3.0.91")
+		req.Header.Set("x-zse-93", "101_3_3.0")
+		req.Header.Set("x-zse-96", xzse96)
+		req.Header.Set("cookie", r.cookies)
 
 		resp, err := r.client.Do(req)
 		if err != nil || resp.StatusCode != http.StatusOK {
