@@ -13,8 +13,8 @@ app.post('/encrypt', (req, res) => {
     return res.status(400).send('Missing parameters');
   }
 
-  result = calculateXZSE96(apiPath, cookieMes)
-  res.send({ result });
+  xzse96 = calculateXZSE96(apiPath, cookieMes)
+  res.send({ xzse96 });
 });
 
 const PORT = 3000;
