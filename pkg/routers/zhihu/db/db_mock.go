@@ -2,7 +2,7 @@ package db
 
 type MockDB struct{}
 
-func (d *MockDB) SavePost(p *Post) error {
+func (d *MockDB) SaveArticle(p *Article) error {
 	return nil
 }
 
@@ -40,8 +40,4 @@ func (d *MockDB) SavePin(p *Pin) error {
 
 func (d *MockDB) GetAuthorName(string) (string, error) {
 	return "", nil
-}
-
-func (d *MockDB) CheckAuthorExist(string) (bool, error) {
-	return true, nil
 }

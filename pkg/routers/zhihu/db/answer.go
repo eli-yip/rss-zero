@@ -21,13 +21,13 @@ type FetchAnswerOption struct {
 // "created_time": 1705985791,
 // "id": 3372966744,
 type Answer struct {
-	ID          int       `gorm:"column:id;type:int;primary_key"`
-	QuestionID  int       `gorm:"column:question_id;type:int"`
-	AuthorID    string    `gorm:"column:author_id;type:text"`
-	CreatedTime time.Time `gorm:"column:created_time;type:timestamp"`
-	Text        string    `gorm:"column:text;type:text"`
-	Raw         []byte    `gorm:"column:raw;type:bytea"`
-	Status      int       `gorm:"column:status;type:int"`
+	ID         int       `gorm:"column:id;type:int;primary_key"`
+	QuestionID int       `gorm:"column:question_id;type:int"`
+	AuthorID   string    `gorm:"column:author_id;type:text"`
+	CreateAt   time.Time `gorm:"column:create_at;type:timestamp"`
+	Text       string    `gorm:"column:text;type:text"`
+	Raw        []byte    `gorm:"column:raw;type:bytea"`
+	Status     int       `gorm:"column:status;type:int"`
 }
 
 const (
@@ -37,6 +37,19 @@ const (
 )
 
 func (a *Answer) TableName() string { return "zhihu_answer" }
+
+//	"question": {
+//	  "created": 1705768292,
+//	  "id": 640511134,
+//	  "title": "为什么那么多人就是不愿意承认女生保守是一个极大的竞争优势？"
+//	}
+type Question struct {
+	ID       int       `gorm:"column:id;type:int;primary_key"`
+	CreateAt time.Time `gorm:"column:create_at;type:timestamp"`
+	Title    string    `gorm:"column:title;type:text"`
+}
+
+func (q *Question) TableName() string { return "zhihu_question" }
 
 func (d *DBService) SaveAnswer(a *Answer) error {
 	return d.Save(a).Error
@@ -64,4 +77,13 @@ func (d *DBService) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, er
 
 func (d *DBService) UpdateAnswerStatus(id int, status int) error {
 	return d.Model(&Answer{}).Where("id = ?", id).Update("status", status).Error
+}
+
+type DataBaseQuestion interface {
+	// Save question info to zhihu_question table
+	SaveQuestion(q *Question) error
+}
+
+func (d *DBService) SaveQuestion(q *Question) error {
+	return d.Save(q).Error
 }
