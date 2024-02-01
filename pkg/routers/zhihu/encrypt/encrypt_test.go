@@ -4,17 +4,20 @@ import (
 	"io"
 	"net/http"
 	"testing"
+
+	"github.com/eli-yip/rss-zero/config"
 )
 
 func TestRealReq(t *testing.T) {
 	t.Log("Test real request to zhihu api")
+	config.InitConfigFromEnv()
 
 	cookies, err := GetCookies()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	api := "https://www.zhihu.com/api/v3/moments/canglimo/activities?offset=1706671953778&page_num=1"
+	api := "https://www.zhihu.com/api/v4/members/canglimo/articles?offset=0&limit=20"
 
 	var xzse96 string
 	for _, cookie := range cookies {
@@ -22,7 +25,7 @@ func TestRealReq(t *testing.T) {
 			t.Logf("d_c0: %s", cookie.Value)
 			xzse96, err = GetXZSE96(api, cookie.Value)
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 		}
 	}

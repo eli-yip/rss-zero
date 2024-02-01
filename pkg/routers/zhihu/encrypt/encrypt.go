@@ -102,11 +102,7 @@ func getPath(path string) (result string, err error) {
 	}
 
 	if u.RawQuery != "" {
-		unescapedQuery, err := url.QueryUnescape(u.RawQuery)
-		if err != nil {
-			return "", err
-		}
-		result = fmt.Sprintf("%s?%s", u.Path, unescapedQuery)
+		result = fmt.Sprintf("%s?%s", u.Path, u.RawQuery)
 	} else {
 		result = u.Path
 	}
