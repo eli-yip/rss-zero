@@ -34,48 +34,8 @@ func main() {
 	zhihuDBService := zhihuDB.NewDBService(db)
 	logger.Info("init zhihu db service successfully")
 
-	parseHomepage := flag.Bool("homepage", false, "parse homepage")
 	parseAnswer := flag.Bool("answer", false, "parse answer")
 	flag.Parse()
-
-	if *parseHomepage {
-		logger.Info("start to parse homepage")
-
-		homepageParser := parse.NewHomepageParser(zhihuDBService)
-		logger.Info("init homepage parser successfully")
-
-		const initialURL = `http://api.zhihu.com/members/canglimo/answers?order_by=created&limit=20&offset=0`
-		resp, err := requestService.LimitRaw(initialURL)
-		if err != nil {
-			logger.Fatal("fail to request zhihu api", zap.Error(err))
-		}
-
-		isEnd, totals, next, err := homepageParser.ParseHomepage(resp)
-		if err != nil {
-			logger.Fatal("fail to parse homepage", zap.Error(err))
-		}
-		logger.Info("homepage parsed", zap.Int("totals", totals))
-
-		var totals2 int
-		for !isEnd {
-			resp, err := requestService.LimitRaw(next)
-			if err != nil {
-				logger.Fatal("fail to request zhihu api", zap.Error(err))
-			}
-
-			isEnd, totals2, next, err = homepageParser.ParseHomepage(resp)
-			if err != nil {
-				logger.Fatal("fail to parse homepage", zap.Error(err))
-			}
-			if totals != totals2 {
-				logger.Fatal("totals not match, maybe more answers are published",
-					zap.Int("supposed", totals), zap.Int("fact", totals2))
-			}
-
-			logger.Info("homepage parsed", zap.String("url", next))
-		}
-		logger.Info("hoempage done!")
-	}
 
 	minioService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
 	if err != nil {
@@ -137,36 +97,6 @@ func main() {
 			logger.Info("parse answers from db successfully", zap.Int("count", len(as)))
 		}
 	}
-
-	// Not used, it need encryption signature
-	// if *parsePost {
-	// 	logger.Info("start to parse posts")
-
-	// 	const url = "https://www.zhihu.com/people/canglimo/posts?page=%d"
-	// 	for i := 1; ; i++ {
-	// 		logger := logger.With(zap.Int("page", i))
-
-	// 		u := fmt.Sprintf(url, i)
-	// 		resp, err := requestService.LimitRaw(u)
-	// 		if err != nil {
-	// 			logger.Fatal("fail to request zhihu api", zap.Error(err))
-	// 		}
-
-	// 		posts, err := parser.SplitPosts(resp)
-	// 		if err != nil {
-	// 			logger.Fatal("fail to split posts", zap.Error(err))
-	// 		}
-	// 		fmt.Println(len(posts))
-	// 		if len(posts) == 0 {
-	// 			break
-	// 		}
-
-	// 		for _, p := range posts {
-	// 			fmt.Println(p.ID)
-	// 			fmt.Println(p.Title)
-	// 		}
-	// 	}
-	// }
 
 	logger.Info("done!")
 }
