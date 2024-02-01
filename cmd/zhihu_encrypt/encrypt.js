@@ -1,14 +1,4 @@
-/**
- * Modified from https://github.com/DIYgod/RSSHub
- * MIT License
- * Copyright (c) 2018 DIYgod
- */
-
 const crypto = require('crypto');
-
-// Credit:
-// https://blog.csdn.net/zjq592767809/article/details/126512798
-// https://blog.csdn.net/zhoumi_/article/details/126659351
 
 function i(e, t, n) {
   (t[n] = 255 & (e >>> 24)), (t[n + 1] = 255 & (e >>> 16)), (t[n + 2] = 255 & (e >>> 8)), (t[n + 3] = 255 & e);
@@ -131,10 +121,10 @@ function md5(date) {
   return crypto.createHash('md5').update(date).digest('hex');
 };
 
-// const cookie_mes = process.argv[3];
-// const apiPath = process.argv[2];
-// // calculate x-zse-96, refer to https://github.com/srx-2000/spider_collection/issues/18
-// const f = `101_3_3.0+${apiPath}+${cookie_mes}`;
-// const xzse96 = '2.0_' + encrypt(md5(f));
-// process.stdout.write(xzse96)
-module.exports = { md5, encrypt };
+function calculateXZSE96(apiPath, cookieMes) {
+  const f = `101_3_3.0+${apiPath}+${cookieMes}`;
+  const xzse96 = '2.0_' + encrypt(md5(f));
+  return xzse96;
+}
+
+module.exports = { calculateXZSE96 };
