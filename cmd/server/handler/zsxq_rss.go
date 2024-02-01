@@ -1,47 +1,51 @@
-package main
+package handler
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
-	"github.com/kataras/iris/v12"
+	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 type ZsxqHandler struct {
-	Redis  *redis.RedisService
-	db     *gorm.DB
-	logger *zap.Logger
-	taskCh chan task
+	redis    *redis.RedisService
+	db       *gorm.DB
+	logger   *zap.Logger
+	taskCh   chan task
+	notifier notify.Notifier
 }
 
-func NewZsxqHandler(redis *redis.RedisService, db *gorm.DB, logger *zap.Logger) *ZsxqHandler {
+func NewZsxqHandler(redis *redis.RedisService, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *ZsxqHandler {
 	h := &ZsxqHandler{
-		Redis:  redis,
-		db:     db,
-		logger: logger,
-		taskCh: make(chan task, 100),
+		redis:    redis,
+		db:       db,
+		logger:   logger,
+		notifier: notifier,
+		taskCh:   make(chan task, 100),
 	}
 	go h.processTask()
 	return h
 }
 
-func (h *ZsxqHandler) Get(ctx iris.Context) {
-	logger := ctx.Values().Get("logger").(*zap.Logger)
+func (h *ZsxqHandler) Get(c echo.Context) (err error) {
+	logger := c.Get("logger").(*zap.Logger)
 
-	groupIDStr := ctx.Params().GetString("id")
+	groupIDStr := c.Param("id")
 	groupID, err := h.extractGroupIDFromParams(groupIDStr)
 	if err != nil {
 		logger.Error("invalid group id",
 			zap.String("group_id_param", groupIDStr),
 			zap.Error(err))
-		ctx.StopWithText(iris.StatusBadRequest, "invalid group id")
+		_ = c.String(http.StatusBadRequest, "invalid group id")
 	}
 	logger.Info("group id extracted", zap.Int("group_id", groupID))
 
@@ -49,11 +53,12 @@ func (h *ZsxqHandler) Get(ctx iris.Context) {
 
 	rss, err := h.getRSSContent(fmt.Sprintf(rssPath, groupID), logger)
 	if err != nil {
-		ctx.StopWithText(iris.StatusInternalServerError, "failed to get rss from redis")
+		_ = c.String(http.StatusInternalServerError, "failed to get rss from redis")
 	}
 	logger.Info("rss content retrieved")
 
-	ctx.StopWithText(iris.StatusOK, rss)
+	_ = c.String(http.StatusOK, rss)
+	return nil
 }
 
 type task struct {
@@ -83,7 +88,7 @@ func (h *ZsxqHandler) processTask() {
 	for {
 		task := <-h.taskCh
 		key := <-task.textCh
-		content, err := h.Redis.Get(key)
+		content, err := h.redis.Get(key)
 		if err != nil {
 			if err == redis.ErrKeyNotExist {
 				content, err = h.generateRSS(key)
@@ -146,7 +151,7 @@ func (h *ZsxqHandler) generateRSS(key string) (content string, err error) {
 	}
 
 	const rssTTL = time.Hour * 2
-	if err := h.Redis.Set(key, result, rssTTL); err != nil {
+	if err := h.redis.Set(key, result, rssTTL); err != nil {
 		return "", err
 	}
 

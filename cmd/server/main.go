@@ -1,19 +1,18 @@
 package main
 
 import (
-	"time"
+	"net"
 
-	middleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
+	"github.com/eli-yip/rss-zero/cmd/server/handler"
+	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/cron"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/log"
-	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/middleware/recover"
-	"github.com/kataras/iris/v12/middleware/requestid"
-	"github.com/rs/cors"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -39,17 +38,47 @@ func main() {
 	bark := notify.NewBarkNotifier(config.C.BarkURL)
 	setupCron(logger, redisService, db, bark)
 
-	app := setupApp(redisService, db, bark, logger)
+	e := setupEcho(redisService, db, bark, logger)
 
-	routes := app.GetRoutes()
-	for _, r := range routes {
-		logger.Info("route registered", zap.String("method", r.Method), zap.String("path", r.Path))
-	}
-
-	err = app.Listen(":8080", iris.WithLowercaseRouting)
+	err = e.Start(":8080")
 	if err != nil {
 		panic(err)
 	}
+}
+
+func setupEcho(redisService *redis.RedisService,
+	db *gorm.DB,
+	notifier notify.Notifier,
+	logger *zap.Logger) *echo.Echo {
+	e := echo.New()
+	e.IPExtractor = echo.ExtractIPFromXFFHeader(
+		echo.TrustIPRange(func(ip string) *net.IPNet {
+			_, ipNet, _ := net.ParseCIDR(ip)
+			return ipNet
+		}("172.0.0.0/8")),
+	)
+	e.Use(middleware.RequestID(), middleware.Recover(),
+		myMiddleware.LogRequest(logger), myMiddleware.InjectLogger(logger))
+
+	zsxqHandler := handler.NewZsxqHandler(redisService, db, notifier, logger)
+
+	rssGroup := e.Group("/rss")
+	rssZsxq := rssGroup.GET("/zsxq/:id", zsxqHandler.Get)
+	rssZsxq.Name = "RSS route for zsxq"
+
+	exportGroup := e.Group("/export")
+	exportZsxq := exportGroup.POST("/zsxq", zsxqHandler.ExportZsxq)
+	exportZsxq.Name = "Export route for zsxq"
+
+	refmtGroup := e.Group("/refmt")
+	refmtZsxq := refmtGroup.POST("/zsxq", zsxqHandler.Refmt)
+	refmtZsxq.Name = "Re-format route for zsxq"
+
+	cookieGroup := e.Group("/cookie")
+	cookieZsxq := cookieGroup.POST("/zsxq", zsxqHandler.UpdateZsxqCookies)
+	cookieZsxq.Name = "Update cookies route for zsxq"
+
+	return e
 }
 
 func setupCron(logger *zap.Logger, redis *redis.RedisService, db *gorm.DB, notifier notify.Notifier) {
@@ -62,47 +91,4 @@ func setupCron(logger *zap.Logger, redis *redis.RedisService, db *gorm.DB, notif
 	if err != nil {
 		logger.Fatal("add job failed", zap.Error(err))
 	}
-}
-
-func setupApp(redisService *redis.RedisService,
-	db *gorm.DB,
-	notifier notify.Notifier,
-	logger *zap.Logger) (app *iris.Application) {
-	app = iris.New()
-
-	corsOpts := cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedHeaders:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"},
-		ExposedHeaders:   []string{"X-Header"},
-		AllowCredentials: true,
-		MaxAge:           int((24 * time.Hour).Seconds()),
-		Debug:            false,
-	}
-
-	c := cors.New(corsOpts)
-	app.WrapRouter(c.ServeHTTP)
-
-	app.Use(requestid.New(), recover.New(),
-		middleware.LogRequest(logger), middleware.LoggerMiddleware(logger))
-
-	rss := app.Party("/rss")
-	zsxq := rss.Party("/zsxq")
-
-	zsxqHandler := NewZsxqHandler(redisService, db, logger)
-	zsxq.Get("/{id:string}", zsxqHandler.Get)
-
-	cookies := app.Party("/cookies")
-	zsxqCookiesHandler := NewCookiesHandler(redisService)
-	cookies.Post("/zsxq", zsxqCookiesHandler.UpdateZsxqCookies)
-
-	refmt := app.Party("/refmt")
-	refmtHandler := NewRefmtHandler(db, notifier)
-	refmt.Post("/zsxq", refmtHandler.Post)
-
-	export := app.Party("/export")
-	exportHandler := NewExportHandler(db, logger, notifier)
-	export.Post("/zsxq", exportHandler.ExportZsxq)
-
-	return app
 }
