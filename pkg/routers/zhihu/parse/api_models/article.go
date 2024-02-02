@@ -7,3 +7,8 @@ type Article struct {
 	Title    string `json:"title"`
 	HTML     string `json:"content"`
 }
+
+type ArticleList struct {
+	Paging Paging    `json:"paging"`
+	Data   []Article `json:"data"` // NOTE: HTML part is empty
+}

@@ -9,6 +9,18 @@ import (
 	"go.uber.org/zap"
 )
 
+func (p *Parser) ParseArticleList(content []byte, index int) (paging apiModels.Paging, articles []apiModels.Article, err error) {
+	logger := p.logger.With(zap.Int("article list page", index))
+
+	articleList := apiModels.ArticleList{}
+	if err = json.Unmarshal(content, &articleList); err != nil {
+		return apiModels.Paging{}, nil, err
+	}
+	logger.Info("unmarshal article list successfully")
+
+	return articleList.Paging, articleList.Data, nil
+}
+
 // ParseArticle parses the zhihu.com/api/v4 resp
 func (p *Parser) ParseArticle(content []byte) (text string, err error) {
 	article := apiModels.Article{}
