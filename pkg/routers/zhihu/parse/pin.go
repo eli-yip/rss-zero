@@ -10,6 +10,18 @@ import (
 	"go.uber.org/zap"
 )
 
+func (p *Parser) ParsePinList(content []byte, index int) (paging apiModels.Paging, pins []apiModels.Pin, err error) {
+	logger := p.logger.With(zap.Int("pin list page", index))
+
+	pinList := apiModels.PinList{}
+	if err = json.Unmarshal(content, &pinList); err != nil {
+		return apiModels.Paging{}, nil, err
+	}
+	logger.Info("unmarshal pin list successfully")
+
+	return pinList.Paging, pinList.Data, nil
+}
+
 // ParsePin parses the zhihu.com/api/v4 resp
 func (p *Parser) ParsePin(content []byte) (text string, err error) {
 	pin := apiModels.Pin{}

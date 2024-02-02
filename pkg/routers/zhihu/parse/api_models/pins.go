@@ -6,3 +6,8 @@ type Pin struct {
 	Author   Author `json:"author"`
 	HTML     string `json:"content_html"`
 }
+
+type PinList struct {
+	Paging Paging `json:"paging"`
+	Data   []Pin  `json:"data"` // NOTE: HTML is empty
+}
