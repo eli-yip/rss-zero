@@ -30,9 +30,9 @@ type (
 )
 
 type FullTextRender interface {
-	Answer(a Answer) (string, error)
-	Article(a Article) (string, error)
-	Pin(p Pin) (string, error)
+	Answer(a *Answer) (string, error)
+	Article(a *Article) (string, error)
+	Pin(p *Pin) (string, error)
 }
 
 type Render struct{ *md.MarkdownFormatter }
@@ -43,7 +43,7 @@ func NewRender(mdfmt *md.MarkdownFormatter) *Render {
 	}
 }
 
-func (r *Render) Answer(a Answer) (text string, err error) {
+func (r *Render) Answer(a *Answer) (text string, err error) {
 	titlePart := a.Question.Text
 	titlePart = trimRightSpace(md.H1(titlePart))
 
@@ -61,7 +61,7 @@ func (r *Render) Answer(a Answer) (text string, err error) {
 	return r.FormatStr(text)
 }
 
-func (r *Render) Article(a Article) (text string, err error) {
+func (r *Render) Article(a *Article) (text string, err error) {
 	titlePart := a.Title
 	titlePart = trimRightSpace(md.H1(titlePart))
 
@@ -78,7 +78,7 @@ func (r *Render) Article(a Article) (text string, err error) {
 	return r.FormatStr(text)
 }
 
-func (r *Render) Pin(p Pin) (text string, err error) {
+func (r *Render) Pin(p *Pin) (text string, err error) {
 	titlePart := trimRightSpace(strconv.Itoa(p.ID))
 
 	link := fmt.Sprintf("https://www.zhihu.com/pin/%d", p.ID)

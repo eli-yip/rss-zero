@@ -98,11 +98,11 @@ func (h *ZsxqController) ExportZsxq(c echo.Context) (err error) {
 
 var ErrGroupIDEmpty = errors.New("group id is empty")
 
-func (h *ZsxqController) parseOption(req *ExportReq) (zsxqExport.Options, error) {
-	var opts zsxqExport.Options
+func (h *ZsxqController) parseOption(req *ExportReq) (zsxqExport.Option, error) {
+	var opts zsxqExport.Option
 
 	if req.GroupID == 0 {
-		return zsxqExport.Options{}, ErrGroupIDEmpty
+		return zsxqExport.Option{}, ErrGroupIDEmpty
 	}
 	opts.GroupID = req.GroupID
 
@@ -113,7 +113,7 @@ func (h *ZsxqController) parseOption(req *ExportReq) (zsxqExport.Options, error)
 	if req.StartTime != nil {
 		t, err := h.parseTime(*req.StartTime)
 		if err != nil {
-			return zsxqExport.Options{}, err
+			return zsxqExport.Option{}, err
 		}
 		opts.StartTime = t
 	}
@@ -121,14 +121,14 @@ func (h *ZsxqController) parseOption(req *ExportReq) (zsxqExport.Options, error)
 	if req.EndTime != nil {
 		t, err := h.parseTime(*req.EndTime)
 		if err != nil {
-			return zsxqExport.Options{}, err
+			return zsxqExport.Option{}, err
 		}
 		opts.EndTime = t
 	}
 
 	if req.Digest != nil {
 		if !*req.Digest {
-			return zsxqExport.Options{}, errors.New("digest must be true or nil")
+			return zsxqExport.Option{}, errors.New("digest must be true or nil")
 		}
 		opts.Digested = req.Digest
 	}
@@ -140,7 +140,7 @@ func (h *ZsxqController) parseOption(req *ExportReq) (zsxqExport.Options, error)
 	return opts, nil
 }
 
-func (h *ZsxqController) zsxqFileName(opts zsxqExport.Options) string {
+func (h *ZsxqController) zsxqFileName(opts zsxqExport.Option) string {
 	var parts []string
 
 	parts = append(parts, fmt.Sprintf("export/zsxq/%d", opts.GroupID))

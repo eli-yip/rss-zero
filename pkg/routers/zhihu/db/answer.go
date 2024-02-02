@@ -16,6 +16,8 @@ type DBAnswer interface {
 	UpdateAnswerStatus(id int, status int) error
 	// GetLatestAnswerTime get the latest answer time from zhihu_answer table
 	GetLatestAnswerTime(userID string) (time.Time, error)
+	// GetQuestion get question info from zhihu_question table
+	GetQuestion(id int) (*Question, error)
 }
 
 type FetchAnswerOption struct {
@@ -124,4 +126,12 @@ type DBQuestion interface {
 
 func (d *DBService) SaveQuestion(q *Question) error {
 	return d.Save(q).Error
+}
+
+func (d *DBService) GetQuestion(id int) (*Question, error) {
+	var q Question
+	if err := d.Where("id = ?", id).First(&q).Error; err != nil {
+		return nil, err
+	}
+	return &q, nil
 }

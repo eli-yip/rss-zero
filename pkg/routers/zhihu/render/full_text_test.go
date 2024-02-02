@@ -47,7 +47,7 @@ func TestArticleFullText(t *testing.T) {
 	r := NewRender(mdfmt)
 
 	for _, c := range cases {
-		got, err := r.Answer(c.input)
+		got, err := r.Answer(&c.input)
 		if err != nil {
 			t.Errorf("r.Answer(%v) error: %v", c.input, err)
 		}

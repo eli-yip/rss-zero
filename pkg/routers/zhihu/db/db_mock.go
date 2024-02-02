@@ -63,3 +63,7 @@ func (d *MockDB) FetchNArticle(n int, opts FetchArticleOption) (as []Article, er
 func (d *MockDB) FetchNPin(n int, opts FetchPinOption) (ps []Pin, err error) {
 	return nil, nil
 }
+
+func (d *MockDB) GetQuestion(id int) (*Question, error) {
+	return nil, nil
+}
