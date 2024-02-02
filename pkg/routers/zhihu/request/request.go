@@ -1,6 +1,7 @@
 package request
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"math/rand"
@@ -18,6 +19,7 @@ var (
 	ErrUnreachable   = errors.New("unreachable")
 	ErrGetXZSE96     = errors.New("fail to get x-zse-96")
 	ErrNewRequest    = errors.New("fail to new a request")
+	ErrNeedLogin     = errors.New("need login")
 )
 
 const (
@@ -77,6 +79,12 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 	return nil, nil
 }
 
+type Error403 struct {
+	Error struct {
+		NeedLogin bool `json:"need_login"`
+	} `json:"error"`
+}
+
 // Send request with limiter, used for all zhihu api requests
 func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 	logger := r.log.With(zap.String("url", u))
@@ -100,11 +108,28 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 		}
 
 		resp, err := r.client.Do(req)
-		if err != nil || resp.StatusCode != http.StatusOK {
-			if resp != nil && resp.Body != nil {
-				resp.Body.Close()
-			}
+		if err != nil {
 			logger.Error("fail to request url", zap.Error(err))
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			bytes, _ := io.ReadAll(resp.Body)
+			if resp.StatusCode == http.StatusForbidden {
+				var e403 Error403
+				if err = json.Unmarshal(bytes, &e403); err != nil {
+					logger.Error("fail to unmarshal 403 error", zap.Error(err))
+					resp.Body.Close()
+					continue
+				}
+				if e403.Error.NeedLogin {
+					logger.Error("need login")
+					resp.Body.Close()
+					return nil, ErrNeedLogin
+				}
+			}
+			logger.Error("status code error", zap.Int("status_code", resp.StatusCode))
+			resp.Body.Close()
 			continue
 		}
 

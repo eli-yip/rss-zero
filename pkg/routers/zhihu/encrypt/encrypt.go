@@ -42,7 +42,6 @@ func GetCookies() (cookies []*http.Cookie, err error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(bytes))
 
 	tooManyRequest, err := checkBody(bytes)
 	if err != nil {
