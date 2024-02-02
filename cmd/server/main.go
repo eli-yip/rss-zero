@@ -21,7 +21,7 @@ func main() {
 	var err error
 	logger := log.NewLogger()
 
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 	logger.Info("config initialized")
 
 	redisService, err := redis.NewRedisService(config.C.RedisAddr, "", 0)

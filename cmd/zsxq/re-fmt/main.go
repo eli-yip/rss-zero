@@ -24,7 +24,7 @@ func main() {
 	var err error
 	logger := log.NewLogger()
 
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 	logger.Info("config initialized")
 
 	db, err := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)

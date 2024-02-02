@@ -14,7 +14,7 @@ import (
 func TestPinList(t *testing.T) {
 	u := `https://www.zhihu.com/api/v4/members/canglimo/pins`
 	u = fmt.Sprintf("%s?%s", u, "offset=0&limit=20")
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 
 	logger := log.NewLogger()
 	requestService, err := zhihuRequest.NewRequestService(logger)

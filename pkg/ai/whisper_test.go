@@ -9,7 +9,7 @@ import (
 )
 
 func TestWhisper(t *testing.T) {
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 
 	s := NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
 

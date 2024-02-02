@@ -17,7 +17,7 @@ import (
 func main() {
 	logger := log.NewLogger()
 
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 	logger.Info("init config successfully")
 
 	requestService, err := request.NewRequestService(logger)

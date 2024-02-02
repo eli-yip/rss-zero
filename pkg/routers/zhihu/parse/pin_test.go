@@ -15,7 +15,7 @@ import (
 
 func TestPin(t *testing.T) {
 	t.Log("Test Pin Parse")
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 	path := filepath.Join("examples", "pin_single_apiv4_resp.json")
 	bytes, err := os.ReadFile(path)
 	if err != nil {

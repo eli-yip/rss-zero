@@ -14,7 +14,7 @@ import (
 func TestRefmt(t *testing.T) {
 	t.Log("TestRefmt")
 
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 	logger := log.NewLogger()
 	db, err := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
 	if err != nil {

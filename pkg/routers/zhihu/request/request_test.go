@@ -15,7 +15,7 @@ func TestLimitRaw(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 
 	params := `data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,collapsed_by,suggest_edit,comment_count,can_comment,content,voteup_count,reshipment_settings,comment_permission,mark_infos,created_time,updated_time,review_info,question,excerpt,is_labeled,label_info,relationship.is_authorized,voting,is_author,is_thanked,is_nothelp;data[*].author.badge[?(type=best_answerer)].topics`
 	escaped := url.QueryEscape(params)

@@ -10,7 +10,7 @@ import (
 
 func TestRealReq(t *testing.T) {
 	t.Log("Test real request to zhihu api")
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 
 	cookies, err := GetCookies()
 	if err != nil {

@@ -16,7 +16,7 @@ import (
 func TestAnswer(t *testing.T) {
 	t.Log("Test Answer Parse")
 
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 	path := filepath.Join("examples", "answer_single_api_resp.json")
 	output := `巧妇难为无米之炊。
 

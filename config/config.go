@@ -32,12 +32,12 @@ type Config struct {
 
 var C Config
 
-func InitConfigFromFile() {
+func InitFromFile() {
 	loadEnv()
 	readEnv()
 }
 
-func InitConfigFromEnv() {
+func InitFromEnv() {
 	readEnv()
 }
 
