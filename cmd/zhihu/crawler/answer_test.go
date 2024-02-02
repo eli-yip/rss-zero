@@ -9,6 +9,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/pkg/log"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	zhihuRequest "github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
@@ -40,5 +41,60 @@ func TestAnswerList(t *testing.T) {
 		}
 	} else {
 		t.Fatal(err)
+	}
+}
+
+// With this test, we can conclude that not every page is full of answers.
+// In the web, it is same. As 192 pages will have 3845 answers, but actually it has 3825 answers.
+func TestAnswerListPaging(t *testing.T) {
+	config.InitConfigFromEnv()
+	logger := log.NewLogger()
+	requestService, err := zhihuRequest.NewRequestService(logger)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bytes, err := os.ReadFile(filepath.Join("examples", "answer_list.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	parser := parse.NewParser(nil, nil, nil, nil, logger)
+	paging, answerList, err := parser.ParseAnswerList(bytes, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("AnswerList length: ", len(answerList))
+
+	for _, a := range answerList {
+		fmt.Println("Answer Title: ", a.Question.Title)
+	}
+
+	bytes, err = requestService.LimitRaw(paging.Next)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path := filepath.Join("examples", "answer_list_2.json")
+	_, err = os.Stat(path)
+	if err == nil {
+		fmt.Println("File already exists. Skipping write.")
+	} else if os.IsNotExist(err) {
+		err = os.WriteFile(path, bytes, 0644)
+		if err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		t.Fatal(err)
+	}
+
+	paging, answerList, err = parser.ParseAnswerList(bytes, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("AnswerList length: ", len(answerList))
+
+	for _, a := range answerList {
+		fmt.Println("Answer Title: ", a.Question.Title)
 	}
 }

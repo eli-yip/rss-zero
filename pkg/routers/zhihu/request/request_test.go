@@ -34,7 +34,7 @@ func TestLimitRaw(t *testing.T) {
 	}
 
 	for _, u := range urls {
-		if _, err := reqService.LimitRaw(u); err != nil {
+		if _, err = reqService.LimitRaw(u); err != nil {
 			t.Error(err)
 		}
 	}

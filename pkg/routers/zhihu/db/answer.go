@@ -1,6 +1,10 @@
 package db
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type DataBaseAnswer interface {
 	// Save answer info to zhihu_answer table
@@ -10,6 +14,8 @@ type DataBaseAnswer interface {
 	FetchNAnswer(int, FetchAnswerOption) ([]Answer, error)
 	// UpdateAnswerStatus update answer status in zhihu_answer table
 	UpdateAnswerStatus(id int, status int) error
+	// GetLatestAnswerTime get the latest answer time from zhihu_answer table
+	GetLatestAnswerTime(userID string) (time.Time, error)
 }
 
 type FetchAnswerOption struct {
@@ -26,8 +32,15 @@ type Answer struct {
 	AuthorID   string    `gorm:"column:author_id;type:text"`
 	CreateAt   time.Time `gorm:"column:create_at;type:timestamp"`
 	Text       string    `gorm:"column:text;type:text"`
-	Raw        []byte    `gorm:"column:raw;type:bytea"`
-	Status     int       `gorm:"column:status;type:int"`
+	// NOTE: raw can be standard apiModel.Answer,
+	// or raw from zhihu api,
+	// it depends on how parseAnswer func is used.
+	// If parseAnswer func is used to parse the standard apiModel.Answer from answerList,
+	// then raw is the standard apiModel.Answer.
+	// If parseAnswer func is used to parse the raw from zhihu api,
+	// then raw is the raw from zhihu api.
+	Raw    []byte `gorm:"column:raw;type:bytea"`
+	Status int    `gorm:"column:status;type:int"`
 }
 
 const (
@@ -68,11 +81,22 @@ func (d *DBService) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, er
 		query = query.Where("status = ?", *opts.Status)
 	}
 
-	if err := query.Order("created_time asc").Find(&as).Error; err != nil {
+	if err := query.Order("create_at asc").Find(&as).Error; err != nil {
 		return nil, err
 	}
 
 	return as, nil
+}
+
+func (d *DBService) GetLatestAnswerTime(userID string) (time.Time, error) {
+	var t time.Time
+	if err := d.Model(&Answer{}).Where("author_id = ?", userID).Order("create_at desc").Limit(1).Pluck("create_at", &t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return time.Time{}, nil
+		}
+		return time.Time{}, err
+	}
+	return t, nil
 }
 
 func (d *DBService) UpdateAnswerStatus(id int, status int) error {

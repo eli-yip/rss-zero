@@ -1,5 +1,7 @@
 package db
 
+import "time"
+
 type MockDB struct{}
 
 func (d *MockDB) SaveArticle(p *Article) error {
@@ -40,4 +42,8 @@ func (d *MockDB) SavePin(p *Pin) error {
 
 func (d *MockDB) GetAuthorName(string) (string, error) {
 	return "", nil
+}
+
+func (d *MockDB) GetLatestAnswerTime(string) (time.Time, error) {
+	return time.Time{}, nil
 }

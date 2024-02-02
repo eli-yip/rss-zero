@@ -9,6 +9,18 @@ import (
 	"go.uber.org/zap"
 )
 
+func (p *Parser) ParseAnswerList(content []byte, index int) (paging apiModels.Paging, answers []apiModels.Answer, err error) {
+	logger := p.logger.With(zap.Int("answer list page", index))
+
+	answerList := apiModels.AnswerList{}
+	if err = json.Unmarshal(content, &answerList); err != nil {
+		return apiModels.Paging{}, nil, err
+	}
+	logger.Info("unmarshal answer list successfully")
+
+	return answerList.Paging, answerList.Data, nil
+}
+
 // ParseAnswer receives api.zhihu.com resp and parse it
 func (p *Parser) ParseAnswer(content []byte) (text string, err error) {
 	answer := apiModels.Answer{}
@@ -53,7 +65,7 @@ func (p *Parser) ParseAnswer(content []byte) (text string, err error) {
 		AuthorID:   answer.Author.ID,
 		CreateAt:   time.Unix(answer.CreateAt, 0),
 		Text:       formattedText,
-		Raw:        content,
+		Raw:        content, // NOTE: see db.Answer.Raw comment
 		Status:     db.AnswerStatusCompleted,
 	}); err != nil {
 		return "", err

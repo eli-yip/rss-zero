@@ -13,3 +13,8 @@ type Question struct {
 	CreateAt int64  `json:"created"`
 	Title    string `json:"title"`
 }
+
+type AnswerList struct {
+	Paging Paging   `json:"paging"`
+	Data   []Answer `json:"data"`
+}

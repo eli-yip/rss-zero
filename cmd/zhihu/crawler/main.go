@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/db"
@@ -13,7 +12,6 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 func main() {
@@ -37,9 +35,6 @@ func main() {
 	zhihuDBService := zhihuDB.NewDBService(db)
 	logger.Info("init zhihu db service successfully")
 
-	parseAnswer := flag.Bool("answer", false, "parse answer")
-	flag.Parse()
-
 	minioService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
 	if err != nil {
 		logger.Fatal("fail to connect minio", zap.Error(err))
@@ -51,54 +46,17 @@ func main() {
 
 	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, logger)
 
+	parseAnswer := flag.Bool("answer", false, "parse answer")
+	flag.Parse()
+
 	if *parseAnswer {
-		logger.Info("start to parse answer from db")
-
-		opts := zhihuDB.FetchAnswerOption{Text: func() *string { s := ""; return &s }(),
-			Status: func() *int { status := zhihuDB.AnswerStatusUncompleted; return &status }()} // Get texts that are not generated
-		for {
-			logger.Info("start to parse answers from db")
-
-			as, err := zhihuDBService.FetchNAnswer(20, opts)
-			if err != nil {
-				if err == gorm.ErrRecordNotFound {
-					break
-				}
-				logger.Fatal("fail to fetch answers from db", zap.Error(err))
-			}
-			if len(as) == 0 {
-				break
-			}
-
-			for _, a := range as {
-				logger := logger.With(zap.Int("id", a.ID))
-
-				const zhihuAnswerAPI = "https://api.zhihu.com/appview/api/v4/answers/%d?include=content&is_appview=true"
-				u := fmt.Sprintf(zhihuAnswerAPI, a.ID)
-				logger.Info("parsing answer", zap.String("url", u))
-
-				resp, err := requestService.Limit(u) // FIXME: Limit has been deprecated
-				if err != nil {
-					if err == request.ErrUnreachable {
-						logger.Error("answer is unreachable in public, updaate status to unreachable", zap.Error(err))
-						if err = zhihuDBService.UpdateAnswerStatus(a.ID, zhihuDB.AnswerStatusUnreachable); err != nil {
-							logger.Fatal("fail to update answer status", zap.Error(err))
-						}
-						continue
-					} else {
-						logger.Fatal("fail to request zhihu api", zap.Error(err))
-					}
-				}
-				logger.Info("request zhihu api successfully")
-
-				if _, err = parser.ParseAnswer(resp); err != nil {
-					logger.Fatal("fail to parse answer", zap.Error(err))
-				}
-				logger.Info("parse answer successfully")
-			}
-
-			logger.Info("parse answers from db successfully", zap.Int("count", len(as)))
+		latestTimeInDB, err := zhihuDBService.GetLatestAnswerTime("canglimo")
+		if err != nil {
+			logger.Fatal("fail to get latest answer time", zap.Error(err))
 		}
+		logger.Info("get latest answer time in db successfully", zap.Time("latest_time", latestTimeInDB))
+
+		CrawlAnswer("canglimo", requestService, parser, latestTimeInDB, logger)
 	}
 
 	logger.Info("done!")
