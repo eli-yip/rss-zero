@@ -17,9 +17,10 @@ type Article struct {
 
 func (p *Article) TableName() string { return "zhihu_article" }
 
-type DataBasePost interface {
+type DBArticle interface {
 	SaveArticle(p *Article) error
 	GetLatestArticleTime(authorID string) (time.Time, error)
+	FetchNArticle(n int, opt FetchArticleOption) (as []Article, err error)
 }
 
 func (d *DBService) SaveArticle(p *Article) error {
@@ -35,4 +36,30 @@ func (d *DBService) GetLatestArticleTime(userID string) (time.Time, error) {
 		return time.Time{}, err
 	}
 	return t, nil
+}
+
+type FetchArticleOption struct{ FetchOptionBase }
+
+func (d *DBService) FetchNArticle(n int, opt FetchArticleOption) (as []Article, err error) {
+	as = make([]Article, 0, n)
+
+	query := d.Limit(n)
+
+	if opt.UserID != nil {
+		query = query.Where("author_id = ?", *opt.UserID)
+	}
+
+	if !opt.StartTime.IsZero() {
+		query = query.Where("create_at >= ?", opt.StartTime)
+	}
+
+	if !opt.EndTime.IsZero() {
+		query = query.Where("create_at <= ?", opt.EndTime)
+	}
+
+	if err := query.Order("create_at asc").Find(&as).Error; err != nil {
+		return nil, err
+	}
+
+	return as, nil
 }

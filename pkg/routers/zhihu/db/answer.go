@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type DataBaseAnswer interface {
+type DBAnswer interface {
 	// Save answer info to zhihu_answer table
 	SaveAnswer(a *Answer) error
 	// FetchNAnswers get n answers from zhihu_answer table,
@@ -19,6 +19,8 @@ type DataBaseAnswer interface {
 }
 
 type FetchAnswerOption struct {
+	FetchOptionBase
+
 	Text   *string
 	Status *int
 }
@@ -73,6 +75,18 @@ func (d *DBService) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, er
 
 	query := d.Limit(n)
 
+	if opts.UserID != nil {
+		query = query.Where("author_id = ?", *opts.UserID)
+	}
+
+	if !opts.StartTime.IsZero() {
+		query = query.Where("create_at >= ?", opts.StartTime)
+	}
+
+	if !opts.EndTime.IsZero() {
+		query = query.Where("create_at <= ?", opts.EndTime)
+	}
+
 	if opts.Text != nil {
 		query = query.Where("text = ?", *opts.Text)
 	}
@@ -103,7 +117,7 @@ func (d *DBService) UpdateAnswerStatus(id int, status int) error {
 	return d.Model(&Answer{}).Where("id = ?", id).Update("status", status).Error
 }
 
-type DataBaseQuestion interface {
+type DBQuestion interface {
 	// Save question info to zhihu_question table
 	SaveQuestion(q *Question) error
 }

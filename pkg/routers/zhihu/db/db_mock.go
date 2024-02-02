@@ -55,3 +55,11 @@ func (d *MockDB) GetLatestArticleTime(string) (time.Time, error) {
 func (d *MockDB) GetLatestPinTime(string) (time.Time, error) {
 	return time.Time{}, nil
 }
+
+func (d *MockDB) FetchNArticle(n int, opts FetchArticleOption) (as []Article, err error) {
+	return nil, nil
+}
+
+func (d *MockDB) FetchNPin(n int, opts FetchPinOption) (ps []Pin, err error) {
+	return nil, nil
+}

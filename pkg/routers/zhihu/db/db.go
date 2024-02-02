@@ -1,24 +1,28 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type DB interface {
-	DataBaseAnswer
-	DataBaseQuestion
-	DataBasePost
-	DataBasePin
-	DataBaseAuthor
-	DataBaseObject
+	DBAnswer
+	DBQuestion
+	DBArticle
+	DBPin
+	DBAuthor
+	DBObject
 }
 
-type DataBaseAuthor interface {
+type DBAuthor interface {
 	// Save author info to zhihu_author table
 	SaveAuthor(a *Author) error
 	// Get author name
 	GetAuthorName(id string) (name string, err error)
 }
 
-type DataBaseObject interface {
+type DBObject interface {
 	// Save object info to zhihu_object table
 	SaveObjectInfo(o *Object) error
 	// Get object info from zhihu_object table
@@ -49,4 +53,10 @@ func (d *DBService) GetObjectInfo(id int) (o *Object, err error) {
 	o = &Object{}
 	err = d.Where("id = ?", id).First(o).Error
 	return
+}
+
+type FetchOptionBase struct {
+	UserID    *string
+	StartTime time.Time
+	EndTime   time.Time
 }
