@@ -20,8 +20,8 @@ import (
 type ExportReq struct {
 	GroupID   int     `json:"group_id"`
 	Type      *string `json:"type"`
-	StartTime *string `json:"start_time"`
-	EndTime   *string `json:"end_time"`
+	StartTime *string `json:"start_time"` // start time is included
+	EndTime   *string `json:"end_time"`   // end time is included
 	Digest    *bool   `json:"digest"`
 	Author    *string `json:"author"`
 }
@@ -123,7 +123,7 @@ func (h *ZsxqController) parseOption(req *ExportReq) (zsxqExport.Option, error) 
 		if err != nil {
 			return zsxqExport.Option{}, err
 		}
-		opts.EndTime = t
+		opts.EndTime = t.Add(24 * time.Hour)
 	}
 
 	if req.Digest != nil {
