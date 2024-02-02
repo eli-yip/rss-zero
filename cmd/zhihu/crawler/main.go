@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"time"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/db"
@@ -47,6 +48,7 @@ func main() {
 	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, logger)
 
 	parseAnswer := flag.Bool("answer", false, "parse answer")
+	answerURL := flag.String("answer_url", "", "answer url")
 	parseArticle := flag.Bool("article", false, "parse article")
 	parsePin := flag.Bool("pin", false, "parse pin")
 	userID := flag.String("user", "", "user id")
@@ -63,7 +65,10 @@ func main() {
 		}
 		logger.Info("get latest answer time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
-		CrawlAnswer(*userID, requestService, parser, latestTimeInDB, logger)
+		if *answerURL != "" {
+			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
+		}
+		CrawlAnswer(*userID, requestService, parser, latestTimeInDB, *answerURL, logger)
 	}
 
 	if *parseArticle {

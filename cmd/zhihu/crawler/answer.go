@@ -11,16 +11,21 @@ import (
 	"go.uber.org/zap"
 )
 
-func CrawlAnswer(user string, request request.Requester, parser *parse.Parser, targetTime time.Time, logger *zap.Logger) {
+func CrawlAnswer(user string, request request.Requester, parser *parse.Parser, targetTime time.Time, answerURL string, logger *zap.Logger) {
 	logger.Info("start to crawl zhihu answers", zap.String("user url token", user))
 
-	const (
-		urlLayout = "https://www.zhihu.com/api/v4/members/%s/answers"
-		params    = `data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,collapsed_by,suggest_edit,comment_count,can_comment,content,voteup_count,reshipment_settings,comment_permission,mark_infos,created_time,updated_time,review_info,question,excerpt,is_labeled,label_info,relationship.is_authorized,voting,is_author,is_thanked,is_nothelp;data[*].author.badge[?(type=best_answerer)].topics`
-	)
-	escaped := url.QueryEscape(params)
-	next := fmt.Sprintf(urlLayout, user)
-	next = fmt.Sprintf("%s?include=%s&%s", next, escaped, "offset=0&limit=20&sort_by=created")
+	next := ""
+	if answerURL != "" {
+		next = answerURL
+	} else {
+		const (
+			urlLayout = "https://www.zhihu.com/api/v4/members/%s/answers"
+			params    = `data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,collapsed_by,suggest_edit,comment_count,can_comment,content,voteup_count,reshipment_settings,comment_permission,mark_infos,created_time,updated_time,review_info,question,excerpt,is_labeled,label_info,relationship.is_authorized,voting,is_author,is_thanked,is_nothelp;data[*].author.badge[?(type=best_answerer)].topics`
+		)
+		escaped := url.QueryEscape(params)
+		next = fmt.Sprintf(urlLayout, user)
+		next = fmt.Sprintf("%s?include=%s&%s", next, escaped, "offset=0&limit=20&sort_by=created")
+	}
 
 	index := 0
 	total1 := 0
