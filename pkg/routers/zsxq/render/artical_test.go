@@ -41,7 +41,7 @@ func TestHTML2Md(t *testing.T) {
 		}
 		fmt.Println("md ->\n", string(markdown))
 
-		err = os.WriteFile(c.output, markdown, 0644)
+		err = os.WriteFile(c.output, []byte(markdown), 0644)
 		if err != nil {
 			t.Fatal(err)
 		}

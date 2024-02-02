@@ -144,7 +144,7 @@ func main() {
 				}
 
 				logger.Info("start to parse topic", zap.Int("topic id", result.Topic.TopicID))
-				if err := parseService.ParseTopic(&result); err != nil {
+				if _, err := parseService.ParseTopic(&result); err != nil {
 					logger.Fatal("failed to parse topic", zap.Error(err))
 				}
 			}
@@ -202,7 +202,7 @@ func main() {
 				}
 
 				logger.Info("start to parse topic", zap.Int("topic id", result.Topic.TopicID))
-				if err := parseService.ParseTopic(&result); err != nil {
+				if _, err := parseService.ParseTopic(&result); err != nil {
 					logger.Fatal("failed to parse topic", zap.Error(err))
 				}
 			}

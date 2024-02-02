@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 	"regexp"
 
+	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -18,7 +19,7 @@ type Parser struct {
 	file           file.FileIface
 	db             db.DB
 	logger         *zap.Logger
-	mdfmt          *render.MarkdownFormatter
+	mdfmt          *md.MarkdownFormatter
 }
 
 func NewParser(htmlToMarkdown render.HTMLToMarkdownConverter,
@@ -29,7 +30,7 @@ func NewParser(htmlToMarkdown render.HTMLToMarkdownConverter,
 		file:           f,
 		db:             db,
 		logger:         logger,
-		mdfmt:          render.NewMarkdownFormatter(),
+		mdfmt:          md.NewMarkdownFormatter(),
 	}
 }
 

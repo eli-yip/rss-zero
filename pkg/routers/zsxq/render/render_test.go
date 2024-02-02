@@ -151,7 +151,7 @@ test-text
 	MarkdownRenderService := NewMarkdownRenderService(mockDBService, logger)
 
 	for i, c := range cases {
-		var text []byte
+		var text string
 		var err error
 		if text, err = MarkdownRenderService.ToFullText(&c.topic); err != nil {
 			t.Logf("testing %d failed", i)
@@ -159,7 +159,7 @@ test-text
 		}
 		if string(text) != c.result {
 			t.Logf("testing %d failed", i)
-			t.Errorf("RenderMarkdown() got =\n%q, want\n%q", string(text), c.result)
+			t.Errorf("RenderMarkdown() got =\n%q, want\n%q", text, c.result)
 		}
 	}
 }
@@ -386,7 +386,7 @@ test-text
 	logger := log.NewLogger()
 	MarkdownRenderService := NewMarkdownRenderService(mockDBService, logger)
 	for i, c := range cases {
-		var text []byte
+		var text string
 		var err error
 		if text, err = MarkdownRenderService.ToText(&c.topic); err != nil {
 			t.Logf("testing %d failed", i)
@@ -394,7 +394,7 @@ test-text
 		}
 		if string(text) != c.result {
 			t.Logf("testing %d failed", i)
-			t.Errorf("RenderMarkdown() got =\n%q, want\n%q", string(text), c.result)
+			t.Errorf("RenderMarkdown() got =\n%q, want\n%q", text, c.result)
 		}
 	}
 }

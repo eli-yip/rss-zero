@@ -1,13 +1,11 @@
-package render
+package md
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
-
-	"github.com/eli-yip/rss-zero/pkg/log"
 )
 
 func TestFormatMarkdown(t *testing.T) {
@@ -75,12 +73,11 @@ func TestFormatMarkdown(t *testing.T) {
 		},
 	}
 
-	loggger := log.NewLogger()
-	s := NewMarkdownRenderService(nil, loggger)
+	s := NewMarkdownFormatter()
 
 	for i, test := range tests {
 		t.Logf("test %d", i)
-		output, err := s.FormatMarkdown([]byte(test.input))
+		output, err := s.FormatStr(test.input)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -96,7 +93,7 @@ func TestFormatMarkdown(t *testing.T) {
 		}
 		defer file.Close()
 
-		_, err = file.ReadFrom(bytes.NewReader(output))
+		_, err = file.ReadFrom(strings.NewReader(output))
 		if err != nil {
 			t.Fatal(err)
 		}

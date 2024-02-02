@@ -112,7 +112,7 @@ func (s *ExportService) Export(writer io.Writer, opt Options) error {
 				return err
 			}
 
-			if _, err := writer.Write(fullText); err != nil {
+			if _, err := writer.Write([]byte(fullText)); err != nil {
 				return err
 			}
 
