@@ -11,7 +11,7 @@ import (
 
 func TestLimitRaw(t *testing.T) {
 	logger := log.NewLogger()
-	reqService, err := NewRequestService(logger)
+	reqService, err := NewRequestService(nil, logger)
 	if err != nil {
 		t.Fatal(err)
 	}

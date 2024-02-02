@@ -36,7 +36,7 @@ type RequestService struct {
 	log      *zap.Logger
 }
 
-func NewRequestService(logger *zap.Logger) (*RequestService, error) {
+func NewRequestService(dC0 *string, logger *zap.Logger) (*RequestService, error) {
 	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:   &http.Client{},
@@ -45,22 +45,26 @@ func NewRequestService(logger *zap.Logger) (*RequestService, error) {
 		log:      logger,
 	}
 
-	cookies, err := encrypt.GetCookies()
-	if err != nil {
-		return nil, err
-	}
-	s.cookies = encrypt.CookiesToString(cookies)
-
-	found := false
-	for _, c := range cookies {
-		if c.Name == "d_c0" {
-			logger.Info("get d_c0 cookie successfully", zap.String("value", c.Value))
-			s.dC0 = c.Value
-			found = true
+	if dC0 == nil {
+		cookies, err := encrypt.GetCookies()
+		if err != nil {
+			return nil, err
 		}
-	}
-	if !found {
-		return nil, errors.New("fail to find d_c0 cookie")
+		s.cookies = encrypt.CookiesToString(cookies)
+
+		found := false
+		for _, c := range cookies {
+			if c.Name == "d_c0" {
+				logger.Info("get d_c0 cookie successfully", zap.String("value", c.Value))
+				s.dC0 = c.Value
+				found = true
+			}
+		}
+		if !found {
+			return nil, errors.New("fail to find d_c0 cookie")
+		}
+	} else {
+		s.cookies = *dC0
 	}
 
 	go func() {

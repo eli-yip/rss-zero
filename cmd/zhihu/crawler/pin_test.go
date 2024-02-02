@@ -17,7 +17,7 @@ func TestPinList(t *testing.T) {
 	config.InitFromEnv()
 
 	logger := log.NewLogger()
-	requestService, err := zhihuRequest.NewRequestService(logger)
+	requestService, err := zhihuRequest.NewRequestService(nil, logger)
 	if err != nil {
 		t.Fatal(err)
 	}

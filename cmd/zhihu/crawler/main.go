@@ -16,12 +16,26 @@ import (
 )
 
 func main() {
+	var err error
 	logger := log.NewLogger()
 
 	config.InitFromEnv()
 	logger.Info("init config successfully")
 
-	requestService, err := request.NewRequestService(logger)
+	parseAnswer := flag.Bool("answer", false, "parse answer")
+	answerURL := flag.String("answer_url", "", "answer url")
+	parseArticle := flag.Bool("article", false, "parse article")
+	parsePin := flag.Bool("pin", false, "parse pin")
+	userID := flag.String("user", "", "user id")
+	dC0 := flag.String("d_c0", "", "d_c0 cookie")
+	flag.Parse()
+
+	var requestService *request.RequestService
+	if *dC0 != "" {
+		requestService, err = request.NewRequestService(dC0, logger)
+	} else {
+		requestService, err = request.NewRequestService(nil, logger)
+	}
 	if err != nil {
 		logger.Fatal("fail to init request service", zap.Error(err))
 	}
@@ -46,13 +60,6 @@ func main() {
 	logger.Info("init html to markdown service successfully")
 
 	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, logger)
-
-	parseAnswer := flag.Bool("answer", false, "parse answer")
-	answerURL := flag.String("answer_url", "", "answer url")
-	parseArticle := flag.Bool("article", false, "parse article")
-	parsePin := flag.Bool("pin", false, "parse pin")
-	userID := flag.String("user", "", "user id")
-	flag.Parse()
 
 	if *userID == "" {
 		logger.Fatal("user id is required")

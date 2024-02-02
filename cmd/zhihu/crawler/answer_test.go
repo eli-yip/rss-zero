@@ -21,7 +21,7 @@ func TestAnswerList(t *testing.T) {
 	config.InitFromEnv()
 
 	logger := log.NewLogger()
-	requestService, err := zhihuRequest.NewRequestService(logger)
+	requestService, err := zhihuRequest.NewRequestService(nil, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func TestAnswerList(t *testing.T) {
 func TestAnswerListPaging(t *testing.T) {
 	config.InitFromEnv()
 	logger := log.NewLogger()
-	requestService, err := zhihuRequest.NewRequestService(logger)
+	requestService, err := zhihuRequest.NewRequestService(nil, logger)
 	if err != nil {
 		t.Fatal(err)
 	}

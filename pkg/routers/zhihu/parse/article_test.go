@@ -62,7 +62,7 @@ func TestArticle(t *testing.T) {
 	mockFileService := file.MockMinio{}
 	mockDBService := zhihuDB.MockDB{}
 	logger := log.NewLogger()
-	requester, err := request.NewRequestService(logger)
+	requester, err := request.NewRequestService(nil, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
