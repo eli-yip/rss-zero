@@ -45,7 +45,7 @@ func NewRender(mdfmt *md.MarkdownFormatter) *Render {
 
 func (r *Render) Answer(a *Answer) (text string, err error) {
 	titlePart := a.Question.Text
-	titlePart = trimRightSpace(md.H1(titlePart))
+	titlePart = trimRightSpace(md.H2(titlePart))
 
 	link := fmt.Sprintf("https://www.zhihu.com/question/%d/answer/%d",
 		a.Question.ID, a.Answer.ID)
@@ -63,7 +63,7 @@ func (r *Render) Answer(a *Answer) (text string, err error) {
 
 func (r *Render) Article(a *Article) (text string, err error) {
 	titlePart := a.Title
-	titlePart = trimRightSpace(md.H1(titlePart))
+	titlePart = trimRightSpace(md.H2(titlePart))
 
 	link := fmt.Sprintf("https://zhuanlan.zhihu.com/p/%d", a.ID)
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))
@@ -79,7 +79,7 @@ func (r *Render) Article(a *Article) (text string, err error) {
 }
 
 func (r *Render) Pin(p *Pin) (text string, err error) {
-	titlePart := trimRightSpace(strconv.Itoa(p.ID))
+	titlePart := trimRightSpace(md.H3(strconv.Itoa(p.ID)))
 
 	link := fmt.Sprintf("https://www.zhihu.com/pin/%d", p.ID)
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))
