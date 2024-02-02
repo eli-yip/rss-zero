@@ -1,6 +1,10 @@
 package db
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Article struct {
 	ID       int       `gorm:"column:id;type:int;primary_key"`
@@ -15,8 +19,20 @@ func (p *Article) TableName() string { return "zhihu_article" }
 
 type DataBasePost interface {
 	SaveArticle(p *Article) error
+	GetLatestArticleTime(authorID string) (time.Time, error)
 }
 
 func (d *DBService) SaveArticle(p *Article) error {
 	return d.Save(p).Error
+}
+
+func (d *DBService) GetLatestArticleTime(userID string) (time.Time, error) {
+	var t time.Time
+	if err := d.Model(&Article{}).Where("author_id = ?", userID).Order("create_at desc").Limit(1).Pluck("create_at", &t).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return time.Time{}, nil
+		}
+		return time.Time{}, err
+	}
+	return t, nil
 }

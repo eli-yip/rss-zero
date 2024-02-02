@@ -47,3 +47,11 @@ func (d *MockDB) GetAuthorName(string) (string, error) {
 func (d *MockDB) GetLatestAnswerTime(string) (time.Time, error) {
 	return time.Time{}, nil
 }
+
+func (d *MockDB) GetLatestArticleTime(string) (time.Time, error) {
+	return time.Time{}, nil
+}
+
+func (d *MockDB) GetLatestPinTime(string) (time.Time, error) {
+	return time.Time{}, nil
+}

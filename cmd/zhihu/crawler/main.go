@@ -47,6 +47,8 @@ func main() {
 	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, logger)
 
 	parseAnswer := flag.Bool("answer", false, "parse answer")
+	parseArticle := flag.Bool("article", false, "parse article")
+	parsePin := flag.Bool("pin", false, "parse pin")
 	flag.Parse()
 
 	if *parseAnswer {
@@ -57,6 +59,26 @@ func main() {
 		logger.Info("get latest answer time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
 		CrawlAnswer("canglimo", requestService, parser, latestTimeInDB, logger)
+	}
+
+	if *parseArticle {
+		latestTimeInDB, err := zhihuDBService.GetLatestArticleTime("canglimo")
+		if err != nil {
+			logger.Fatal("fail to get latest article time", zap.Error(err))
+		}
+		logger.Info("get latest article time in db successfully", zap.Time("latest_time", latestTimeInDB))
+
+		CrawlArticle("canglimo", requestService, parser, latestTimeInDB, logger)
+	}
+
+	if *parsePin {
+		latestTimeInDB, err := zhihuDBService.GetLatestPinTime("canglimo")
+		if err != nil {
+			logger.Fatal("fail to get latest pin time", zap.Error(err))
+		}
+		logger.Info("get latest pin time in db successfully", zap.Time("latest_time", latestTimeInDB))
+
+		CrawlPin("canglimo", requestService, parser, latestTimeInDB, logger)
 	}
 
 	logger.Info("done!")
