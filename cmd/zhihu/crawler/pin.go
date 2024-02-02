@@ -9,7 +9,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func CrawlPin(user string, request request.Requester, parser *parse.Parser, targetTime time.Time, logger *zap.Logger) {
+// CrawlPin crawl zhihu pins
+// user: user url token
+// targetTime: the time to stop crawling
+// pinURL: the url of the pin list, useful when continue to crawl
+func CrawlPin(user string, request request.Requester, parser *parse.Parser,
+	targetTime time.Time, pinURL string, logger *zap.Logger) {
 	logger.Info("start to crawl zhihu pins", zap.String("user url token", user))
 
 	const urlLayout = "https://www.zhihu.com/api/v4/members/%s/pins"
@@ -21,7 +26,7 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser, targ
 	for {
 		bytes, err := request.LimitRaw(next)
 		if err != nil {
-			logger.Fatal("failed to request zhihu api", zap.Error(err))
+			logger.Fatal("fail to request zhihu api", zap.Error(err))
 		}
 		logger.Info("request zhihu api successfully", zap.String("url", next))
 
@@ -29,10 +34,10 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser, targ
 		if err != nil {
 			logger.Fatal("failed to parse pin list", zap.Error(err))
 		}
-		logger.Info("parse pin list success", zap.Int("index", index), zap.String("next", next))
+		logger.Info("parse pin list successfully", zap.Int("index", index), zap.String("next", next))
 
 		if index != 0 && paging.Totals != total1 {
-			logger.Fatal("new pin found break", zap.Int("new pin num", paging.Totals-total1))
+			logger.Fatal("new pin found, break now", zap.Int("new pin num", paging.Totals-total1))
 		}
 		total1 = paging.Totals
 
@@ -45,12 +50,12 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser, targ
 			u := fmt.Sprintf(pinURLLayout, pin.ID)
 			bytes, err := request.LimitRaw(u)
 			if err != nil {
-				logger.Fatal("failed to request zhihu api", zap.Error(err))
+				logger.Fatal("fail to request zhihu api", zap.Error(err))
 			}
 
 			_, err = parser.ParsePin(bytes)
 			if err != nil {
-				logger.Fatal("failed to parse pin", zap.Error(err))
+				logger.Fatal("fail to parse pin", zap.Error(err))
 			}
 
 			logger.Info("parse pin successfully")

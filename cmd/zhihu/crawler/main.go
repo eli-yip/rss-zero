@@ -25,7 +25,9 @@ func main() {
 	parseAnswer := flag.Bool("answer", false, "parse answer")
 	answerURL := flag.String("answer_url", "", "answer url")
 	parseArticle := flag.Bool("article", false, "parse article")
+	articleURL := flag.String("article_url", "", "article url")
 	parsePin := flag.Bool("pin", false, "parse pin")
+	pinURL := flag.String("pin_url", "", "pin url")
 	userID := flag.String("user", "", "user id")
 	dC0 := flag.String("d_c0", "", "d_c0 cookie")
 	flag.Parse()
@@ -85,7 +87,10 @@ func main() {
 		}
 		logger.Info("get latest article time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
-		CrawlArticle(*userID, requestService, parser, latestTimeInDB, logger)
+		if *articleURL != "" {
+			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
+		}
+		CrawlArticle(*userID, requestService, parser, latestTimeInDB, *articleURL, logger)
 	}
 
 	if *parsePin {
@@ -95,7 +100,10 @@ func main() {
 		}
 		logger.Info("get latest pin time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
-		CrawlPin(*userID, requestService, parser, latestTimeInDB, logger)
+		if *pinURL != "" {
+			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
+		}
+		CrawlPin(*userID, requestService, parser, latestTimeInDB, *pinURL, logger)
 	}
 
 	logger.Info("done!")

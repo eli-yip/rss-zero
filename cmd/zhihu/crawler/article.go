@@ -9,7 +9,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func CrawlArticle(user string, request request.Requester, parser *parse.Parser, targetTime time.Time, logger *zap.Logger) {
+// CrawlArticle crawl zhihu articles
+// user: user url token
+// targetTime: the time to stop crawling
+// articleURL: the url of the article list, useful when continue to crawl
+func CrawlArticle(user string, request request.Requester, parser *parse.Parser,
+	targetTime time.Time, articleURL string, logger *zap.Logger) {
 	logger.Info("start to crawl zhihu articles", zap.String("user url token", user))
 
 	const urlLayout = "https://www.zhihu.com/api/v4/members/%s/articles"
@@ -21,18 +26,18 @@ func CrawlArticle(user string, request request.Requester, parser *parse.Parser, 
 	for {
 		bytes, err := request.LimitRaw(next)
 		if err != nil {
-			logger.Fatal("failed to request zhihu api", zap.Error(err))
+			logger.Fatal("fail to request zhihu api", zap.Error(err))
 		}
 		logger.Info("request zhihu api successfully", zap.String("url", next))
 
 		paging, articleList, err := parser.ParseArticleList(bytes, index)
 		if err != nil {
-			logger.Fatal("failed to parse article list", zap.Error(err))
+			logger.Fatal("fail to parse article list", zap.Error(err))
 		}
-		logger.Info("parse article list success", zap.Int("index", index), zap.String("next", next))
+		logger.Info("parse article list successfully", zap.Int("index", index), zap.String("next", next))
 
 		if index != 0 && paging.Totals != total1 {
-			logger.Fatal("new article found break", zap.Int("new article num", paging.Totals-total1))
+			logger.Fatal("new article found, break now", zap.Int("new article num", paging.Totals-total1))
 		}
 		total1 = paging.Totals
 
@@ -45,12 +50,12 @@ func CrawlArticle(user string, request request.Requester, parser *parse.Parser, 
 			u := fmt.Sprintf(articleURLLayout, article.ID)
 			bytes, err := request.LimitRaw(u)
 			if err != nil {
-				logger.Fatal("failed to request zhihu api", zap.Error(err))
+				logger.Fatal("fail to request zhihu api", zap.Error(err))
 			}
 
 			_, err = parser.ParseArticle(bytes)
 			if err != nil {
-				logger.Fatal("failed to parse article", zap.Error(err))
+				logger.Fatal("fail to parse article", zap.Error(err))
 			}
 
 			logger.Info("parse article successfully")

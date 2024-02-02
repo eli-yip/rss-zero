@@ -11,7 +11,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func CrawlAnswer(user string, request request.Requester, parser *parse.Parser, targetTime time.Time, answerURL string, logger *zap.Logger) {
+// CrawlAnswer crawl zhihu answers
+// user: user url token
+// targetTime: the time to stop crawling
+// answerURL: the url of the answer list, useful when continue to crawl
+func CrawlAnswer(user string, request request.Requester, parser *parse.Parser,
+	targetTime time.Time, answerURL string, logger *zap.Logger) {
 	logger.Info("start to crawl zhihu answers", zap.String("user url token", user))
 
 	next := ""
@@ -32,18 +37,18 @@ func CrawlAnswer(user string, request request.Requester, parser *parse.Parser, t
 	for {
 		bytes, err := request.LimitRaw(next)
 		if err != nil {
-			logger.Fatal("failed to request zhihu api", zap.Error(err))
+			logger.Fatal("fail to request zhihu api", zap.Error(err))
 		}
 		logger.Info("request zhihu api successfully", zap.String("url", next))
 
 		paging, answerList, err := parser.ParseAnswerList(bytes, index)
 		if err != nil {
-			logger.Fatal("failed to parse answer list", zap.Error(err))
+			logger.Fatal("fail to parse answer list", zap.Error(err))
 		}
-		logger.Info("parse answer list success", zap.Int("index", index), zap.String("next", next))
+		logger.Info("parse answer list successfully", zap.Int("index", index), zap.String("next", next))
 
 		if index != 0 && paging.Totals != total1 {
-			logger.Fatal("new answers found break", zap.Int("new answers num", paging.Totals-total1))
+			logger.Fatal("new answers found, break now", zap.Int("new answers num", paging.Totals-total1))
 		}
 		total1 = paging.Totals
 
@@ -51,14 +56,15 @@ func CrawlAnswer(user string, request request.Requester, parser *parse.Parser, t
 
 		for _, answer := range answerList {
 			logger := logger.With(zap.Int("answer_id", answer.ID))
+
 			answereBytes, err := json.Marshal(answer)
 			if err != nil {
-				logger.Fatal("failed to marshal answer", zap.Error(err))
+				logger.Fatal("fail to marshal answer", zap.Error(err))
 			}
 
 			_, err = parser.ParseAnswer(answereBytes)
 			if err != nil {
-				logger.Fatal("failed to parse answer", zap.Error(err))
+				logger.Fatal("fail to parse answer", zap.Error(err))
 			}
 
 			logger.Info("parse answer successfully")
