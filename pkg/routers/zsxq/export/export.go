@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Options struct {
+type Option struct {
 	GroupID    int
 	Type       *string
 	Digested   *bool
@@ -20,7 +20,7 @@ type Options struct {
 }
 
 type Exporter interface {
-	Export(io.Writer, Options) error
+	Export(io.Writer, Option) error
 }
 
 type ExportService struct {
@@ -37,7 +37,7 @@ var (
 	ErrTimeOrder = errors.New("start time should be before end time")
 )
 
-func (s *ExportService) Export(writer io.Writer, opt Options) error {
+func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
 	var queryOpt db.Options
 
 	queryOpt.GroupID = opt.GroupID
@@ -61,19 +61,11 @@ func (s *ExportService) Export(writer io.Writer, opt Options) error {
 		queryOpt.Aid = &aid
 	}
 
-	if opt.StartTime.IsZero() && opt.EndTime.IsZero() {
-		if opt.StartTime.After(opt.EndTime) {
-			return ErrTimeOrder
-		}
+	if opt.StartTime.After(opt.EndTime) {
+		return ErrTimeOrder
 	}
-
-	if !opt.StartTime.IsZero() {
-		queryOpt.StartTime = opt.StartTime
-	}
-
-	if !opt.EndTime.IsZero() {
-		queryOpt.EndTime = opt.EndTime
-	}
+	queryOpt.StartTime = opt.StartTime
+	queryOpt.EndTime = opt.EndTime
 
 	var (
 		finished bool = false

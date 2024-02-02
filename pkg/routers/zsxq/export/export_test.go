@@ -30,7 +30,7 @@ func TestExport(t *testing.T) {
 
 	exportService := NewExportService(zsxqDB, mr)
 
-	Options := Options{
+	Options := Option{
 		GroupID:    28855218411241,
 		Type:       nil,
 		Digested:   nil,
