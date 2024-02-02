@@ -49,36 +49,41 @@ func main() {
 	parseAnswer := flag.Bool("answer", false, "parse answer")
 	parseArticle := flag.Bool("article", false, "parse article")
 	parsePin := flag.Bool("pin", false, "parse pin")
+	userID := flag.String("user", "", "user id")
 	flag.Parse()
 
+	if *userID == "" {
+		logger.Fatal("user id is required")
+	}
+
 	if *parseAnswer {
-		latestTimeInDB, err := zhihuDBService.GetLatestAnswerTime("canglimo")
+		latestTimeInDB, err := zhihuDBService.GetLatestAnswerTime(*userID)
 		if err != nil {
 			logger.Fatal("fail to get latest answer time", zap.Error(err))
 		}
 		logger.Info("get latest answer time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
-		CrawlAnswer("canglimo", requestService, parser, latestTimeInDB, logger)
+		CrawlAnswer(*userID, requestService, parser, latestTimeInDB, logger)
 	}
 
 	if *parseArticle {
-		latestTimeInDB, err := zhihuDBService.GetLatestArticleTime("canglimo")
+		latestTimeInDB, err := zhihuDBService.GetLatestArticleTime(*userID)
 		if err != nil {
 			logger.Fatal("fail to get latest article time", zap.Error(err))
 		}
 		logger.Info("get latest article time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
-		CrawlArticle("canglimo", requestService, parser, latestTimeInDB, logger)
+		CrawlArticle(*userID, requestService, parser, latestTimeInDB, logger)
 	}
 
 	if *parsePin {
-		latestTimeInDB, err := zhihuDBService.GetLatestPinTime("canglimo")
+		latestTimeInDB, err := zhihuDBService.GetLatestPinTime(*userID)
 		if err != nil {
 			logger.Fatal("fail to get latest pin time", zap.Error(err))
 		}
 		logger.Info("get latest pin time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
-		CrawlPin("canglimo", requestService, parser, latestTimeInDB, logger)
+		CrawlPin(*userID, requestService, parser, latestTimeInDB, logger)
 	}
 
 	logger.Info("done!")
