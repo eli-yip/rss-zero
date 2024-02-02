@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/eli-yip/rss-zero/config"
 )
 
@@ -37,7 +38,38 @@ func GetCookies() (cookies []*http.Cookie, err error) {
 		}
 	}
 
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(string(bytes))
+
+	tooManyRequest, err := checkBody(bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	if tooManyRequest {
+		return nil, errors.New("too many requests, please verify youself in browser and try again later")
+	}
+
 	return nil, errors.New("no d_c0 cookie")
+}
+
+func checkBody(body []byte) (tooManyRequest bool, err error) {
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
+	if err != nil {
+		return false, err
+	}
+
+	found := false
+	_ = doc.Find("head title").Each(func(i int, s *goquery.Selection) {
+		if strings.TrimSpace(s.Text()) == "安全验证 - 知乎" && s.AttrOr("data-rh", "") == "true" {
+			found = true
+		}
+	})
+
+	return found, nil
 }
 
 type encryptReq struct {
