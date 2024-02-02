@@ -9,7 +9,7 @@ import (
 type Pin struct {
 	ID       int       `gorm:"column:id;type:int;primary_key"`
 	AuthorID string    `gorm:"column:author_id;type:string"`
-	CreateAt time.Time `gorm:"column:create_at;type:timestamp"`
+	CreateAt time.Time `gorm:"column:create_at;type:timestamp with time zone"`
 	Text     string    `gorm:"column:text;type:text"`
 	Raw      []byte    `gorm:"column:raw;type:bytea"`
 }

@@ -30,7 +30,7 @@ type Answer struct {
 	ID         int       `gorm:"column:id;type:int;primary_key"`
 	QuestionID int       `gorm:"column:question_id;type:int"`
 	AuthorID   string    `gorm:"column:author_id;type:text"`
-	CreateAt   time.Time `gorm:"column:create_at;type:timestamp"`
+	CreateAt   time.Time `gorm:"column:create_at;type:timestamp with time zone"`
 	Text       string    `gorm:"column:text;type:text"`
 	// NOTE: raw can be standard apiModel.Answer,
 	// or raw from zhihu api,
@@ -58,7 +58,7 @@ func (a *Answer) TableName() string { return "zhihu_answer" }
 //	}
 type Question struct {
 	ID       int       `gorm:"column:id;type:int;primary_key"`
-	CreateAt time.Time `gorm:"column:create_at;type:timestamp"`
+	CreateAt time.Time `gorm:"column:create_at;type:timestamp with time zone"`
 	Title    string    `gorm:"column:title;type:text"`
 }
 
