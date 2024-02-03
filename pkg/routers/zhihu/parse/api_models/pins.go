@@ -23,6 +23,12 @@ type PinImage struct {
 	OriginalURL string `json:"original_url"`
 }
 
+type PinLink struct {
+	Type  string `json:"type"`
+	Title string `json:"title"`
+	URL   string `json:"url"`
+}
+
 type PinList struct {
 	Paging Paging `json:"paging"`
 	Data   []Pin  `json:"data"` // NOTE: HTML is empty

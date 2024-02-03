@@ -142,7 +142,18 @@ func (p *Parser) parsePinContent(content []json.RawMessage, id int, logger *zap.
 			textPart = append(textPart, text)
 
 			logger.Info("convert image to markdown successfully")
+		case "link":
+			logger.Info("find link content")
+
+			var linkContent apiModels.PinLink
+			if err := json.Unmarshal(c, &linkContent); err != nil {
+				return "", err
+			}
+			text = fmt.Sprintf("[%s](%s)", linkContent.Title, linkContent.URL)
+
+			textPart = append(textPart, text)
 		default:
+			fmt.Println(string(c))
 			return "", fmt.Errorf("unknown content type: %s", contentType.Type)
 		}
 	}
