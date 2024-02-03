@@ -123,6 +123,7 @@ func main() {
 		if err != nil {
 			logger.Fatal("fail to open file", zap.Error(err))
 		}
+		defer file.Close()
 
 		if err = exportService.Export(file, exportOpt); err != nil {
 			logger.Fatal("fail to export", zap.Error(err))
