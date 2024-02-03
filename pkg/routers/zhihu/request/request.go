@@ -64,7 +64,7 @@ func NewRequestService(dC0 *string, logger *zap.Logger) (*RequestService, error)
 			return nil, errors.New("fail to find d_c0 cookie")
 		}
 	} else {
-		s.cookies = *dC0
+		s.dC0 = *dC0
 	}
 
 	go func() {
