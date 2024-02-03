@@ -2,7 +2,9 @@ package export
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -24,6 +26,7 @@ const (
 
 type Exporter interface {
 	Export(io.Writer, Option) error
+	FileName(Option) string
 }
 
 type ExportService struct {
@@ -31,7 +34,7 @@ type ExportService struct {
 	mr render.FullTextRender
 }
 
-func NewExportService(db db.DB, mr render.FullTextRender) *ExportService {
+func NewExportService(db db.DB, mr render.FullTextRender) Exporter {
 	return &ExportService{db: db, mr: mr}
 }
 
@@ -247,4 +250,33 @@ func (s *ExportService) ExportPin(writer io.Writer, opt Option) (err error) {
 	}
 
 	return nil
+}
+
+func (s ExportService) FileName(opt Option) string {
+	fileNameArr := []string{"知乎合集"}
+
+	switch *opt.Type {
+	case TypeAnswer:
+		fileNameArr = append(fileNameArr, "回答")
+	case TypeArticle:
+		fileNameArr = append(fileNameArr, "文章")
+	case TypePin:
+		fileNameArr = append(fileNameArr, "想法")
+	}
+
+	fileNameArr = append(fileNameArr, *opt.AuthorID)
+
+	if !opt.StartTime.IsZero() {
+		fileNameArr = append(fileNameArr, opt.StartTime.Format("2006-01-02"))
+	} else {
+		fileNameArr = append(fileNameArr, "从头")
+	}
+
+	if !opt.EndTime.IsZero() {
+		fileNameArr = append(fileNameArr, opt.EndTime.Format("2006-01-02"))
+	} else {
+		fileNameArr = append(fileNameArr, "到尾")
+	}
+
+	return fmt.Sprintf("%s.md", strings.Join(fileNameArr, "-"))
 }

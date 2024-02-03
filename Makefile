@@ -10,7 +10,7 @@ server:
 
 .PHONY: zhihu-crawler
 zhihu-crawler:
-	$(GOCMD) build -o zhihu-crawler ${CURRENT_DIR}/cmd/zhihu/crawler
+	$(GOCMD) build -o zhihu-crawler ${CURRENT_DIR}/cmd/crawler
 
 .PHONY: zsxq-crawler
 zsxq-crawler:

@@ -52,3 +52,28 @@ func TestExport(t *testing.T) {
 
 	t.Log("TestExport done")
 }
+
+func TestFileName(t *testing.T) {
+	exportService := NewExportService(nil, nil)
+	options := []struct {
+		Option Option
+		Expect string
+	}{
+		{
+			Option: Option{
+				Type:      func(i int) *int { return &i }(TypeAnswer),
+				AuthorID:  func(s string) *string { return &s }("canglimo"),
+				StartTime: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				EndTime:   time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			},
+			Expect: "知乎合集-回答-canglimo-2024-01-01-2024-02-01.md",
+		},
+	}
+
+	for _, opt := range options {
+		fileName := exportService.FileName(opt.Option)
+		if fileName != opt.Expect {
+			t.Fatalf("FileName expect %s, got %s", opt.Expect, fileName)
+		}
+	}
+}
