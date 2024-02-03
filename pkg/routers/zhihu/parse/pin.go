@@ -44,6 +44,11 @@ func (p *Parser) ParsePin(content []byte) (text string, err error) {
 	}
 	logger.Info("parse html successfully")
 
+	if text == "" {
+		logger.Info("no text content found")
+		return "", nil
+	}
+
 	formattedText, err := p.mdfmt.FormatStr(text)
 	if err != nil {
 		return "", err
@@ -152,6 +157,7 @@ func (p *Parser) parsePinContent(content []json.RawMessage, id int, logger *zap.
 			text = fmt.Sprintf("[%s](%s)", linkContent.Title, linkContent.URL)
 
 			textPart = append(textPart, text)
+		case "video":
 		default:
 			fmt.Println(string(c))
 			return "", fmt.Errorf("unknown content type: %s", contentType.Type)
