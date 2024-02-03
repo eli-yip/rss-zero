@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -50,4 +51,29 @@ func TestPin(t *testing.T) {
 	if text != output {
 		t.Fatalf("expected:\n%s\ngot\n%s", output, text)
 	}
+}
+
+func TestPinContent(t *testing.T) {
+	t.Log("Test PinList Parse")
+	config.InitFromEnv()
+	mockFileService := file.MockMinio{}
+	mockDBService := zhihuDB.MockDB{}
+	logger := log.NewLogger()
+	requester, err := request.NewRequestService(nil, logger)
+	if err != nil {
+		t.Fatal(err)
+	}
+	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
+	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, logger)
+
+	bytes, err := os.ReadFile(filepath.Join("examples", "pin_with_problem.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	text, err := parser.ParsePin(bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(text)
 }

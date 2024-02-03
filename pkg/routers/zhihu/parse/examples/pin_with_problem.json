@@ -43,6 +43,19 @@
       "type": "image",
       "is_gif": false,
       "is_long": false
+    },
+    {
+      "url": "https://pic3.zhimg.com/100/v2-509507f0fa5532dcd5dcd0c2f1a81886_720w.jpg",
+      "original_url": "https://pic4.zhimg.com/100/v2-608bf3f75952da082e97a24143e2a6db_1440w.jpg",
+      "cropped_url": "https://pic4.zhimg.com/100/v2-af6d5987d7ec127649caae3d84637f9f_720w.jpg",
+      "is_watermark": true,
+      "watermark_url": "https://pic3.zhimg.com/100/v2-509507f0fa5532dcd5dcd0c2f1a81886_720w.jpg",
+      "thumbnail": "",
+      "width": 3840,
+      "height": 2160,
+      "type": "image",
+      "is_gif": false,
+      "is_long": false
     }
   ],
   "excerpt_title": "2023年墨的回答关键词 | 感谢叶子整理。\u003cbr\u003e\u003cbr\u003e大小即权重。",
