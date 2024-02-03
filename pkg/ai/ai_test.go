@@ -7,7 +7,7 @@ import (
 )
 
 func TestBaseURL(t *testing.T) {
-	config.InitConfigFromEnv()
+	config.InitFromEnv()
 	t.Logf("API: %s\nBaseURL: %s\n", config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
 
 	ai := NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)

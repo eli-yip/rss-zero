@@ -1,47 +1,51 @@
-package main
+package controller
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
-	"github.com/kataras/iris/v12"
+	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
-type ZsxqHandler struct {
-	Redis  *redis.RedisService
-	db     *gorm.DB
-	logger *zap.Logger
-	taskCh chan task
+type ZsxqController struct {
+	redis    *redis.RedisService
+	db       *gorm.DB
+	logger   *zap.Logger
+	taskCh   chan task
+	notifier notify.Notifier
 }
 
-func NewZsxqHandler(redis *redis.RedisService, db *gorm.DB, logger *zap.Logger) *ZsxqHandler {
-	h := &ZsxqHandler{
-		Redis:  redis,
-		db:     db,
-		logger: logger,
-		taskCh: make(chan task, 100),
+func NewZsxqHandler(redis *redis.RedisService, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *ZsxqController {
+	h := &ZsxqController{
+		redis:    redis,
+		db:       db,
+		logger:   logger,
+		notifier: notifier,
+		taskCh:   make(chan task, 100),
 	}
 	go h.processTask()
 	return h
 }
 
-func (h *ZsxqHandler) Get(ctx iris.Context) {
-	logger := ctx.Values().Get("logger").(*zap.Logger)
+func (h *ZsxqController) Get(c echo.Context) (err error) {
+	logger := c.Get("logger").(*zap.Logger)
 
-	groupIDStr := ctx.Params().GetString("id")
+	groupIDStr := c.Param("id")
 	groupID, err := h.extractGroupIDFromParams(groupIDStr)
 	if err != nil {
 		logger.Error("invalid group id",
 			zap.String("group_id_param", groupIDStr),
 			zap.Error(err))
-		ctx.StopWithText(iris.StatusBadRequest, "invalid group id")
+		return c.String(http.StatusBadRequest, "invalid group id")
 	}
 	logger.Info("group id extracted", zap.Int("group_id", groupID))
 
@@ -49,11 +53,11 @@ func (h *ZsxqHandler) Get(ctx iris.Context) {
 
 	rss, err := h.getRSSContent(fmt.Sprintf(rssPath, groupID), logger)
 	if err != nil {
-		ctx.StopWithText(iris.StatusInternalServerError, "failed to get rss from redis")
+		return c.String(http.StatusInternalServerError, "failed to get rss from redis")
 	}
 	logger.Info("rss content retrieved")
 
-	ctx.StopWithText(iris.StatusOK, rss)
+	return c.String(http.StatusOK, rss)
 }
 
 type task struct {
@@ -61,7 +65,7 @@ type task struct {
 	errCh  chan error
 }
 
-func (h *ZsxqHandler) getRSSContent(key string, logger *zap.Logger) (content string, err error) {
+func (h *ZsxqController) getRSSContent(key string, logger *zap.Logger) (content string, err error) {
 	task := task{textCh: make(chan string), errCh: make(chan error)}
 	defer close(task.textCh)
 	defer close(task.errCh)
@@ -79,11 +83,11 @@ func (h *ZsxqHandler) getRSSContent(key string, logger *zap.Logger) (content str
 	}
 }
 
-func (h *ZsxqHandler) processTask() {
+func (h *ZsxqController) processTask() {
 	for {
 		task := <-h.taskCh
 		key := <-task.textCh
-		content, err := h.Redis.Get(key)
+		content, err := h.redis.Get(key)
 		if err != nil {
 			if err == redis.ErrKeyNotExist {
 				content, err = h.generateRSS(key)
@@ -102,7 +106,7 @@ func (h *ZsxqHandler) processTask() {
 	}
 }
 
-func (h *ZsxqHandler) generateRSS(key string) (content string, err error) {
+func (h *ZsxqController) generateRSS(key string) (content string, err error) {
 	gid, err := h.extractGroupIDFromKey(key)
 	if err != nil {
 		return "", err
@@ -146,14 +150,14 @@ func (h *ZsxqHandler) generateRSS(key string) (content string, err error) {
 	}
 
 	const rssTTL = time.Hour * 2
-	if err := h.Redis.Set(key, result, rssTTL); err != nil {
+	if err := h.redis.Set(key, result, rssTTL); err != nil {
 		return "", err
 	}
 
 	return result, nil
 }
 
-func (h *ZsxqHandler) extractGroupIDFromParams(s string) (gid int, err error) {
+func (h *ZsxqController) extractGroupIDFromParams(s string) (gid int, err error) {
 	re := regexp.MustCompile(`\d+`)
 	numbers := re.FindAllString(s, -1)
 
@@ -170,7 +174,7 @@ func (h *ZsxqHandler) extractGroupIDFromParams(s string) (gid int, err error) {
 	return resultInt, nil
 }
 
-func (h *ZsxqHandler) extractGroupIDFromKey(key string) (groupID int, err error) {
+func (h *ZsxqController) extractGroupIDFromKey(key string) (groupID int, err error) {
 	re := regexp.MustCompile(`zsxq_rss_(\d+)`)
 	matches := re.FindStringSubmatch(key)
 	if len(matches) < 2 {

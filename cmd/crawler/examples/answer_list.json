@@ -1,0 +1,1711 @@
+{
+  "paging": {
+    "is_end": false,
+    "totals": 3825,
+    "previous": "http://www.zhihu.com/api/v4/members/canglimo/answers?sort_by=created&include=data%5b%2a%5d.is_normal%2cadmin_closed_comment%2creward_info%2cis_collapsed%2cannotation_action%2cannotation_detail%2ccollapse_reason%2ccollapsed_by%2csuggest_edit%2ccomment_count%2ccan_comment%2ccontent%2cvoteup_count%2creshipment_settings%2ccomment_permission%2cmark_infos%2ccreated_time%2cupdated_time%2creview_info%2cquestion%2cexcerpt%2cis_labeled%2clabel_info%2crelationship.is_authorized%2cvoting%2cis_author%2cis_thanked%2cis_nothelp%3bdata%5b%2a%5d.author.badge%5b%3f%28type%3dbest_answerer%29%5d.topics&limit=20&offset=0",
+    "is_start": true,
+    "next": "http://www.zhihu.com/api/v4/members/canglimo/answers?sort_by=created&include=data%5b%2a%5d.is_normal%2cadmin_closed_comment%2creward_info%2cis_collapsed%2cannotation_action%2cannotation_detail%2ccollapse_reason%2ccollapsed_by%2csuggest_edit%2ccomment_count%2ccan_comment%2ccontent%2cvoteup_count%2creshipment_settings%2ccomment_permission%2cmark_infos%2ccreated_time%2cupdated_time%2creview_info%2cquestion%2cexcerpt%2cis_labeled%2clabel_info%2crelationship.is_authorized%2cvoting%2cis_author%2cis_thanked%2cis_nothelp%3bdata%5b%2a%5d.author.badge%5b%3f%28type%3dbest_answerer%29%5d.topics&limit=20&offset=20"
+  },
+  "data": [
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "会信这句话的人。 首先他就没有金山银山，而且大概率的也没啥正确的三观。 这句话之所以流行，是有非常多的心理暗示在里面起作用的。 我们当个例题分析下，为何废话能成为金句吧。 1，给金山银山，不如xxxx，这个对“给金山银山”的贬低，迎合了多数人，因为多数人没有给孩子很多资产的条件，并以此为耻的潜意识，贬低钱，貌似自己“没钱”就高尚了。 2，给金山银山，不如xxx是一个选择题，暗示了当事人有选择，让当事人假装自己…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706786919,
+      "id": 3383940987,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3383940987",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "有句话说“给予孩子金山银山，不如教给孩子正确的三观”，你同意吗？",
+        "url": "http://www.zhihu.com/api/v4/questions/641593918",
+        "created": 1706370541,
+        "type": "question",
+        "id": 641593918,
+        "updated_time": 1706370541
+      },
+      "updated_time": 1706786919,
+      "content": "<p data-pid=\"ow9shapp\">会信这句话的人。<\/p><p data-pid=\"ef2zmr3m\">首先他就没有金山银山，而且大概率的也没啥正确的三观。<\/p><p data-pid=\"oszysnyb\">这句话之所以流行，是有非常多的心理暗示在里面起作用的。<\/p><p data-pid=\"pt644v21\">我们当个例题分析下，为何废话能成为金句吧。<\/p><p data-pid=\"ccqcaiby\">1，给金山银山，不如xxxx，这个对“给金山银山”的贬低，迎合了多数人，因为多数人没有给孩子很多资产的条件，并以此为耻的潜意识，贬低钱，貌似自己“没钱”就高尚了。<\/p><p data-pid=\"iyv4r641\">2，给金山银山，不如xxx是一个选择题，暗示了当事人有选择，让当事人假装自己其实可以有钱。<\/p><p data-pid=\"a8awybcy\">3，强调“金山银山”这个词，兼容了对财富缺乏真实想象的人群的夸张想象，这群人不知道资产不仅仅是钱，知识、精神、文化甚至信用都是资产。<\/p><p data-pid=\"bbikebji\">4，“正确的三观”这个“正确”的定词，暗示当事人的“三观”是正确的，哪怕某些人的模因都歪的一塌糊涂，但是都能自洽自媚自己是优秀的、正义的、道德的、高尚的，而这个金句的暗示让当事人很受用。<\/p><p data-pid=\"jb12yvsw\">5，正确的三观假设了道德是刚性的，而道德的非刚性无论在伦理学还是哲学上都是基本概念，所以这五个字顺利的谄媚了那些非黑即白的不愿意琢磨事的懒人。<\/p><p data-pid=\"xufvabjp\">以上。<\/p><p data-pid=\"wsiudsuc\">短短不足20字，筛选人群、谄媚潜意识、帮助自媚以及制造崇高感，全了。<\/p><p data-pid=\"14kquvue\">所以，废话金句看多了。<\/p><p data-pid=\"gktobbjj\">人的脑子越来越清澈。<\/p><p data-pid=\"fhutsknq\">也变得越来越以为自己很智慧。<\/p>",
+      "comment_count": 81,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 1,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "我相信。 因为某些人就是主观做到可以让任何人都产生好感。 比如。。。",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706784266,
+      "id": 3383899672,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": true,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3383899672",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "你们相信人与人之间的磁场吗？",
+        "url": "http://www.zhihu.com/api/v4/questions/380308276",
+        "created": 1584453907,
+        "type": "question",
+        "id": 380308276,
+        "updated_time": 1584453907
+      },
+      "updated_time": 1706784266,
+      "content": "<p data-pid=\"ydvd-to_\">我相信。<\/p><p data-pid=\"kla1pxgf\">因为某些人就是主观做到可以让任何人都产生好感。<\/p><p data-pid=\"1ghpqeg-\">比如。。。<\/p>",
+      "comment_count": 35,
+      "extras": "",
+      "reshipment_settings": "need_payment",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "【道理我都懂】是一种极致的傲慢和自欺。 道理的有效性、辩证性、前置条件、适用人群，不关心。 看着舒坦共鸣，就认为是“好道理”，就认为“自己懂”。 道理即使有有效性，也只是自己记忆下来，然后自己当人肉硬盘复读机，用来做社会展现，以及给自己的情绪决策，当理由，完全没有通过实践迭代内化的意识，也没有有效的以实践作为锚点的思辨。 即使天天思辨了，也不过是虚空自我演戏，在内心中搞一堆“我自己在思考”的内耗和伪…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706775581,
+      "id": 3383742367,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": true,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3383742367",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "为什么会出现「道理我都懂，可是……」的情况？",
+        "url": "http://www.zhihu.com/api/v4/questions/31793776",
+        "created": 1435656534,
+        "type": "question",
+        "id": 31793776,
+        "updated_time": 1559030653
+      },
+      "updated_time": 1706775581,
+      "content": "<p data-pid=\"n-ieqjja\">【道理我都懂】是一种极致的傲慢和自欺。<\/p><p data-pid=\"pn868o-n\">道理的有效性、辩证性、前置条件、适用人群，不关心。<\/p><p data-pid=\"ajourt6c\">看着舒坦共鸣，就认为是“好道理”，就认为“自己懂”。<\/p><p data-pid=\"mjsoeoi4\">道理即使有有效性，也只是自己记忆下来，然后自己当人肉硬盘复读机，用来做社会展现，以及给自己的情绪决策，当理由，完全没有通过实践迭代内化的意识，也没有有效的以实践作为锚点的思辨。<\/p><p data-pid=\"_btxfdap\">即使天天思辨了，也不过是虚空自我演戏，在内心中搞一堆“我自己在思考”的内耗和伪装成长的表演。<\/p><p data-pid=\"cf7mvkfe\">那么，这种普遍的【道理我都懂】的实质是啥？<\/p><p data-pid=\"i6dhtxah\">你懂个毛线。<\/p><p data-pid=\"4qi1m3el\">我在新媒体上看到的多数的疑问、内耗，以及强调自律不足和意志力不足的声音中，都自以为自己【懂道理】而做不到。<\/p><p data-pid=\"ofzwzuum\">你要真懂了你不会做不到，但关键是，好多人只有被社会毒打了，被欺骗了，破防了，才会真正的回去看看【道理】，原来是这样啊。<\/p><p data-pid=\"5hqntkbj\">然后第二次犯傻把道理搞成刚性的，丢掉辩证性，来作为自己的指导。<\/p><p data-pid=\"ebbiqpjm\">这次是真的开始实践了。<\/p><p data-pid=\"tvclkuch\">但由于没有辩证和适用范围的概念，又叕被大概率毒打。<\/p><p data-pid=\"xo_wkcmz\">然后再回去说之前的【道理】是骗人的，又再去寻找新的，更深刻的【道理】。<\/p><p data-pid=\"6nwv2bth\">新的寻找过程与最早的【道理我都懂】的唯一区别是。<\/p><p data-pid=\"tkjzsnqr\">舒适度的各种指数变了。<\/p><p data-pid=\"s8xhsftb\">然后继续舒适度共鸣，就认为是“好道理”，就认为“自己懂”。<\/p><p data-pid=\"yyqwzsvg\">然后继续后面的毒打循环。<\/p><p data-pid=\"6subh1m7\">这就是【懂道理】的傲慢和自欺的一种典型的终身循环。<\/p>",
+      "comment_count": 11,
+      "extras": "",
+      "reshipment_settings": "need_payment",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "列一下一些常见的吧。 阅读者如有不适感，请中止阅读。 1，没有任何无条件无前提无情景的通用道德，任何道德要求，脱离以上三点，都是一种对人的迫害或者隐性的收割。 2，表达怜悯和帮助的唯二方式，是给钱或者给出切实可行的行动方案，除此之外都是表演。 3，大多数的流行道理，是由于简单以及（博弈、成长）无效，才被很多人理解。 4，绝大多数人的主观能动性在社会活动中的作用是微小的，而主要取决于各种形式周期，在高发展…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706773613,
+      "id": 3383702729,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": true,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3383702729",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "你有哪些不符合政治正确的观点？",
+        "url": "http://www.zhihu.com/api/v4/questions/642181970",
+        "created": 1706697931,
+        "type": "question",
+        "id": 642181970,
+        "updated_time": 1706697931
+      },
+      "updated_time": 1706773613,
+      "content": "<p data-pid=\"voewgnbx\">列一下一些常见的吧。<\/p><p data-pid=\"ecs3y8x0\">阅读者如有不适感，请中止阅读。<\/p><p data-pid=\"cg7vdsp4\">1，没有任何无条件无前提无情景的通用道德，任何道德要求，脱离以上三点，都是一种对人的迫害或者隐性的收割。<\/p><p data-pid=\"psmqifbe\">2，表达怜悯和帮助的唯二方式，是给钱或者给出切实可行的行动方案，除此之外都是表演。<\/p><p data-pid=\"7fomidbl\">3，大多数的流行道理，是由于简单以及（博弈、成长）无效，才被很多人理解。<\/p><p data-pid=\"bpr5f8w7\">4，绝大多数人的主观能动性在社会活动中的作用是微小的，而主要取决于各种形式周期，在高发展期，做什么都胜率高。<\/p><p data-pid=\"zg8fmpws\">5，理性并非褒义，因为在一个复杂系统中，每个环节都理性的结果几乎必然导向合成谬误。——因而复杂系统反而需要一部分不可或缺的感性。<\/p><p data-pid=\"i-rrqdbc\">6，科技进步与工程学提升的最大副作用是，人类多数个体越来越弱，越来越大范围的糊弄，而不是变得更有质量。<\/p><p data-pid=\"ryx46hzq\">7，在情绪低潮期，励志是一种对冲的好措施，但在除此之外，励志往往让人变得潜力更大的有害兴奋剂。<\/p><p data-pid=\"y72wgyjr\">8，多数人展现出来的个性，都是被社会化规训的伪个性，而他们品质中真正的稀缺品反而被这种伪个性打压或抹杀了。<\/p><p data-pid=\"ms1jtyko\">9，我国的应试教育是目前系统稳定性和发展性的最优解，个体能做的事情是在其中寻找自己的不输解。<\/p><p data-pid=\"qy28v8vz\">10，人们喜欢唾弃的很多不良事务、不良规则乃至不良现象，其实在保护这些唾弃他们的人。<\/p><p><\/p>",
+      "comment_count": 33,
+      "extras": "",
+      "reshipment_settings": "need_payment",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "看一下史书吧。 看完了你就知道华夏周边很多人群能歌善舞的根源。 南越杀汉使者，屠为九郡。宛王杀汉使者，头县北阙。朝鲜杀汉使者，即时诛灭。 臣延寿、臣汤将义兵，行天诛，赖陛下神灵，阴阳并应，陷阵克敌，斩郅支首及名王以下。宜悬头槁于蛮夷邸间，以示万里，明犯强汉者，虽远必诛！ 二十二年，遣右卫率府长史王玄策使其国，以蒋师仁为副；未至，尸罗逸多死，国人乱，其臣那伏帝阿罗那顺自立，发兵拒玄策。时从骑才数十，战…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706770444,
+      "id": 3383641628,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3383641628",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "日本文化大部分学习中国，那么为什么他们没有学到我们热爱和平而是好战？",
+        "url": "http://www.zhihu.com/api/v4/questions/600301519",
+        "created": 1683758769,
+        "type": "question",
+        "id": 600301519,
+        "updated_time": 1685953242
+      },
+      "updated_time": 1706774002,
+      "content": "<p data-pid=\"otr-ekuf\">看一下史书吧。<\/p><p data-pid=\"nfr--svx\">看完了你就知道华夏周边很多人群能歌善舞的根源。<\/p><p data-pid=\"iscqa8a9\">南越杀汉使者，屠为九郡。宛王杀汉使者，头县北阙。朝鲜杀汉使者，即时诛灭。<\/p><p data-pid=\"sl56-bjt\">臣延寿、臣汤将义兵，行天诛，赖陛下神灵，阴阳并应，陷阵克敌，斩郅支首及名王以下。宜悬头槁于蛮夷邸间，以示万里，明犯强汉者，虽远必诛！<\/p><p data-pid=\"ucai_czp\">二十二年，遣右卫率府长史王玄策使其国，以蒋师仁为副；未至，尸罗逸多死，国人乱，其臣那伏帝阿罗那顺自立，发兵拒玄策。时从骑才数十，战不胜，皆没，遂剽诸国贡物。玄策挺身奔吐蕃西鄙，檄召邻国兵。吐蕃以兵千人来，泥婆罗以七千骑来，玄策部分进战茶镈和罗城，三日破之，斩首三千级，溺水死万人。阿罗那顺委国走，合散兵复阵，师仁禽之，俘斩千计。馀众奉王妻息阻乾陀卫江，师仁击之，大溃，获其妃、王子，虏男女万二千人，杂畜三万，降城邑五百八十所。东天竺王尸鸠摩送牛马三万馈军，及弓、刀、宝缨络。迦没路国献异物，并上地图，请老子象。玄策执阿罗那顺献阙下。有司告宗庙，帝曰：“夫人耳目玩声色，口鼻耽臭味，此败德之原也。婆罗门不劫吾使者，宁至俘虏邪？”擢玄策朝散大夫。<\/p><p data-pid=\"z14jswnl\">山东之卒，被甲冒胄以会战，秦人捐甲徒裎以趋敌，左挈人头，右挟生虏。<\/p><p data-pid=\"6uisupkz\">京，谓高丘也;观，阙型也。古人杀贼，战捷陈尸，必筑京观，以为藏尸之地。古之战场所在有之。<\/p>",
+      "comment_count": 8,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "这个赛道想要长青太难了。 董老师这种知识博主多数是在消耗自己。 董只是做题家不是创作者，水准支撑不了这么高密度的消耗。 多数长期的博主或者网红，是没有原创能力的。 等自己和自己团队的积累消耗差不多了，就开始“致敬”“解读”“二创”。 如果更新极快，那就干脆就照搬了。 但是听众开始上头时候，不会管这个，因为滤镜还在。 之前罗辑思维也是抄了很多次被抓到很多次才塌房的。 所以还需要时间。 被群氓捧得越高，等滤…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706711677,
+      "id": 3382953729,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3382953729",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "百万粉丝博主控诉与辉同行主播抄袭文案，重合度达 90%，哪些信息值得关注？",
+        "url": "http://www.zhihu.com/api/v4/questions/642166175",
+        "created": 1706686940,
+        "type": "question",
+        "id": 642166175,
+        "updated_time": 1706686940
+      },
+      "updated_time": 1706711677,
+      "content": "<p data-pid=\"qlvmsnce\">这个赛道想要长青太难了。<\/p><p data-pid=\"x2fwmuuk\">董老师这种知识博主多数是在消耗自己。<\/p><p data-pid=\"yx76reum\">董只是做题家不是创作者，水准支撑不了这么高密度的消耗。<\/p><p data-pid=\"feqvbss0\">多数长期的博主或者网红，是没有原创能力的。<\/p><p data-pid=\"em6uufs3\">等自己和自己团队的积累消耗差不多了，就开始“致敬”“解读”“二创”。<\/p><p data-pid=\"roxjl8zb\">如果更新极快，那就干脆就照搬了。<\/p><p data-pid=\"3cjudrjn\">但是听众开始上头时候，不会管这个，因为滤镜还在。<\/p><p data-pid=\"uzaugrq9\">之前罗辑思维也是抄了很多次被抓到很多次才塌房的。<\/p><p data-pid=\"_zeu7vid\">所以还需要时间。<\/p><p data-pid=\"fgml2f1q\">被群氓捧得越高，等滤镜褪去，风光去得也越快。<\/p><p data-pid=\"kvyha7ic\">如果希望维持长久的被喜好，那么博主本身就需要不断学习，或者天然的具备超强建构能力及图式思维。<\/p><p data-pid=\"pyzmflhc\">显然董老师不是后者。<\/p><p data-pid=\"6cp_xfpp\">那么，希望他能有时间沉下心来充电吧。<\/p><p data-pid=\"tuowxi4t\">不然，又会变成只要墨苍离明着怼过的，早晚塌房的大预言术样本了。<\/p><p><\/p>",
+      "comment_count": 23,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "2001年，在大宇软星（北京）。 试用期1500+100=1600元。 三个月转正后2600元。 不过说实在的，感觉当时2600购买力跟现在1万差不多。 软星当时在北京上地，那时候上地南口（现在算核心区）的新房子，每平米3200。 吃一顿饭6块钱。",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706685077,
+      "id": 3382485730,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3382485730",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "你还记得你第一份工作的工资是多少吗？",
+        "url": "http://www.zhihu.com/api/v4/questions/641980956",
+        "created": 1706595932,
+        "type": "question",
+        "id": 641980956,
+        "updated_time": 1706595932
+      },
+      "updated_time": 1706685106,
+      "content": "<p data-pid=\"7ncweymo\">2001年，在大宇软星（北京）。<\/p><p data-pid=\"j5uq0dnm\">试用期1500+100=1600元。<\/p><p data-pid=\"xv2a-xn0\">三个月转正后2600元。<\/p><p data-pid=\"skakbnbi\">不过说实在的，感觉当时2600购买力跟现在1万差不多。<\/p><p data-pid=\"awx7_5op\">软星当时在北京上地，那时候上地南口（现在算核心区）的新房子，每平米3200。<\/p><p data-pid=\"j8wkggap\">吃一顿饭6块钱。<\/p>",
+      "comment_count": 44,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "1，战争是政治的延续，也是政治的最终手段，战争不应该脱离政治去考虑。 2，要彻底击败任何伟大帝国，必须等待其共识瓦解，内部矛盾表面化，必须等待其由于内部对立导致的内耗不可调和，必须等待其财政收入崩溃和动员力枯竭。 3，不遵从第二点可能会导致，帮助该帝国重新团结，从而续命了该帝国。 4，在大战役的层面，战役的目的必须清晰，直接攻击的目标到底是什么，如果是摧毁工业，那么战略轰炸和全面禁运就可以做到，如果是…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706675087,
+      "id": 3382297840,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3382297840",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "严重怀疑美国的本土作战能力，直击美国本土，甚至登陆美国作战，是疯狂的冒险，还是切实可行？",
+        "url": "http://www.zhihu.com/api/v4/questions/640565469",
+        "created": 1705837561,
+        "type": "question",
+        "id": 640565469,
+        "updated_time": 1706413947
+      },
+      "updated_time": 1706675470,
+      "content": "<p data-pid=\"iw3qg45o\">1，战争是政治的延续，也是政治的最终手段，战争不应该脱离政治去考虑。<\/p><p data-pid=\"n5iv3nz9\">2，要彻底击败任何伟大帝国，必须等待其共识瓦解，内部矛盾表面化，必须等待其由于内部对立导致的内耗不可调和，必须等待其财政收入崩溃和动员力枯竭。<\/p><p data-pid=\"hw02jnws\">3，不遵从第二点可能会导致，帮助该帝国重新团结，从而续命了该帝国。<\/p><p data-pid=\"uahxo_pt\">4，在大战役的层面，战役的目的必须清晰，直接攻击的目标到底是什么，如果是摧毁工业，那么战略轰炸和全面禁运就可以做到，如果是摧毁人力潜力，那么应该直接使用战略武器。<\/p><p data-pid=\"lvtpwleh\">5，对美国这种大帝国，地面战必须有带路党，否则很可能陷入泥潭，拖垮自己。<\/p><p data-pid=\"sg2tbrm3\">6，军迷们的很多爱好未来可能不会出现，因为战争已经改变了形态。未来治安战是预警机+地面小型相阵控雷达+无人机蜂群的自动杀伤，而列强之间很可能没有热战了，因为贸易战和金融战、认知战、病毒战的效率更高。<\/p><p data-pid=\"dti2erlw\">供参考。<\/p>",
+      "comment_count": 5,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "无论男女，恋爱和婚姻一定要记住一个基本问题。 如果有真命天子/天女，那么他/她的总数一定超过一个集团军（除非你个人超凡脱俗/才智惊天地泣鬼神，但这样你还会谈恋爱吗？）。 也就是说，（不考虑经济匹配）跟你合拍或者可以让你认为值得恋爱/结婚的人非常多，没有任何稀缺性。 所以遇到在关键价值观上谈不拢的，抓紧互相止损，别耽误自己也别耽误对方，更别凑合着互相折磨。 为什么真命天子/天女没有稀缺性？ 因为多数稀缺性是…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706674158,
+      "id": 3382283023,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3382283023",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "男朋友不同意婚后再doi怎么办?",
+        "url": "http://www.zhihu.com/api/v4/questions/641788072",
+        "created": 1706504450,
+        "type": "question",
+        "id": 641788072,
+        "updated_time": 1706504785
+      },
+      "updated_time": 1706674311,
+      "content": "<p data-pid=\"olkjjfuf\">无论男女，恋爱和婚姻一定要记住一个基本问题。<\/p><p data-pid=\"k0lpx5ea\">如果有真命天子/天女，那么他/她的总数一定超过一个集团军（除非你个人超凡脱俗/才智惊天地泣鬼神，但这样你还会谈恋爱吗？）。<\/p><p data-pid=\"ului619g\">也就是说，（不考虑经济匹配）跟你合拍或者可以让你认为值得恋爱/结婚的人非常多，没有任何稀缺性。<\/p><p data-pid=\"aafoxlw9\">所以遇到在关键价值观上谈不拢的，抓紧互相止损，别耽误自己也别耽误对方，更别凑合着互相折磨。<\/p><p data-pid=\"7jutriqs\">为什么真命天子/天女没有稀缺性？<\/p><p data-pid=\"5dvapcu6\">因为多数稀缺性是发情焦点伪造出来的，诱导触发了多角色的依赖成瘾，所以恐惧依赖对象离开之后的戒断反应。<\/p><p data-pid=\"sqi2bzf7\">如果把发情焦点去掉，所谓的真命天子/天女，都是社会规训出来的标准件，没什么生理/心理/认知/品德优势。<\/p><p data-pid=\"ocpgpp7_\">满大街都是。<\/p><p data-pid=\"uedr4rjp\">这也是为什么，很多人分分手后戒断完了，清醒了，会很奇怪当年为什么会迷恋某个人。<\/p><p data-pid=\"bfgv8sce\">所以，遇到类似本题目的问题，以及彩礼问题等，价值观没办法兼容的。<\/p><p data-pid=\"6_8wz7ep\">早点换。<\/p><p data-pid=\"ifg1juui\">别瞎耽误功夫。<\/p>",
+      "comment_count": 60,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "适量的白酒，是我国文化中，佳节团聚的必备品。 春节作为我国最重要的传统节日，聚会吃席喝白酒已经成为我们文化传统中不可或缺的一部分，代代相传。这一习俗不仅代表了尊重和传承，也反映了我们独特的饮食文化——毕竟，\"民以食为天\"。 白酒作为中国传统酒类之一，蕴含着悠久的历史传承和深厚的文化内涵，与中国人的生活息息相关。它见证了家庭、友情和团聚，同时也承载着丰富的文化象征。 有很多流传千古的诗篇，为酒文化赋予…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706622277,
+      "id": 3381703570,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3381703570",
+      "comment_permission": "censor",
+      "question": {
+        "question_type": "commercial",
+        "title": "为什么春节送礼总少不了白酒？",
+        "url": "http://www.zhihu.com/api/v4/questions/640935422",
+        "created": 1706064172,
+        "type": "question",
+        "id": 640935422,
+        "updated_time": 1706065454
+      },
+      "updated_time": 1706622277,
+      "content": "<p data-pid=\"i175xibu\">适量的白酒，是我国文化中，佳节团聚的必备品。 <\/p><p data-pid=\"d9q5d7jr\">春节作为我国最重要的传统节日，聚会吃席喝白酒已经成为我们文化传统中不可或缺的一部分，代代相传。这一习俗不仅代表了尊重和传承，也反映了我们独特的饮食文化——毕竟，\"民以食为天\"。 <\/p><p data-pid=\"0_ltnhxs\">白酒作为中国传统酒类之一，蕴含着悠久的历史传承和深厚的文化内涵，与中国人的生活息息相关。它见证了家庭、友情和团聚，同时也承载着丰富的文化象征。 <\/p><p data-pid=\"1ocohuv4\">有很多流传千古的诗篇，为酒文化赋予了深刻的涵义，“人生得意须尽欢，莫使金樽空对月。天生我材必有用，千金散尽还复来。”——这不仅仅将酒与场景的情绪渲染绑定，也抒发了了励志奋进的情怀。“五花马，千金裘，呼儿将出换美酒，与尔同销万古愁。”——美酒在社交中不仅拉近距离也是舒缓忧愁、互诉衷肠的良伴。 <\/p><p data-pid=\"zpsllnta\">白酒传统文化源远流长，是中华民族的宝贵文化遗产，然而，或许是因为白酒文化底蕴深厚，涉及的知识面广泛，也可能是因为现代生活的快节奏，使人们很少有机会花时间来深入了解这一文化。<\/p><p data-pid=\"ffx9m3yf\">由于朋友比较多，也有各种商务宴请，笔者之前喝酒场合很多，也能略饮数杯，但对白酒及其文化的了解浅尝辄止，停留在道听途说的水平。说白了，喝酒只是一种习惯，没有喝明白酒。 <\/p><p data-pid=\"etz0mhuf\">直到最近，参与了水井坊白酒学坊，才了解到白酒文化的内涵和饮酒、品酒的技巧与讲究。<\/p><figure data-size=\"normal\"><noscript><img src=\"https://pic1.zhimg.com/50/v2-5d4e3983a8145fec7ae348bfe284d973_720w.jpg?source=c8b7c179\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-6234fcd44326b60e6b5ca2d11ee1ec72\" data-default-watermark-src=\"https://picx.zhimg.com/50/v2-b9b0d3fbd931bfca9e68937f1234359c_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb\" width=\"865\" data-original=\"https://pic1.zhimg.com/v2-5d4e3983a8145fec7ae348bfe284d973_r.jpg?source=c8b7c179\"><\/noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='865'%20height='648'&gt;&lt;/svg&gt;\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-6234fcd44326b60e6b5ca2d11ee1ec72\" data-default-watermark-src=\"https://picx.zhimg.com/50/v2-b9b0d3fbd931bfca9e68937f1234359c_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"865\" data-original=\"https://pic1.zhimg.com/v2-5d4e3983a8145fec7ae348bfe284d973_r.jpg?source=c8b7c179\" data-actualsrc=\"https://pic1.zhimg.com/50/v2-5d4e3983a8145fec7ae348bfe284d973_720w.jpg?source=c8b7c179\"><\/figure><figure data-size=\"normal\"><noscript><img src=\"https://pica.zhimg.com/50/v2-978c33cbecb5a9d99d7d72e840bcc246_720w.jpg?source=c8b7c179\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"637\" data-original-token=\"v2-e5d5f7b53a3c08bed2eecb39a0e016ca\" data-default-watermark-src=\"https://pic1.zhimg.com/50/v2-a051486f8ae17ac12477b332a781538d_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb\" width=\"865\" data-original=\"https://picx.zhimg.com/v2-978c33cbecb5a9d99d7d72e840bcc246_r.jpg?source=c8b7c179\"><\/noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='865'%20height='637'&gt;&lt;/svg&gt;\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"637\" data-original-token=\"v2-e5d5f7b53a3c08bed2eecb39a0e016ca\" data-default-watermark-src=\"https://pic1.zhimg.com/50/v2-a051486f8ae17ac12477b332a781538d_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"865\" data-original=\"https://picx.zhimg.com/v2-978c33cbecb5a9d99d7d72e840bcc246_r.jpg?source=c8b7c179\" data-actualsrc=\"https://pica.zhimg.com/50/v2-978c33cbecb5a9d99d7d72e840bcc246_720w.jpg?source=c8b7c179\"><\/figure><p data-pid=\"ax1vxfjk\">据考古学家的研究，中国酿酒历史可追溯至七千多年前，而白酒是其中最重要的品类之一，白酒在中国历史上一直与各种文化活动相联系，如宴席、祭祀、节庆等。因而，中国传统文化中逐步形成了有许多关于饮酒的礼仪和规范，这些礼仪与白酒文化密切相关，体现了中国社交和待客的精髓。而随着社交与待客中酒文化的盛行，古代文人墨客以及现代作家艺术家们也就自然而言的将白酒作为创作的题材之一，因此白酒在中国文学和艺术中也有不可或缺的一席之地。 <\/p><p data-pid=\"ufzbvmzq\">中国地域广阔，各地形成了不同的白酒酿造技艺和传统，不同地区的白酒在口味、酿造工艺、风格上都有自己的特色，反映了当地的地域文化、民俗、传统和礼节，源远流长，经久不衰。 <\/p><p data-pid=\"6gq0y02i\">以知名品牌水井坊为例，其历史可追溯至元代。1998年，考古工作者在开掘水井街酒坊遗址时，发现了地下有埋藏川酒老烧坊的遗址， 已发现面积约1700平方米，发掘面积近280平方米，遗迹现象包括晾堂3座、酒窑8口、炉灶4座、灰坑4个及路基、木柱、酿酒设备基座等。这一发现被考古专家评为“1999中国十大考古新发现”之一，当年考古界和白酒界专家盛赞其为“白酒界的兵马俑“。 <\/p><p data-pid=\"ulodqaxt\">水井坊是迄今为止世界发现的最古老、最全面、保存最完整的古代酿酒作坊。经考古研究水井坊自元末明初起，历经明清，至当今前后延续六百余年，被称为“中国白酒第一坊”。最难得的是，在过去600多年间，水井坊古窖池一直不间断酿造，也就是说我们今日喝到的每一杯水井坊里决定了香味口感的微生物菌群，都自600多年前就生生不息了。<\/p><p data-pid=\"ct2aburd\">浓香型、酱香型、清香型、米香型是中国白酒的四大香型，其中浓香型白酒有芳香浓郁、绵柔甘洌、香味协调、入口甜、落口绵、尾净余长等特点。 <\/p><figure data-size=\"normal\"><noscript><img src=\"https://pic1.zhimg.com/50/v2-63a9de6f21d91318d1c46fd1d5ab1eba_720w.jpg?source=c8b7c179\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-5f97e0b0a65a2296c30f89ac403a9db7\" data-default-watermark-src=\"https://picx.zhimg.com/50/v2-489dd48fb6e84f3a3b21a7c840f77a2b_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb\" width=\"865\" data-original=\"https://picx.zhimg.com/v2-63a9de6f21d91318d1c46fd1d5ab1eba_r.jpg?source=c8b7c179\"><\/noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='865'%20height='648'&gt;&lt;/svg&gt;\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-5f97e0b0a65a2296c30f89ac403a9db7\" data-default-watermark-src=\"https://picx.zhimg.com/50/v2-489dd48fb6e84f3a3b21a7c840f77a2b_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"865\" data-original=\"https://picx.zhimg.com/v2-63a9de6f21d91318d1c46fd1d5ab1eba_r.jpg?source=c8b7c179\" data-actualsrc=\"https://pic1.zhimg.com/50/v2-63a9de6f21d91318d1c46fd1d5ab1eba_720w.jpg?source=c8b7c179\"><\/figure><p data-pid=\"irctc5pl\">在酿造工艺上，浓香型白酒酿造通常采用泥窖（也称为泥涂窖），这种窖以泥土为主要建材，有着较好的保温和透气性能。泥窖一般会被埋入地下一定深度，利用地下恒定的温度和湿度，有利于酒液的发酵和陈化。泥窖的发酵接触面较多，而且泥土本身就是一个良好的生态系统，因而发酵时泥窖内的菌群种类较为丰富，参与到酒的发酵过程中之后，为酒的风味贡献独特的特点和复合的香气和风味。 <\/p><p data-pid=\"5avgwb6z\">而这也是水井坊的核心竞争力之一。 <\/p><p data-pid=\"wpvyoyie\">在中科院微生物所真菌学重点实验室发布的《水井坊窖泥研究报告》中显示，水井坊窖泥微生物与宜宾产区和泸州产区相比，菌群既有相同也有差异。水井坊窖泥中存在的微生物特有类群18个属，另还有近20个尚未报道过的新的细菌种类。 <\/p><p data-pid=\"qy-8ep-2\">主持此项研究的白逢彦教授表示，传统白酒发酵过程实际上是一个多种类群微生物的生长代谢过程，即“多微共酵”。浓香型白酒采用泥窖固态发酵，窖泥是浓香型白酒生香微生物的主要来源之一。此次研究就是主要围绕来源于水井街酒坊600年古窖泥中“一号菌群”的独特性而展开。 <\/p><p data-pid=\"4ljvxx4n\">研究证明，“一号菌群”作为目前白酒行业繁衍时间悠久的微生物群落之一，与宜宾产区和泸州产区相比，水井坊窖泥中特有的微生物类群有18个属，其中包括16个细菌属和2个古菌属，并形成了其特有结构。同时，水井坊窖泥还存在近20个尚未报道的新的细菌种类，且老窖泥中新细菌的种类更多。<\/p><figure data-size=\"normal\"><noscript><img src=\"https://pic1.zhimg.com/50/v2-8486ee92e3c48564736734ff9fbfc0ac_720w.jpg?source=c8b7c179\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-63c3baa1d7f001475a7df034fac900e6\" data-default-watermark-src=\"https://pic1.zhimg.com/50/v2-a36a058b55e09434523d97ceec92fe81_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb\" width=\"865\" data-original=\"https://picx.zhimg.com/v2-8486ee92e3c48564736734ff9fbfc0ac_r.jpg?source=c8b7c179\"><\/noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='865'%20height='648'&gt;&lt;/svg&gt;\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-63c3baa1d7f001475a7df034fac900e6\" data-default-watermark-src=\"https://pic1.zhimg.com/50/v2-a36a058b55e09434523d97ceec92fe81_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"865\" data-original=\"https://picx.zhimg.com/v2-8486ee92e3c48564736734ff9fbfc0ac_r.jpg?source=c8b7c179\" data-actualsrc=\"https://pic1.zhimg.com/50/v2-8486ee92e3c48564736734ff9fbfc0ac_720w.jpg?source=c8b7c179\"><\/figure><p data-pid=\"agbavsqk\">窖泥中复杂的菌群结构对中国浓香型白酒的风味和品质具有极其重要作用，正是这些微生物类群成就了水井坊酒的独特品质、风味和口感。 <\/p><p data-pid=\"souqbo8k\">而风味和口感是品酒的最重要指标之一，说起来，在参加水井坊白酒学坊的课程之前，笔者对品酒也听到和看到过一些小技巧，最常见的是观酒花和拉酒线。 <\/p><p data-pid=\"yk1fwskz\">观酒花，就是把白酒放在透明瓶子中剧烈摇晃，来观察气泡的大小和持续的时间，拉酒线则是倒酒时候逐步抬高器皿，观察酒流出的样子是否绵延、连续以及细长。 <\/p><p data-pid=\"ho7qn4eu\">在水井坊白酒学坊课程中，也展示了这两种“品酒”方式，并由学员做演示和评价。很有意思的是，经过盲测，发现这两种技巧，其实是一种“伪科学”，并不能有效的识别白酒的优劣。 <\/p><p data-pid=\"yo3ko9u3\">答案揭晓之后，老师进行了说明，酒花的大小只跟白酒的度数高低有关，越大则酒精度越高；而酒线就更加物理了——其实只跟器皿的出口形状，和器皿内置有没有缓冲作用的小球有关，缓冲之后流速越慢、器皿出口约小，酒线越漂亮。<\/p><figure data-size=\"normal\"><noscript><img src=\"https://picx.zhimg.com/50/v2-867c7c805879f39565acb0a8e9b8866b_720w.jpg?source=c8b7c179\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-ac2f5044ea773e399fc3ec18c4b30e86\" data-default-watermark-src=\"https://picx.zhimg.com/50/v2-023a6f343cf3faae94a441eadf5f0af4_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb\" width=\"865\" data-original=\"https://pica.zhimg.com/v2-867c7c805879f39565acb0a8e9b8866b_r.jpg?source=c8b7c179\"><\/noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='865'%20height='648'&gt;&lt;/svg&gt;\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-ac2f5044ea773e399fc3ec18c4b30e86\" data-default-watermark-src=\"https://picx.zhimg.com/50/v2-023a6f343cf3faae94a441eadf5f0af4_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"865\" data-original=\"https://pica.zhimg.com/v2-867c7c805879f39565acb0a8e9b8866b_r.jpg?source=c8b7c179\" data-actualsrc=\"https://picx.zhimg.com/50/v2-867c7c805879f39565acb0a8e9b8866b_720w.jpg?source=c8b7c179\"><\/figure><p data-pid=\"hldxi_wg\">其后，老师分享了品白酒的“靠谱”技巧。 <\/p><p data-pid=\"_zkqls1k\">观色：将白酒倒入适量的酒杯中，观察酒液的颜色和透明度。一般来说，好的白酒应该清澈透亮，颜色纯净。观察颜色也可以初步了解酒的年代和制作工艺。<\/p><p data-pid=\"z9e0qj9m\">闻香：将酒杯拿到鼻子附近，轻轻摇动杯子，使酒液挥发出来，通过鼻子嗅闻酒液中散发出的香气。这样可以感知到白酒的香气特点，例如是否有麦香、果香或者其他特殊的香味。<\/p><p data-pid=\"znffcb_r\">品味：小口抿一小口白酒，让酒液在口中停留片刻，感受其初次入口时的味道，然后再大口品尝，通过舌尖、舌中和舌根全面品味白酒的甘甜、醇厚、余味以及口感等特点。<\/p><figure data-size=\"normal\"><noscript><img src=\"https://picx.zhimg.com/50/v2-59e6ca23cfbdc3b516acb2d4352d61f1_720w.jpg?source=c8b7c179\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-a1b1b80260b569110975cfd5f458a5dd\" data-default-watermark-src=\"https://picx.zhimg.com/50/v2-dd58cbb2fc7449003b0034d65c7d8c6a_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb\" width=\"865\" data-original=\"https://picx.zhimg.com/v2-59e6ca23cfbdc3b516acb2d4352d61f1_r.jpg?source=c8b7c179\"><\/noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='865'%20height='648'&gt;&lt;/svg&gt;\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-a1b1b80260b569110975cfd5f458a5dd\" data-default-watermark-src=\"https://picx.zhimg.com/50/v2-dd58cbb2fc7449003b0034d65c7d8c6a_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"865\" data-original=\"https://picx.zhimg.com/v2-59e6ca23cfbdc3b516acb2d4352d61f1_r.jpg?source=c8b7c179\" data-actualsrc=\"https://picx.zhimg.com/50/v2-59e6ca23cfbdc3b516acb2d4352d61f1_720w.jpg?source=c8b7c179\"><\/figure><p data-pid=\"0jnenkfr\">这样的品酒，不仅仅能识别优劣，也能辨别白酒的种类、香型等等，老师的指引下，笔者进行了多次盲品，过程中，也深刻体验了不同风味香型的区别。<\/p><figure data-size=\"normal\"><noscript><img src=\"https://pic1.zhimg.com/50/v2-5e6e90d574e1b34913a76d25d4ab0fb6_720w.jpg?source=c8b7c179\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-qrcode-action=\"none\" data-original-token=\"v2-9b2b0e5278c364318afdf823d389190f\" data-default-watermark-src=\"https://pic1.zhimg.com/50/v2-dca06e550119879616393c99f9ba77fe_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb\" width=\"865\" data-original=\"https://pic1.zhimg.com/v2-5e6e90d574e1b34913a76d25d4ab0fb6_r.jpg?source=c8b7c179\"><\/noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='865'%20height='648'&gt;&lt;/svg&gt;\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-qrcode-action=\"none\" data-original-token=\"v2-9b2b0e5278c364318afdf823d389190f\" data-default-watermark-src=\"https://pic1.zhimg.com/50/v2-dca06e550119879616393c99f9ba77fe_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"865\" data-original=\"https://pic1.zhimg.com/v2-5e6e90d574e1b34913a76d25d4ab0fb6_r.jpg?source=c8b7c179\" data-actualsrc=\"https://pic1.zhimg.com/50/v2-5e6e90d574e1b34913a76d25d4ab0fb6_720w.jpg?source=c8b7c179\"><\/figure><figure data-size=\"normal\"><noscript><img src=\"https://pic1.zhimg.com/50/v2-f15c7ef1d5741e39c1a41794635d9ddc_720w.jpg?source=c8b7c179\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-dada2db96f00f18d8de9a05d24b1f096\" data-default-watermark-src=\"https://picx.zhimg.com/50/v2-3e1d84d61221b5a0f11f295b938376ec_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb\" width=\"865\" data-original=\"https://picx.zhimg.com/v2-f15c7ef1d5741e39c1a41794635d9ddc_r.jpg?source=c8b7c179\"><\/noscript><img src=\"data:image/svg+xml;utf8,&lt;svg%20xmlns='http://www.w3.org/2000/svg'%20width='865'%20height='648'&gt;&lt;/svg&gt;\" data-caption=\"\" data-size=\"normal\" data-rawwidth=\"865\" data-rawheight=\"648\" data-original-token=\"v2-dada2db96f00f18d8de9a05d24b1f096\" data-default-watermark-src=\"https://picx.zhimg.com/50/v2-3e1d84d61221b5a0f11f295b938376ec_720w.jpg?source=c8b7c179\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"865\" data-original=\"https://picx.zhimg.com/v2-f15c7ef1d5741e39c1a41794635d9ddc_r.jpg?source=c8b7c179\" data-actualsrc=\"https://pic1.zhimg.com/50/v2-f15c7ef1d5741e39c1a41794635d9ddc_720w.jpg?source=c8b7c179\"><\/figure><p data-pid=\"y5mkqs_k\">在品酒和风味以外，作为与日常生活、节日庆祝、社交聚会等不可分割的一部分，白酒也成为了生活的升华的文化的一部分。在文学、绘画、音乐甚至戏剧等艺术形式中得到了充分的展现，成为了中国文化创作的灵感源泉之一。 <\/p><p data-pid=\"9ub0e1zh\">水井坊白酒学坊对笔者来说，是打开了一个新的世界。 <\/p><p data-pid=\"xcrtnuvi\">之前笔者对白酒也就是“喝多少有多少”，根本不知道其中的门道。但是通过参加这个学坊，开始懂得了“知其所以然”。原来白酒里还有那么多的文化和传统，酿造它的过程也非常讲究，充满了传统文化智慧的结晶。 <\/p><p data-pid=\"zzmfwtl8\">笔者一向主张，做任何事情都要知道原理和原因，这样才能避免“人菜瘾大”，喝酒也是一样，要喝明白酒，不仅仅是为了喝而已，更是为了感受那些文化，把中国古老的酒文化承传下去。 <\/p><p data-pid=\"ztouthje\">从这个意义上，希望水井坊白酒学坊能增加覆盖面，为传统文化的延续和发扬光大加油。<\/p>",
+      "comment_count": 5,
+      "extras": "",
+      "reshipment_settings": "need_payment",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "https://pica.zhimg.com/v2-6234fcd44326b60e6b5ca2d11ee1ec72_qhd.jpg?source=c8b7c179",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "独处的时候，忘记自己曾经是穷人。 交友的时候，忘记自己现在是富人。 决策的时候，忘记没钱时的自尊心。 消费的时候，忘记没钱时的攀比欲。 自己觉得自己很智慧的时候，要小心幸运的馈赠被自满的能力败光。 自己觉得自己很了不起的时候，看看周围的例子，有钱人垮掉比没钱人变有钱人要容易很多倍。",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706609572,
+      "id": 3381513153,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3381513153",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "穷人暴富，有什么忠告吗？",
+        "url": "http://www.zhihu.com/api/v4/questions/640589026",
+        "created": 1705873842,
+        "type": "question",
+        "id": 640589026,
+        "updated_time": 1705873842
+      },
+      "updated_time": 1706609653,
+      "content": "<p data-pid=\"rbu4x6ye\">独处的时候，忘记自己曾经是穷人。<\/p><p data-pid=\"9orv48jj\">交友的时候，忘记自己现在是富人。<\/p><p data-pid=\"ryj_m-_h\">决策的时候，忘记没钱时的自尊心。<\/p><p data-pid=\"0vdxxrlk\">消费的时候，忘记没钱时的攀比欲。<\/p><p><br><\/p><p data-pid=\"-yus5sty\">自己觉得自己很智慧的时候，要小心幸运的馈赠被自满的能力败光。<\/p><p data-pid=\"o33opwhn\">自己觉得自己很了不起的时候，看看周围的例子，有钱人垮掉比没钱人变有钱人要容易很多倍。<\/p><p><\/p><p><\/p>",
+      "comment_count": 12,
+      "extras": "",
+      "reshipment_settings": "need_payment",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "东施捧心的时候，收获的不是保护欲而是几千年社死。 题目表述的现象是假象。 原题目是这样写的： 为什么对「体质弱的人」大家都想保护，而对「心理承受力弱的人」大家都很鄙夷？大家看到以后觉得有道理，是因为没有魅力的体质弱的人被忽视了。 林黛玉体弱，被呵护，她心理强大吗？ 如果她长得疑似性转小岳岳，还有人有呵护欲望吗？如果有，真的很特别。 说白了，多数人在对待他人时，是双标的，主要看脸，跟体弱还是心弱完全没关…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706598916,
+      "id": 3381293257,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3381293257",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "为什么对「体质弱的人」大家都想保护，而对「心理承受力弱的人」大家都很鄙夷？",
+        "url": "http://www.zhihu.com/api/v4/questions/641330193",
+        "created": 1706252340,
+        "type": "question",
+        "id": 641330193,
+        "updated_time": 1706252340
+      },
+      "updated_time": 1706599151,
+      "content": "<p data-pid=\"abf4qdh-\">东施捧心的时候，收获的不是保护欲而是几千年社死。<\/p><p data-pid=\"k4sphzog\">题目表述的现象是假象。<\/p><p data-pid=\"wcsahtpb\">原题目是这样写的：<\/p><blockquote data-pid=\"ippbduai\">为什么对「体质弱的人」大家都想保护，而对「心理承受力弱的人」大家都很鄙夷？<\/blockquote><p data-pid=\"l8fcyyei\">大家看到以后觉得有道理，是因为没有魅力的体质弱的人被忽视了。<\/p><p data-pid=\"idnvhkml\">林黛玉体弱，被呵护，她心理强大吗？<\/p><p data-pid=\"532fl9cm\">如果她长得疑似性转小岳岳，还有人有呵护欲望吗？如果有，真的很特别。<\/p><p data-pid=\"vcrh6hn9\">说白了，多数人在对待他人时，是双标的，主要看脸，跟体弱还是心弱完全没关系。<\/p><p data-pid=\"z8gobpd6\">甚至貌美如花或貌若潘安的疯比，更被喜欢，觉得特别有魅力。<\/p><p data-pid=\"c2ld9h1s\">同样的事情，无论是体弱还是心弱，放在一些颜值不足或平平无奇的人身上，就会被嫌弃，甚至被取笑成为二次伤害。<\/p><p data-pid=\"28tetrot\">圣母心也只是针对可爱或者颜值高的物种。<\/p><p data-pid=\"om-glhhj\">没听说对癞蛤蟆或蛆虫有圣母心的。<\/p><p data-pid=\"xumnfpcm\">在心理上，不要搞题目这种表象化的规律了。<\/p><p data-pid=\"1ir4n-hd\">因为对多数认知潜力巨大的所谓好人来说，颜值其实才是标准。<\/p><p data-pid=\"yupciix0\">性预期或者镜像自媚驱动的。<\/p><p><\/p>",
+      "comment_count": 9,
+      "extras": "",
+      "reshipment_settings": "need_payment",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "这句话是对的。 所以你要做到两件事。 第一，把你自己的认知提升，搞清楚养育实际上是审慎的与孩子共同成长。 第二，别找会折腾孩子的伴侣。 多数起跑线上的落后，不是金钱，也不是学习，更不是什么爱与善良。 是开始的模因就跪了。",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706592970,
+      "id": 3381172152,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3381172152",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "“不能让孩子输在起跑线上”这句话对吗？",
+        "url": "http://www.zhihu.com/api/v4/questions/641905864",
+        "created": 1706541413,
+        "type": "question",
+        "id": 641905864,
+        "updated_time": 1706541413
+      },
+      "updated_time": 1706593744,
+      "content": "<p data-pid=\"kr4kcfnl\">这句话是对的。<\/p><p data-pid=\"hqz3zw2g\">所以你要做到两件事。<\/p><p data-pid=\"fbxju8ht\">第一，把你自己的认知提升，搞清楚养育实际上是审慎的与孩子共同成长。<\/p><p data-pid=\"asczf0ze\">第二，别找会折腾孩子的伴侣。<\/p><p data-pid=\"gi7tlb13\">多数起跑线上的落后，不是金钱，也不是学习，更不是什么爱与善良。<\/p><p data-pid=\"_tqhabmh\">是开始的模因就跪了。<\/p>",
+      "comment_count": 3,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "耻感是后天形成的。 早期社会化，通过观察父母和周围人的言行，以及被教育规训，孩子会继承一些模因，同时将某些符号（语言或者情景感知）固化在情绪回路中。 当这个符号拉起的情绪是羞愧、负罪感、逃避冲动等等的时候，就是一个耻感回路。 在主观感受上就是【丢人】了，【不好意思】了，或者进入自我谴责和内耗。 这就是各种【脸皮薄】的来源。 通常，如果人们认为自己的耻感已经影响了正常的社会化。 可以采取以下的方式进行调…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706592845,
+      "id": 3381170016,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3381170016",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "俗话说的「脸皮厚或薄」是天生还是后天形成的？怎么改变？",
+        "url": "http://www.zhihu.com/api/v4/questions/641330220",
+        "created": 1706252340,
+        "type": "question",
+        "id": 641330220,
+        "updated_time": 1706252340
+      },
+      "updated_time": 1706592845,
+      "content": "<p data-pid=\"pw4w6gkd\">耻感是后天形成的。<\/p><p data-pid=\"1b0v0_mx\">早期社会化，通过观察父母和周围人的言行，以及被教育规训，孩子会继承一些模因，同时将某些符号（语言或者情景感知）固化在情绪回路中。<\/p><p data-pid=\"ed2q5qid\">当这个符号拉起的情绪是羞愧、负罪感、逃避冲动等等的时候，就是一个耻感回路。<\/p><p data-pid=\"yh7orz1u\">在主观感受上就是【丢人】了，【不好意思】了，或者进入自我谴责和内耗。<\/p><p data-pid=\"r7nak2dg\">这就是各种【脸皮薄】的来源。<\/p><p data-pid=\"i9tvvhv7\">通常，如果人们认为自己的耻感已经影响了正常的社会化。<\/p><p data-pid=\"skezham0\">可以采取以下的方式进行调整：<\/p><p data-pid=\"f6f5pifh\">1，负面暴露，在影视作品中，找到自己做不到的【脸皮厚】情景，多看。<\/p><p data-pid=\"4msil-jx\">2，使用情境分离的方式，清晰耻感激活的必要场景，在必要情景以外，设法建立新的情绪回路。<\/p><p data-pid=\"_5asn3yy\">3，在下意识里，把距离自己亲密度和利益羁绊很远的人，视为非人类，以规避耻感的频繁激活。<\/p><p data-pid=\"dqpd2plh\">以上。<\/p><p data-pid=\"of56xvz0\">供参考。<\/p><p><\/p>",
+      "comment_count": 6,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "男的至死是少年，所以女的只能一辈子当妈了。 知道为什么新婚女性被称为【新娘】而不是【准娘】了吗？",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706546430,
+      "id": 3380637196,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3380637196",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "为什么没有听到过人说「女人至死是少女」？",
+        "url": "http://www.zhihu.com/api/v4/questions/585400980",
+        "created": 1676976366,
+        "type": "question",
+        "id": 585400980,
+        "updated_time": 1676976366
+      },
+      "updated_time": 1706546799,
+      "content": "<p data-pid=\"5wpslgm-\">男的至死是少年，所以女的只能一辈子当妈了。<\/p><p data-pid=\"xklvqqoj\">知道为什么新婚女性被称为【新娘】而不是【准娘】了吗？<\/p>",
+      "comment_count": 4,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "各位看一下历史书。 满清最后续命那么久，靠的是关税。 工业没有、农业邋遢，各方面被列强吊打。 但仍然获得了以往王朝不可具备的财政收入。 这里面有个逻辑。 把关税搞得很高，可以是重商主义，扶植本国产业。 也可以是在没有本国产业的情况下，作为对本国民众的隐形剥削，敲骨吸髓的那种。 王朝末期，这是一个糊裱匠的必经之路啊。 没有比懂王更懂怎么做糊裱匠了。",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706532262,
+      "id": 3380422349,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3380422349",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "消息称特朗普或对所有中国商品征税 60%，如何看待其可能性？",
+        "url": "http://www.zhihu.com/api/v4/questions/641811527",
+        "created": 1706515040,
+        "type": "question",
+        "id": 641811527,
+        "updated_time": 1706515040
+      },
+      "updated_time": 1706532262,
+      "content": "<p data-pid=\"svsknj5k\">各位看一下历史书。<\/p><p data-pid=\"qlrlfevg\">满清最后续命那么久，靠的是关税。<\/p><p data-pid=\"krguhd-z\">工业没有、农业邋遢，各方面被列强吊打。<\/p><p data-pid=\"6hcpltug\">但仍然获得了以往王朝不可具备的财政收入。<\/p><p data-pid=\"u_djakd9\">这里面有个逻辑。<\/p><p data-pid=\"dv9nk7qo\">把关税搞得很高，可以是重商主义，扶植本国产业。<\/p><p data-pid=\"3ixvqe-9\">也可以是在没有本国产业的情况下，作为对本国民众的隐形剥削，敲骨吸髓的那种。<\/p><p data-pid=\"qqznnwen\">王朝末期，这是一个糊裱匠的必经之路啊。<\/p><p data-pid=\"zrztkdbl\">没有比懂王更懂怎么做糊裱匠了。<\/p>",
+      "comment_count": 197,
+      "extras": "",
+      "reshipment_settings": "need_payment",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "这个话题终于在本乎到了榜上了。 （侧面证明本乎是中立的好平台） 1，这个事件实际上可以看做，民主党利用掌控某些州的法律对懂王迫害的后续，共和党的升级报复行为。主要的意义还是在选举年搞事情，提高核心选民的动员率，争取中间选民。 2，美国是联邦制国家，在建国之初，先贤们在制度上就为州的独立性和对联邦的制约给出了设计，而且与现在美帝形象相悖的是，美国先贤们对民主的多数人暴政有非常多的批判和担忧。比如汉密尔…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706519333,
+      "id": 3380213555,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "阴谋论者，右派，悲观主义",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3380213555",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "得州与美联邦政府陷入武装对峙，副州长警告拜登「别惹得州」，具体情况如何？事态将如何发展？",
+        "url": "http://www.zhihu.com/api/v4/questions/641779814",
+        "created": 1706498729,
+        "type": "question",
+        "id": 641779814,
+        "updated_time": 1706498729
+      },
+      "updated_time": 1706519333,
+      "content": "<p data-pid=\"oe6xlxj9\">这个话题终于在本乎到了榜上了。<\/p><p data-pid=\"3ynzhc2k\">（侧面证明本乎是中立的好平台）<\/p><p data-pid=\"fd0riqjy\">1，这个事件实际上可以看做，民主党利用掌控某些州的法律对懂王迫害的后续，共和党的升级报复行为。主要的意义还是在选举年搞事情，提高核心选民的动员率，争取中间选民。<\/p><p data-pid=\"nrs3jvay\">2，美国是联邦制国家，在建国之初，先贤们在制度上就为州的独立性和对联邦的制约给出了设计，而且与现在美帝形象相悖的是，美国先贤们对民主的多数人暴政有非常多的批判和担忧。比如汉密尔顿说过一句名言“民主是一种疾病。”<\/p><p data-pid=\"8a7oenxp\">3，美帝现在陷入的螺旋上升的党政，根本是对于社会的纵向细分（用纵向细分对抗横向细分的阶级论，掩盖贫富对立）的恶果，纵向细分导致的人群分裂，在短中长利益上都很难找到共识的公约数，而只能进入零和博弈，从而激发了人群代表的两党的无底线对抗。<\/p><p data-pid=\"z64rrri0\">4，这种分裂的未来可能很多，但我们不要过于乐观短期内会有什么大事件，只要美帝作为一个整体还在通过对外掠夺获利（从而可以分利），那么内部的分裂就不会导致解体，什么时候对外掠夺无法支撑赎买人群分裂的利益冲突了，这个事情才会发生。<\/p><p data-pid=\"6pwj66q0\">5，做好咱自己的事情是最重要的，先为己之不可胜，以待敌之可胜。<\/p><p data-pid=\"zdyteypa\">6，即使美帝相对衰落，我们还是需要外部竞争者的，同时也要容忍内部的异见声音，不然也会重蹈覆辙。“入则无法家拂士，出则无敌国外患者。国恒亡。”<\/p><p data-pid=\"_wgcgpst\">供参考。<\/p>",
+      "comment_count": 25,
+      "extras": "",
+      "reshipment_settings": "need_payment",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": false,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": ""
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "爹味是需要资格的。 万年白银往往叶公好龙，喜欢爹味输出来获得上位感和虚空责任感。 【爱之深，责之切】是一种极为典型的动机对冲，即，怼你是因为对你有爱，有责任心等等，来对冲对你造成情绪伤害的不当性。 这里面最大的问题是，脱离了“怼的内容”的质量问题。 如果质量极高，被怼的人，醍醐灌顶、拨云见日，那么被怼的不快感很容易被忽视掉。 那么什么情况下需要来动机对冲呢？ “怼的内容”很差的时候。 不能提供有效的建…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706518170,
+      "id": 3380187825,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3380187825",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "老一辈常说「爱之深，责之切」如何反驳这一观点？",
+        "url": "http://www.zhihu.com/api/v4/questions/640085702",
+        "created": 1705574257,
+        "type": "question",
+        "id": 640085702,
+        "updated_time": 1705574257
+      },
+      "updated_time": 1706518170,
+      "content": "<p data-pid=\"37zwvfpp\">爹味是需要资格的。<\/p><p data-pid=\"bfh8l3wc\">万年白银往往叶公好龙，喜欢爹味输出来获得上位感和虚空责任感。<\/p><p data-pid=\"ethgnb-c\">【爱之深，责之切】是一种极为典型的动机对冲，即，怼你是因为对你有爱，有责任心等等，来对冲对你造成情绪伤害的不当性。<\/p><p data-pid=\"jgxtbejn\">这里面最大的问题是，脱离了“怼的内容”的质量问题。<\/p><p data-pid=\"klft03or\">如果质量极高，被怼的人，醍醐灌顶、拨云见日，那么被怼的不快感很容易被忽视掉。<\/p><p data-pid=\"03hgz1ug\">那么什么情况下需要来动机对冲呢？<\/p><p data-pid=\"w2li3sdl\">“怼的内容”很差的时候。<\/p><p data-pid=\"_0xegp80\">不能提供有效的建议，或者干脆是由于老辈儿人的刻舟求剑造成的观察者偏见。<\/p><p data-pid=\"pil6soym\">说白了，看着不顺眼的事情，而不是真的对年轻人有高价值的忠言。<\/p><p data-pid=\"wtzjycd3\">所以，面对前辈或者长辈的责备批评。<\/p><p data-pid=\"fgdhui8c\">我们的第一判断是，这位是不是这个领域的明白人呢？即使不是专家，也得是熟练度的老手吧？<\/p><p data-pid=\"mgkfkvmm\">如果不是，那么我们应该迅速做好心理建设。<\/p><p data-pid=\"qapvm0mx\">听听得了，别当真。<\/p><p data-pid=\"qld8rgtp\">人菜瘾大的表演，配合演一下闻过则喜得了。<\/p>",
+      "comment_count": 8,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "在心理学上，要避免极端化强调任何逻辑。 社会化动物多数没办法独立生存。 心理症或人格障碍个体，其内在力量和自我救赎渴望诚然是很宝贵的。 但脱离社会化的协助和渡让，自我调节的实际效能非常可疑。 多数人们没有足够的认知，去寻找自我救赎的途径、方法论。 也可能缺乏解析自己内外心理加害根源的能力。 同时，由于对自己【箱庭世界】的长期信任惯性，很容易有常驻的认知盲区，导致心理调节是治标不治本，频繁反复的。 因而…",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706517351,
+      "id": 3380169223,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pic1.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3380169223",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "你是否认同「只有自己可以救自己」？如何反驳这一观点？",
+        "url": "http://www.zhihu.com/api/v4/questions/641330196",
+        "created": 1706252340,
+        "type": "question",
+        "id": 641330196,
+        "updated_time": 1706252340
+      },
+      "updated_time": 1706517351,
+      "content": "<p data-pid=\"_8slozi_\">在心理学上，要避免极端化强调任何逻辑。<\/p><p data-pid=\"lj234qfq\">社会化动物多数没办法独立生存。<\/p><p data-pid=\"plpjcpfk\">心理症或人格障碍个体，其内在力量和自我救赎渴望诚然是很宝贵的。<\/p><p data-pid=\"dmwln4yd\">但脱离社会化的协助和渡让，自我调节的实际效能非常可疑。<\/p><p data-pid=\"krezxpm9\">多数人们没有足够的认知，去寻找自我救赎的途径、方法论。<\/p><p data-pid=\"v1tto24f\">也可能缺乏解析自己内外心理加害根源的能力。<\/p><p data-pid=\"5v-qbxmv\">同时，由于对自己【箱庭世界】的长期信任惯性，很容易有常驻的认知盲区，导致心理调节是治标不治本，频繁反复的。<\/p><p data-pid=\"q9egwngy\">因而，本题目所说的「只有自己可以救自己」，在积极的意义上，是自强和对救赎的渴望与驱动，以及规避对外部救世主的盲信；在消极的意义上，如果没有外部协助和引导，这种自强大概率会变成一种类似打鸡血的消耗性机械表演，当激情耗尽的时候，又重新坠入原点。<\/p><p data-pid=\"fvu9zzec\">相对健康的心理调节方式应该是自己和社会化结合的。<\/p><p data-pid=\"o_zogvrc\">需要听到不同的声音，客观解析自身的问题，同时也感受世界的多样性，而包容之，包容了世界的多样性，也就包容了自己。<\/p><p data-pid=\"idtavno0\">自我救赎以自己的力量为主没问题，对外部的来源不要盲信，可以辩证的采纳尝试，自己做自己的救世主，但要寻求辅助、寻求环境的变化以帮助自己。<\/p><p data-pid=\"k2yggome\">以上<\/p><p data-pid=\"ttzdvire\">希望对你有用。<\/p>",
+      "comment_count": 11,
+      "extras": "",
+      "reshipment_settings": "need_payment",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    },
+    {
+      "suggest_edit": {
+        "status": false,
+        "reason": "",
+        "title": "",
+        "url": "",
+        "unnormal_details": {},
+        "tip": ""
+      },
+      "relationship": {
+        "is_authorized": false,
+        "is_author": false,
+        "is_thanked": false,
+        "is_nothelp": false,
+        "voting": 0
+      },
+      "mark_infos": [],
+      "excerpt": "要学会利用和制造回旋镖。 你这么跟他说： 学法律专业的目的，是为了认识和交往未来的法官、检察官和司法官员。",
+      "annotation_action": [],
+      "admin_closed_comment": false,
+      "biz_ext": {
+        "creation_relationship": {}
+      },
+      "collapsed_by": "nobody",
+      "created_time": 1706441625,
+      "id": 3379163176,
+      "is_copyable": false,
+      "collapse_reason": "",
+      "is_labeled": false,
+      "is_collapsed": false,
+      "author": {
+        "avatar_url_template": "https://picx.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65.jpg?source=c8b7c179",
+        "badge_v2": {
+          "icon": "",
+          "detail_badges": [],
+          "night_icon": "",
+          "merged_badges": [],
+          "title": ""
+        },
+        "name": "墨苍离",
+        "headline": "文明其精神，野蛮其意志。世故其言行，耿直其理想。",
+        "url_token": "canglimo",
+        "user_type": "people",
+        "is_advertiser": false,
+        "type": "people",
+        "avatar_url": "https://pica.zhimg.com/v2-10aa5ef81e99982b71958119f1543b65_l.jpg?source=c8b7c179",
+        "is_org": false,
+        "gender": 1,
+        "url": "http://www.zhihu.com/api/v4/people/00a69a0323d435435c7bbd0f1bd535e5",
+        "badge": [],
+        "id": "00a69a0323d435435c7bbd0f1bd535e5"
+      },
+      "url": "http://www.zhihu.com/api/v4/answers/3379163176",
+      "comment_permission": "all",
+      "question": {
+        "question_type": "normal",
+        "title": "我爸和我说中国是人情社会，学法没用，我该怎么办？",
+        "url": "http://www.zhihu.com/api/v4/questions/531935298",
+        "created": 1652052234,
+        "type": "question",
+        "id": 531935298,
+        "updated_time": 1652057208
+      },
+      "updated_time": 1706443261,
+      "content": "<p data-pid=\"u-8gbt0z\">要学会利用和制造回旋镖。<\/p><p data-pid=\"aowniorb\">你这么跟他说：<\/p><p data-pid=\"uuei9x4u\">学法律专业的目的，是为了认识和交往未来的法官、检察官和司法官员。<\/p>",
+      "comment_count": 13,
+      "extras": "",
+      "reshipment_settings": "disallowed",
+      "answer_type": "normal",
+      "reward_info": {
+        "reward_member_count": 0,
+        "is_rewardable": true,
+        "reward_total_money": 0,
+        "can_open_reward": false,
+        "tagline": "真诚赞赏，手留余香"
+      },
+      "same_video_answers": [],
+      "can_comment": {
+        "status": true,
+        "reason": ""
+      },
+      "type": "answer",
+      "thumbnail": "",
+      "is_normal": true
+    }
+  ]
+}

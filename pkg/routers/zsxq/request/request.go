@@ -95,7 +95,7 @@ type badAPIResp struct {
 func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 	logger := r.log.With(zap.String("url", u))
 
-	logger.Info("start to get zsxq API response with limit", zap.String("url", u))
+	logger.Info("start to get zsxq API response with limit")
 	for i := 0; i < r.maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
 		<-r.limiter // block until get a token
@@ -280,4 +280,9 @@ func (r *RequestService) setReq(u string) (req *http.Request, err error) {
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Referer", "https://wx.zsxq.com/")
 	return req, nil
+}
+
+// Zsxq api does not support no limit stream
+func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error) {
+	return nil, nil
 }

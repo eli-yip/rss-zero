@@ -13,7 +13,6 @@ import (
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
-	"github.com/yuin/goldmark"
 	"go.uber.org/zap"
 )
 
@@ -25,19 +24,19 @@ type Renderer interface {
 type MarkdownRenderer interface {
 	// ToText converts a render.topic to markdown main body, which include
 	// author name, text, files(image/voice), images, article
-	ToText(*Topic) ([]byte, error)
+	ToText(*Topic) (string, error)
 	// Article converts a article html to markdown
-	Article([]byte) ([]byte, error)
+	Article([]byte) (string, error)
 	// ToFullText converts a topic to markdown full text, which include everything
 	//
 	// The result can be used to generate a pdf file
-	ToFullText(*Topic) ([]byte, error)
+	ToFullText(*Topic) (string, error)
 }
 
 type MarkdownRenderService struct {
 	db          zsxqDB.DataBaseIface
 	converter   *gomd.Converter // Used to convert html to markdown
-	mdFormatter goldmark.Markdown
+	mdFmt       *md.MarkdownFormatter
 	formatFuncs []formatFunc
 	logger      *zap.Logger
 }
@@ -48,7 +47,7 @@ func NewMarkdownRenderService(dbService zsxqDB.DataBaseIface, logger *zap.Logger
 	s := &MarkdownRenderService{
 		db:          dbService,
 		converter:   newHTML2MdConverter(logger),
-		mdFormatter: newMdFormatter(),
+		mdFmt:       md.NewMarkdownFormatter(),
 		formatFuncs: getFormatFuncs(),
 		logger:      logger,
 	}
@@ -57,7 +56,7 @@ func NewMarkdownRenderService(dbService zsxqDB.DataBaseIface, logger *zap.Logger
 	return s
 }
 
-func (m *MarkdownRenderService) ToFullText(t *Topic) ([]byte, error) {
+func (m *MarkdownRenderService) ToFullText(t *Topic) (text string, err error) {
 	titlePart := ""
 	if t.Title == nil {
 		titlePart = strconv.Itoa(t.ID)
@@ -71,17 +70,17 @@ func (m *MarkdownRenderService) ToFullText(t *Topic) ([]byte, error) {
 
 	timeStr, err := zsxqTime.FmtForRead(t.Time)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	timePart := fmt.Sprintf("时间：%s", timeStr)
 
 	linkPart := trimRightSpace(fmt.Sprintf("链接：[%s](%s)", t.ShareLink, t.ShareLink))
 
-	text := md.Join(titlePart, timePart, linkPart, t.Text)
-	return m.FormatMarkdown([]byte(text))
+	text = md.Join(titlePart, timePart, linkPart, t.Text)
+	return m.mdFmt.FormatStr(text)
 }
 
-func (m *MarkdownRenderService) ToText(t *Topic) (text []byte, err error) {
+func (m *MarkdownRenderService) ToText(t *Topic) (text string, err error) {
 	logger := m.logger.With(zap.Int("topic_id", t.ID))
 	logger.Info("start to render topic to text", zap.String("type", t.Type))
 	var buffer bytes.Buffer
@@ -89,37 +88,37 @@ func (m *MarkdownRenderService) ToText(t *Topic) (text []byte, err error) {
 	switch t.Type {
 	case "talk":
 		if err = m.renderTalk(t.Talk, t.AuthorName, &buffer); err != nil {
-			return nil, err
+			return "", err
 		}
 	case "q&a":
 		if err = m.renderQA(t.Question, t.Answer, t.AuthorName, &buffer); err != nil {
-			return nil, err
+			return "", err
 		}
 	default:
 	}
 	logger.Info("render topic to unformatted text successfully")
 
 	logger.Info("start to format text")
-	bytes, err := m.FormatMarkdown(buffer.Bytes())
+	text, err = m.mdFmt.FormatStr(buffer.String())
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	logger.Info("format text successfully")
-	return bytes, nil
+	return text, nil
 }
 
-func (m *MarkdownRenderService) Article(text []byte) ([]byte, error) {
+func (m *MarkdownRenderService) Article(article []byte) (text string, err error) {
 	m.logger.Info("start to render article to text")
-	text, err := m.converter.ConvertBytes(text)
+	bytes, err := m.converter.ConvertBytes(article)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	m.logger.Info("render article to text successfully")
 
 	m.logger.Info("start to format text")
-	text, err = m.FormatMarkdown(text)
+	text, err = m.mdFmt.FormatStr(string(bytes))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	m.logger.Info("format text successfully")
 	return text, nil

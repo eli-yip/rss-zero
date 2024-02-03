@@ -26,16 +26,18 @@ type Config struct {
 	BarkURL string
 
 	ZsxqTestURL string
+
+	ZhihuEncryptionURL string
 }
 
 var C Config
 
-func InitConfigFromFile() {
+func InitFromFile() {
 	loadEnv()
 	readEnv()
 }
 
-func InitConfigFromEnv() {
+func InitFromEnv() {
 	readEnv()
 }
 
@@ -72,6 +74,8 @@ func readEnv() {
 	C.BarkURL = getEnv("BARK_URL")
 
 	C.ZsxqTestURL = getEnv("ZSXQ_TEST_URL")
+
+	C.ZhihuEncryptionURL = getEnv("ZHIHU_ENCRYPTION_URL")
 }
 
 func getEnv(key string) string {

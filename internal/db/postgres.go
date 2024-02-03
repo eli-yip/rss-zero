@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zsxqDBModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -37,8 +38,16 @@ func NewDB(host, port, user, password, name string) (db *gorm.DB, err error) {
 		&zsxqDBModels.Author{},
 		&zsxqDBModels.Object{},
 		&zsxqDBModels.Article{},
+
+		&zhihuDB.Answer{},
+		&zhihuDB.Question{},
+		&zhihuDB.Author{},
+		&zhihuDB.Object{},
+
+		&zhihuDB.Article{},
+		&zhihuDB.Pin{},
 	); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	mdb, _ := db.DB()

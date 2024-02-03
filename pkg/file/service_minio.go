@@ -34,7 +34,6 @@ func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (*FileServ
 		Secure: minioConfig.UseSSL,
 	})
 	if err != nil {
-		logger.Error("Failed to init minio", zap.Error(err))
 		return nil, err
 	}
 
@@ -48,6 +47,7 @@ func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (*FileServ
 
 func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, size int64) (err error) {
 	s.logger.Info("Start to save stream to minio", zap.String("key", objectKey))
+
 	if stream == nil {
 		return errors.New("no body")
 	}
@@ -70,7 +70,7 @@ func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, si
 	if err != nil {
 		return err
 	}
-	s.logger.Info("Successfully uploaded object to minio",
+	s.logger.Info("Upload to minio successfully",
 		zap.String("bucket", info.Bucket),
 		zap.String("key", info.Key),
 		zap.String("type", contentType),

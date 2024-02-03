@@ -55,7 +55,7 @@ func (s *ParseService) SplitTopics(respBytes []byte) (rawTopics []json.RawMessag
 }
 
 // ParseTopics parse the raw topics to topic parse result
-func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
+func (s *ParseService) ParseTopic(result *models.TopicParseResult) (text string, err error) {
 	logger := s.log.With(zap.Int("topic_id", result.Topic.TopicID))
 	// Parse topic and set result
 	switch result.Topic.Type {
@@ -64,16 +64,16 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 		if result.AuthorID, result.AuthorName, err = s.parseTalk(logger, &result.Topic); err != nil {
 			if err == ErrNoText {
 				logger.Info("this topic is a talk without text")
-				return nil
+				return "", nil
 			}
 			s.log.Info("Failed to parse talk", zap.Error(err))
-			return err
+			return "", err
 		}
 	case "q&a":
 		logger.Info("this topic is a q&a")
 		if result.AuthorID, result.AuthorName, err = s.parseQA(logger, &result.Topic); err != nil {
 			logger.Info("tailed to parse q&a", zap.Error(err))
-			return err
+			return "", err
 		}
 	default:
 		logger.Info("this topic is not a talk or q&a")
@@ -83,7 +83,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	createTimeInTime, err := zsxqTime.DecodeZsxqAPITime(result.Topic.CreateTime)
 	if err != nil {
 		logger.Error("failed to decode create time", zap.Error(err))
-		return err
+		return "", err
 	}
 	logger.Info("successfully decode create time", zap.Time("create_time", createTimeInTime))
 
@@ -97,7 +97,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 		AuthorName: result.AuthorName,
 	}); err != nil {
 		logger.Error("failed to render topic to text", zap.Error(err))
-		return err
+		return "", err
 	} else {
 		result.Text = string(text)
 	}
@@ -107,7 +107,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 	result.ShareLink, err = s.shareLink(result.Topic.TopicID)
 	if err != nil {
 		logger.Error("failed to generate share link", zap.Error(err))
-		return err
+		return "", err
 	}
 	logger.Info("successfully generate share link", zap.String("share_link", result.ShareLink))
 
@@ -125,11 +125,11 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (err error) {
 		Raw:       result.Raw,
 	}); err != nil {
 		logger.Error("failed to save topic to database", zap.Error(err))
-		return err
+		return "", err
 	}
 	logger.Info("successfully save topic to database")
 
-	return nil
+	return result.Text, nil
 }
 
 const ZsxqFileBaseURL = "https://api.zsxq.com/v2/files/%d/download_url"

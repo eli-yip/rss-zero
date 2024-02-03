@@ -30,7 +30,7 @@ func TestExport(t *testing.T) {
 
 	exportService := NewExportService(zsxqDB, mr)
 
-	Options := Options{
+	Options := Option{
 		GroupID:    28855218411241,
 		Type:       nil,
 		Digested:   nil,
@@ -50,4 +50,43 @@ func TestExport(t *testing.T) {
 	}
 
 	t.Log("TestExport done")
+}
+
+func TestFileName(t *testing.T) {
+	exportService := ExportService{}
+
+	options := []struct {
+		Option Option
+		Expect string
+	}{
+		{
+			Option: Option{
+				GroupID:    28855218411241,
+				Type:       nil,
+				Digested:   nil,
+				AuthorName: nil,
+				StartTime:  time.Date(2022, 11, 20, 0, 0, 0, 0, time.Local),
+				EndTime:    time.Date(2022, 11, 25, 0, 0, 0, 0, time.Local),
+			},
+			Expect: "知识星球合集-28855218411241-2022-11-20-2022-11-25.md",
+		},
+		{
+			Option: Option{
+				GroupID:    28855218411241,
+				Type:       func() *string { s := "q&a"; return &s }(),
+				Digested:   func() *bool { b := true; return &b }(),
+				AuthorName: nil,
+				StartTime:  time.Date(2022, 11, 20, 0, 0, 0, 0, time.Local),
+				EndTime:    time.Date(2022, 11, 25, 0, 0, 0, 0, time.Local),
+			},
+			Expect: "知识星球合集-28855218411241-q&a-digest-2022-11-20-2022-11-25.md",
+		},
+	}
+
+	for _, v := range options {
+		got := exportService.FileName(v.Option)
+		if got != v.Expect {
+			t.Fatalf("FileName: got %s, expect %s", got, v.Expect)
+		}
+	}
 }

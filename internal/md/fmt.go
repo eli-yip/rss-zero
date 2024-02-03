@@ -1,4 +1,4 @@
-package render
+package md
 
 import (
 	"bytes"
@@ -7,6 +7,14 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 )
+
+type MarkdownFormatter struct {
+	formatter goldmark.Markdown
+}
+
+func NewMarkdownFormatter() *MarkdownFormatter {
+	return &MarkdownFormatter{formatter: newMdFormatter()}
+}
 
 func newMdFormatter() goldmark.Markdown {
 	mr := markdown.NewRenderer()
@@ -21,18 +29,12 @@ func newMdFormatter() goldmark.Markdown {
 	return gm
 }
 
-func (m *MarkdownRenderService) FormatMarkdown(text []byte) ([]byte, error) {
-	textStr := string(text)
-	for _, f := range m.formatFuncs {
-		var err error
-		if textStr, err = f(textStr); err != nil {
-			return nil, err
-		}
+func (m *MarkdownFormatter) FormatStr(src string) (string, error) {
+	var buf bytes.Buffer
+	err := m.formatter.Convert([]byte(src), &buf)
+	if err != nil {
+		return "", err
 	}
 
-	output := bytes.NewBuffer(nil)
-	if err := m.mdFormatter.Convert([]byte(textStr), output); err != nil {
-		return nil, err
-	}
-	return output.Bytes(), nil
+	return buf.String(), nil
 }

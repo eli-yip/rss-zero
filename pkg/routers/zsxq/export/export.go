@@ -3,6 +3,8 @@ package export
 import (
 	"errors"
 	"io"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
@@ -10,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Options struct {
+type Option struct {
 	GroupID    int
 	Type       *string
 	Digested   *bool
@@ -20,7 +22,8 @@ type Options struct {
 }
 
 type Exporter interface {
-	Export(io.Writer, Options) error
+	Export(io.Writer, Option) error
+	FileName(opt Option) string
 }
 
 type ExportService struct {
@@ -28,7 +31,7 @@ type ExportService struct {
 	mr render.MarkdownRenderer
 }
 
-func NewExportService(db db.DataBaseIface, mr render.MarkdownRenderer) *ExportService {
+func NewExportService(db db.DataBaseIface, mr render.MarkdownRenderer) Exporter {
 	return &ExportService{db: db, mr: mr}
 }
 
@@ -37,7 +40,7 @@ var (
 	ErrTimeOrder = errors.New("start time should be before end time")
 )
 
-func (s *ExportService) Export(writer io.Writer, opt Options) error {
+func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
 	var queryOpt db.Options
 
 	queryOpt.GroupID = opt.GroupID
@@ -61,19 +64,11 @@ func (s *ExportService) Export(writer io.Writer, opt Options) error {
 		queryOpt.Aid = &aid
 	}
 
-	if opt.StartTime.IsZero() && opt.EndTime.IsZero() {
-		if opt.StartTime.After(opt.EndTime) {
-			return ErrTimeOrder
-		}
+	if opt.StartTime.After(opt.EndTime) {
+		return ErrTimeOrder
 	}
-
-	if !opt.StartTime.IsZero() {
-		queryOpt.StartTime = opt.StartTime
-	}
-
-	if !opt.EndTime.IsZero() {
-		queryOpt.EndTime = opt.EndTime
-	}
+	queryOpt.StartTime = opt.StartTime
+	queryOpt.EndTime = opt.EndTime
 
 	var (
 		finished bool = false
@@ -112,7 +107,7 @@ func (s *ExportService) Export(writer io.Writer, opt Options) error {
 				return err
 			}
 
-			if _, err := writer.Write(fullText); err != nil {
+			if _, err := writer.Write([]byte(fullText)); err != nil {
 				return err
 			}
 
@@ -129,4 +124,29 @@ func (s *ExportService) Export(writer io.Writer, opt Options) error {
 	}
 
 	return nil
+}
+
+func (s *ExportService) FileName(opt Option) string {
+	fileNameArr := []string{"知识星球合集", strconv.Itoa(opt.GroupID)}
+
+	if opt.Type != nil {
+		fileNameArr = append(fileNameArr, *opt.Type)
+	}
+
+	if opt.Digested != nil {
+		if *opt.Digested {
+			fileNameArr = append(fileNameArr, "digest")
+		} else {
+			fileNameArr = append(fileNameArr, "all")
+		}
+	}
+
+	if opt.AuthorName != nil {
+		fileNameArr = append(fileNameArr, *opt.AuthorName)
+	}
+
+	fileNameArr = append(fileNameArr, opt.StartTime.Format("2006-01-02"))
+	fileNameArr = append(fileNameArr, opt.EndTime.Format("2006-01-02"))
+
+	return strings.Join(fileNameArr, "-") + ".md"
 }

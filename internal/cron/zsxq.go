@@ -153,7 +153,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.No
 					}
 
 					logger.Info("start to parse topic", zap.Int("topic id", result.Topic.TopicID))
-					if err := parseService.ParseTopic(&result); err != nil {
+					if _, err := parseService.ParseTopic(&result); err != nil {
 						logger.Error("failed to parse topic", zap.Error(err))
 						return
 					}

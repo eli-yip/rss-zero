@@ -1,64 +1,57 @@
-package main
+package controller
 
 import (
+	"errors"
 	"fmt"
 	"io"
-	"strings"
+	"net/http"
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	zsxqExport "github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
-	"github.com/kataras/iris/v12"
-	"github.com/kataras/iris/v12/x/errors"
+	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
-type ExportHandler struct {
-	db       *gorm.DB
-	logger   *zap.Logger
-	notifier notify.Notifier
-}
-
-func NewExportHandler(db *gorm.DB, logger *zap.Logger, notifier notify.Notifier) *ExportHandler {
-	return &ExportHandler{db: db, logger: logger, notifier: notifier}
-}
-
-type ExportRequest struct {
+type ExportReq struct {
 	GroupID   int     `json:"group_id"`
 	Type      *string `json:"type"`
-	StartTime *string `json:"start_time"`
-	EndTime   *string `json:"end_time"`
+	StartTime *string `json:"start_time"` // start time is included
+	EndTime   *string `json:"end_time"`   // end time is included
 	Digest    *bool   `json:"digest"`
 	Author    *string `json:"author"`
 }
 
-func (h *ExportHandler) ExportZsxq(ctx iris.Context) {
-	logger := ctx.Values().Get("logger").(*zap.Logger)
+type ExportResp struct {
+	Message  string `json:"message"`
+	FileName string `json:"file_name"`
+	URL      string `json:"url"`
+}
 
-	var req ExportRequest
-	if err := ctx.ReadJSON(&req); err != nil {
+func (h *ZsxqController) ExportZsxq(c echo.Context) (err error) {
+	logger := c.Get("logger").(*zap.Logger)
+
+	var req ExportReq
+	if err = c.Bind(&req); err != nil {
 		logger.Error("read json error", zap.Error(err))
-		ctx.StopWithText(iris.StatusBadRequest, err.Error())
-		return
+		return c.String(http.StatusBadRequest, err.Error())
 	}
 
 	options, err := h.parseOption(&req)
 	if err != nil {
 		logger.Error("parse option error", zap.Error(err))
-		ctx.StopWithText(iris.StatusBadRequest, err.Error())
-		return
+		return c.String(http.StatusBadRequest, err.Error())
 	}
 
 	zsxqDBService := zsxqDB.NewZsxqDBService(h.db)
 	mdRender := render.NewMarkdownRenderService(zsxqDBService, logger)
 	exportService := zsxqExport.NewExportService(zsxqDBService, mdRender)
 
-	fileName := h.zsxqFileName(options)
+	fileName := exportService.FileName(options)
+	fileName = fmt.Sprintf("export/zsxq/%s", fileName)
 	go func() {
 		logger.Info("start to export", zap.String("file_name", fileName))
 
@@ -96,20 +89,20 @@ func (h *ExportHandler) ExportZsxq(ctx iris.Context) {
 		logger.Info("export successfully")
 	}()
 
-	_ = ctx.StopWithJSON(iris.StatusOK, iris.Map{
-		"message":   "start to export, you'll be notified when it's done",
-		"file_name": fileName,
-		"url":       config.C.MinioConfig.AssetsPrefix + "/" + fileName,
+	return c.JSON(http.StatusOK, &ExportResp{
+		Message:  "start to export, you'll be notified when it's done",
+		FileName: fileName,
+		URL:      config.C.MinioConfig.AssetsPrefix + "/" + fileName,
 	})
 }
 
 var ErrGroupIDEmpty = errors.New("group id is empty")
 
-func (h *ExportHandler) parseOption(req *ExportRequest) (zsxqExport.Options, error) {
-	var opts zsxqExport.Options
+func (h *ZsxqController) parseOption(req *ExportReq) (zsxqExport.Option, error) {
+	var opts zsxqExport.Option
 
 	if req.GroupID == 0 {
-		return zsxqExport.Options{}, ErrGroupIDEmpty
+		return zsxqExport.Option{}, ErrGroupIDEmpty
 	}
 	opts.GroupID = req.GroupID
 
@@ -120,7 +113,7 @@ func (h *ExportHandler) parseOption(req *ExportRequest) (zsxqExport.Options, err
 	if req.StartTime != nil {
 		t, err := h.parseTime(*req.StartTime)
 		if err != nil {
-			return zsxqExport.Options{}, err
+			return zsxqExport.Option{}, err
 		}
 		opts.StartTime = t
 	}
@@ -128,14 +121,14 @@ func (h *ExportHandler) parseOption(req *ExportRequest) (zsxqExport.Options, err
 	if req.EndTime != nil {
 		t, err := h.parseTime(*req.EndTime)
 		if err != nil {
-			return zsxqExport.Options{}, err
+			return zsxqExport.Option{}, err
 		}
-		opts.EndTime = t
+		opts.EndTime = t.Add(24 * time.Hour)
 	}
 
 	if req.Digest != nil {
 		if !*req.Digest {
-			return zsxqExport.Options{}, errors.New("digest must be true or nil")
+			return zsxqExport.Option{}, errors.New("digest must be true or nil")
 		}
 		opts.Digested = req.Digest
 	}
@@ -147,41 +140,7 @@ func (h *ExportHandler) parseOption(req *ExportRequest) (zsxqExport.Options, err
 	return opts, nil
 }
 
-func (h *ExportHandler) zsxqFileName(opts zsxqExport.Options) string {
-	var parts []string
-
-	parts = append(parts, fmt.Sprintf("export/zsxq/%d", opts.GroupID))
-
-	if opts.Type != nil {
-		parts = append(parts, *opts.Type)
-	}
-
-	if opts.Digested != nil {
-		parts = append(parts, func() string {
-			if *opts.Digested {
-				return "digest"
-			} else {
-				return "all"
-			}
-		}())
-	}
-
-	if opts.AuthorName != nil {
-		parts = append(parts, *opts.AuthorName)
-	}
-
-	const timeLayout = "2006-01-02"
-	if !opts.StartTime.IsZero() {
-		parts = append(parts, opts.StartTime.Format(timeLayout))
-	}
-	if !opts.EndTime.IsZero() {
-		parts = append(parts, opts.EndTime.Format(timeLayout))
-	}
-
-	return fmt.Sprintf("%s.%s", strings.Join(parts, "-"), "md")
-}
-
-func (h *ExportHandler) parseTime(s string) (time.Time, error) {
+func (h *ZsxqController) parseTime(s string) (time.Time, error) {
 	const timeLayout = "2006-01-02"
 	return time.Parse(timeLayout, s)
 }
