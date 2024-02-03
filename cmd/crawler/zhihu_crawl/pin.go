@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -51,14 +52,12 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser,
 		for _, pin := range pinList {
 			logger := logger.With(zap.String("pin_id", pin.ID))
 
-			const pinURLLayout = "https://www.zhihu.com/api/v4/pins/%s"
-			u := fmt.Sprintf(pinURLLayout, pin.ID)
-			bytes, err := request.LimitRaw(u)
+			pinBytes, err := json.Marshal(pin)
 			if err != nil {
-				logger.Fatal("fail to request zhihu api", zap.Error(err))
+				logger.Fatal("fail to marshal pin", zap.Error(err))
 			}
 
-			_, err = parser.ParsePin(bytes)
+			_, err = parser.ParsePin(pinBytes)
 			if err != nil {
 				logger.Fatal("fail to parse pin", zap.Error(err))
 			}
