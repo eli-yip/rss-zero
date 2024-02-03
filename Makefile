@@ -1,6 +1,5 @@
 GOCMD=go
 GORUN=$(GOCMD) run
-GOLINT_CONTAINER_CMD=docker run -t --rm -w /app -v $(shell pwd):/app -v ${GOPATH}/pkg/mod:/cache/mod  -v $(shell go env GOCACHE):/cache -e GOCACHE=/cache -e GOMODCACHE=/cache/mod -e GOLANGCI_LINT_CACHE=/cache golangci/golangci-lint:v1.55-alpine
 CURRENT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 CURRENT_DIR := $(CURDIR)
 
@@ -26,13 +25,13 @@ zhihu-encrypt:
 
 .PHONY: lint
 lint:
-	$(GOLINT_CONTAINER_CMD) golangci-lint run -v --timeout 5m
+	golangci-lint run -v --timeout 5m
 
 .PHONY: full-lint
 full-lint:
 	go get -u
 	go mod tidy
-	$(GOLINT_CONTAINER_CMD) golangci-lint run -v --timeout 5m
+	golangci-lint run -v --timeout 5m
 
 .PHONY: switch
 switch:
