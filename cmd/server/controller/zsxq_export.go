@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -51,7 +50,8 @@ func (h *ZsxqController) ExportZsxq(c echo.Context) (err error) {
 	mdRender := render.NewMarkdownRenderService(zsxqDBService, logger)
 	exportService := zsxqExport.NewExportService(zsxqDBService, mdRender)
 
-	fileName := h.zsxqFileName(options)
+	fileName := exportService.FileName(options)
+	fileName = fmt.Sprintf("export/zsxq/%s", fileName)
 	go func() {
 		logger.Info("start to export", zap.String("file_name", fileName))
 
@@ -138,40 +138,6 @@ func (h *ZsxqController) parseOption(req *ExportReq) (zsxqExport.Option, error) 
 	}
 
 	return opts, nil
-}
-
-func (h *ZsxqController) zsxqFileName(opts zsxqExport.Option) string {
-	var parts []string
-
-	parts = append(parts, fmt.Sprintf("export/zsxq/%d", opts.GroupID))
-
-	if opts.Type != nil {
-		parts = append(parts, *opts.Type)
-	}
-
-	if opts.Digested != nil {
-		parts = append(parts, func() string {
-			if *opts.Digested {
-				return "digest"
-			} else {
-				return "all"
-			}
-		}())
-	}
-
-	if opts.AuthorName != nil {
-		parts = append(parts, *opts.AuthorName)
-	}
-
-	const timeLayout = "2006-01-02"
-	if !opts.StartTime.IsZero() {
-		parts = append(parts, opts.StartTime.Format(timeLayout))
-	}
-	if !opts.EndTime.IsZero() {
-		parts = append(parts, opts.EndTime.Format(timeLayout))
-	}
-
-	return fmt.Sprintf("%s.%s", strings.Join(parts, "-"), "md")
 }
 
 func (h *ZsxqController) parseTime(s string) (time.Time, error) {
