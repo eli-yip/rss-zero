@@ -17,9 +17,14 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser,
 	targetTime time.Time, pinURL string, logger *zap.Logger) {
 	logger.Info("start to crawl zhihu pins", zap.String("user url token", user))
 
-	const urlLayout = "https://www.zhihu.com/api/v4/members/%s/pins"
-	next := fmt.Sprintf(urlLayout, user)
-	next = fmt.Sprintf("%s?%s", next, "offset=0&limit=20&sort_by=created")
+	next := ""
+	if pinURL != "" {
+		next = pinURL
+	} else {
+		const urlLayout = "https://www.zhihu.com/api/v4/members/%s/pins"
+		next = fmt.Sprintf(urlLayout, user)
+		next = fmt.Sprintf("%s?%s", next, "offset=0&limit=20&sort_by=created")
+	}
 
 	index := 0
 	total1 := 0

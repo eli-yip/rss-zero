@@ -17,9 +17,14 @@ func CrawlArticle(user string, request request.Requester, parser *parse.Parser,
 	targetTime time.Time, articleURL string, logger *zap.Logger) {
 	logger.Info("start to crawl zhihu articles", zap.String("user url token", user))
 
-	const urlLayout = "https://www.zhihu.com/api/v4/members/%s/articles"
-	next := fmt.Sprintf(urlLayout, user)
-	next = fmt.Sprintf("%s?%s", next, "offset=0&limit=20&sort_by=created")
+	next := ""
+	if articleURL != "" {
+		next = articleURL
+	} else {
+		const urlLayout = "https://www.zhihu.com/api/v4/members/%s/articles"
+		next = fmt.Sprintf(urlLayout, user)
+		next = fmt.Sprintf("%s?%s", next, "offset=0&limit=20&sort_by=created")
+	}
 
 	index := 0
 	total1 := 0
