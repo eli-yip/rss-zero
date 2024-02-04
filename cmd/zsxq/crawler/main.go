@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
+	crawl "github.com/eli-yip/rss-zero/internal/crawl/zsxq"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/ai"
@@ -14,16 +14,9 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/log"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
-	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
-	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
 	"go.uber.org/zap"
-)
-
-const (
-	apiBaseURL  = "https://api.zsxq.com/v2/groups/%d/topics?scope=all&count=20"
-	apiFetchURL = "%s&end_time=%s"
 )
 
 func main() {
@@ -100,54 +93,9 @@ func main() {
 			logger.Info(fmt.Sprintf("latest topic time in database: %s", latestTopicTimeInDB.Format("2006-01-02 15:04:05")))
 		}
 
-		// Get latest topics from zsxq
-		var (
-			finished  bool = false
-			firstTime bool = true
-		)
-		var createTime time.Time
-		for !finished {
-			url := fmt.Sprintf(apiBaseURL, groupID)
-			if !firstTime {
-				createTimeStr := zsxqTime.EncodeTimeForQuery(createTime)
-				url = fmt.Sprintf(apiFetchURL, url, createTimeStr)
-			}
-			firstTime = false
-			logger.Info("requesting", zap.String("url", url))
-
-			respByte, err := requestService.Limit(url)
-			if err != nil {
-				logger.Fatal("failed to request", zap.String("url", url), zap.Error(err))
-			}
-
-			rawTopics, err := parseService.SplitTopics(respByte)
-			if err != nil {
-				logger.Fatal("failed to split topics", zap.Error(err))
-			}
-
-			for _, rawTopic := range rawTopics {
-				result := models.TopicParseResult{}
-				result.Raw = rawTopic
-				if err := json.Unmarshal(rawTopic, &result.Topic); err != nil {
-					logger.Fatal("failed to unmarshal topic", zap.Error(err))
-				}
-				logger.Info(fmt.Sprintf("current topic id: %d", result.Topic.TopicID))
-
-				createTime, err = zsxqTime.DecodeZsxqAPITime(result.Topic.CreateTime)
-				if err != nil {
-					logger.Fatal("failed to decode create time", zap.Error(err))
-				}
-				if !createTime.After(latestTopicTimeInDB) {
-					finished = true
-					logger.Info("finished crawling as latest time in db has been reached")
-					break
-				}
-
-				logger.Info("start to parse topic", zap.Int("topic id", result.Topic.TopicID))
-				if _, err := parseService.ParseTopic(&result); err != nil {
-					logger.Fatal("failed to parse topic", zap.Error(err))
-				}
-			}
+		if err = crawl.CrawlGroup(groupID, requestService, parseService,
+			latestTopicTimeInDB, false, false, time.Time{}, logger); err != nil {
+			logger.Fatal("failed to crawl group", zap.Error(err))
 		}
 
 		// Update crawl time
@@ -165,52 +113,18 @@ func main() {
 		logger.Info(fmt.Sprintf("earliest topic time in database: %s", earliestTopicTimeInDB.Format("2006-01-02 15:04:05")))
 
 		// Get crawl status from database
-		finished, err = dbService.GetCrawlStatus(groupID)
+		finished, err := dbService.GetCrawlStatus(groupID)
 		if err != nil {
 			logger.Fatal("failed to get crawl status", zap.Error(err))
 		}
-		// NOTE: Use ealiestTopicTimeInDB as createTime to start backtracking
-		createTime = earliestTopicTimeInDB
-		for !finished {
-			url := fmt.Sprintf(apiBaseURL, groupID)
-			createTimeStr := zsxqTime.EncodeTimeForQuery(createTime)
-			url = fmt.Sprintf(apiFetchURL, url, createTimeStr)
-			logger.Info("requesting", zap.String("url", url))
+		if finished {
+			logger.Info("group has been crawled, skip")
+			continue
+		}
 
-			respByte, err := requestService.Limit(url)
-			if err != nil {
-				logger.Fatal("failed to request", zap.String("url", url), zap.Error(err))
-			}
-
-			rawTopics, err := parseService.SplitTopics(respByte)
-			if err != nil {
-				logger.Fatal("failed to split topics", zap.Error(err))
-			}
-
-			for _, rawTopic := range rawTopics {
-				result := models.TopicParseResult{}
-				result.Raw = rawTopic
-				if err := json.Unmarshal(rawTopic, &result.Topic); err != nil {
-					logger.Fatal("failed to unmarshal topic", zap.Error(err))
-				}
-				logger.Info(fmt.Sprintf("current topic id: %d", result.Topic.TopicID))
-
-				// crateTime here is for next request url generation
-				createTime, err = zsxqTime.DecodeZsxqAPITime(result.Topic.CreateTime)
-				if err != nil {
-					logger.Fatal("failed to decode create time", zap.Error(err))
-				}
-
-				logger.Info("start to parse topic", zap.Int("topic id", result.Topic.TopicID))
-				if _, err := parseService.ParseTopic(&result); err != nil {
-					logger.Fatal("failed to parse topic", zap.Error(err))
-				}
-			}
-
-			if len(rawTopics) < 20 {
-				finished = true
-				logger.Info("finished crawling as earliest time in zsxq has been reached")
-			}
+		if err = crawl.CrawlGroup(groupID, requestService, parseService,
+			time.Time{}, false, true, earliestTopicTimeInDB, logger); err != nil {
+			logger.Fatal("failed to crawl group", zap.Error(err))
 		}
 
 		// Save crawl status
