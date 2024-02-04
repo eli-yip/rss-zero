@@ -37,6 +37,7 @@ func (r *RSSRenderService) RenderRSS(ts []RSSTopic) (output string, err error) {
 		Title:   ts[0].GroupName,
 		Link:    &feeds.Link{Href: fmt.Sprintf("https://wx.zsxq.com/dweb2/index/group/%d", ts[0].GroupID)},
 		Created: time.Now(),
+		Updated: ts[0].CreateTime,
 	}
 
 	for _, t := range ts {
@@ -46,25 +47,27 @@ func (r *RSSRenderService) RenderRSS(ts []RSSTopic) (output string, err error) {
 		}
 
 		feedItem := feeds.Item{
-			Title: func(topic *RSSTopic) string {
-				if topic.Title != nil {
-					return *topic.Title
+			Title: func() string {
+				if t.Title != nil {
+					return *t.Title
 				}
-				return strconv.Itoa(topic.TopicID)
-			}(&t),
+				return strconv.Itoa(t.TopicID)
+			}(),
 			Link:   &feeds.Link{Href: t.ShareLink},
 			Author: &feeds.Author{Name: t.AuthorName},
 			Id:     strconv.Itoa(t.TopicID),
-			Description: func(topic *RSSTopic) string {
+			Description: func() string {
 				// up to 100 word of text
-				if len(topic.Text) > 100 {
-					return topic.Text[:100]
+				if len(t.Text) > 100 {
+					return t.Text[:100]
 				}
-				return topic.Text
-			}(&t),
+				return t.Text
+			}(),
 			Created: t.CreateTime,
+			Updated: t.CreateTime,
 			Content: buffer.String(),
 		}
+
 		rssFeed.Items = append(rssFeed.Items, &feedItem)
 	}
 
