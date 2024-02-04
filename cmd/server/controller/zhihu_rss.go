@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/eli-yip/rss-zero/internal/redis"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -213,6 +214,11 @@ func (h *ZhihuController) generateRSS(key string) (output string, err error) {
 		}
 	default:
 		return "", fmt.Errorf("invalid type: %d", t)
+	}
+
+	const rssTTL = time.Hour * 2
+	if err := h.redis.Set(key, output, rssTTL); err != nil {
+		return "", err
 	}
 
 	return output, nil

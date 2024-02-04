@@ -113,8 +113,11 @@ func setupCron(logger *zap.Logger, redis *redis.RedisService, db *gorm.DB, notif
 		logger.Fatal("cron service init failed", zap.Error(err))
 	}
 
-	err = s.AddJob(cron.CrawlZsxq(redis, db, notifier))
-	if err != nil {
-		logger.Fatal("add job failed", zap.Error(err))
+	if err = s.AddJob(cron.CrawlZsxq(redis, db, notifier)); err != nil {
+		logger.Fatal("add zsxq job failed", zap.Error(err))
+	}
+
+	if err = s.AddJob(cron.CrawlZhihu(redis, db, notifier)); err != nil {
+		logger.Fatal("add zhihu job failed", zap.Error(err))
 	}
 }

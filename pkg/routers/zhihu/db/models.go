@@ -38,6 +38,7 @@ func (a *Author) TableName() string { return "zhihu_author" }
 type Sub struct {
 	AuthorID string `gorm:"column:author_id;type:text;primary_key"`
 	Type     int    `gorm:"column:type;type:int;primary_key"`
+	Finished bool   `gorm:"column:finished;type:boolean"`
 }
 
 const (
@@ -50,6 +51,7 @@ func (s *Sub) TableName() string { return "zhihu_sub" }
 
 type DBSub interface {
 	GetSubs() ([]Sub, error)
+	SetStatus(authorID string, subType int, finished bool) error
 }
 
 func (d *DBService) GetSubs() ([]Sub, error) {
@@ -58,4 +60,8 @@ func (d *DBService) GetSubs() ([]Sub, error) {
 		return nil, err
 	}
 	return subs, nil
+}
+
+func (d *DBService) SetStatus(authorID string, subType int, finished bool) error {
+	return d.Model(&Sub{}).Where("author_id = ? and type = ?", authorID, subType).Update("finished", finished).Error
 }

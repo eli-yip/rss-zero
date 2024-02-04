@@ -79,3 +79,11 @@ func (d *MockDB) FetchNPin(n int, opts FetchPinOption) (ps []Pin, err error) {
 func (d *MockDB) GetQuestion(id int) (*Question, error) {
 	return nil, nil
 }
+
+func (d *MockDB) GetSubs() ([]Sub, error) {
+	return nil, nil
+}
+
+func (d *MockDB) SetStatus(authorID string, subType int, finished bool) error {
+	return nil
+}

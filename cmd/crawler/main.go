@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	zhihuCrawl "github.com/eli-yip/rss-zero/cmd/crawler/zhihu_crawl"
 	"github.com/eli-yip/rss-zero/config"
+	zhihuCrawl "github.com/eli-yip/rss-zero/internal/crawl/zhihu"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/file"

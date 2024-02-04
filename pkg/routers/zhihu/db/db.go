@@ -13,6 +13,7 @@ type DB interface {
 	DBPin
 	DBAuthor
 	DBObject
+	DBSub
 }
 
 type DBAuthor interface {

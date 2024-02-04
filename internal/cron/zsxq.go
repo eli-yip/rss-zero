@@ -27,12 +27,7 @@ const (
 	apiFetchURL = "%s&end_time=%s"
 )
 
-const defaultFetchCount = 20
-
-const (
-	rssPath = "zsxq_rss_%d"
-	rssTTL  = time.Hour * 2
-)
+const zsxqRssPath = "zsxq_rss_%d"
 
 func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
@@ -60,7 +55,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.No
 		}
 
 		dbService := zsxqDB.NewZsxqDBService(db)
-		logger.Info("database service initialized")
+		logger.Info("zsxq database service initialized")
 
 		requestService := request.NewRequestService(cookies, redisService, logger)
 		logger.Info("request service initialized")
@@ -211,7 +206,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.No
 			if err != nil {
 				logger.Error("failed to render rss", zap.Error(err))
 			}
-			if err := redisService.Set(fmt.Sprintf(rssPath, groupID), result, rssTTL); err != nil {
+			if err := redisService.Set(fmt.Sprintf(zsxqRssPath, groupID), result, rssTTL); err != nil {
 				logger.Error("failed to set rss to redis", zap.Error(err))
 			}
 		}
