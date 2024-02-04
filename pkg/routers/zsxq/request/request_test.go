@@ -32,6 +32,21 @@ func TestLimitRaw(t *testing.T) {
 	t.Log(string(bytes))
 }
 
+func TestRequest(t *testing.T) {
+	cookies := os.Getenv("COOKIES")
+	if cookies == "" {
+		t.Fatal("env COOKIES is empty")
+	}
+	log := log.NewLogger()
+	rs := NewRequestService(cookies, nil, log)
+	u := "https://api.zsxq.com/v2/groups/28855218411241/topics?scope=all&count=20"
+	bytes, err := rs.Limit(u)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(bytes))
+}
+
 func TestInvalidCookies(t *testing.T) {
 	respBytes := []byte(`{
     "succeeded": false,
