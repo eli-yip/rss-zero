@@ -56,7 +56,6 @@ func (h *ZhihuController) PinRSS(c echo.Context) (err error) {
 		return c.String(http.StatusInternalServerError, "failed to get rss from redis")
 	}
 
-	c.Response().Header().Set(echo.HeaderContentType, "application/atom+xml")
 	return c.String(http.StatusOK, rss)
 }
 

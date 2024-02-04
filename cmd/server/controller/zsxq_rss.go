@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (h *ZsxqController) Get(c echo.Context) (err error) {
+func (h *ZsxqController) RSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	groupIDStr := c.Param("id")
@@ -35,7 +35,6 @@ func (h *ZsxqController) Get(c echo.Context) (err error) {
 	}
 	logger.Info("rss content retrieved")
 
-	c.Response().Header().Set(echo.HeaderContentType, "application/atom+xml")
 	return c.String(http.StatusOK, rss)
 }
 
