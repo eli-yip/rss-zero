@@ -23,5 +23,6 @@ func NewZhihuHandler(redis *redis.RedisService, db *gorm.DB, notifier notify.Not
 		notifier: notifier,
 		taskCh:   make(chan task, 100),
 	}
+	go h.processTask()
 	return h
 }

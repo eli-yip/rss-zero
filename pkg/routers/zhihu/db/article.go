@@ -19,12 +19,19 @@ func (p *Article) TableName() string { return "zhihu_article" }
 
 type DBArticle interface {
 	SaveArticle(p *Article) error
+	GetLatestNArticle(n int, authorID string) ([]Article, error)
 	GetLatestArticleTime(authorID string) (time.Time, error)
 	FetchNArticle(n int, opt FetchArticleOption) (as []Article, err error)
 }
 
-func (d *DBService) SaveArticle(p *Article) error {
-	return d.Save(p).Error
+func (d *DBService) SaveArticle(p *Article) error { return d.Save(p).Error }
+
+func (d *DBService) GetLatestNArticle(n int, authorID string) ([]Article, error) {
+	as := make([]Article, 0, n)
+	if err := d.Where("author_id = ?", authorID).Order("create_at desc").Limit(n).Find(&as).Error; err != nil {
+		return nil, err
+	}
+	return as, nil
 }
 
 func (d *DBService) GetLatestArticleTime(userID string) (time.Time, error) {

@@ -8,6 +8,18 @@ func (d *MockDB) SaveArticle(p *Article) error {
 	return nil
 }
 
+func (d *MockDB) GetLatestNAnswer(n int, id string) ([]Answer, error) {
+	return nil, nil
+}
+
+func (d *MockDB) GetLatestNArticle(n int, id string) ([]Article, error) {
+	return nil, nil
+}
+
+func (d *MockDB) GetLatestNPin(n int, id string) ([]Pin, error) {
+	return nil, nil
+}
+
 func (d *MockDB) SaveQuestion(q *Question) error {
 	return nil
 }

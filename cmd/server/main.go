@@ -66,6 +66,13 @@ func setupEcho(redisService *redis.RedisService,
 	rssGroup := e.Group("/rss")
 	rssZsxq := rssGroup.GET("/zsxq/:id", zsxqHandler.Get)
 	rssZsxq.Name = "RSS route for zsxq"
+	rssZhihu := rssGroup.Group("/zhihu")
+	rssZhihuAnswer := rssZhihu.GET("/answer/:id", zhihuHandler.AnswerRSS)
+	rssZhihuAnswer.Name = "RSS route for zhihu answer"
+	rssZhihuArticle := rssZhihu.GET("/article/:id", zhihuHandler.ArticleRSS)
+	rssZhihuArticle.Name = "RSS route for zhihu article"
+	rssZhihuPin := rssZhihu.GET("/pin/:id", zhihuHandler.PinRSS)
+	rssZhihuPin.Name = "RSS route for zhihu pin"
 
 	exportGroup := e.Group("/export")
 	exportZsxq := exportGroup.POST("/zsxq", zsxqHandler.Export)

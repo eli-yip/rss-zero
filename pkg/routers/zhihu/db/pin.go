@@ -18,11 +18,20 @@ func (p *Pin) TableName() string { return "zhihu_pin" }
 
 type DBPin interface {
 	SavePin(p *Pin) error
+	GetLatestNPin(n int, authorID string) ([]Pin, error)
 	GetLatestPinTime(userID string) (time.Time, error)
 	FetchNPin(n int, opt FetchPinOption) (ps []Pin, err error)
 }
 
 func (d *DBService) SavePin(p *Pin) error { return d.Save(p).Error }
+
+func (d *DBService) GetLatestNPin(n int, authorID string) ([]Pin, error) {
+	ps := make([]Pin, 0, n)
+	if err := d.Where("author_id = ?", authorID).Order("create_at desc").Limit(n).Find(&ps).Error; err != nil {
+		return nil, err
+	}
+	return ps, nil
+}
 
 func (d *DBService) GetLatestPinTime(userID string) (time.Time, error) {
 	var t time.Time

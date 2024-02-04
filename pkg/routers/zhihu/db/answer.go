@@ -9,6 +9,7 @@ import (
 type DBAnswer interface {
 	// Save answer info to zhihu_answer table
 	SaveAnswer(a *Answer) error
+	GetLatestNAnswer(n int, userID string) ([]Answer, error)
 	// FetchNAnswers get n answers from zhihu_answer table,
 	// then return the answers for text generating.
 	FetchNAnswer(int, FetchAnswerOption) ([]Answer, error)
@@ -68,8 +69,14 @@ type Question struct {
 
 func (q *Question) TableName() string { return "zhihu_question" }
 
-func (d *DBService) SaveAnswer(a *Answer) error {
-	return d.Save(a).Error
+func (d *DBService) SaveAnswer(a *Answer) error { return d.Save(a).Error }
+
+func (d *DBService) GetLatestNAnswer(n int, userID string) ([]Answer, error) {
+	as := make([]Answer, 0, n)
+	if err := d.Where("author_id = ?", userID).Order("create_at desc").Limit(n).Find(&as).Error; err != nil {
+		return nil, err
+	}
+	return as, nil
 }
 
 func (d *DBService) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, err error) {
