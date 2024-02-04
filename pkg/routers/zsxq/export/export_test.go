@@ -68,7 +68,7 @@ func TestFileName(t *testing.T) {
 				StartTime:  time.Date(2022, 11, 20, 0, 0, 0, 0, time.Local),
 				EndTime:    time.Date(2022, 11, 25, 0, 0, 0, 0, time.Local),
 			},
-			Expect: "知识星球合集-28855218411241-2022-11-20-2022-11-25.md",
+			Expect: "知识星球合集-28855218411241-2022-11-20-2022-11-24.md",
 		},
 		{
 			Option: Option{
@@ -79,7 +79,7 @@ func TestFileName(t *testing.T) {
 				StartTime:  time.Date(2022, 11, 20, 0, 0, 0, 0, time.Local),
 				EndTime:    time.Date(2022, 11, 25, 0, 0, 0, 0, time.Local),
 			},
-			Expect: "知识星球合集-28855218411241-q&a-digest-2022-11-20-2022-11-25.md",
+			Expect: "知识星球合集-28855218411241-q&a-digest-2022-11-20-2022-11-24.md",
 		},
 	}
 

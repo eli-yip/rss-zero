@@ -51,16 +51,16 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 	exportService := zsxqExport.NewExportService(zsxqDBService, mdRender)
 
 	fileName := exportService.FileName(options)
-	fileName = fmt.Sprintf("export/zsxq/%s", fileName)
+	objectKey := fmt.Sprintf("export/zsxq/%s", fileName)
 	go func() {
-		logger.Info("start to export", zap.String("file_name", fileName))
+		logger.Info("start to export", zap.String("file_name", objectKey))
 
 		pr, pw := io.Pipe()
 
 		go func() {
 			defer pw.Close()
 
-			logger := logger.With(zap.String("file_name", fileName))
+			logger := logger.With(zap.String("file_name", objectKey))
 
 			if err := exportService.Export(pw, options); err != nil {
 				logger.Error("fail to export", zap.Error(err))
@@ -78,13 +78,13 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 		logger.Info("init minio service successfully")
 
 		logger.Info("start to save stream")
-		if err := minioService.SaveStream(fileName, pr, -1); err != nil {
+		if err := minioService.SaveStream(objectKey, pr, -1); err != nil {
 			logger.Error("fail to save stream", zap.Error(err))
 			_ = h.notifier.Notify("fail to save stream", err.Error())
 			return
 		}
 
-		err = h.notifier.Notify("export successfully", fileName)
+		err = h.notifier.Notify("export successfully", objectKey)
 		if err != nil {
 			logger.Error("fail to notify", zap.Error(err))
 		}
@@ -95,7 +95,7 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, &ZsxqExportResp{
 		Message:  "start to export, you'll be notified when it's done",
 		FileName: fileName,
-		URL:      config.C.MinioConfig.AssetsPrefix + "/" + fileName,
+		URL:      config.C.MinioConfig.AssetsPrefix + "/" + objectKey,
 	})
 }
 

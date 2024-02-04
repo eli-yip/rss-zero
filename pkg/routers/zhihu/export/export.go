@@ -266,17 +266,9 @@ func (s ExportService) FileName(opt Option) string {
 
 	fileNameArr = append(fileNameArr, *opt.AuthorID)
 
-	if !opt.StartTime.IsZero() {
-		fileNameArr = append(fileNameArr, opt.StartTime.Format("2006-01-02"))
-	} else {
-		fileNameArr = append(fileNameArr, "从头")
-	}
-
-	if !opt.EndTime.IsZero() {
-		fileNameArr = append(fileNameArr, opt.EndTime.Format("2006-01-02"))
-	} else {
-		fileNameArr = append(fileNameArr, "到尾")
-	}
+	fileNameArr = append(fileNameArr, opt.StartTime.Format("2006-01-02"))
+	// HACK: -1 day to make the end time inclusive: https://git.momoai.me/yezi/rss-zero/issues/55
+	fileNameArr = append(fileNameArr, opt.EndTime.Add(-1*time.Hour*24).Format("2006-01-02"))
 
 	return fmt.Sprintf("%s.md", strings.Join(fileNameArr, "-"))
 }
