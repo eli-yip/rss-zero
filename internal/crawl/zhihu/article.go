@@ -15,7 +15,7 @@ import (
 // articleURL: the url of the article list, useful when continue to crawl
 // oneTime: if true, only crawl one time
 func CrawlArticle(user string, request request.Requester, parser *parse.Parser,
-	targetTime time.Time, articleURL string, oneTime bool, logger *zap.Logger) {
+	targetTime time.Time, articleURL string, oneTime bool, logger *zap.Logger) (err error) {
 	logger.Info("start to crawl zhihu articles", zap.String("user url token", user))
 
 	next := ""
@@ -32,18 +32,21 @@ func CrawlArticle(user string, request request.Requester, parser *parse.Parser,
 	for {
 		bytes, err := request.LimitRaw(next)
 		if err != nil {
-			logger.Fatal("fail to request zhihu api", zap.Error(err))
+			logger.Error("fail to request zhihu api", zap.Error(err))
+			return err
 		}
 		logger.Info("request zhihu api successfully", zap.String("url", next))
 
 		paging, articleList, err := parser.ParseArticleList(bytes, index)
 		if err != nil {
-			logger.Fatal("fail to parse article list", zap.Error(err))
+			logger.Error("fail to parse article list", zap.Error(err))
+			return nil
 		}
 		logger.Info("parse article list successfully", zap.Int("index", index), zap.String("next", next))
 
 		if index != 0 && paging.Totals != total1 {
-			logger.Fatal("new article found, break now", zap.Int("new article num", paging.Totals-total1))
+			logger.Error("new article found, break now", zap.Int("new article num", paging.Totals-total1))
+			return err
 		}
 		total1 = paging.Totals
 
@@ -54,21 +57,23 @@ func CrawlArticle(user string, request request.Requester, parser *parse.Parser,
 
 			const articleURLLayout = "https://www.zhihu.com/api/v4/articles/%d"
 			u := fmt.Sprintf(articleURLLayout, article.ID)
-			bytes, err := request.LimitRaw(u)
+			bytes, err = request.LimitRaw(u)
 			if err != nil {
-				logger.Fatal("fail to request zhihu api", zap.Error(err))
+				logger.Error("fail to request zhihu api", zap.Error(err))
+				return err
 			}
 
 			_, err = parser.ParseArticle(bytes)
 			if err != nil {
-				logger.Fatal("fail to parse article", zap.Error(err))
+				logger.Error("fail to parse article", zap.Error(err))
+				return err
 			}
 
 			logger.Info("parse article successfully")
 
 			if targetTime.After(time.Unix(article.CreateAt, 0)) {
 				logger.Info("target time reached, break")
-				return
+				return nil
 			}
 		}
 
@@ -83,4 +88,6 @@ func CrawlArticle(user string, request request.Requester, parser *parse.Parser,
 			break
 		}
 	}
+
+	return nil
 }

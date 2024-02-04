@@ -163,7 +163,10 @@ func main() {
 		if *answerURL != "" {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
 		}
-		zhihuCrawl.CrawlAnswer(*userID, requestService, parser, latestTimeInDB, *answerURL, false, logger)
+		if err = zhihuCrawl.CrawlAnswer(*userID, requestService, parser,
+			latestTimeInDB, *answerURL, false, logger); err != nil {
+			logger.Fatal("fail to crawl answer", zap.Error(err))
+		}
 	}
 
 	if *article {
@@ -176,7 +179,10 @@ func main() {
 		if *articleURL != "" {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
 		}
-		zhihuCrawl.CrawlArticle(*userID, requestService, parser, latestTimeInDB, *articleURL, false, logger)
+		if err = zhihuCrawl.CrawlArticle(*userID, requestService, parser,
+			latestTimeInDB, *articleURL, false, logger); err != nil {
+			logger.Fatal("fail to crawl article", zap.Error(err))
+		}
 	}
 
 	if *pin {
@@ -189,7 +195,10 @@ func main() {
 		if *pinURL != "" {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
 		}
-		zhihuCrawl.CrawlPin(*userID, requestService, parser, latestTimeInDB, *pinURL, false, logger)
+		if err = zhihuCrawl.CrawlPin(*userID, requestService, parser,
+			latestTimeInDB, *pinURL, false, logger); err != nil {
+			logger.Fatal("fail to crawl pin", zap.Error(err))
+		}
 	}
 }
 

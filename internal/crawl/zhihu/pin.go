@@ -16,7 +16,7 @@ import (
 // pinURL: the url of the pin list, useful when continue to crawl
 // oneTime: if true, only crawl one time
 func CrawlPin(user string, request request.Requester, parser *parse.Parser,
-	targetTime time.Time, pinURL string, oneTime bool, logger *zap.Logger) {
+	targetTime time.Time, pinURL string, oneTime bool, logger *zap.Logger) (err error) {
 	logger.Info("start to crawl zhihu pins", zap.String("user url token", user))
 
 	next := ""
@@ -33,18 +33,21 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser,
 	for {
 		bytes, err := request.LimitRaw(next)
 		if err != nil {
-			logger.Fatal("fail to request zhihu api", zap.Error(err))
+			logger.Error("fail to request zhihu api", zap.Error(err))
+			return err
 		}
 		logger.Info("request zhihu api successfully", zap.String("url", next))
 
 		paging, pinList, err := parser.ParsePinList(bytes, index)
 		if err != nil {
-			logger.Fatal("failed to parse pin list", zap.Error(err))
+			logger.Error("failed to parse pin list", zap.Error(err))
+			return err
 		}
 		logger.Info("parse pin list successfully", zap.Int("index", index), zap.String("next", next))
 
 		if index != 0 && paging.Totals != total1 {
-			logger.Fatal("new pin found, break now", zap.Int("new pin num", paging.Totals-total1))
+			logger.Error("new pin found, break now", zap.Int("new pin num", paging.Totals-total1))
+			return err
 		}
 		total1 = paging.Totals
 
@@ -55,19 +58,21 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser,
 
 			pinBytes, err := json.Marshal(pin)
 			if err != nil {
-				logger.Fatal("fail to marshal pin", zap.Error(err))
+				logger.Error("fail to marshal pin", zap.Error(err))
+				return err
 			}
 
 			_, err = parser.ParsePin(pinBytes)
 			if err != nil {
-				logger.Fatal("fail to parse pin", zap.Error(err))
+				logger.Error("fail to parse pin", zap.Error(err))
+				return err
 			}
 
 			logger.Info("parse pin successfully")
 
 			if targetTime.After(time.Unix(pin.CreateAt, 0)) {
 				logger.Info("target time reached, break")
-				return
+				return nil
 			}
 		}
 
@@ -82,4 +87,6 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser,
 			break
 		}
 	}
+
+	return nil
 }

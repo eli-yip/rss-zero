@@ -69,9 +69,15 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 				}
 				if len(answers) == 0 {
 					logger.Info("no answer found")
-					crawl.CrawlAnswer(sub.AuthorID, requestService, parser, longLongago, "", true, logger)
+					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, longLongago, "", true, logger); err != nil {
+						logger.Error("failed to crawl answer", zap.Error(err))
+						continue
+					}
 				} else {
-					crawl.CrawlAnswer(sub.AuthorID, requestService, parser, answers[0].CreateAt, "", false, logger)
+					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, answers[0].CreateAt, "", false, logger); err != nil {
+						logger.Error("failed to crawl answer", zap.Error(err))
+						continue
+					}
 				}
 
 				path, content, err := rss.GenerateZhihu(rss.TypeAnswer, sub.AuthorID, dbService)
@@ -91,9 +97,15 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 				}
 				if len(articles) == 0 {
 					logger.Info("no article found")
-					crawl.CrawlArticle(sub.AuthorID, requestService, parser, longLongago, "", true, logger)
+					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, longLongago, "", true, logger); err != nil {
+						logger.Error("failed to crawl article", zap.Error(err))
+						continue
+					}
 				} else {
-					crawl.CrawlArticle(sub.AuthorID, requestService, parser, articles[0].CreateAt, "", false, logger)
+					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, articles[0].CreateAt, "", false, logger); err != nil {
+						logger.Error("failed to crawl article", zap.Error(err))
+						continue
+					}
 				}
 
 				path, content, err := rss.GenerateZhihu(rss.TypeArticle, sub.AuthorID, dbService)
@@ -113,9 +125,15 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 				}
 				if len(pins) == 0 {
 					logger.Info("no pin found")
-					crawl.CrawlPin(sub.AuthorID, requestService, parser, longLongago, "", true, logger)
+					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, longLongago, "", true, logger); err != nil {
+						logger.Error("failed to crawl pin", zap.Error(err))
+						continue
+					}
 				} else {
-					crawl.CrawlPin(sub.AuthorID, requestService, parser, pins[0].CreateAt, "", false, logger)
+					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, pins[0].CreateAt, "", false, logger); err != nil {
+						logger.Error("failed to crawl pin", zap.Error(err))
+						continue
+					}
 				}
 
 				path, content, err := rss.GenerateZhihu(rss.TypePin, sub.AuthorID, dbService)
