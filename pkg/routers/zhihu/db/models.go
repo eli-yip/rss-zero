@@ -40,4 +40,22 @@ type Sub struct {
 	Type     int    `gorm:"column:type;type:int;primary_key"`
 }
 
+const (
+	TypeAnswer = iota
+	TypeArticle
+	TypePin
+)
+
 func (s *Sub) TableName() string { return "zhihu_sub" }
+
+type DBSub interface {
+	GetSubs() ([]Sub, error)
+}
+
+func (d *DBService) GetSubs() ([]Sub, error) {
+	var subs []Sub
+	if err := d.Find(&subs).Error; err != nil {
+		return nil, err
+	}
+	return subs, nil
+}
