@@ -61,14 +61,17 @@ func setupEcho(redisService *redis.RedisService,
 		myMiddleware.LogRequest(logger), myMiddleware.InjectLogger(logger))
 
 	zsxqHandler := controller.NewZsxqHandler(redisService, db, notifier, logger)
+	zhihuHandler := controller.NewZhihuHandler(redisService, db, notifier, logger)
 
 	rssGroup := e.Group("/rss")
 	rssZsxq := rssGroup.GET("/zsxq/:id", zsxqHandler.Get)
 	rssZsxq.Name = "RSS route for zsxq"
 
 	exportGroup := e.Group("/export")
-	exportZsxq := exportGroup.POST("/zsxq", zsxqHandler.ExportZsxq)
+	exportZsxq := exportGroup.POST("/zsxq", zsxqHandler.Export)
 	exportZsxq.Name = "Export route for zsxq"
+	exportZhihu := exportGroup.POST("/zhihu", zhihuHandler.Export)
+	exportZhihu.Name = "Export route for zhihu"
 
 	refmtGroup := e.Group("/refmt")
 	refmtZsxq := refmtGroup.POST("/zsxq", zsxqHandler.Refmt)

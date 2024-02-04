@@ -5,53 +5,52 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/file"
-	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
-	zsxqExport "github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
-	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
+	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	zhihuExport "github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
+	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
-type ZxsqExportReq struct {
-	GroupID   int     `json:"group_id"`
+type ZhihuExportReq struct {
+	Author    *string `json:"author"`
 	Type      *string `json:"type"`
 	StartTime *string `json:"start_time"` // start time is included
 	EndTime   *string `json:"end_time"`   // end time is included
-	Digest    *bool   `json:"digest"`
-	Author    *string `json:"author"`
 }
 
-type ZsxqExportResp struct {
+type ZhihuExportResp struct {
 	Message  string `json:"message"`
 	FileName string `json:"file_name"`
 	URL      string `json:"url"`
 }
 
-func (h *ZsxqController) Export(c echo.Context) (err error) {
+func (h *ZhihuController) Export(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
-	var req ZxsqExportReq
+	var req ZhihuExportReq
 	if err = c.Bind(&req); err != nil {
 		logger.Error("read json error", zap.Error(err))
 		return c.String(http.StatusBadRequest, err.Error())
 	}
 
-	options, err := h.parseOption(&req)
+	options, err := h.parseOption(req)
 	if err != nil {
 		logger.Error("parse option error", zap.Error(err))
 		return c.String(http.StatusBadRequest, err.Error())
 	}
+	logger.Info("parse option successfully", zap.Any("options", options))
 
-	zsxqDBService := zsxqDB.NewZsxqDBService(h.db)
-	mdRender := render.NewMarkdownRenderService(zsxqDBService, logger)
-	exportService := zsxqExport.NewExportService(zsxqDBService, mdRender)
+	zhihuDBService := zhihuDB.NewDBService(h.db)
+	fullTextRender := zhihuRender.NewRender(md.NewMarkdownFormatter())
+	exportService := zhihuExport.NewExportService(zhihuDBService, fullTextRender)
 
 	fileName := exportService.FileName(options)
-	fileName = fmt.Sprintf("export/zsxq/%s", fileName)
+	fileName = fmt.Sprintf("export/zhihu/%s", fileName)
 	go func() {
 		logger.Info("start to export", zap.String("file_name", fileName))
 
@@ -63,7 +62,7 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 			logger := logger.With(zap.String("file_name", fileName))
 
 			if err := exportService.Export(pw, options); err != nil {
-				logger.Error("fail to export", zap.Error(err))
+				logger.Error("export error", zap.Error(err))
 				_ = h.notifier.Notify("fail to export", err.Error())
 				return
 			}
@@ -71,13 +70,12 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 
 		minioService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
 		if err != nil {
-			logger.Error("fail to init minio service", zap.Error(err))
-			_ = h.notifier.Notify("fail to init minio service", err.Error())
+			logger.Error("create minio service error", zap.Error(err))
+			_ = h.notifier.Notify("fail to init minio", err.Error())
 			return
 		}
-		logger.Info("init minio service successfully")
+		logger.Info("start to upload to minio")
 
-		logger.Info("start to save stream")
 		if err := minioService.SaveStream(fileName, pr, -1); err != nil {
 			logger.Error("fail to save stream", zap.Error(err))
 			_ = h.notifier.Notify("fail to save stream", err.Error())
@@ -92,31 +90,42 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 		logger.Info("export successfully")
 	}()
 
-	return c.JSON(http.StatusOK, &ZsxqExportResp{
-		Message:  "start to export, you'll be notified when it's done",
+	return c.JSON(http.StatusOK, &ZhihuExportResp{
+		Message:  "exporting",
 		FileName: fileName,
 		URL:      config.C.MinioConfig.AssetsPrefix + "/" + fileName,
 	})
 }
 
-var ErrGroupIDEmpty = errors.New("group id is empty")
-
-func (h *ZsxqController) parseOption(req *ZxsqExportReq) (zsxqExport.Option, error) {
-	var opts zsxqExport.Option
-
-	if req.GroupID == 0 {
-		return zsxqExport.Option{}, ErrGroupIDEmpty
+func (h *ZhihuController) parseOption(req ZhihuExportReq) (opts zhihuExport.Option, err error) {
+	if req.Author == nil {
+		return opts, errors.New("author is required")
 	}
-	opts.GroupID = req.GroupID
+	opts.AuthorID = req.Author
 
-	if req.Type != nil {
-		opts.Type = req.Type
+	typeMap := map[string]int{
+		"answer":  1,
+		"article": 2,
+		"pin":     3,
 	}
+
+	if req.Type == nil {
+		return opts, errors.New("type is required")
+	}
+
+	if _, ok := typeMap[*req.Type]; !ok {
+		return opts, errors.New("invalid type")
+	}
+
+	opts.Type = func() *int {
+		t := typeMap[*req.Type]
+		return &t
+	}()
 
 	if req.StartTime != nil {
 		t, err := parseTime(*req.StartTime)
 		if err != nil {
-			return zsxqExport.Option{}, err
+			return opts, err
 		}
 		opts.StartTime = t
 	}
@@ -124,20 +133,9 @@ func (h *ZsxqController) parseOption(req *ZxsqExportReq) (zsxqExport.Option, err
 	if req.EndTime != nil {
 		t, err := parseTime(*req.EndTime)
 		if err != nil {
-			return zsxqExport.Option{}, err
+			return opts, err
 		}
-		opts.EndTime = t.Add(24 * time.Hour)
-	}
-
-	if req.Digest != nil {
-		if !*req.Digest {
-			return zsxqExport.Option{}, errors.New("digest must be true or nil")
-		}
-		opts.Digested = req.Digest
-	}
-
-	if req.Author != nil {
-		opts.AuthorName = req.Author
+		opts.EndTime = t
 	}
 
 	return opts, nil

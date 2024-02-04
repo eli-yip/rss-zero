@@ -7,34 +7,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
-
-type ZsxqController struct {
-	redis    *redis.RedisService
-	db       *gorm.DB
-	logger   *zap.Logger
-	taskCh   chan task
-	notifier notify.Notifier
-}
-
-func NewZsxqHandler(redis *redis.RedisService, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *ZsxqController {
-	h := &ZsxqController{
-		redis:    redis,
-		db:       db,
-		logger:   logger,
-		notifier: notifier,
-		taskCh:   make(chan task, 100),
-	}
-	go h.processTask()
-	return h
-}
 
 func (h *ZsxqController) Get(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
@@ -58,11 +36,6 @@ func (h *ZsxqController) Get(c echo.Context) (err error) {
 	logger.Info("rss content retrieved")
 
 	return c.String(http.StatusOK, rss)
-}
-
-type task struct {
-	textCh chan string
-	errCh  chan error
 }
 
 func (h *ZsxqController) getRSSContent(key string, logger *zap.Logger) (content string, err error) {
