@@ -71,6 +71,19 @@ func TestFormatMarkdown(t *testing.T) {
 			output: `作者：娅娅**作者娅娅**作者：娅娅
 `,
 		},
+		{
+			input: `abc  
+1234`,
+			output: `abc
+1234
+`,
+		},
+		{
+			input: `我是
+中文`,
+			output: `我是 中文
+`,
+		},
 	}
 
 	s := NewMarkdownFormatter()
@@ -83,7 +96,7 @@ func TestFormatMarkdown(t *testing.T) {
 		}
 		t.Logf("%s\n", string(output))
 		if string(output) != test.output {
-			t.Fatalf("expected %s, got %s", test.output, string(output))
+			t.Fatalf("expected\n%+v\ngot\n%+v\n", test.output, string(output))
 		}
 
 		path := filepath.Join("testdata", fmt.Sprintf("test%d.md", i))
