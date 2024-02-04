@@ -1,13 +1,11 @@
 package cron
 
 import (
-	"fmt"
-	"strconv"
-
 	"github.com/eli-yip/rss-zero/config"
 	crawl "github.com/eli-yip/rss-zero/internal/crawl/zhihu"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	log "github.com/eli-yip/rss-zero/pkg/log"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -56,8 +54,6 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 			return
 		}
 
-		rssRender := render.NewRSSRenderService()
-
 		for _, sub := range subs {
 			ts := getSubType(sub.Type)
 			logger := logger.With(zap.String("author id", sub.AuthorID),
@@ -78,51 +74,13 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 					crawl.CrawlAnswer(sub.AuthorID, requestService, parser, answers[0].CreateAt, "", false, logger)
 				}
 
-				const zhihuAnswerRSSPath = "zhihu_rss_answer_%s"
-
-				answers, err = dbService.GetLatestNAnswer(defaultFetchCount, sub.AuthorID)
+				path, content, err := rss.GenerateZhihu(rss.TypeAnswer, sub.AuthorID, dbService)
 				if err != nil {
-					logger.Error("failed to get latest answer", zap.Error(err))
+					logger.Error("failed to generate rss", zap.Error(err))
 					continue
 				}
 
-				if len(answers) == 0 {
-					logger.Info("no answer found")
-					continue
-				}
-
-				authorName, err := dbService.GetAuthorName(answers[0].AuthorID)
-				if err != nil {
-					logger.Error("failed to get author name", zap.Error(err))
-					continue
-				}
-
-				var rs []render.RSS
-				for _, a := range answers {
-					question, err := dbService.GetQuestion(a.QuestionID)
-					if err != nil {
-						logger.Error("failed to get question", zap.Error(err))
-						continue
-					}
-
-					rs = append(rs, render.RSS{
-						ID:         a.ID,
-						Link:       fmt.Sprintf("https://www.zhihu.com/question/%d/answer/%d", a.QuestionID, a.ID),
-						CreateTime: a.CreateAt,
-						AuthorID:   a.AuthorID,
-						AuthorName: authorName,
-						Title:      question.Title,
-						Text:       a.Text,
-					})
-				}
-
-				output, err := rssRender.Render(render.TypeAnswer, rs)
-				if err != nil {
-					logger.Error("failed to render rss", zap.Error(err))
-					continue
-				}
-
-				if err := redisService.Set(fmt.Sprintf(zhihuAnswerRSSPath, sub.AuthorID), output, rssTTL); err != nil {
+				if err := redisService.Set(path, content, rssTTL); err != nil {
 					logger.Error("failed to set rss to redis", zap.Error(err))
 				}
 			case "article":
@@ -138,45 +96,13 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 					crawl.CrawlArticle(sub.AuthorID, requestService, parser, articles[0].CreateAt, "", false, logger)
 				}
 
-				const zhihuArticleRSSPath = "zhihu_rss_article_%s"
-
-				articles, err = dbService.GetLatestNArticle(defaultFetchCount, sub.AuthorID)
+				path, content, err := rss.GenerateZhihu(rss.TypeArticle, sub.AuthorID, dbService)
 				if err != nil {
-					logger.Error("failed to get latest article", zap.Error(err))
+					logger.Error("failed to generate rss", zap.Error(err))
 					continue
 				}
 
-				if len(articles) == 0 {
-					logger.Info("no article found")
-					continue
-				}
-
-				authorName, err := dbService.GetAuthorName(articles[0].AuthorID)
-				if err != nil {
-					logger.Error("failed to get author name", zap.Error(err))
-					continue
-				}
-
-				var rs []render.RSS
-				for _, a := range articles {
-					rs = append(rs, render.RSS{
-						ID:         a.ID,
-						Link:       fmt.Sprintf("https://zhuanlan.zhihu.com/p/%d", a.ID),
-						CreateTime: a.CreateAt,
-						AuthorID:   a.AuthorID,
-						AuthorName: authorName,
-						Title:      a.Title,
-						Text:       a.Text,
-					})
-				}
-
-				output, err := rssRender.Render(render.TypeArticle, rs)
-				if err != nil {
-					logger.Error("failed to render rss", zap.Error(err))
-					continue
-				}
-
-				if err := redisService.Set(fmt.Sprintf(zhihuArticleRSSPath, sub.AuthorID), output, rssTTL); err != nil {
+				if err := redisService.Set(path, content, rssTTL); err != nil {
 					logger.Error("failed to set rss to redis", zap.Error(err))
 				}
 			case "pin":
@@ -192,45 +118,13 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 					crawl.CrawlPin(sub.AuthorID, requestService, parser, pins[0].CreateAt, "", false, logger)
 				}
 
-				const zhihuPinRSSPath = "zhihu_rss_pin_%s"
-
-				pins, err = dbService.GetLatestNPin(defaultFetchCount, sub.AuthorID)
+				path, content, err := rss.GenerateZhihu(rss.TypePin, sub.AuthorID, dbService)
 				if err != nil {
-					logger.Error("failed to get latest pin", zap.Error(err))
+					logger.Error("failed to generate rss", zap.Error(err))
 					continue
 				}
 
-				if len(pins) == 0 {
-					logger.Info("no pin found")
-					continue
-				}
-
-				authorName, err := dbService.GetAuthorName(pins[0].AuthorID)
-				if err != nil {
-					logger.Error("failed to get author name", zap.Error(err))
-					continue
-				}
-
-				var rs []render.RSS
-				for _, p := range pins {
-					rs = append(rs, render.RSS{
-						ID:         p.ID,
-						Link:       fmt.Sprintf("https://www.zhihu.com/pin/%d", p.ID),
-						CreateTime: p.CreateAt,
-						AuthorID:   p.AuthorID,
-						AuthorName: authorName,
-						Title:      func() string { return strconv.Itoa(p.ID) }(),
-						Text:       p.Text,
-					})
-				}
-
-				output, err := rssRender.Render(render.TypePin, rs)
-				if err != nil {
-					logger.Error("failed to render rss", zap.Error(err))
-					continue
-				}
-
-				if err := redisService.Set(fmt.Sprintf(zhihuPinRSSPath, sub.AuthorID), output, rssTTL); err != nil {
+				if err := redisService.Set(path, content, rssTTL); err != nil {
 					logger.Error("failed to set rss to redis", zap.Error(err))
 				}
 			}

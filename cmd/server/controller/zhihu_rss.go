@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/rss"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -101,127 +100,25 @@ func (h *ZhihuController) processTask() {
 	}
 }
 
-func (h *ZhihuController) generateRSS(key string) (output string, err error) {
+func (h *ZhihuController) generateRSS(key string) (content string, err error) {
 	t, authorID, err := h.extractTypeAuthorFromKey(key)
 	if err != nil {
 		return "", err
 	}
 
-	const defaultFetchCount = 20
 	zhihuDB := zhihuDB.NewDBService(h.db)
 
-	rssRender := zhihuRender.NewRSSRenderService()
-
-	var rs []zhihuRender.RSS
-	switch t {
-	case zhihuRender.TypeAnswer:
-		answers, err := zhihuDB.GetLatestNAnswer(defaultFetchCount, authorID)
-		if err != nil {
-			return "", err
-		}
-
-		if len(answers) == 0 {
-			return "", fmt.Errorf("no answer found for author: %s", authorID)
-		}
-
-		authorName, err := zhihuDB.GetAuthorName(answers[0].AuthorID)
-		if err != nil {
-			return "", err
-		}
-
-		for _, a := range answers {
-			question, err := zhihuDB.GetQuestion(a.QuestionID)
-			if err != nil {
-				return "", err
-			}
-
-			rs = append(rs, zhihuRender.RSS{
-				ID:         a.ID,
-				Link:       fmt.Sprintf("https://www.zhihu.com/question/%d/answer/%d", a.QuestionID, a.ID),
-				CreateTime: a.CreateAt,
-				AuthorID:   a.AuthorID,
-				AuthorName: authorName,
-				Title:      question.Title,
-				Text:       a.Text,
-			})
-		}
-
-		output, err = rssRender.Render(zhihuRender.TypeAnswer, rs)
-		if err != nil {
-			return "", err
-		}
-	case zhihuRender.TypeArticle:
-		articles, err := zhihuDB.GetLatestNArticle(defaultFetchCount, authorID)
-		if err != nil {
-			return "", err
-		}
-
-		if len(articles) == 0 {
-			return "", fmt.Errorf("no article found for author: %s", authorID)
-		}
-
-		authorName, err := zhihuDB.GetAuthorName(articles[0].AuthorID)
-		if err != nil {
-			return "", err
-		}
-
-		for _, a := range articles {
-			rs = append(rs, zhihuRender.RSS{
-				ID:         a.ID,
-				Link:       fmt.Sprintf("https://zhuanlan.zhihu.com/p/%d", a.ID),
-				CreateTime: a.CreateAt,
-				AuthorID:   a.AuthorID,
-				AuthorName: authorName,
-				Title:      a.Title,
-				Text:       a.Text,
-			})
-		}
-
-		output, err = rssRender.Render(zhihuRender.TypeArticle, rs)
-		if err != nil {
-			return "", err
-		}
-	case zhihuRender.TypePin:
-		pins, err := zhihuDB.GetLatestNPin(defaultFetchCount, authorID)
-		if err != nil {
-			return "", err
-		}
-
-		if len(pins) == 0 {
-			return "", fmt.Errorf("no pin found for author: %s", authorID)
-		}
-
-		authorName, err := zhihuDB.GetAuthorName(pins[0].AuthorID)
-		if err != nil {
-			return "", err
-		}
-
-		for _, p := range pins {
-			rs = append(rs, zhihuRender.RSS{
-				ID:         p.ID,
-				Link:       fmt.Sprintf("https://www.zhihu.com/pin/%d", p.ID),
-				CreateTime: p.CreateAt,
-				AuthorID:   p.AuthorID,
-				AuthorName: authorName,
-				Title:      func() string { return strconv.Itoa(p.ID) }(),
-				Text:       p.Text,
-			})
-		}
-
-		output, err = rssRender.Render(zhihuRender.TypePin, rs)
-		if err != nil {
-			return "", err
-		}
-	default:
-		return "", fmt.Errorf("invalid type: %d", t)
-	}
-
-	const rssTTL = time.Hour * 2
-	if err := h.redis.Set(key, output, rssTTL); err != nil {
+	_, content, err = rss.GenerateZhihu(t, authorID, zhihuDB)
+	if err != nil {
 		return "", err
 	}
 
-	return output, nil
+	const rssTTL = time.Hour * 2
+	if err := h.redis.Set(key, content, rssTTL); err != nil {
+		return "", err
+	}
+
+	return content, nil
 }
 
 func (h *ZhihuController) extractTypeAuthorFromKey(key string) (t int, authorID string, err error) {
@@ -236,11 +133,11 @@ func (h *ZhihuController) extractTypeAuthorFromKey(key string) (t int, authorID 
 
 	switch matches[1] {
 	case "answer":
-		t = zhihuRender.TypeAnswer
+		t = rss.TypeAnswer
 	case "article":
-		t = zhihuRender.TypeArticle
+		t = rss.TypeArticle
 	case "pin":
-		t = zhihuRender.TypePin
+		t = rss.TypePin
 	default:
 		return 0, "", fmt.Errorf("invalid type: %s", matches[1])
 	}
