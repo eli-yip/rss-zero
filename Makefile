@@ -50,6 +50,10 @@ commit:
 
 .PHONY: push
 push:
+	git push -u origin $(CURRENT_BRANCH)
+
+.PHONY: push-f
+push:
 	git push -u origin $(CURRENT_BRANCH) --force-with-lease
 
 .PHONY: update
