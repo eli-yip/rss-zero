@@ -14,8 +14,9 @@ import (
 // user: user url token
 // targetTime: the time to stop crawling
 // pinURL: the url of the pin list, useful when continue to crawl
+// oneTime: if true, only crawl one time
 func CrawlPin(user string, request request.Requester, parser *parse.Parser,
-	targetTime time.Time, pinURL string, logger *zap.Logger) {
+	targetTime time.Time, pinURL string, oneTime bool, logger *zap.Logger) {
 	logger.Info("start to crawl zhihu pins", zap.String("user url token", user))
 
 	next := ""
@@ -75,5 +76,10 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser,
 		}
 
 		index++
+
+		if oneTime {
+			logger.Info("one time mode, break")
+			break
+		}
 	}
 }

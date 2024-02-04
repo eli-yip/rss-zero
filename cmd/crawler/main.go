@@ -163,7 +163,7 @@ func main() {
 		if *answerURL != "" {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
 		}
-		zhihuCrawl.CrawlAnswer(*userID, requestService, parser, latestTimeInDB, *answerURL, logger)
+		zhihuCrawl.CrawlAnswer(*userID, requestService, parser, latestTimeInDB, *answerURL, false, logger)
 	}
 
 	if *article {
@@ -176,7 +176,7 @@ func main() {
 		if *articleURL != "" {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
 		}
-		zhihuCrawl.CrawlArticle(*userID, requestService, parser, latestTimeInDB, *articleURL, logger)
+		zhihuCrawl.CrawlArticle(*userID, requestService, parser, latestTimeInDB, *articleURL, false, logger)
 	}
 
 	if *pin {
@@ -189,7 +189,7 @@ func main() {
 		if *pinURL != "" {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
 		}
-		zhihuCrawl.CrawlPin(*userID, requestService, parser, latestTimeInDB, *pinURL, logger)
+		zhihuCrawl.CrawlPin(*userID, requestService, parser, latestTimeInDB, *pinURL, false, logger)
 	}
 }
 

@@ -15,8 +15,9 @@ import (
 // user: user url token
 // targetTime: the time to stop crawling
 // answerURL: the url of the answer list, useful when continue to crawl
+// oneTime: if true, only crawl one time
 func CrawlAnswer(user string, request request.Requester, parser *parse.Parser,
-	targetTime time.Time, answerURL string, logger *zap.Logger) {
+	targetTime time.Time, answerURL string, oneTime bool, logger *zap.Logger) {
 	logger.Info("start to crawl zhihu answers", zap.String("user url token", user))
 
 	next := ""
@@ -80,5 +81,10 @@ func CrawlAnswer(user string, request request.Requester, parser *parse.Parser,
 		}
 
 		index++
+
+		if oneTime {
+			logger.Info("one time mode, break")
+			break
+		}
 	}
 }
