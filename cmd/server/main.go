@@ -1,7 +1,12 @@
 package main
 
 import (
+	"context"
 	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
 	"github.com/eli-yip/rss-zero/cmd/server/controller"
 	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
@@ -40,9 +45,19 @@ func main() {
 
 	e := setupEcho(redisService, db, bark, logger)
 
-	err = e.Start(":8080")
-	if err != nil {
-		panic(err)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	go func() {
+		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
+			e.Logger.Fatal("shutting down the server")
+		}
+	}()
+
+	<-ctx.Done()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
 	}
 }
 
@@ -51,6 +66,7 @@ func setupEcho(redisService *redis.RedisService,
 	notifier notify.Notifier,
 	logger *zap.Logger) *echo.Echo {
 	e := echo.New()
+	e.HideBanner = true
 	e.IPExtractor = echo.ExtractIPFromXFFHeader(
 		echo.TrustIPRange(func(ip string) *net.IPNet {
 			_, ipNet, _ := net.ParseCIDR(ip)
