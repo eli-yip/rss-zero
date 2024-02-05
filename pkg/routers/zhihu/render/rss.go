@@ -2,7 +2,6 @@ package render
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"time"
 
@@ -34,8 +33,6 @@ func NewRSSRenderService() *RSSRenderService {
 	)}
 }
 
-var ErrNoContent = errors.New("no content")
-
 const (
 	TypeAnswer = iota
 	TypeArticle
@@ -44,10 +41,6 @@ const (
 
 // t: "answers", "posts", "pins"
 func (r *RSSRenderService) Render(t int, rs []RSS) (rss string, err error) {
-	if len(rs) == 0 {
-		return "", ErrNoContent
-	}
-
 	var tt string
 	switch t {
 	case TypeAnswer:
