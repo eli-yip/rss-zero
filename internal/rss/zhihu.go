@@ -24,6 +24,7 @@ func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB) (path stri
 		return "", "", err
 	}
 
+	var rs []render.RSS
 	switch t {
 	case TypeAnswer:
 		const path = "zhihu_rss_answer_%s"
@@ -32,10 +33,9 @@ func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB) (path stri
 			return "", "", err
 		}
 		if len(answers) == 0 {
-			return "", "", nil
+			return rssRender.RenderEmpty(t, authorID, authorName)
 		}
 
-		var rs []render.RSS
 		for _, a := range answers {
 			question, err := zhihuDBService.GetQuestion(a.QuestionID)
 			if err != nil {
@@ -66,10 +66,9 @@ func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB) (path stri
 			return "", "", err
 		}
 		if len(articles) == 0 {
-			return "", "", nil
+			return rssRender.RenderEmpty(t, authorID, authorName)
 		}
 
-		var rs []render.RSS
 		for _, a := range articles {
 			rs = append(rs, render.RSS{
 				ID:         a.ID,
@@ -95,10 +94,9 @@ func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB) (path stri
 			return "", "", err
 		}
 		if len(pins) == 0 {
-			return "", "", nil
+			return rssRender.RenderEmpty(t, authorID, authorName)
 		}
 
-		var rs []render.RSS
 		for _, p := range pins {
 			rs = append(rs, render.RSS{
 				ID:         p.ID,
