@@ -87,3 +87,7 @@ func (d *MockDB) GetSubs() ([]Sub, error) {
 func (d *MockDB) SetStatus(authorID string, subType int, finished bool) error {
 	return nil
 }
+
+func (d *MockDB) AddSub(authorID string, subType int) error {
+	return nil
+}

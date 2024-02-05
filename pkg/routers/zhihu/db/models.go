@@ -50,8 +50,13 @@ const (
 func (s *Sub) TableName() string { return "zhihu_sub" }
 
 type DBSub interface {
+	AddSub(authorID string, subType int) error
 	GetSubs() ([]Sub, error)
 	SetStatus(authorID string, subType int, finished bool) error
+}
+
+func (d *DBService) AddSub(authorID string, subType int) error {
+	return d.Save(&Sub{AuthorID: authorID, Type: subType}).Error
 }
 
 func (d *DBService) GetSubs() ([]Sub, error) {
