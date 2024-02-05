@@ -7,9 +7,9 @@ CURRENT_DIR := $(CURDIR)
 server:
 	$(GOCMD) build -o server ${CURRENT_DIR}/cmd/server
 
-.PHONY: zhihu-crawler
-zhihu-crawler:
-	$(GOCMD) build -o zhihu-crawler ${CURRENT_DIR}/cmd/crawler
+.PHONY: crawler
+crawler:
+	$(GOCMD) build -o crawler ${CURRENT_DIR}/cmd/crawler
 
 .PHONY: zsxq-crawler
 zsxq-crawler:
