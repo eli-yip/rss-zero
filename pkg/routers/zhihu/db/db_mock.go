@@ -103,3 +103,7 @@ func (d *MockDB) CountArticle(authorID string) (int, error) {
 func (d *MockDB) CountPin(authorID string) (int, error) {
 	return 0, nil
 }
+
+func (d *MockDB) CheckSub(authorID string, subType int) (bool, error) {
+	return false, nil
+}

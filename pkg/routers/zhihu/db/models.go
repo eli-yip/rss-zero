@@ -51,12 +51,21 @@ func (s *Sub) TableName() string { return "zhihu_sub" }
 
 type DBSub interface {
 	AddSub(authorID string, subType int) error
+	CheckSub(authorID string, subType int) (bool, error)
 	GetSubs() ([]Sub, error)
 	SetStatus(authorID string, subType int, finished bool) error
 }
 
 func (d *DBService) AddSub(authorID string, subType int) error {
 	return d.Save(&Sub{AuthorID: authorID, Type: subType}).Error
+}
+
+func (d *DBService) CheckSub(authorID string, subType int) (bool, error) {
+	var sub Sub
+	if err := d.Where("author_id = ? and type = ?", authorID, subType).First(&sub).Error; err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (d *DBService) GetSubs() ([]Sub, error) {
