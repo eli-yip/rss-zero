@@ -21,6 +21,7 @@ type DBPin interface {
 	GetLatestNPin(n int, authorID string) ([]Pin, error)
 	GetLatestPinTime(userID string) (time.Time, error)
 	FetchNPin(n int, opt FetchPinOption) (ps []Pin, err error)
+	CountPin(authorID string) (int, error)
 }
 
 func (d *DBService) SavePin(p *Pin) error { return d.Save(p).Error }
@@ -42,6 +43,14 @@ func (d *DBService) GetLatestPinTime(userID string) (time.Time, error) {
 		return time.Time{}, err
 	}
 	return t, nil
+}
+
+func (d *DBService) CountPin(authorID string) (int, error) {
+	var count int64
+	if err := d.Model(&Pin{}).Where("author_id = ?", authorID).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return int(count), nil
 }
 
 type FetchPinOption struct{ FetchOptionBase }

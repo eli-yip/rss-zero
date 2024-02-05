@@ -22,6 +22,7 @@ type DBArticle interface {
 	GetLatestNArticle(n int, authorID string) ([]Article, error)
 	GetLatestArticleTime(authorID string) (time.Time, error)
 	FetchNArticle(n int, opt FetchArticleOption) (as []Article, err error)
+	CountArticle(authorID string) (int, error)
 }
 
 func (d *DBService) SaveArticle(p *Article) error { return d.Save(p).Error }
@@ -43,6 +44,14 @@ func (d *DBService) GetLatestArticleTime(userID string) (time.Time, error) {
 		return time.Time{}, err
 	}
 	return t, nil
+}
+
+func (d *DBService) CountArticle(authorID string) (int, error) {
+	var count int64
+	if err := d.Model(&Article{}).Where("author_id = ?", authorID).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return int(count), nil
 }
 
 type FetchArticleOption struct{ FetchOptionBase }

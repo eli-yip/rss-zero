@@ -91,3 +91,15 @@ func (d *MockDB) SetStatus(authorID string, subType int, finished bool) error {
 func (d *MockDB) AddSub(authorID string, subType int) error {
 	return nil
 }
+
+func (d *MockDB) CountAnswer(authorID string) (int, error) {
+	return 0, nil
+}
+
+func (d *MockDB) CountArticle(authorID string) (int, error) {
+	return 0, nil
+}
+
+func (d *MockDB) CountPin(authorID string) (int, error) {
+	return 0, nil
+}

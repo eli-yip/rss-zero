@@ -19,6 +19,7 @@ type DBAnswer interface {
 	GetLatestAnswerTime(userID string) (time.Time, error)
 	// GetQuestion get question info from zhihu_question table
 	GetQuestion(id int) (*Question, error)
+	CountAnswer(userID string) (int, error)
 }
 
 type FetchAnswerOption struct {
@@ -77,6 +78,14 @@ func (d *DBService) GetLatestNAnswer(n int, userID string) ([]Answer, error) {
 		return nil, err
 	}
 	return as, nil
+}
+
+func (d *DBService) CountAnswer(userID string) (int, error) {
+	var count int64
+	if err := d.Model(&Answer{}).Where("author_id = ?", userID).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return int(count), nil
 }
 
 func (d *DBService) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, err error) {
