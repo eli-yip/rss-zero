@@ -102,6 +102,8 @@ func setupEcho(redisService *redis.RedisService,
 	refmtGroup := e.Group("/refmt")
 	refmtZsxq := refmtGroup.POST("/zsxq", zsxqHandler.Refmt)
 	refmtZsxq.Name = "Re-format route for zsxq"
+	refmtZhihu := refmtGroup.POST("/zhihu", zhihuHandler.Refmt)
+	refmtZhihu.Name = "Re-format route for zhihu"
 
 	cookieGroup := e.Group("/cookie")
 	cookieZsxq := cookieGroup.POST("/zsxq", zsxqHandler.UpdateZsxqCookies)
