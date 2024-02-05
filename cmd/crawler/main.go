@@ -32,7 +32,7 @@ type zhihuOption struct {
 	dC0        string
 }
 
-type zsxqOption struct{ groupID string }
+type zsxqOption struct{ groupID int }
 
 func main() {
 	logger := log.NewLogger()
@@ -57,6 +57,10 @@ func main() {
 	if opt.zhihu != nil {
 		handleZhihu(opt, logger)
 	}
+
+	if opt.zsxq != nil {
+		handleZsxq(opt, logger)
+	}
 }
 
 func parseArgs() (opt option, err error) {
@@ -71,7 +75,7 @@ func parseArgs() (opt option, err error) {
 	pinURL := flag.String("pin_url", "", "pin url")
 	dC0 := flag.String("d_c0", "", "d_c0 cookie")
 
-	groupID := flag.String("group", "", "group id")
+	groupID := flag.Int("group", 0, "group id")
 
 	export := flag.Bool("export", false, "whether to export")
 	startTime := flag.String("start", "", "start time")
@@ -84,10 +88,10 @@ func parseArgs() (opt option, err error) {
 	}
 
 	if *crawl {
-		if *userID != "" && *groupID != "" {
+		if *userID != "" && *groupID != 0 {
 			return option{}, errors.New("user id and group id can't be set at the same time")
 		}
-		if *userID == "" && *groupID == "" {
+		if *userID == "" && *groupID == 0 {
 			return option{}, errors.New("user id or group id is required")
 		}
 
@@ -107,7 +111,7 @@ func parseArgs() (opt option, err error) {
 			return opt, nil
 		}
 
-		if *groupID != "" {
+		if *groupID != 0 {
 			opt.zsxq = &zsxqOption{}
 
 			opt.crawl = true
@@ -140,7 +144,7 @@ func parseArgs() (opt option, err error) {
 
 			opt.export = true
 			opt.zhihu.userID = *userID
-		} else if *groupID != "" {
+		} else if *groupID != 0 {
 			opt.zsxq = &zsxqOption{}
 			opt.zsxq.groupID = *groupID
 		} else {
