@@ -16,7 +16,7 @@ import (
 func (h *ZhihuController) AnswerRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
-	authorID := c.Param("id")
+	authorID := c.Get("feed_id").(string)
 
 	const rssPath = "zhihu_rss_answer_%s"
 
@@ -32,7 +32,7 @@ func (h *ZhihuController) AnswerRSS(c echo.Context) (err error) {
 func (h *ZhihuController) ArticleRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
-	authorID := c.Param("id")
+	authorID := c.Get("feed_id").(string)
 
 	const rssPath = "zhihu_rss_article_%s"
 
@@ -47,7 +47,7 @@ func (h *ZhihuController) ArticleRSS(c echo.Context) (err error) {
 func (h *ZhihuController) PinRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
-	authorID := c.Param("id")
+	authorID := c.Get("feed_id").(string)
 
 	const rssPath = "zhihu_rss_pin_%s"
 

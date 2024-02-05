@@ -17,7 +17,7 @@ import (
 func (h *ZsxqController) RSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
-	groupIDStr := c.Param("id")
+	groupIDStr := c.Get("group_id").(string)
 	groupID, err := h.extractGroupIDFromParams(groupIDStr)
 	if err != nil {
 		logger.Error("invalid group id",

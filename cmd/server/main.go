@@ -80,7 +80,7 @@ func setupEcho(redisService *redis.RedisService,
 	zhihuHandler := controller.NewZhihuHandler(redisService, db, notifier, logger)
 
 	rssGroup := e.Group("/rss")
-	rssGroup.Use(myMiddleware.SetRSSContentType())
+	rssGroup.Use(myMiddleware.SetRSSContentType(), myMiddleware.ExtractFeedID())
 	rssZsxq := rssGroup.GET("/zsxq/:id", zsxqHandler.RSS)
 	rssZsxq.Name = "RSS route for zsxq"
 	rssZhihu := rssGroup.Group("/zhihu")

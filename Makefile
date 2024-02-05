@@ -52,8 +52,8 @@ commit:
 push:
 	git push -u origin $(CURRENT_BRANCH)
 
-.PHONY: push-f
-push:
+.PHONY: fpush
+fpush:
 	git push -u origin $(CURRENT_BRANCH) --force-with-lease
 
 .PHONY: update
