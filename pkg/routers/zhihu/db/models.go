@@ -1,7 +1,10 @@
 package db
 
 import (
+	"errors"
+
 	"github.com/lib/pq"
+	"gorm.io/gorm"
 )
 
 type Object struct {
@@ -63,6 +66,9 @@ func (d *DBService) AddSub(authorID string, subType int) error {
 func (d *DBService) CheckSub(authorID string, subType int) (bool, error) {
 	var sub Sub
 	if err := d.Where("author_id = ? and type = ?", authorID, subType).First(&sub).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
 	return true, nil
