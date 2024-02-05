@@ -9,6 +9,8 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -17,11 +19,18 @@ func (h *ZhihuController) AnswerRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	authorID := c.Get("feed_id").(string)
+	logger.Info("authorID", zap.String("authorID", authorID))
+
+	if err = h.checkSub(rss.TypeAnswer, authorID, logger); err != nil {
+		logger.Error("failed to check sub", zap.Error(err))
+		return c.String(http.StatusInternalServerError, "failed to check sub")
+	}
 
 	const rssPath = "zhihu_rss_answer_%s"
 
 	rss, err := h.getRSSContent(fmt.Sprintf(rssPath, authorID), logger)
 	if err != nil {
+		logger.Error("failed to get rss from redis", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "failed to get rss from redis")
 	}
 	logger.Info("rss content retrieved")
@@ -33,11 +42,18 @@ func (h *ZhihuController) ArticleRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	authorID := c.Get("feed_id").(string)
+	logger.Info("authorID", zap.String("authorID", authorID))
+
+	if err := h.checkSub(rss.TypeArticle, authorID, logger); err != nil {
+		logger.Error("failed to check sub", zap.Error(err))
+		return c.String(http.StatusInternalServerError, "failed to check sub")
+	}
 
 	const rssPath = "zhihu_rss_article_%s"
 
 	rss, err := h.getRSSContent(fmt.Sprintf(rssPath, authorID), logger)
 	if err != nil {
+		logger.Error("failed to get rss from redis", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "failed to get rss from redis")
 	}
 
@@ -48,11 +64,18 @@ func (h *ZhihuController) PinRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	authorID := c.Get("feed_id").(string)
+	logger.Info("authorID", zap.String("authorID", authorID))
+
+	if err := h.checkSub(rss.TypePin, authorID, logger); err != nil {
+		logger.Error("failed to check sub", zap.Error(err))
+		return c.String(http.StatusInternalServerError, "failed to check sub")
+	}
 
 	const rssPath = "zhihu_rss_pin_%s"
 
 	rss, err := h.getRSSContent(fmt.Sprintf(rssPath, authorID), logger)
 	if err != nil {
+		logger.Error("failed to get rss from redis", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "failed to get rss from redis")
 	}
 
@@ -106,9 +129,7 @@ func (h *ZhihuController) generateRSS(key string) (content string, err error) {
 		return "", err
 	}
 
-	zhihuDB := zhihuDB.NewDBService(h.db)
-
-	_, content, err = rss.GenerateZhihu(t, authorID, zhihuDB)
+	_, content, err = rss.GenerateZhihu(t, authorID, h.db)
 	if err != nil {
 		return "", err
 	}
@@ -145,4 +166,51 @@ func (h *ZhihuController) extractTypeAuthorFromKey(key string) (t int, authorID 
 	authorID = matches[2]
 
 	return t, authorID, nil
+}
+
+func (h *ZhihuController) checkSub(t int, authorID string, logger *zap.Logger) (err error) {
+	exist, err := h.db.CheckSub(authorID, zhihuDB.TypeAnswer)
+	if err != nil {
+		logger.Error("failed to check sub", zap.Error(err))
+		return err
+	}
+
+	if !exist {
+		err := h.db.AddSub(authorID, zhihuDB.TypeAnswer)
+		if err != nil {
+			logger.Error("failed to add sub", zap.Error(err))
+			return err
+		}
+
+		_, err = h.parseAuthorName(authorID, logger)
+		if err != nil {
+			logger.Error("failed to parse author name", zap.Error(err))
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (authorName string, err error) {
+	requestService, err := request.NewRequestService(nil, logger)
+	if err != nil {
+		logger.Error("failed to create request service", zap.Error(err))
+		return "", err
+	}
+
+	bytes, err := requestService.LimitRaw("https://api.zhihu.com/people/" + authorID)
+	if err != nil {
+		logger.Error("failed to get author name", zap.Error(err))
+		return "", err
+	}
+
+	parser := parse.NewParser(nil, nil, nil, h.db, logger)
+
+	authorName, err = parser.ParseAuthorName(bytes)
+	if err != nil {
+		logger.Error("failed to parse author name", zap.Error(err))
+		return "", err
+	}
+	return authorName, nil
 }

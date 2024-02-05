@@ -9,7 +9,6 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/file"
-	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zhihuExport "github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"github.com/labstack/echo/v4"
@@ -45,9 +44,8 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	}
 	logger.Info("parse option successfully", zap.Any("options", options))
 
-	zhihuDBService := zhihuDB.NewDBService(h.db)
 	fullTextRender := zhihuRender.NewRender(md.NewMarkdownFormatter())
-	exportService := zhihuExport.NewExportService(zhihuDBService, fullTextRender)
+	exportService := zhihuExport.NewExportService(h.db, fullTextRender)
 
 	fileName := exportService.FileName(options)
 	objectKey := fmt.Sprintf("export/zhihu/%s", fileName)

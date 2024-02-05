@@ -16,6 +16,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/log"
+	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
@@ -77,7 +78,8 @@ func setupEcho(redisService *redis.RedisService,
 		myMiddleware.LogRequest(logger), myMiddleware.InjectLogger(logger))
 
 	zsxqHandler := controller.NewZsxqHandler(redisService, db, notifier, logger)
-	zhihuHandler := controller.NewZhihuHandler(redisService, db, notifier, logger)
+	zhihuDB := zhihuDB.NewDBService(db)
+	zhihuHandler := controller.NewZhihuHandler(redisService, zhihuDB, notifier, logger)
 
 	rssGroup := e.Group("/rss")
 	rssGroup.Use(myMiddleware.SetRSSContentType(), myMiddleware.ExtractFeedID())

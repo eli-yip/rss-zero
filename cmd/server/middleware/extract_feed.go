@@ -12,7 +12,7 @@ func ExtractFeedID() echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			feedPath := c.Request().URL.Path
 
-			re := regexp.MustCompile(`(/feed|/rss)?\.com$|\.atom$`)
+			re := regexp.MustCompile(`(/rss|/feed)?(\.com)?(\.atom)?(/rss|/feed)?$`)
 			feedPath = re.ReplaceAllString(feedPath, "")
 
 			feedID := path.Base(feedPath)
