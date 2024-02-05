@@ -113,7 +113,7 @@ func (p *Parser) parsePinContent(content []json.RawMessage, id int, logger *zap.
 			}
 			logger = logger.With(zap.String("url", imageContent.OriginalURL))
 
-			picID := urlToID(imageContent.OriginalURL)
+			picID := URLToID(imageContent.OriginalURL)
 
 			resp, err := p.request.NoLimitStream(imageContent.OriginalURL)
 			if err != nil {
@@ -165,5 +165,5 @@ func (p *Parser) parsePinContent(content []json.RawMessage, id int, logger *zap.
 	}
 
 	text = md.Join(textPart...)
-	return
+	return text, nil
 }
