@@ -11,3 +11,8 @@ func parseTime(s string) (time.Time, error) {
 	const timeLayout = "2006-01-02"
 	return time.Parse(timeLayout, s)
 }
+
+type Resp struct {
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}

@@ -28,6 +28,8 @@ type Config struct {
 	ZsxqTestURL string
 
 	ZhihuEncryptionURL string
+
+	ServerURL string
 }
 
 var C Config
@@ -76,6 +78,8 @@ func readEnv() {
 	C.ZsxqTestURL = getEnv("ZSXQ_TEST_URL")
 
 	C.ZhihuEncryptionURL = getEnv("ZHIHU_ENCRYPTION_URL")
+
+	C.ServerURL = getEnv("SERVER_URL")
 }
 
 func getEnv(key string) string {

@@ -105,6 +105,11 @@ func setupEcho(redisService *redis.RedisService,
 	cookieZsxq := cookieGroup.POST("/zsxq", zsxqHandler.UpdateZsxqCookies)
 	cookieZsxq.Name = "Update cookies route for zsxq"
 
+	apiGroup := e.Group("/api/v1")
+	feedApi := apiGroup.Group("/feed")
+	zhihuFeedApi := feedApi.GET("/zhihu/:id", zhihuHandler.Feed)
+	zhihuFeedApi.Name = "Feed route for zhihu"
+
 	return e
 }
 
