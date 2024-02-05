@@ -11,7 +11,7 @@ func TestStrToInt(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Logf("strToInt(%s) = %d", test, urlToID(test))
+		t.Logf("strToInt(%s) = %d", test, URLToID(test))
 	}
 }
 

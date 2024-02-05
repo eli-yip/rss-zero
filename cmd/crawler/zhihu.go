@@ -102,7 +102,8 @@ func handleZhihu(opt option, logger *zap.Logger) {
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
 	logger.Info("init html to markdown service successfully")
 
-	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, logger)
+	imageParser := parse.NewImageParserOnline(requestService, minioService, zhihuDBService, logger)
+	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, imageParser, logger)
 
 	if opt.zhihu.answer {
 		latestTimeInDB, err := zhihuDBService.GetLatestAnswerTime(opt.zhihu.userID)

@@ -224,7 +224,7 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 		return "", err
 	}
 
-	parser := parse.NewParser(nil, nil, nil, h.db, logger)
+	parser := parse.NewParser(nil, nil, nil, h.db, nil, logger)
 
 	authorName, err = parser.ParseAuthorName(bytes)
 	if err != nil {

@@ -37,7 +37,8 @@ func TestAnswer(t *testing.T) {
 		t.Fatal(err)
 	}
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
-	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, logger)
+	imageParser := NewImageParserOnline(requester, &mockFileService, &mockDBService, logger)
+	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, imageParser, logger)
 	text, err := parser.ParseAnswer(bytes)
 	if err != nil {
 		t.Fatal(err)

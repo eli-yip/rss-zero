@@ -43,7 +43,8 @@ func TestPin(t *testing.T) {
 		t.Fatal(err)
 	}
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
-	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, logger)
+	imageParser := NewImageParserOnline(requester, &mockFileService, &mockDBService, logger)
+	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, imageParser, logger)
 	text, err := parser.ParsePin(bytes)
 	if err != nil {
 		t.Fatal(err)
@@ -64,7 +65,8 @@ func TestPinContent(t *testing.T) {
 		t.Fatal(err)
 	}
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
-	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, logger)
+	imageParser := NewImageParserOnline(requester, &mockFileService, &mockDBService, logger)
+	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, imageParser, logger)
 
 	bytes, err := os.ReadFile(filepath.Join("examples", "pin_with_problem.json"))
 	if err != nil {

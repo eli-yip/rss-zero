@@ -46,7 +46,8 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 
 		htmlToMarkdown := render.NewHTMLToMarkdownService(logger)
 
-		parser := parse.NewParser(htmlToMarkdown, requestService, fileService, dbService, logger)
+		imageParser := parse.NewImageParserOnline(requestService, fileService, dbService, logger)
+		parser := parse.NewParser(htmlToMarkdown, requestService, fileService, dbService, imageParser, logger)
 
 		subs, err := dbService.GetSubs()
 		if err != nil {
