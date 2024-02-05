@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -12,6 +13,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
@@ -24,6 +26,75 @@ func handleZsxq(opt option, logger *zap.Logger) {
 		logger.Fatal("failed to connect database", zap.Error(err))
 	}
 	logger.Info("database connected")
+
+	dbService := zsxqDB.NewZsxqDBService(db)
+	logger.Info("database service initialized")
+
+	if opt.export {
+		if opt.startTime == "" {
+			opt.startTime = "2014-01-01"
+		}
+		startT, err := parseExportTime(opt.startTime)
+		if err != nil {
+			logger.Fatal("fail to parse start time", zap.Error(err))
+		}
+		if opt.endTime == "" {
+			location, _ := time.LoadLocation("Asia/Shanghai")
+			opt.endTime = time.Now().In(location).Format("2006-01-02")
+		}
+		endT, err := parseExportTime(opt.endTime)
+		if err != nil {
+			logger.Fatal("fail to parse end time", zap.Error(err))
+		}
+		endT = endT.Add(24 * time.Hour)
+
+		exportOpt := export.Option{
+			GroupID: opt.zsxq.groupID,
+			Type: func() *string {
+				if opt.zsxq.t == "" {
+					return nil
+				}
+				return &opt.zsxq.t
+			}(),
+			Digested: func() *bool {
+				if opt.zsxq.digest {
+					return &opt.zsxq.digest
+				}
+				return nil
+			}(),
+			AuthorName: func() *string {
+				if opt.zsxq.author == "" {
+					return nil
+				}
+				return &opt.zsxq.author
+			}(),
+			StartTime: startT,
+			EndTime:   endT,
+		}
+
+		mr := render.NewMarkdownRenderService(dbService, logger)
+		exportService := export.NewExportService(dbService, mr)
+
+		fileName := exportService.FileName(exportOpt)
+		logger.Info("export file name", zap.String("file_name", fileName))
+
+		file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+		if err != nil {
+			logger.Fatal("fail to open file", zap.Error(err))
+		}
+		defer file.Close()
+
+		if err = exportService.Export(file, exportOpt); err != nil {
+			logger.Fatal("fail to export", zap.Error(err))
+		}
+		return
+	}
+
+	fileService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
+	if err != nil {
+		logger.Fatal("failed to initialize file service", zap.Error(err))
+	}
+	logger.Info("file service initialized")
 
 	redisService, err := redis.NewRedisService(config.C.RedisAddr, "", config.C.RedisDB)
 	if err != nil {
@@ -40,17 +111,8 @@ func handleZsxq(opt option, logger *zap.Logger) {
 	}
 	logger.Info("cookies fetched", zap.String("cookies", cookies))
 
-	dbService := zsxqDB.NewZsxqDBService(db)
-	logger.Info("database service initialized")
-
 	requestService := request.NewRequestService(cookies, redisService, logger)
 	logger.Info("request service initialized")
-
-	fileService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
-	if err != nil {
-		logger.Fatal("failed to initialize file service", zap.Error(err))
-	}
-	logger.Info("file service initialized")
 
 	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
 	logger.Info("ai service initialized",

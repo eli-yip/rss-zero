@@ -30,7 +30,12 @@ type zhihuOption struct {
 	dC0     string
 }
 
-type zsxqOption struct{ groupID int }
+type zsxqOption struct {
+	groupID int
+	t       string
+	digest  bool
+	author  string
+}
 
 func main() {
 	logger := log.NewLogger()
@@ -72,6 +77,9 @@ func parseArgs() (opt option, err error) {
 	dC0 := flag.String("d_c0", "", "d_c0 cookie")
 
 	groupID := flag.Int("group", 0, "group id")
+	authorID := flag.String("author", "", "author id")
+	t := flag.String("type", "", "type")
+	digest := flag.Bool("digest", false, "digest")
 
 	export := flag.Bool("export", false, "whether to export")
 	startTime := flag.String("start", "", "start time")
@@ -142,6 +150,9 @@ func parseArgs() (opt option, err error) {
 		} else if *groupID != 0 {
 			opt.zsxq = &zsxqOption{}
 			opt.zsxq.groupID = *groupID
+			opt.zsxq.author = *authorID
+			opt.zsxq.t = *t
+			opt.zsxq.digest = *digest
 		} else {
 			return option{}, errors.New("user id or group id is required")
 		}
