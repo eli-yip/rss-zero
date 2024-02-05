@@ -10,6 +10,8 @@ import (
 	"github.com/yuin/goldmark/extension"
 )
 
+var defaultTime = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+
 type RSS struct {
 	ID         int    // unique id of zhihu item
 	Link       string // link to zhihu item
@@ -22,6 +24,7 @@ type RSS struct {
 
 type RSSRender interface {
 	Render(t string, rs []RSS) (string, error)
+	RenderEmpty(t string, authorID string, authorName string) (string, error)
 }
 
 type RSSRenderService struct{ goldmark.Markdown }
@@ -38,6 +41,41 @@ const (
 	TypeArticle
 	TypePin
 )
+
+func (r *RSSRenderService) RenderEmpty(t int, authorID string, authorName string) (path string, rss string, err error) {
+	var tt string
+	switch t {
+	case TypeAnswer:
+		path = "zhihu_rss_answer_%s"
+		tt = "回答"
+	case TypeArticle:
+		path = "zhihu_rss_article_%s"
+		tt = "文章"
+	case TypePin:
+		path = "zhihu_rss_pin_%s"
+		tt = "想法"
+	}
+
+	var te string
+	switch t {
+	case TypeAnswer:
+		te = "answers"
+	case TypeArticle:
+		te = "posts"
+	case TypePin:
+		te = "pins"
+	}
+
+	rssFeed := &feeds.Feed{
+		Title:   authorName + "的知乎" + tt,
+		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", authorID, te)},
+		Created: defaultTime,
+		Updated: defaultTime,
+	}
+
+	content, err := rssFeed.ToAtom()
+	return fmt.Sprintf(path, authorID), content, err
+}
 
 // t: "answers", "posts", "pins"
 func (r *RSSRenderService) Render(t int, rs []RSS) (rss string, err error) {
