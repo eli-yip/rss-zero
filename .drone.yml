@@ -50,7 +50,12 @@ steps:
         from_secret: docker_username
       DOCKER_PASSWORD:
         from_secret: docker_password
+      DOCKER_HUB_USERNAME:
+        from_secret: docker_hub_username
+      DOCKER_HUB_TOKEN:
+        from_secret: docker_hub_token
     commands:
+      - echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin
       - echo $DOCKER_PASSWORD | docker login $${DOCKER_REPO} -u $DOCKER_USERNAME --password-stdin
       - docker build -t "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}" -f docker/Dockerfile.server .
       - docker tag "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}" $${DOCKER_REPO}/rss-zero:latest
