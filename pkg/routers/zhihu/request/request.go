@@ -132,6 +132,11 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 					return nil, ErrNeedLogin
 				}
 			}
+			if resp.StatusCode == http.StatusNotFound {
+				logger.Error("404 not found")
+				resp.Body.Close()
+				return nil, ErrUnreachable
+			}
 			logger.Error("status code error", zap.Int("status_code", resp.StatusCode))
 			resp.Body.Close()
 			continue

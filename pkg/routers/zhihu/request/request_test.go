@@ -26,7 +26,7 @@ func TestLimitRaw(t *testing.T) {
 	singleAnswerURL := fmt.Sprintf("https://api.zhihu.com/answers/3375497152?include=%s", escaped)
 
 	urls := []string{
-		"https://api.zhihu.com/people/canglimo",
+		"https://api.zhihu.com/people/9988eli000-98",
 		answerListURL,
 		"https://www.zhihu.com/api/v4/members/canglimo/articles?offset=0&limit=20",
 		singleAnswerURL,
@@ -35,8 +35,11 @@ func TestLimitRaw(t *testing.T) {
 	}
 
 	for _, u := range urls {
-		if _, err := reqService.LimitRaw(u); err != nil {
+		if b, err := reqService.LimitRaw(u); err != nil {
 			t.Error(err)
+		} else {
+			fmt.Println(string(b))
+			break
 		}
 	}
 }

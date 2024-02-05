@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -22,6 +23,10 @@ func (h *ZhihuController) AnswerRSS(c echo.Context) (err error) {
 	logger.Info("authorID", zap.String("authorID", authorID))
 
 	if err = h.checkSub(rss.TypeAnswer, authorID, logger); err != nil {
+		if errors.Is(err, errAuthorNotFound) {
+			logger.Error("author not found", zap.String("authorID", authorID))
+			return c.String(http.StatusNotFound, "author not found")
+		}
 		logger.Error("failed to check sub", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "failed to check sub")
 	}
@@ -45,6 +50,10 @@ func (h *ZhihuController) ArticleRSS(c echo.Context) (err error) {
 	logger.Info("authorID", zap.String("authorID", authorID))
 
 	if err := h.checkSub(rss.TypeArticle, authorID, logger); err != nil {
+		if errors.Is(err, errAuthorNotFound) {
+			logger.Error("author not found", zap.String("authorID", authorID))
+			return c.String(http.StatusNotFound, "author not found")
+		}
 		logger.Error("failed to check sub", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "failed to check sub")
 	}
@@ -67,6 +76,10 @@ func (h *ZhihuController) PinRSS(c echo.Context) (err error) {
 	logger.Info("authorID", zap.String("authorID", authorID))
 
 	if err := h.checkSub(rss.TypePin, authorID, logger); err != nil {
+		if errors.Is(err, errAuthorNotFound) {
+			logger.Error("author not found", zap.String("authorID", authorID))
+			return c.String(http.StatusNotFound, "author not found")
+		}
 		logger.Error("failed to check sub", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "failed to check sub")
 	}
@@ -192,6 +205,8 @@ func (h *ZhihuController) checkSub(t int, authorID string, logger *zap.Logger) (
 	return nil
 }
 
+var errAuthorNotFound = errors.New("author not found")
+
 func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (authorName string, err error) {
 	requestService, err := request.NewRequestService(nil, logger)
 	if err != nil {
@@ -201,6 +216,10 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 
 	bytes, err := requestService.LimitRaw("https://api.zhihu.com/people/" + authorID)
 	if err != nil {
+		if errors.Is(err, request.ErrUnreachable) {
+			logger.Error("author not found", zap.String("authorID", authorID))
+			return "", errAuthorNotFound
+		}
 		logger.Error("failed to get author name", zap.Error(err))
 		return "", err
 	}
