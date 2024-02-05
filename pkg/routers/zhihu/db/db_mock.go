@@ -107,3 +107,15 @@ func (d *MockDB) CountPin(authorID string) (int, error) {
 func (d *MockDB) CheckSub(authorID string, subType int) (bool, error) {
 	return false, nil
 }
+
+func (d *MockDB) FetchNAnswersBeforeTime(n int, t time.Time, userID string) (as []Answer, err error) {
+	return nil, nil
+}
+
+func (d *MockDB) FetchNArticlesBeforeTime(n int, t time.Time, authorID string) (as []Article, err error) {
+	return nil, nil
+}
+
+func (d *MockDB) FetchNPinsBeforeTime(n int, t time.Time, authorID string) (ps []Pin, err error) {
+	return nil, nil
+}

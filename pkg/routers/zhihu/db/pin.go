@@ -22,6 +22,7 @@ type DBPin interface {
 	GetLatestPinTime(userID string) (time.Time, error)
 	FetchNPin(n int, opt FetchPinOption) (ps []Pin, err error)
 	CountPin(authorID string) (int, error)
+	FetchNPinsBeforeTime(n int, t time.Time, authorID string) (ps []Pin, err error)
 }
 
 func (d *DBService) SavePin(p *Pin) error { return d.Save(p).Error }
@@ -32,6 +33,11 @@ func (d *DBService) GetLatestNPin(n int, authorID string) ([]Pin, error) {
 		return nil, err
 	}
 	return ps, nil
+}
+
+func (d *DBService) FetchNPinsBeforeTime(n int, t time.Time, authorID string) (ps []Pin, err error) {
+	err = d.Where("author_id = ? and create_at < ?", authorID, t).Order("create_at desc").Limit(n).Find(&ps).Error
+	return ps, err
 }
 
 func (d *DBService) GetLatestPinTime(userID string) (time.Time, error) {

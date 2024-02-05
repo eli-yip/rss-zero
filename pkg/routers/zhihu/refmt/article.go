@@ -38,13 +38,7 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 		}
 
 		var articles []db.Article
-		if articles, err = s.db.FetchNArticle(defaultFetchLimit, db.FetchArticleOption{
-			FetchOptionBase: db.FetchOptionBase{
-				UserID:    &authorID,
-				StartTime: time.Time{},
-				EndTime:   latestTime,
-			},
-		}); err != nil {
+		if articles, err = s.db.FetchNArticlesBeforeTime(defaultFetchLimit, latestTime, authorID); err != nil {
 			s.logger.Info("fail to fetch article from db",
 				zap.Error(err), zap.String("author_id", authorID),
 				zap.Time("end_time", latestTime), zap.Int("limit", defaultFetchLimit))

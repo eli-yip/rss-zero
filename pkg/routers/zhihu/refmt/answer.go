@@ -39,12 +39,7 @@ func (s *RefmtService) refmtAnswer(authorID string) (err error) {
 
 		var answers []db.Answer
 		// fetch answer before latestTime
-		if answers, err = s.db.FetchNAnswer(defaultFetchLimit, db.FetchAnswerOption{
-			FetchOptionBase: db.FetchOptionBase{
-				UserID:    &authorID,
-				StartTime: time.Time{},
-				EndTime:   latestTime,
-			}}); err != nil {
+		if answers, err = s.db.FetchNAnswersBeforeTime(defaultFetchLimit, latestTime, authorID); err != nil {
 			s.logger.Info("fail to fetch answer from db", zap.String("author_id", authorID),
 				zap.Error(err), zap.Time("end_time", latestTime))
 		}

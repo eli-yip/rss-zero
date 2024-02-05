@@ -20,6 +20,7 @@ type DBAnswer interface {
 	// GetQuestion get question info from zhihu_question table
 	GetQuestion(id int) (*Question, error)
 	CountAnswer(userID string) (int, error)
+	FetchNAnswersBeforeTime(n int, t time.Time, userID string) ([]Answer, error)
 }
 
 type FetchAnswerOption struct {
@@ -78,6 +79,11 @@ func (d *DBService) GetLatestNAnswer(n int, userID string) ([]Answer, error) {
 		return nil, err
 	}
 	return as, nil
+}
+
+func (d *DBService) FetchNAnswersBeforeTime(n int, t time.Time, userID string) (as []Answer, err error) {
+	err = d.Where("author_id = ? and create_at < ?", userID, t).Order("create_at desc").Limit(n).Find(&as).Error
+	return as, err
 }
 
 func (d *DBService) CountAnswer(userID string) (int, error) {

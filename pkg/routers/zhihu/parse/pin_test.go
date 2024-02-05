@@ -55,7 +55,7 @@ func TestPin(t *testing.T) {
 }
 
 func TestPinContent(t *testing.T) {
-	t.Log("Test PinList Parse")
+	t.Log("Test Pin Content Parse")
 	config.InitFromEnv()
 	mockFileService := file.MockMinio{}
 	mockDBService := zhihuDB.MockDB{}

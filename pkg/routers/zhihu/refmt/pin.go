@@ -35,6 +35,7 @@ func (s *RefmtService) refmtPin(authorID string) (err error) {
 	var wg sync.WaitGroup
 	var count int64
 	idSet := mapset.NewSet[int]()
+
 	for {
 		if latestTime.Before(longLongAgo) {
 			s.logger.Info("latest time long long ago, break")
@@ -42,13 +43,7 @@ func (s *RefmtService) refmtPin(authorID string) (err error) {
 		}
 
 		var pins []db.Pin
-		if pins, err = s.db.FetchNPin(defaultFetchLimit, db.FetchPinOption{
-			FetchOptionBase: db.FetchOptionBase{
-				UserID:    &authorID,
-				StartTime: time.Time{},
-				EndTime:   latestTime,
-			},
-		}); err != nil {
+		if pins, err = s.db.FetchNPinsBeforeTime(defaultFetchLimit, latestTime, authorID); err != nil {
 			s.logger.Info("fail to fetch pin from db",
 				zap.Error(err), zap.String("author_id", authorID),
 				zap.Time("end_time", latestTime), zap.Int("limit", defaultFetchLimit))
@@ -75,7 +70,7 @@ func (s *RefmtService) refmtPin(authorID string) (err error) {
 				logger.Info("start to format pin")
 
 				var pin apiModels.Pin
-				if err := json.Unmarshal(p.Raw, &pin); err != nil {
+				if err = json.Unmarshal(p.Raw, &pin); err != nil {
 					logger.Error("fail to unmarshal pin", zap.Error(err))
 					return
 				}
@@ -152,7 +147,8 @@ func (s *RefmtService) parsePinContent(content []json.RawMessage, logger *zap.Lo
 			picID := parse.URLToID(imageContent.OriginalURL)
 			object, err := s.db.GetObjectInfo(picID)
 			if err != nil {
-				logger.Error("fail to get object info from db", zap.Error(err))
+				logger.Error("fail to get object info from db",
+					zap.Error(err), zap.Int("pic_id", picID))
 				return "", err
 			}
 
