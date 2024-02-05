@@ -13,6 +13,7 @@ import (
 type option struct {
 	crawl     bool
 	backtrack bool
+	refmt     bool
 
 	export    bool
 	startTime string
@@ -58,7 +59,12 @@ func main() {
 	}
 
 	if opt.zhihu != nil {
-		handleZhihu(opt, logger)
+		if !opt.refmt {
+			handleZhihu(opt, logger)
+		}
+		if opt.refmt {
+			refmtZhihu(opt, logger)
+		}
 	}
 
 	if opt.zsxq != nil {
@@ -85,10 +91,22 @@ func parseArgs() (opt option, err error) {
 	startTime := flag.String("start", "", "start time")
 	endTime := flag.String("end", "", "end time")
 
+	refmt := flag.Bool("refmt", false, "whether to refmt")
+
 	flag.Parse()
 
-	if *export && *crawl {
-		return option{}, errors.New("export type and parse type can't be set at the same time")
+	setFlag := 0
+	if *crawl {
+		setFlag++
+	}
+	if *export {
+		setFlag++
+	}
+	if *refmt {
+		setFlag++
+	}
+	if setFlag != 1 {
+		return option{}, errors.New("only support one of crawl, export and refmt")
 	}
 
 	if *crawl {
@@ -160,6 +178,29 @@ func parseArgs() (opt option, err error) {
 		opt.export = true
 		opt.startTime = *startTime
 		opt.endTime = *endTime
+		return opt, nil
+	}
+
+	if *refmt {
+		if *userID == "" && *groupID == 0 {
+			return option{}, errors.New("user id or group id is required")
+		}
+
+		if *userID != "" && *groupID != 0 {
+			return option{}, errors.New("user id and group id can't be set at the same time")
+		}
+
+		if *userID != "" {
+			opt.zhihu = &zhihuOption{}
+			opt.zhihu.userID = *userID
+		}
+
+		if *groupID != 0 {
+			opt.zsxq = &zsxqOption{}
+			opt.zsxq.groupID = *groupID
+		}
+
+		opt.refmt = true
 		return opt, nil
 	}
 

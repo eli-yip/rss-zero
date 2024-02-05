@@ -8,10 +8,12 @@ import (
 	zhihuCrawl "github.com/eli-yip/rss-zero/internal/crawl/zhihu"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/refmt"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"go.uber.org/zap"
@@ -164,4 +166,30 @@ func handleZhihu(opt option, logger *zap.Logger) {
 			logger.Fatal("fail to crawl pin", zap.Error(err))
 		}
 	}
+}
+
+func refmtZhihu(opt option, logger *zap.Logger) {
+	db, err := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
+	if err != nil {
+		logger.Fatal("fail to connect database", zap.Error(err))
+	}
+	logger.Info("init database successfully")
+
+	zhihuDBService := zhihuDB.NewDBService(db)
+	logger.Info("init zhihu db service successfully")
+
+	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
+	logger.Info("init html to markdown service successfully")
+
+	imageParser := parse.NewImageParserOffline(zhihuDBService, logger)
+	logger.Info("init image parser successfully")
+
+	notifyService := notify.NewBarkNotifier(config.C.BarkURL)
+
+	refmtService := refmt.NewRefmtService(logger, zhihuDBService, htmlToMarkdownService, imageParser, notifyService, md.NewMarkdownFormatter())
+	logger.Info("init re-fmt service successfully")
+
+	refmtService.ReFmt(opt.zhihu.userID)
+
+	logger.Info("re-fmt doen")
 }
