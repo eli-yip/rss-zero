@@ -13,20 +13,17 @@ import (
 // CrawlPin crawl zhihu pins
 // user: user url token
 // targetTime: the time to stop crawling
-// pinURL: the url of the pin list, useful when continue to crawl
+// offset: number of pins have been crawled
+// set it to 0 if you want to crawl pins from the beginning
 // oneTime: if true, only crawl one time
 func CrawlPin(user string, request request.Requester, parser *parse.Parser,
-	targetTime time.Time, pinURL string, oneTime bool, logger *zap.Logger) (err error) {
+	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	logger.Info("start to crawl zhihu pins", zap.String("user url token", user))
 
 	next := ""
-	if pinURL != "" {
-		next = pinURL
-	} else {
-		const urlLayout = "https://www.zhihu.com/api/v4/members/%s/pins"
-		next = fmt.Sprintf(urlLayout, user)
-		next = fmt.Sprintf("%s?%s", next, "offset=0&limit=20&sort_by=created")
-	}
+	const urlLayout = "https://www.zhihu.com/api/v4/members/%s/pins"
+	next = fmt.Sprintf(urlLayout, user)
+	next = fmt.Sprintf("%s?%s", next, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
 
 	index := 0
 	total1 := 0

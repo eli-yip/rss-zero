@@ -12,20 +12,17 @@ import (
 // CrawlArticle crawl zhihu articles
 // user: user url token
 // targetTime: the time to stop crawling
-// articleURL: the url of the article list, useful when continue to crawl
+// offset: number of articles have been crawled
+// set it to 0 if you want to crawl articles from the beginning
 // oneTime: if true, only crawl one time
 func CrawlArticle(user string, request request.Requester, parser *parse.Parser,
-	targetTime time.Time, articleURL string, oneTime bool, logger *zap.Logger) (err error) {
+	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	logger.Info("start to crawl zhihu articles", zap.String("user url token", user))
 
 	next := ""
-	if articleURL != "" {
-		next = articleURL
-	} else {
-		const urlLayout = "https://www.zhihu.com/api/v4/members/%s/articles"
-		next = fmt.Sprintf(urlLayout, user)
-		next = fmt.Sprintf("%s?%s", next, "offset=0&limit=20&sort_by=created")
-	}
+	const urlLayout = "https://www.zhihu.com/api/v4/members/%s/articles"
+	next = fmt.Sprintf(urlLayout, user)
+	next = fmt.Sprintf("%s?%s", next, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
 
 	index := 0
 	total1 := 0

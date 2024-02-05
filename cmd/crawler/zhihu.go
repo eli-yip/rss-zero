@@ -111,11 +111,15 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		}
 		logger.Info("get latest answer time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
-		if opt.zhihu.answerURL != "" {
+		if opt.backtrack {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
 		}
+		answerCount, err := zhihuDBService.CountAnswer(opt.zhihu.userID)
+		if err != nil {
+			logger.Fatal("fail to count answer", zap.Error(err))
+		}
 		if err = zhihuCrawl.CrawlAnswer(opt.zhihu.userID, requestService, parser,
-			latestTimeInDB, opt.zhihu.answerURL, false, logger); err != nil {
+			latestTimeInDB, answerCount, false, logger); err != nil {
 			logger.Fatal("fail to crawl answer", zap.Error(err))
 		}
 	}
@@ -127,11 +131,15 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		}
 		logger.Info("get latest article time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
-		if opt.zhihu.articleURL != "" {
+		if opt.backtrack {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
 		}
+		articleCount, err := zhihuDBService.CountArticle(opt.zhihu.userID)
+		if err != nil {
+			logger.Fatal("fail to count article", zap.Error(err))
+		}
 		if err = zhihuCrawl.CrawlArticle(opt.zhihu.userID, requestService, parser,
-			latestTimeInDB, opt.zhihu.articleURL, false, logger); err != nil {
+			latestTimeInDB, articleCount, false, logger); err != nil {
 			logger.Fatal("fail to crawl article", zap.Error(err))
 		}
 	}
@@ -143,11 +151,15 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		}
 		logger.Info("get latest pin time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
-		if opt.zhihu.pinURL != "" {
+		if opt.backtrack {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
 		}
+		pinCount, err := zhihuDBService.CountPin(opt.zhihu.userID)
+		if err != nil {
+			logger.Fatal("fail to count pin", zap.Error(err))
+		}
 		if err = zhihuCrawl.CrawlPin(opt.zhihu.userID, requestService, parser,
-			latestTimeInDB, opt.zhihu.pinURL, false, logger); err != nil {
+			latestTimeInDB, pinCount, false, logger); err != nil {
 			logger.Fatal("fail to crawl pin", zap.Error(err))
 		}
 	}

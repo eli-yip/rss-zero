@@ -69,12 +69,12 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 				}
 				if len(answers) == 0 {
 					logger.Info("no answer found")
-					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, longLongago, "", true, logger); err != nil {
+					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, longLongago, 0, true, logger); err != nil {
 						logger.Error("failed to crawl answer", zap.Error(err))
 						continue
 					}
 				} else {
-					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, answers[0].CreateAt, "", false, logger); err != nil {
+					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, answers[0].CreateAt, 0, false, logger); err != nil {
 						logger.Error("failed to crawl answer", zap.Error(err))
 						continue
 					}
@@ -97,12 +97,12 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 				}
 				if len(articles) == 0 {
 					logger.Info("no article found")
-					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, longLongago, "", true, logger); err != nil {
+					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, longLongago, 0, true, logger); err != nil {
 						logger.Error("failed to crawl article", zap.Error(err))
 						continue
 					}
 				} else {
-					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, articles[0].CreateAt, "", false, logger); err != nil {
+					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, articles[0].CreateAt, 0, false, logger); err != nil {
 						logger.Error("failed to crawl article", zap.Error(err))
 						continue
 					}
@@ -125,12 +125,12 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 				}
 				if len(pins) == 0 {
 					logger.Info("no pin found")
-					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, longLongago, "", true, logger); err != nil {
+					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, longLongago, 0, true, logger); err != nil {
 						logger.Error("failed to crawl pin", zap.Error(err))
 						continue
 					}
 				} else {
-					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, pins[0].CreateAt, "", false, logger); err != nil {
+					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, pins[0].CreateAt, 0, false, logger); err != nil {
 						logger.Error("failed to crawl pin", zap.Error(err))
 						continue
 					}

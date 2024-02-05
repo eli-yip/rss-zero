@@ -11,7 +11,8 @@ import (
 )
 
 type option struct {
-	crawl bool
+	crawl     bool
+	backtrack bool
 
 	export    bool
 	startTime string
@@ -22,14 +23,11 @@ type option struct {
 }
 
 type zhihuOption struct {
-	userID     string
-	answer     bool
-	article    bool
-	pin        bool
-	answerURL  string
-	articleURL string
-	pinURL     string
-	dC0        string
+	userID  string
+	answer  bool
+	article bool
+	pin     bool
+	dC0     string
 }
 
 type zsxqOption struct{ groupID int }
@@ -70,9 +68,7 @@ func parseArgs() (opt option, err error) {
 	answer := flag.Bool("answer", false, "answer")
 	article := flag.Bool("article", false, "article")
 	pin := flag.Bool("pin", false, "pin")
-	answerURL := flag.String("answer_url", "", "answer url")
-	articleURL := flag.String("article_url", "", "article url")
-	pinURL := flag.String("pin_url", "", "pin url")
+	backtrack := flag.Bool("backtrack", false, "whether to backtrack")
 	dC0 := flag.String("d_c0", "", "d_c0 cookie")
 
 	groupID := flag.Int("group", 0, "group id")
@@ -99,13 +95,11 @@ func parseArgs() (opt option, err error) {
 			opt.zhihu = &zhihuOption{}
 
 			opt.crawl = true
+			opt.backtrack = *backtrack
 			opt.zhihu.userID = *userID
 			opt.zhihu.answer = *answer
 			opt.zhihu.article = *article
 			opt.zhihu.pin = *pin
-			opt.zhihu.answerURL = *answerURL
-			opt.zhihu.articleURL = *articleURL
-			opt.zhihu.pinURL = *pinURL
 			opt.zhihu.dC0 = *dC0
 
 			return opt, nil
@@ -115,6 +109,7 @@ func parseArgs() (opt option, err error) {
 			opt.zsxq = &zsxqOption{}
 
 			opt.crawl = true
+			opt.backtrack = *backtrack
 			opt.zsxq.groupID = *groupID
 			return opt, nil
 		}
