@@ -143,10 +143,10 @@ func (s *RefmtService) ReFmt(gid int) {
 				// get author name from db
 				authorName, err := s.db.GetAuthorName(topic.AuthorID)
 				if err != nil {
-					s.logger.Error("failed to get author name", zap.Error(err))
+					logger.Error("failed to get author name", zap.Error(err))
 					return
 				}
-				s.logger.Info("author name fetched", zap.String("author_name", authorName))
+				logger.Info("author name fetched", zap.String("author_name", authorName))
 
 				// render topic
 				textBytes, err := s.mdRender.ToText(&render.Topic{
@@ -158,10 +158,10 @@ func (s *RefmtService) ReFmt(gid int) {
 					AuthorName: authorName,
 				})
 				if err != nil {
-					s.logger.Error("failed to render topic", zap.Error(err))
+					logger.Error("failed to render topic", zap.Error(err))
 					return
 				}
-				s.logger.Info("render topic successfully")
+				logger.Info("render topic successfully")
 
 				// update topic
 				if err := s.db.SaveTopic(&zsxqDBModels.Topic{
@@ -175,11 +175,11 @@ func (s *RefmtService) ReFmt(gid int) {
 					Text:      string(textBytes),
 					Raw:       topic.Raw,
 				}); err != nil {
-					s.logger.Error("failed to update topic", zap.Error(err))
+					logger.Error("failed to update topic", zap.Error(err))
 					return
 				}
-				s.logger.Info("update topic in db successfully")
-				s.logger.Info("format topic successfully")
+				logger.Info("update topic in db successfully")
+				logger.Info("format topic successfully")
 			}(i, &topic)
 		}
 	}
