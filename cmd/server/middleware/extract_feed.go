@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"path"
 	"regexp"
 
 	"github.com/labstack/echo/v4"
@@ -10,12 +9,10 @@ import (
 func ExtractFeedID() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			feedPath := c.Request().URL.Path
+			feedID := c.Param("feed")
 
 			re := regexp.MustCompile(`(/rss|/feed)?(\.com)?(\.atom)?(/rss|/feed)?$`)
-			feedPath = re.ReplaceAllString(feedPath, "")
-
-			feedID := path.Base(feedPath)
+			feedID = re.ReplaceAllString(feedID, "")
 
 			c.Set("feed_id", feedID)
 

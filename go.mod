@@ -6,6 +6,7 @@ require (
 	github.com/JohannesKaufmann/html-to-markdown v1.5.0
 	github.com/Kunde21/markdownfmt/v3 v3.1.0
 	github.com/PuerkitoBio/goquery v1.8.1
+	github.com/brpaz/echozap v1.1.3
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/go-co-op/gocron/v2 v2.2.2
@@ -18,6 +19,7 @@ require (
 	github.com/sashabaranov/go-openai v1.19.2
 	github.com/stretchr/testify v1.8.4
 	github.com/yuin/goldmark v1.6.0
+	github.com/brpaz/echozap v1.1.3
 	go.uber.org/zap v1.26.0
 	golang.org/x/net v0.20.0
 	gorm.io/driver/postgres v1.5.4

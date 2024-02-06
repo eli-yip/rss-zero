@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/brpaz/echozap"
 	"github.com/eli-yip/rss-zero/cmd/server/controller"
 	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/config"
@@ -43,6 +44,8 @@ func main() {
 	logger.Info("db initialized")
 
 	bark := notify.NewBarkNotifier(config.C.BarkURL)
+	logger.Info("bark notifier initialized")
+
 	setupCron(logger, redisService, db, bark)
 	logger.Info("cron service initialized")
 
@@ -52,6 +55,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	go func() {
+		logger.Info("start server", zap.String("address", ":8080"))
 		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal("shutting down the server")
 		}
@@ -63,63 +67,109 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
+
+	logger.Info("server shutdown")
 }
 
 func setupEcho(redisService *redis.RedisService,
 	db *gorm.DB,
 	notifier notify.Notifier,
-	logger *zap.Logger) *echo.Echo {
-	e := echo.New()
+	logger *zap.Logger) (e *echo.Echo) {
+	e = echo.New()
 	e.HideBanner = true
 	e.IPExtractor = echo.ExtractIPFromXFFHeader(
 		echo.TrustIPRange(func(ip string) *net.IPNet {
 			_, ipNet, _ := net.ParseCIDR(ip)
 			return ipNet
-		}("172.0.0.0/8")),
+		}("172.0.0.0/8")), // trust docker network
 	)
-	e.Use(middleware.RequestID(), middleware.Recover(),
-		myMiddleware.LogRequest(logger), myMiddleware.InjectLogger(logger))
+	e.Use(
+		echozap.ZapLogger(logger),         // use zap for echo logger
+		middleware.RequestID(),            // add request id
+		middleware.Recover(),              // recover from panic
+		myMiddleware.LogRequest(logger),   // log request
+		myMiddleware.InjectLogger(logger), // inject logger to context
+	)
 
 	zsxqHandler := controller.NewZsxqHandler(redisService, db, notifier, logger)
-	zhihuDB := zhihuDB.NewDBService(db)
-	zhihuHandler := controller.NewZhihuHandler(redisService, zhihuDB, notifier, logger)
 
+	zhihuDBService := zhihuDB.NewDBService(db)
+	zhihuHandler := controller.NewZhihuHandler(redisService, zhihuDBService, notifier, logger)
+
+	// /rss
 	rssGroup := e.Group("/rss")
-	rssGroup.Use(myMiddleware.SetRSSContentType(), myMiddleware.ExtractFeedID())
-	rssZsxq := rssGroup.GET("/zsxq/:id", zsxqHandler.RSS)
-	rssZsxq.Name = "RSS route for zsxq"
+	rssGroup.Use(
+		myMiddleware.SetRSSContentType(), // set content type to application/atom+xml
+		myMiddleware.ExtractFeedID(),     // extract feed id from url and set it to context
+	)
+
+	// /rss/zsxq/:feed
+	rssZsxq := rssGroup.GET("/zsxq/:feed", zsxqHandler.RSS)
+	rssZsxq.Name = "RSS route for zsxq group"
+
+	// /rss/zhihu/:feed
 	rssZhihu := rssGroup.Group("/zhihu")
-	rssZhihuAnswer := rssZhihu.GET("/answer/:id", zhihuHandler.AnswerRSS)
+	// /rss/zhihu/answer/:feed
+	rssZhihuAnswer := rssZhihu.GET("/answer/:feed", zhihuHandler.AnswerRSS)
 	rssZhihuAnswer.Name = "RSS route for zhihu answer"
-	rssZhihuArticle := rssZhihu.GET("/article/:id", zhihuHandler.ArticleRSS)
+	// /rss/zhihu/article/:feed
+	rssZhihuArticle := rssZhihu.GET("/article/:feed", zhihuHandler.ArticleRSS)
 	rssZhihuArticle.Name = "RSS route for zhihu article"
-	rssZhihuPin := rssZhihu.GET("/pin/:id", zhihuHandler.PinRSS)
+	// /rss/zhihu/pin/:feed
+	rssZhihuPin := rssZhihu.GET("/pin/:feed", zhihuHandler.PinRSS)
 	rssZhihuPin.Name = "RSS route for zhihu pin"
 
-	exportGroup := e.Group("/export")
-	exportZsxq := exportGroup.POST("/zsxq", zsxqHandler.Export)
-	exportZsxq.Name = "Export route for zsxq"
-	exportZhihu := exportGroup.POST("/zhihu", zhihuHandler.Export)
-	exportZhihu.Name = "Export route for zhihu"
-
-	refmtGroup := e.Group("/refmt")
-	refmtZsxq := refmtGroup.POST("/zsxq", zsxqHandler.Refmt)
-	refmtZsxq.Name = "Re-format route for zsxq"
-	refmtZhihu := refmtGroup.POST("/zhihu", zhihuHandler.Refmt)
-	refmtZhihu.Name = "Re-format route for zhihu"
-
-	cookieGroup := e.Group("/cookie")
-	cookieZsxq := cookieGroup.POST("/zsxq", zsxqHandler.UpdateZsxqCookies)
-	cookieZsxq.Name = "Update cookies route for zsxq"
-
+	// /api/v1
 	apiGroup := e.Group("/api/v1")
+
+	// /api/v1/feed
 	feedApi := apiGroup.Group("/feed")
+	// /api/v1/feed/zhihu/:id
 	zhihuFeedApi := feedApi.GET("/zhihu/:id", zhihuHandler.Feed)
 	zhihuFeedApi.Name = "Feed route for zhihu"
+
+	// /api/v1/cookie
+	cookieApi := apiGroup.Group("/cookie")
+	// /api/v1/cookie/zsxq
+	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateZsxqCookies)
+	zsxqCookieApi.Name = "Update cookies route for zsxq"
+
+	// /api/v1/refmt
+	refmtApi := apiGroup.Group("/refmt")
+	// /api/v1/refmt/zsxq
+	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Refmt)
+	refmtZsxqApi.Name = "Re-format route for zsxq"
+	// /api/v1/refmt/zhihu
+	refmtZhihuApi := refmtApi.POST("/zhihu", zhihuHandler.Refmt)
+	refmtZhihuApi.Name = "Re-format route for zhihu"
+
+	// /api/v1/export
+	exportApi := apiGroup.Group("/export")
+	// /api/v1/export/zsxq
+	exportZsxqApi := exportApi.POST("/zsxq", zsxqHandler.Export)
+	exportZsxqApi.Name = "Export route for zsxq"
+	// /api/v1/export/zhihu
+	exportZhihuApi := exportApi.POST("/zhihu", zhihuHandler.Export)
+	exportZhihuApi.Name = "Export route for zhihu"
+
+	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, struct {
+			Status string `json:"status"`
+		}{Status: "ok"})
+	})
+	healthEndpoint.Name = "Health check route"
+
+	// iterate all routes and log them
+	for _, r := range e.Routes() {
+		logger.Info("route",
+			zap.String("name", r.Name),
+			zap.String("path", r.Path))
+	}
 
 	return e
 }
 
+// setupCron sets up cron jobs
 func setupCron(logger *zap.Logger, redisService *redis.RedisService, db *gorm.DB, notifier notify.Notifier) {
 	type cronFunc func(*redis.RedisService, *gorm.DB, notify.Notifier) func()
 	cronFuncs := []cronFunc{
