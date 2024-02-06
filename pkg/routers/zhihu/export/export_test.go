@@ -16,7 +16,7 @@ func TestExport(t *testing.T) {
 	t.Log("TestExport")
 
 	config.InitFromEnv()
-	db, err := db.NewDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.DB)
 	if err != nil {
 		t.Fatal(err)
 	}

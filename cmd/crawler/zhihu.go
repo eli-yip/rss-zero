@@ -20,7 +20,7 @@ import (
 )
 
 func handleZhihu(opt option, logger *zap.Logger) {
-	db, err := db.NewDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.DB)
 	if err != nil {
 		logger.Fatal("fail to connect database", zap.Error(err))
 	}
@@ -180,7 +180,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 }
 
 func refmtZhihu(opt option, logger *zap.Logger) {
-	db, err := db.NewDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.DB)
 	if err != nil {
 		logger.Fatal("fail to connect database", zap.Error(err))
 	}

@@ -10,18 +10,24 @@ import (
 
 var ErrKeyNotExist = errors.New("key does not exist")
 
+const Forever = 0
+
 type RedisService struct {
 	client *redis.Client
 	ctx    context.Context
 }
 
-const Forever = 0
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
+}
 
-func NewRedisService(addr, password string, db int) (service *RedisService, err error) {
+func NewRedisService(c RedisConfig) (service *RedisService, err error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
+		Addr:     c.Addr,
+		Password: c.Password,
+		DB:       c.DB,
 	})
 
 	service = &RedisService{

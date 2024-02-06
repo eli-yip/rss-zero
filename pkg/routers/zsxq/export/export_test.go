@@ -14,7 +14,7 @@ import (
 
 func TestExport(t *testing.T) {
 	t.Log("TestExport")
-	db, err := db.NewDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.DB)
 	if err != nil {
 		t.Fatal(err)
 	}

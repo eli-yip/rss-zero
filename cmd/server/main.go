@@ -30,13 +30,13 @@ func main() {
 	config.InitFromEnv()
 	logger.Info("config initialized", zap.Any("config", config.C))
 
-	redisService, err := redis.NewRedisService(config.C.RedisAddr, "", 0)
+	redisService, err := redis.NewRedisService(config.C.Redis)
 	if err != nil {
 		logger.Fatal("redis service init failed", zap.Error(err))
 	}
 	logger.Info("redis service initialized")
 
-	db, err := db.NewDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.DB)
 	if err != nil {
 		logger.Fatal("db init failed", zap.Error(err))
 	}

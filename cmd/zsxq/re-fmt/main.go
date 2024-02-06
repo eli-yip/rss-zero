@@ -27,7 +27,7 @@ func main() {
 	config.InitFromEnv()
 	logger.Info("config initialized")
 
-	db, err := db.NewDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.DB)
 	if err != nil {
 		panic(err)
 	}

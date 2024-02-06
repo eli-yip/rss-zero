@@ -18,8 +18,8 @@ func TestZsxq(t *testing.T) {
 	t.Log("TestZsxq")
 	config.InitFromEnv()
 
-	redisService, _ := redis.NewRedisService(config.C.RedisAddr, "", 0)
-	db, _ := db.NewDB(config.C.DB)
+	redisService, _ := redis.NewRedisService(config.C.Redis)
+	db, _ := db.NewPostgresDB(config.C.DB)
 
 	logger := log.NewLogger()
 	bark := notify.NewBarkNotifier(os.Getenv("BARK_URL"))

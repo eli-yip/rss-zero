@@ -21,7 +21,7 @@ import (
 )
 
 func handleZsxq(opt option, logger *zap.Logger) {
-	db, err := db.NewDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.DB)
 	if err != nil {
 		logger.Fatal("failed to connect database", zap.Error(err))
 	}
@@ -96,7 +96,7 @@ func handleZsxq(opt option, logger *zap.Logger) {
 	}
 	logger.Info("file service initialized")
 
-	redisService, err := redis.NewRedisService(config.C.RedisAddr, "", config.C.RedisDB)
+	redisService, err := redis.NewRedisService(config.C.Redis)
 	if err != nil {
 		logger.Fatal("failed to connect to redis", zap.Error(err))
 	}

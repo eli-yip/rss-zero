@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/eli-yip/rss-zero/internal/db"
+	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/joho/godotenv"
 )
@@ -14,11 +15,9 @@ type Config struct {
 	OpenAIApiKey  string
 	OpenAIBaseURL string // e.g.: https://one-api.example.com/v1
 
-	DB db.DBConfig
+	DB db.PostgresConfig
 
-	RedisAddr     string
-	RedisPassword string
-	RedisDB       int
+	Redis redis.RedisConfig
 
 	BarkURL string
 
@@ -67,9 +66,9 @@ func readEnv() {
 	C.DB.Password = getEnv("DB_PASSWORD")
 	C.DB.Name = getEnv("DB_NAME")
 
-	C.RedisAddr = getEnv("REDIS_ADDR")
-	C.RedisPassword = getEnv("REDIS_PASSWORD")
-	C.RedisDB = 0
+	C.Redis.Addr = getEnv("REDIS_ADDR")
+	C.Redis.Password = getEnv("REDIS_PASSWORD")
+	C.Redis.DB = 0
 
 	C.BarkURL = getEnv("BARK_URL")
 
