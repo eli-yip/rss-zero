@@ -67,6 +67,7 @@ func (h *ZsxqController) processTask() {
 		content, err := h.redis.Get(key)
 		if err == nil {
 			task.textCh <- content
+			continue
 		}
 
 		if errors.Is(err, redis.ErrKeyNotExist) {
