@@ -57,6 +57,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("fail to parse args", zap.Error(err))
 	}
+	logger.Info("parse args successfully", zap.Any("args", opt))
 
 	if opt.zhihu != nil {
 		if !opt.refmt {
@@ -109,19 +110,22 @@ func parseArgs() (opt option, err error) {
 		return option{}, errors.New("only support one of crawl, export and refmt")
 	}
 
-	if *crawl {
-		if *userID != "" && *groupID != 0 {
-			return option{}, errors.New("user id and group id can't be set at the same time")
-		}
-		if *userID == "" && *groupID == 0 {
-			return option{}, errors.New("user id or group id is required")
-		}
+	if *userID == "" && *groupID == 0 {
+		return option{}, errors.New("user id or group id is required")
+	}
 
+	if *userID != "" && *groupID != 0 {
+		return option{}, errors.New("user id and group id can't be set at the same time")
+	}
+
+	if *crawl {
+		opt.crawl = true
+		opt.backtrack = *backtrack
+
+		// parse zhihu config
 		if *userID != "" {
 			opt.zhihu = &zhihuOption{}
 
-			opt.crawl = true
-			opt.backtrack = *backtrack
 			opt.zhihu.userID = *userID
 			opt.zhihu.answer = *answer
 			opt.zhihu.article = *article
@@ -131,17 +135,20 @@ func parseArgs() (opt option, err error) {
 			return opt, nil
 		}
 
+		// parse zsxq config
 		if *groupID != 0 {
 			opt.zsxq = &zsxqOption{}
 
-			opt.crawl = true
-			opt.backtrack = *backtrack
 			opt.zsxq.groupID = *groupID
 			return opt, nil
 		}
 	}
 
 	if *export {
+		opt.export = true
+		opt.startTime = *startTime
+		opt.endTime = *endTime
+
 		if *userID != "" {
 			opt.zhihu = &zhihuOption{}
 
@@ -158,37 +165,26 @@ func parseArgs() (opt option, err error) {
 				opt.zhihu.pin = true
 				setFlag++
 			}
-
 			if setFlag != 1 {
 				return option{}, errors.New("export type can only be set once")
 			}
 
-			opt.export = true
 			opt.zhihu.userID = *userID
-		} else if *groupID != 0 {
+		}
+
+		if *groupID != 0 {
 			opt.zsxq = &zsxqOption{}
 			opt.zsxq.groupID = *groupID
 			opt.zsxq.author = *authorID
 			opt.zsxq.t = *t
 			opt.zsxq.digest = *digest
-		} else {
-			return option{}, errors.New("user id or group id is required")
 		}
 
-		opt.export = true
-		opt.startTime = *startTime
-		opt.endTime = *endTime
 		return opt, nil
 	}
 
 	if *refmt {
-		if *userID == "" && *groupID == 0 {
-			return option{}, errors.New("user id or group id is required")
-		}
-
-		if *userID != "" && *groupID != 0 {
-			return option{}, errors.New("user id and group id can't be set at the same time")
-		}
+		opt.refmt = true
 
 		if *userID != "" {
 			opt.zhihu = &zhihuOption{}
@@ -200,21 +196,22 @@ func parseArgs() (opt option, err error) {
 			opt.zsxq.groupID = *groupID
 		}
 
-		opt.refmt = true
 		return opt, nil
 	}
 
-	return option{}, errors.New("crawl or export is required")
+	return option{}, errors.New("unknown error")
 }
 
 func parseExportTime(ts string) (t time.Time, err error) {
-	location, _ := time.LoadLocation("Asia/Shanghai")
 	if ts == "" {
 		return time.Time{}, nil
 	}
+
 	t, err = time.Parse("2006-01-02", ts)
 	if err != nil {
 		return time.Time{}, err
 	}
+
+	location, _ := time.LoadLocation("Asia/Shanghai")
 	return t.In(location), nil
 }

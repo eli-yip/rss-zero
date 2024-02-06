@@ -53,6 +53,11 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser,
 		for _, pin := range pinList {
 			logger := logger.With(zap.String("pin_id", pin.ID))
 
+			if targetTime.After(time.Unix(pin.CreateAt, 0)) {
+				logger.Info("target time reached, break")
+				return nil
+			}
+
 			pinBytes, err := json.Marshal(pin)
 			if err != nil {
 				logger.Error("fail to marshal pin", zap.Error(err))
@@ -66,11 +71,6 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser,
 			}
 
 			logger.Info("parse pin successfully")
-
-			if targetTime.After(time.Unix(pin.CreateAt, 0)) {
-				logger.Info("target time reached, break")
-				return nil
-			}
 		}
 
 		if paging.IsEnd {

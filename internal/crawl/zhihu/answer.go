@@ -58,6 +58,11 @@ func CrawlAnswer(user string, request request.Requester, parser *parse.Parser,
 		for _, answer := range answerList {
 			logger := logger.With(zap.Int("answer_id", answer.ID))
 
+			if targetTime.After(time.Unix(answer.CreateAt, 0)) {
+				logger.Info("target time reached, break")
+				return nil
+			}
+
 			answereBytes, err := json.Marshal(answer)
 			if err != nil {
 				logger.Error("fail to marshal answer", zap.Error(err))
@@ -71,11 +76,6 @@ func CrawlAnswer(user string, request request.Requester, parser *parse.Parser,
 			}
 
 			logger.Info("parse answer successfully")
-
-			if targetTime.After(time.Unix(answer.CreateAt, 0)) {
-				logger.Info("target time reached, break")
-				return nil
-			}
 		}
 
 		if paging.IsEnd {

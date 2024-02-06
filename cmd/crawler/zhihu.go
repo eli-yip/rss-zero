@@ -114,17 +114,20 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		}
 		logger.Info("get latest answer time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
+		answerCount := 0
 		if opt.backtrack {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
+			if answerCount, err = zhihuDBService.CountAnswer(opt.zhihu.userID); err != nil {
+				logger.Fatal("fail to count answer", zap.Error(err))
+			}
 		}
-		answerCount, err := zhihuDBService.CountAnswer(opt.zhihu.userID)
-		if err != nil {
-			logger.Fatal("fail to count answer", zap.Error(err))
-		}
+
 		if err = zhihuCrawl.CrawlAnswer(opt.zhihu.userID, requestService, parser,
 			latestTimeInDB, answerCount, false, logger); err != nil {
 			logger.Fatal("fail to crawl answer", zap.Error(err))
 		}
+
+		logger.Info("crawl zhihu answer succussfully")
 	}
 
 	if opt.zhihu.article {
@@ -134,17 +137,21 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		}
 		logger.Info("get latest article time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
+		articleCount := 0
 		if opt.backtrack {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
+			articleCount, err = zhihuDBService.CountArticle(opt.zhihu.userID)
+			if err != nil {
+				logger.Fatal("fail to count article", zap.Error(err))
+			}
 		}
-		articleCount, err := zhihuDBService.CountArticle(opt.zhihu.userID)
-		if err != nil {
-			logger.Fatal("fail to count article", zap.Error(err))
-		}
+
 		if err = zhihuCrawl.CrawlArticle(opt.zhihu.userID, requestService, parser,
 			latestTimeInDB, articleCount, false, logger); err != nil {
 			logger.Fatal("fail to crawl article", zap.Error(err))
 		}
+
+		logger.Info("crawl zhihu article succussfully")
 	}
 
 	if opt.zhihu.pin {
@@ -154,18 +161,22 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		}
 		logger.Info("get latest pin time in db successfully", zap.Time("latest_time", latestTimeInDB))
 
+		pinCount := 0
 		if opt.backtrack {
 			latestTimeInDB = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC)
+			pinCount, err = zhihuDBService.CountPin(opt.zhihu.userID)
+			if err != nil {
+				logger.Fatal("fail to count pin", zap.Error(err))
+			}
 		}
-		pinCount, err := zhihuDBService.CountPin(opt.zhihu.userID)
-		if err != nil {
-			logger.Fatal("fail to count pin", zap.Error(err))
-		}
+
 		if err = zhihuCrawl.CrawlPin(opt.zhihu.userID, requestService, parser,
 			latestTimeInDB, pinCount, false, logger); err != nil {
 			logger.Fatal("fail to crawl pin", zap.Error(err))
 		}
 	}
+
+	logger.Info("crawl zhihu succussfully")
 }
 
 func refmtZhihu(opt option, logger *zap.Logger) {
