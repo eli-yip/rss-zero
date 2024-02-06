@@ -9,6 +9,9 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// LogRequest is a middleware function that logs incoming requests and outgoing responses.
+// The logger is used to log the request details such as request ID, method, path, IP address,
+// and the response details such as latency and status code.
 func LogRequest(logger *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
@@ -19,16 +20,20 @@ func (h *ZsxqController) Reformat(c echo.Context) (err error) {
 
 	var req RefmtReq
 	if err = c.Bind(&req); err != nil {
-		logger.Error("fail to bind request", zap.Error(err))
+		err = errors.Join(err, errors.New("invalid request"))
+		logger.Error("Error reformat zsxq", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
 	}
-	logger.Info("get re-fmt request", zap.Int("group_id", req.GroupID))
+	logger.Info("Retrieved zsxq reformat group", zap.Int("group_id", req.GroupID))
 
 	zsxqDBService := zsxqDB.NewZsxqDBService(h.db)
 	refmtService := zsxqRefmt.NewRefmtService(logger, zsxqDBService,
 		zsxqRender.NewMarkdownRenderService(zsxqDBService, logger),
 		h.notifier)
 	go refmtService.ReFmt(req.GroupID)
+	logger.Info("Start to reformat zsxq")
 
-	return c.JSON(http.StatusOK, &ApiResp{Message: "start to reformat zsxq content"})
+	return c.JSON(http.StatusOK, &ApiResp{
+		Message: "start to reformat zsxq content, you'll be notified when it's done",
+	})
 }

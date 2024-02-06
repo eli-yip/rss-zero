@@ -1,11 +1,11 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/eli-yip/rss-zero/internal/redis"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
@@ -18,35 +18,38 @@ func (h *ZsxqController) RSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	groupIDStr := c.Get("feed_id").(string)
-	groupID, err := h.extractGroupIDFromParams(groupIDStr)
+	groupID, err := strconv.Atoi(groupIDStr)
 	if err != nil {
-		logger.Error("invalid group id",
-			zap.String("group_id_param", groupIDStr),
-			zap.Error(err))
-		return c.String(http.StatusBadRequest, "invalid group id")
+		err = errors.Join(err, errors.New("convert group id to int error"))
+		logger.Error("Error rss", zap.String("group_id_str", groupIDStr), zap.Error(err))
+		return c.String(http.StatusBadRequest, "invalid request")
 	}
-	logger.Info("group id extracted", zap.Int("group_id", groupID))
+	logger.Info("Retrieved zsxq rss group id", zap.Int("group_id", groupID))
 
 	const rssPath = "zsxq_rss_%d"
 
-	rss, err := h.getRSSContent(fmt.Sprintf(rssPath, groupID), logger)
+	rssContent, err := h.getRSS(fmt.Sprintf(rssPath, groupID), logger)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "failed to get rss from redis")
+		err = errors.Join(err, errors.New("get rss content from redis error"))
+		logger.Error("Error rss", zap.Error(err))
+		return c.String(http.StatusInternalServerError, "internal server error")
 	}
-	logger.Info("rss content retrieved")
+	logger.Info("Retrieved rss content from redis")
 
-	return c.String(http.StatusOK, rss)
+	return c.String(http.StatusOK, rssContent)
 }
 
-func (h *ZsxqController) getRSSContent(key string, logger *zap.Logger) (content string, err error) {
+func (h *ZsxqController) getRSS(key string, logger *zap.Logger) (content string, err error) {
+	logger = logger.With(zap.String("key", key))
+	defer logger.Info("task channel closed")
+
 	task := task{textCh: make(chan string), errCh: make(chan error)}
 	defer close(task.textCh)
 	defer close(task.errCh)
-	defer logger.Info("task channel closed")
 
 	h.taskCh <- task
 	task.textCh <- key
-	logger.Info("task sent to task channel", zap.String("key", key))
+	logger.Info("task sent to task channel")
 
 	select {
 	case content := <-task.textCh:
@@ -60,28 +63,31 @@ func (h *ZsxqController) processTask() {
 	for {
 		task := <-h.taskCh
 		key := <-task.textCh
+
 		content, err := h.redis.Get(key)
-		if err != nil {
-			if err == redis.ErrKeyNotExist {
-				content, err = h.generateRSS(key)
-				if err != nil {
-					task.errCh <- err
-					continue
-				}
-				task.textCh <- content
-				continue
-			} else {
+		if err == nil {
+			task.textCh <- content
+		}
+
+		if errors.Is(err, redis.ErrKeyNotExist) {
+			content, err = h.generateRSS(key)
+			if err != nil {
 				task.errCh <- err
 				continue
 			}
+			task.textCh <- content
+			continue
 		}
-		task.textCh <- content
+
+		task.errCh <- err
+		continue
 	}
 }
 
 func (h *ZsxqController) generateRSS(key string) (content string, err error) {
 	gid, err := h.extractGroupIDFromKey(key)
 	if err != nil {
+		err = errors.Join(err, errors.New("extract group id error"))
 		return "", err
 	}
 
@@ -89,12 +95,14 @@ func (h *ZsxqController) generateRSS(key string) (content string, err error) {
 	zsxqDB := zsxqDB.NewZsxqDBService(h.db)
 	topics, err := zsxqDB.GetLatestNTopics(gid, defaultFetchCount)
 	if err != nil {
+		err = errors.Join(err, errors.New("get latest topics error"))
 		return "", err
 	}
 
 	groupName, err := zsxqDB.GetGroupName(gid)
 	if err != nil {
-		return
+		err = errors.Join(err, errors.New("get group name error"))
+		return "", err
 	}
 
 	var rssTopics []render.RSSTopic
@@ -117,41 +125,32 @@ func (h *ZsxqController) generateRSS(key string) (content string, err error) {
 	}
 
 	rssRenderer := render.NewRSSRenderService()
-	result, err := rssRenderer.RenderRSS(rssTopics)
-	if err != nil {
+	if content, err = rssRenderer.RenderRSS(rssTopics); err != nil {
+		err = errors.Join(err, errors.New("render rss error"))
 		return "", err
 	}
 
-	const rssTTL = time.Hour * 2
-	if err := h.redis.Set(key, result, rssTTL); err != nil {
+	if err := h.redis.Set(key, content, redis.RSSTTL); err != nil {
+		err = errors.Join(err, errors.New("set rss content to redis error"))
 		return "", err
 	}
 
-	return result, nil
+	return content, nil
 }
 
-func (h *ZsxqController) extractGroupIDFromParams(s string) (gid int, err error) {
-	re := regexp.MustCompile(`\d+`)
-	numbers := re.FindAllString(s, -1)
+func (h *ZsxqController) extractGroupIDFromKey(key string) (gid int, err error) {
+	strs := strings.Split(key, "_")
 
-	result := ""
-	for _, number := range numbers {
-		result += number
-	}
-
-	resultInt, err := strconv.Atoi(result)
-	if err != nil {
+	if len(strs) != 3 {
+		err = errors.New("invalid key")
 		return 0, err
 	}
 
-	return resultInt, nil
-}
-
-func (h *ZsxqController) extractGroupIDFromKey(key string) (groupID int, err error) {
-	re := regexp.MustCompile(`zsxq_rss_(\d+)`)
-	matches := re.FindStringSubmatch(key)
-	if len(matches) < 2 {
-		return 0, fmt.Errorf("no number found in string")
+	gid, err = strconv.Atoi(strs[len(strs)-1])
+	if err != nil {
+		err = errors.Join(err, errors.New("convert string to int error"))
+		return 0, err
 	}
-	return strconv.Atoi(matches[1])
+
+	return gid, nil
 }

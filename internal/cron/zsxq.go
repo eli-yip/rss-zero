@@ -37,7 +37,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.No
 		}()
 
 		// Get cookie from redis, if not exist, log an cookie error.
-		cookie, err := redisService.Get(redis.ZsxqCookie)
+		cookie, err := redisService.Get(redis.ZsxqCookiePath)
 		if err != nil {
 			if errors.Is(err, redis.ErrKeyNotExist) {
 				logger.Error("cookie not found in redis, notify user")

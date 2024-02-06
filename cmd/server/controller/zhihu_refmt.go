@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/eli-yip/rss-zero/internal/md"
@@ -11,19 +12,23 @@ import (
 	"go.uber.org/zap"
 )
 
-type RefmtZhihuReq struct {
+type ZhihuReformatReq struct {
 	AuthorID string `json:"author_id"`
 }
 
+// Reformat reformats the Zhihu content based on the author_id.
+// It will start a goroutine to reformat the content
+// and return a JSON response with a message indicating the start of the reformatting process.
 func (h *ZhihuController) Reformat(c echo.Context) error {
 	logger := c.Get("logger").(*zap.Logger)
 
-	var req RefmtZhihuReq
+	var req ZhihuReformatReq
 	if err := c.Bind(&req); err != nil {
-		logger.Error("failed to bind request", zap.Error(err))
+		err = errors.Join(err, errors.New("read reformat request error"))
+		logger.Error("Error reformatting zhihu", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
 	}
-	logger.Info("get reformat request", zap.String("author_id", req.AuthorID))
+	logger.Info("Retieved zhihu reformat request", zap.String("author_id", req.AuthorID))
 
 	imageParser := parse.NewImageParserOffline(h.db, logger)
 	htmlToMarkdown := render.NewHTMLToMarkdownService(logger)

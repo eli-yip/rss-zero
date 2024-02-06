@@ -102,7 +102,7 @@ func handleZsxq(opt option, logger *zap.Logger) {
 	}
 	logger.Info("redis connected")
 
-	cookie, err := redisService.Get(redis.ZsxqCookie)
+	cookie, err := redisService.Get(redis.ZsxqCookiePath)
 	if err != nil {
 		if errors.Is(err, redis.ErrKeyNotExist) {
 			logger.Fatal("cookie not found in redis")

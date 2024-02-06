@@ -142,7 +142,7 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 		switch badResp.Code {
 		case 401:
 			logger.Error("invalid cookie, clear cookie in i time")
-			_ = r.redisService.Set(redis.ZsxqCookie, "", 0)
+			_ = r.redisService.Set(redis.ZsxqCookiePath, "", 0)
 			return nil, ErrInvalidCookie
 		case 1059:
 			logger.Error("too many requests, sleep 10s")

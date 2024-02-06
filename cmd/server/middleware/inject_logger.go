@@ -5,6 +5,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// InjectLogger is a middleware function that injects a logger into the echo context.
+// The middleware function adds a request ID to the logger and sets it in the echo context.
 func InjectLogger(logger *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

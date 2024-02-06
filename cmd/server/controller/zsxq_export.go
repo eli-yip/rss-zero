@@ -18,7 +18,7 @@ import (
 
 type ZxsqExportReq struct {
 	GroupID   int     `json:"group_id"`
-	Type      *string `json:"type"`
+	Type      *string `json:"type"`       // talk, q&a
 	StartTime *string `json:"start_time"` // start time is included
 	EndTime   *string `json:"end_time"`   // end time is included
 	Digest    *bool   `json:"digest"`
@@ -35,17 +35,19 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 
 	var req ZxsqExportReq
 	if err = c.Bind(&req); err != nil {
-		logger.Error("fail to bind request", zap.Error(err))
+		err = errors.Join(err, errors.New("invalid request"))
+		logger.Error("Error exporting zsxq", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
 	}
-	logger.Info("get export request", zap.Int("group_id", req.GroupID))
+	logger.Info("Retrieved zsxq export", zap.Int("group_id", req.GroupID))
 
 	options, err := h.parseOption(&req)
 	if err != nil {
-		logger.Error("parse option error", zap.Error(err))
-		return c.String(http.StatusBadRequest, err.Error())
+		err = errors.Join(err, errors.New("parse option error"))
+		logger.Error("Error exporting zsxq", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid export option"})
 	}
-	logger.Info("parse option successfully", zap.Any("options", options))
+	logger.Info("Parsed zsxq export option", zap.Any("options", options))
 
 	zsxqDBService := zsxqDB.NewZsxqDBService(h.db)
 	mdRender := render.NewMarkdownRenderService(zsxqDBService, logger)
@@ -54,47 +56,45 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 	fileName := exportService.FileName(options)
 	objectKey := fmt.Sprintf("export/zsxq/%s", fileName)
 	go func() {
-		logger.Info("start to export", zap.String("file_name", objectKey))
+		logger := logger.With(zap.String("objectKey", objectKey))
+		logger.Info("Start to export zsxq")
 
 		pr, pw := io.Pipe()
 
 		go func() {
 			defer pw.Close()
 
-			logger := logger.With(zap.String("file_name", objectKey))
-
 			if err := exportService.Export(pw, options); err != nil {
-				logger.Error("fail to export", zap.Error(err))
-				_ = h.notifier.Notify("fail to export", err.Error())
+				err = errors.Join(err, errors.New("export service error"))
+				logger.Error("Failed export zsxq", zap.Error(err))
+				_ = h.notifier.Notify("Failed export zsxq", err.Error())
 				return
 			}
 		}()
 
 		minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
-			logger.Error("fail to init minio service", zap.Error(err))
-			_ = h.notifier.Notify("fail to init minio service", err.Error())
+			err = errors.Join(err, errors.New("init minio service error"))
+			logger.Error("Failed init minio service", zap.Error(err))
+			_ = h.notifier.Notify("Failed init minio service", err.Error())
 			return
 		}
-		logger.Info("init minio service successfully")
+		logger.Info("Init minio service success")
 
-		logger.Info("start to save stream")
+		logger.Info("Start to save export file")
 		if err := minioService.SaveStream(objectKey, pr, -1); err != nil {
-			logger.Error("fail to save stream", zap.Error(err))
-			_ = h.notifier.Notify("fail to save stream", err.Error())
+			logger.Error("Failed saving export file stream", zap.Error(err))
+			_ = h.notifier.Notify("Failed saving export file", err.Error())
 			return
 		}
 
-		err = h.notifier.Notify("export successfully", objectKey)
-		if err != nil {
-			logger.Error("fail to notify", zap.Error(err))
-		}
+		logger.Info("Export zsxq success")
 
-		logger.Info("export successfully")
+		_ = h.notifier.Notify("export successfully", objectKey)
 	}()
 
 	return c.JSON(http.StatusOK, &ApiResp{
-		Message: "start to export, you'll be notified when it's done",
+		Message: "start to export zsxq, you'll be notified when it's done",
 		Data: ZsxqExportResp{
 			FileName: fileName,
 			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
@@ -102,13 +102,13 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 	})
 }
 
-var ErrGroupIDEmpty = errors.New("group id is empty")
+var errGroupIDEmpty = errors.New("group id is empty")
 
 func (h *ZsxqController) parseOption(req *ZxsqExportReq) (zsxqExport.Option, error) {
 	var opts zsxqExport.Option
 
 	if req.GroupID == 0 {
-		return zsxqExport.Option{}, ErrGroupIDEmpty
+		return zsxqExport.Option{}, errGroupIDEmpty
 	}
 	opts.GroupID = req.GroupID
 

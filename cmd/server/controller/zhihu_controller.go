@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// ZhihuController represents a controller for handling Zhihu related operations.
 type ZhihuController struct {
 	redis    *redis.RedisService
 	db       zhihuDB.DB
