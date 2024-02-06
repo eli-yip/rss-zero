@@ -18,6 +18,7 @@ import (
 type AIIface interface {
 	Polish(text string) (result string, err error)
 	Text(path io.Reader) (text string, err error)
+	Conclude(text string) (result string, err error)
 }
 
 type AIService struct{ client *openai.Client }
@@ -42,3 +43,5 @@ type AIServiceWithoutAPI struct{}
 func (s *AIServiceWithoutAPI) Polish(text string) (result string, err error) { return text, nil }
 
 func (s *AIServiceWithoutAPI) Text(stream io.Reader) (text string, err error) { return "", nil }
+
+func (s *AIServiceWithoutAPI) Conclude(text string) (result string, err error) { return text, nil }

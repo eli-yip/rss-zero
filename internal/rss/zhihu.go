@@ -98,13 +98,17 @@ func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB) (path stri
 		}
 
 		for _, p := range pins {
+			if p.Title == "" {
+				p.Title = strconv.Itoa(p.ID)
+			}
+
 			rs = append(rs, render.RSS{
 				ID:         p.ID,
 				Link:       fmt.Sprintf("https://www.zhihu.com/pin/%d", p.ID),
 				CreateTime: p.CreateAt,
 				AuthorID:   p.AuthorID,
 				AuthorName: authorName,
-				Title:      func() string { return strconv.Itoa(p.ID) }(),
+				Title:      p.Title,
 				Text:       p.Text,
 			})
 		}
