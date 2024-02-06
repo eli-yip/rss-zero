@@ -32,7 +32,7 @@ func (h *ZhihuController) Feed(c echo.Context) error {
 	const articleFeedLayout = `%s/rss/zhihu/article/%s`
 	const pinFeedLayout = `%s/rss/zhihu/pin/%s`
 
-	return c.JSON(http.StatusOK, Resp{
+	return c.JSON(http.StatusOK, &ApiResp{
 		Message: "success",
 		Data: FeedResp{
 			External: ExternalFeed{

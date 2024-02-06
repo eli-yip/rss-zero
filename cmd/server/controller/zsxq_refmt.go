@@ -14,19 +14,13 @@ type RefmtReq struct {
 	GroupID int `json:"group_id"`
 }
 
-type ZsxqResp struct {
-	Message string `json:"message"`
-}
-
-var failedToReFmt = "failed to re-format"
-
-func (h *ZsxqController) Refmt(c echo.Context) (err error) {
+func (h *ZsxqController) Reformat(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req RefmtReq
 	if err = c.Bind(&req); err != nil {
-		logger.Error(failedToReFmt, zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ZsxqResp{Message: failedToReFmt})
+		logger.Error("fail to bind request", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
 	}
 	logger.Info("get re-fmt request", zap.Int("group_id", req.GroupID))
 
@@ -36,5 +30,5 @@ func (h *ZsxqController) Refmt(c echo.Context) (err error) {
 		h.notifier)
 	go refmtService.ReFmt(req.GroupID)
 
-	return c.JSON(http.StatusOK, &ZsxqResp{Message: "re-fmt started"})
+	return c.JSON(http.StatusOK, &ApiResp{Message: "start to reformat zsxq content"})
 }

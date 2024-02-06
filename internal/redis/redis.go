@@ -11,6 +11,7 @@ import (
 var ErrKeyNotExist = errors.New("key does not exist")
 
 const Forever = 0
+const ZsxqCookie = "zsxq_cookie"
 
 type RedisService struct {
 	client *redis.Client

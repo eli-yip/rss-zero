@@ -23,7 +23,6 @@ type ZhihuExportReq struct {
 }
 
 type ZhihuExportResp struct {
-	Message  string `json:"message"`
 	FileName string `json:"file_name"`
 	URL      string `json:"url"`
 }
@@ -34,8 +33,9 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	var req ZhihuExportReq
 	if err = c.Bind(&req); err != nil {
 		logger.Error("read json error", zap.Error(err))
-		return c.String(http.StatusBadRequest, err.Error())
+		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
 	}
+	logger.Info("get export request", zap.Any("req", req))
 
 	options, err := h.parseOption(req)
 	if err != nil {
@@ -88,10 +88,12 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 		logger.Info("export successfully")
 	}()
 
-	return c.JSON(http.StatusOK, &ZhihuExportResp{
-		Message:  "start exporting",
-		FileName: fileName,
-		URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
+	return c.JSON(http.StatusOK, &ApiResp{
+		Message: "start to export, you'll be notified when it's done",
+		Data: &ZhihuExportResp{
+			FileName: fileName,
+			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
+		},
 	})
 }
 

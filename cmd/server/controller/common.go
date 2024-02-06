@@ -12,7 +12,7 @@ func parseTime(s string) (time.Time, error) {
 	return time.Parse(timeLayout, s)
 }
 
-type Resp struct {
+type ApiResp struct {
 	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Data    interface{} `json:"data,omitempty"`
 }

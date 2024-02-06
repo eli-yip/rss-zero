@@ -26,7 +26,6 @@ type ZxsqExportReq struct {
 }
 
 type ZsxqExportResp struct {
-	Message  string `json:"message"`
 	FileName string `json:"file_name"`
 	URL      string `json:"url"`
 }
@@ -36,15 +35,17 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 
 	var req ZxsqExportReq
 	if err = c.Bind(&req); err != nil {
-		logger.Error("read json error", zap.Error(err))
-		return c.String(http.StatusBadRequest, err.Error())
+		logger.Error("fail to bind request", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
 	}
+	logger.Info("get export request", zap.Int("group_id", req.GroupID))
 
 	options, err := h.parseOption(&req)
 	if err != nil {
 		logger.Error("parse option error", zap.Error(err))
 		return c.String(http.StatusBadRequest, err.Error())
 	}
+	logger.Info("parse option successfully", zap.Any("options", options))
 
 	zsxqDBService := zsxqDB.NewZsxqDBService(h.db)
 	mdRender := render.NewMarkdownRenderService(zsxqDBService, logger)
@@ -92,10 +93,12 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 		logger.Info("export successfully")
 	}()
 
-	return c.JSON(http.StatusOK, &ZsxqExportResp{
-		Message:  "start to export, you'll be notified when it's done",
-		FileName: fileName,
-		URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
+	return c.JSON(http.StatusOK, &ApiResp{
+		Message: "start to export, you'll be notified when it's done",
+		Data: ZsxqExportResp{
+			FileName: fileName,
+			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
+		},
 	})
 }
 

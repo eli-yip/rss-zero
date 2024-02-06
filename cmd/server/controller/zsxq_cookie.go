@@ -12,36 +12,33 @@ import (
 )
 
 type SetCookieReq struct {
-	Cookies string `json:"cookies"`
+	Cookie string `json:"cookie"`
 }
 
-type SetCookieResp struct {
-	Message string `json:"message"`
-}
-
-func (h *ZsxqController) UpdateZsxqCookies(c echo.Context) (err error) {
+func (h *ZsxqController) UpdateZsxqCookie(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req SetCookieReq
 	if err = c.Bind(&req); err != nil {
-		logger.Error("update zsxq cookies failed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &SetCookieResp{Message: err.Error()})
+		logger.Error("fail to get zsxq cookie from request", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
 	}
-	logger.Info("get zsxq cookies", zap.String("cookies", req.Cookies))
+	logger.Info("get zsxq cookie", zap.String("cookie", req.Cookie))
 
-	if err = h.redis.Set("zsxq_cookies", req.Cookies, redis.Forever); err != nil {
-		logger.Error("update zsxq cookies failed", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &SetCookieResp{Message: err.Error()})
+	if err = h.redis.Set(redis.ZsxqCookie, req.Cookie, redis.Forever); err != nil {
+		logger.Error("fail to update zsxq cookie", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &ApiResp{Message: err.Error()})
 	}
 
-	requestService := zsxqRequest.NewRequestService(req.Cookies, h.redis, logger)
-	const invalidCookies = "invalid cookies"
+	const invalidCookies = "invalid cookie"
+	requestService := zsxqRequest.NewRequestService(req.Cookie, h.redis, logger)
 	if _, err = requestService.Limit(config.C.ZsxqTestURL); err != nil {
 		err = fmt.Errorf("%s: %s", invalidCookies, err.Error())
-		logger.Error("update zsxq cookies failed", zap.Error(err))
+		logger.Error("fail to update zsxq cookie, invalid cookie",
+			zap.String("cookie", req.Cookie), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError,
-			&SetCookieResp{Message: err.Error()})
+			&ApiResp{Message: "invalid cookie"})
 	}
 
-	return c.JSON(http.StatusOK, &SetCookieResp{Message: "update zsxq cookies success"})
+	return c.JSON(http.StatusOK, &ApiResp{Message: "success"})
 }

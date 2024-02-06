@@ -131,17 +131,17 @@ func setupEcho(redisService *redis.RedisService,
 	// /api/v1/cookie
 	cookieApi := apiGroup.Group("/cookie")
 	// /api/v1/cookie/zsxq
-	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateZsxqCookies)
-	zsxqCookieApi.Name = "Update cookies route for zsxq"
+	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateZsxqCookie)
+	zsxqCookieApi.Name = "Cookie updating route for zsxq"
 
 	// /api/v1/refmt
 	refmtApi := apiGroup.Group("/refmt")
 	// /api/v1/refmt/zsxq
-	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Refmt)
-	refmtZsxqApi.Name = "Re-format route for zsxq"
+	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Reformat)
+	refmtZsxqApi.Name = "Reformat route for zsxq"
 	// /api/v1/refmt/zhihu
-	refmtZhihuApi := refmtApi.POST("/zhihu", zhihuHandler.Refmt)
-	refmtZhihuApi.Name = "Re-format route for zhihu"
+	refmtZhihuApi := refmtApi.POST("/zhihu", zhihuHandler.Reformat)
+	refmtZhihuApi.Name = "Reformat route for zhihu"
 
 	// /api/v1/export
 	exportApi := apiGroup.Group("/export")
