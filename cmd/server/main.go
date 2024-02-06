@@ -120,17 +120,21 @@ func setupEcho(redisService *redis.RedisService,
 	return e
 }
 
-func setupCron(logger *zap.Logger, redis *redis.RedisService, db *gorm.DB, notifier notify.Notifier) {
+func setupCron(logger *zap.Logger, redisService *redis.RedisService, db *gorm.DB, notifier notify.Notifier) {
+	type cronFunc func(*redis.RedisService, *gorm.DB, notify.Notifier) func()
+	cronFuncs := []cronFunc{
+		cron.CrawlZsxq,
+		cron.CrawlZhihu,
+	}
+
 	s, err := cron.NewCronService(logger)
 	if err != nil {
 		logger.Fatal("cron service init failed", zap.Error(err))
 	}
 
-	if err = s.AddJob(cron.CrawlZsxq(redis, db, notifier)); err != nil {
-		logger.Fatal("add zsxq job failed", zap.Error(err))
-	}
-
-	if err = s.AddJob(cron.CrawlZhihu(redis, db, notifier)); err != nil {
-		logger.Fatal("add zhihu job failed", zap.Error(err))
+	for _, f := range cronFuncs {
+		if err = s.AddJob(f(redisService, db, notifier)); err != nil {
+			logger.Fatal("add job failed", zap.Error(err))
+		}
 	}
 }

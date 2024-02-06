@@ -39,9 +39,10 @@ func InitFromFile() {
 	readEnv()
 }
 
-func InitFromEnv() {
-	readEnv()
-}
+// InitFromEnv reads environment variables and initializes the config.
+//
+// it will panic if any environment variable is not found
+func InitFromEnv() { readEnv() }
 
 func loadEnv() {
 	err := godotenv.Load()
