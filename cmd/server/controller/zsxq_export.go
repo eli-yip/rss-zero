@@ -69,7 +69,7 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 			}
 		}()
 
-		minioService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
+		minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
 			logger.Error("fail to init minio service", zap.Error(err))
 			_ = h.notifier.Notify("fail to init minio service", err.Error())
@@ -95,7 +95,7 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, &ZsxqExportResp{
 		Message:  "start to export, you'll be notified when it's done",
 		FileName: fileName,
-		URL:      config.C.MinioConfig.AssetsPrefix + "/" + objectKey,
+		URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
 	})
 }
 

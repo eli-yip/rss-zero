@@ -19,7 +19,7 @@ func TestZsxq(t *testing.T) {
 	config.InitFromEnv()
 
 	redisService, _ := redis.NewRedisService(config.C.RedisAddr, "", 0)
-	db, _ := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
+	db, _ := db.NewDB(config.C.DB)
 
 	logger := log.NewLogger()
 	bark := notify.NewBarkNotifier(os.Getenv("BARK_URL"))

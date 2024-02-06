@@ -3,21 +3,18 @@ package config
 import (
 	"os"
 
+	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	MinioConfig file.MinioConfig
+	Minio file.MinioConfig
 
 	OpenAIApiKey  string
 	OpenAIBaseURL string // e.g.: https://one-api.example.com/v1
 
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
+	DB db.DBConfig
 
 	RedisAddr     string
 	RedisPassword string
@@ -52,7 +49,7 @@ func loadEnv() {
 }
 
 func readEnv() {
-	C.MinioConfig = file.MinioConfig{
+	C.Minio = file.MinioConfig{
 		Endpoint:        getEnv("MINIO_ENDPOINT"),
 		AccessKeyID:     getEnv("MINIO_ACCESS_KEY_ID"),
 		SecretAccessKey: getEnv("MINIO_SECRET_ACCESS_KEY"),
@@ -64,11 +61,11 @@ func readEnv() {
 	C.OpenAIApiKey = getEnv("OPENAI_API_KEY")
 	C.OpenAIBaseURL = getEnv("OPENAI_BASE_URL")
 
-	C.DBHost = getEnv("DB_HOST")
-	C.DBPort = getEnv("DB_PORT")
-	C.DBUser = getEnv("DB_USER")
-	C.DBPassword = getEnv("DB_PASSWORD")
-	C.DBName = getEnv("DB_NAME")
+	C.DB.Host = getEnv("DB_HOST")
+	C.DB.Port = getEnv("DB_PORT")
+	C.DB.User = getEnv("DB_USER")
+	C.DB.Password = getEnv("DB_PASSWORD")
+	C.DB.Name = getEnv("DB_NAME")
 
 	C.RedisAddr = getEnv("REDIS_ADDR")
 	C.RedisPassword = getEnv("REDIS_PASSWORD")

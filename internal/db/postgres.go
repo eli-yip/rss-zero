@@ -13,7 +13,15 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func NewDB(host, port, user, password, name string) (db *gorm.DB, err error) {
+type PostgresConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Name     string
+}
+
+func NewPostgresDB(c PostgresConfig) (db *gorm.DB, err error) {
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
@@ -23,7 +31,8 @@ func NewDB(host, port, user, password, name string) (db *gorm.DB, err error) {
 		},
 	)
 
-	mdsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai", host, port, user, password, name)
+	mdsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
+		c.Host, c.Port, c.User, c.Password, c.Name)
 	if db, err = gorm.Open(postgres.Open(mdsn), &gorm.Config{
 		PrepareStmt: true,
 		Logger:      newLogger,

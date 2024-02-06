@@ -66,7 +66,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 			}
 		}()
 
-		minioService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
+		minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
 			logger.Error("create minio service error", zap.Error(err))
 			_ = h.notifier.Notify("fail to init minio", err.Error())
@@ -91,7 +91,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, &ZhihuExportResp{
 		Message:  "start exporting",
 		FileName: fileName,
-		URL:      config.C.MinioConfig.AssetsPrefix + "/" + objectKey,
+		URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
 	})
 }
 

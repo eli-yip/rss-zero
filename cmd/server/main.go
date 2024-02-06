@@ -36,7 +36,7 @@ func main() {
 	}
 	logger.Info("redis service initialized")
 
-	db, err := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
+	db, err := db.NewDB(config.C.DB)
 	if err != nil {
 		logger.Fatal("db init failed", zap.Error(err))
 	}

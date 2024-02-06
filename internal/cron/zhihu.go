@@ -39,7 +39,7 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 		}
 		logger.Info("zhihu request service initialized")
 
-		fileService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
+		fileService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
 			logger.Error("fail to create file service", zap.Error(err))
 			return

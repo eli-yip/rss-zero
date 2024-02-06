@@ -21,7 +21,7 @@ import (
 )
 
 func handleZsxq(opt option, logger *zap.Logger) {
-	db, err := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
+	db, err := db.NewDB(config.C.DB)
 	if err != nil {
 		logger.Fatal("failed to connect database", zap.Error(err))
 	}
@@ -90,7 +90,7 @@ func handleZsxq(opt option, logger *zap.Logger) {
 		return
 	}
 
-	fileService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
+	fileService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {
 		logger.Fatal("failed to initialize file service", zap.Error(err))
 	}

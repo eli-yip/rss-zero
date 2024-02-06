@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/db"
 	log "github.com/eli-yip/rss-zero/pkg/log"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
@@ -13,13 +14,7 @@ import (
 
 func TestExport(t *testing.T) {
 	t.Log("TestExport")
-	db, err := db.NewDB(
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-	)
+	db, err := db.NewDB(config.C.DB)
 	if err != nil {
 		t.Fatal(err)
 	}

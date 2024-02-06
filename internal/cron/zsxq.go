@@ -53,7 +53,7 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.No
 		requestService := request.NewRequestService(cookies, redisService, logger)
 		logger.Info("request service initialized")
 
-		fileService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
+		fileService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
 			logger.Error("failed to initialize file service", zap.Error(err))
 			return

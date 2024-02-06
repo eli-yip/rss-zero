@@ -20,7 +20,7 @@ import (
 )
 
 func handleZhihu(opt option, logger *zap.Logger) {
-	db, err := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
+	db, err := db.NewDB(config.C.DB)
 	if err != nil {
 		logger.Fatal("fail to connect database", zap.Error(err))
 	}
@@ -95,7 +95,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 	}
 	logger.Info("init request service successfully")
 
-	minioService, err := file.NewFileServiceMinio(config.C.MinioConfig, logger)
+	minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {
 		logger.Fatal("fail to connect minio", zap.Error(err))
 	}
@@ -180,7 +180,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 }
 
 func refmtZhihu(opt option, logger *zap.Logger) {
-	db, err := db.NewDB(config.C.DBHost, config.C.DBPort, config.C.DBUser, config.C.DBPassword, config.C.DBName)
+	db, err := db.NewDB(config.C.DB)
 	if err != nil {
 		logger.Fatal("fail to connect database", zap.Error(err))
 	}
