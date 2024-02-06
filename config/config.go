@@ -26,6 +26,8 @@ type Config struct {
 	ZhihuEncryptionURL string
 
 	ServerURL string
+
+	InternalServerURL string
 }
 
 var C Config
@@ -77,6 +79,8 @@ func readEnv() {
 	C.ZhihuEncryptionURL = getEnv("ZHIHU_ENCRYPTION_URL")
 
 	C.ServerURL = getEnv("SERVER_URL")
+
+	C.InternalServerURL = getEnv("INTERNAL_SERVER_URL")
 }
 
 func getEnv(key string) string {
