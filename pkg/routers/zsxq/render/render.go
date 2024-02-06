@@ -99,12 +99,28 @@ func (m *MarkdownRenderService) ToText(t *Topic) (text string, err error) {
 	logger.Info("render topic to unformatted text successfully")
 
 	logger.Info("start to format text")
-	text, err = m.mdFmt.FormatStr(buffer.String())
+	text, err = m.formatText(buffer.String())
 	if err != nil {
 		return "", err
 	}
 	logger.Info("format text successfully")
+
 	return text, nil
+}
+
+func (m *MarkdownRenderService) formatText(text string) (output string, err error) {
+	output, err = m.mdFmt.FormatStr(text)
+	if err != nil {
+		return "", err
+	}
+
+	for _, f := range m.formatFuncs {
+		output, err = f(output)
+		if err != nil {
+			return "", err
+		}
+	}
+	return output, nil
 }
 
 func (m *MarkdownRenderService) Article(article []byte) (text string, err error) {

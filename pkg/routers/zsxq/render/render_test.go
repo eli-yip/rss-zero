@@ -167,6 +167,7 @@ test-text
 func TestToText(t *testing.T) {
 	cases := []testStruct{
 		{
+			name: "basic test",
 			topic: Topic{
 				Type:       "talk",
 				AuthorName: "test-user",
@@ -180,6 +181,7 @@ test-text
 `,
 		},
 		{
+			name: "basic test with files and images",
 			topic: Topic{
 				Type:       "talk",
 				AuthorName: "test-user2",
@@ -225,6 +227,7 @@ test-text
 `,
 		},
 		{
+			name: "basic test with q&a",
 			topic: Topic{
 				Type:       "talk",
 				AuthorName: "test-user2",
@@ -270,6 +273,7 @@ test-text
 `,
 		},
 		{
+			name: "basic test with q&a",
 			topic: Topic{
 				Type:       "q&a",
 				AuthorName: "test-user3",
@@ -325,6 +329,7 @@ this is an answer
 `,
 		},
 		{
+			name: "basic test with article",
 			topic: Topic{
 				Type:       "talk",
 				AuthorName: "test-user2",

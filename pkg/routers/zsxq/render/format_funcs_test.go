@@ -35,12 +35,16 @@ func TestBookMarkup(t *testing.T) {
 			`人性的弱点`,
 		},
 		{
+			`多次推荐《<e type="web" href="https%3A%2F%2Fwx.zsxq.com%2Fmweb%2Fviews%2Fweread%2Fsearch.html%3Fkeyword%3D%E4%BA%BA%E6%80%A7%E7%9A%84%E5%BC%B1%E7%82%B9" title="人性的弱点" style="book" />》这本书。`,
+			`多次推荐《人性的弱点》这本书。`,
+		},
+		{
 			`<e type="web" href="https%3a%2f%2fwx.zsxq.com%2fmweb%2fviews%2fweread%2fsearch.html%3fkeyword%3d%e8%87%aa%e6%81%8b%e5%88%91%e8%ad%a6" title="%e8%87%aa%e6%81%8b%e5%88%91%e8%ad%a6" style="book" />`,
 			`自恋刑警`,
 		},
 		{
-			`多次推荐《<e type="web" href="https%3A%2F%2Fwx.zsxq.com%2Fmweb%2Fviews%2Fweread%2Fsearch.html%3Fkeyword%3D%E4%BA%BA%E6%80%A7%E7%9A%84%E5%BC%B1%E7%82%B9" title="人性的弱点" style="book" />》这本书。`,
-			`多次推荐《人性的弱点》这本书。`,
+			`《<e type="web" href="https%3A%2F%2Fwx.zsxq.com%2Fmweb%2Fviews%2Fweread%2Fsearch.html%3Fkeyword%3D%E8%87%AA%E6%81%8B%E5%88%91%E8%AD%A6" title="%E8%87%AA%E6%81%8B%E5%88%91%E8%AD%A6" style="book" />》`,
+			`《自恋刑警》`,
 		},
 	}
 
