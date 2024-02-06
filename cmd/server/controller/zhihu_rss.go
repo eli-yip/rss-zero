@@ -9,7 +9,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
-	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"github.com/labstack/echo/v4"
@@ -182,22 +182,31 @@ func (h *ZhihuController) extractTypeAuthorFromKey(key string) (t int, authorID 
 }
 
 func (h *ZhihuController) checkSub(t int, authorID string, logger *zap.Logger) (err error) {
-	exist, err := h.db.CheckSub(authorID, zhihuDB.TypeAnswer)
+	switch t {
+	case rss.TypeAnswer:
+		t = db.TypeAnswer
+	case rss.TypeArticle:
+		t = db.TypeArticle
+	case rss.TypePin:
+		t = db.TypePin
+	}
+
+	exist, err := h.db.CheckSub(authorID, t)
 	if err != nil {
 		logger.Error("failed to check sub", zap.Error(err))
 		return err
 	}
 
 	if !exist {
-		err := h.db.AddSub(authorID, zhihuDB.TypeAnswer)
-		if err != nil {
-			logger.Error("failed to add sub", zap.Error(err))
-			return err
-		}
-
 		_, err = h.parseAuthorName(authorID, logger)
 		if err != nil {
 			logger.Error("failed to parse author name", zap.Error(err))
+			return err
+		}
+
+		err = h.db.AddSub(authorID, t)
+		if err != nil {
+			logger.Error("failed to add sub", zap.Error(err))
 			return err
 		}
 	}
