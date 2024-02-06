@@ -28,7 +28,7 @@ func main() {
 	logger := log.NewLogger()
 
 	config.InitFromEnv()
-	logger.Info("config initialized")
+	logger.Info("config initialized", zap.Any("config", config.C))
 
 	redisService, err := redis.NewRedisService(config.C.RedisAddr, "", 0)
 	if err != nil {
@@ -40,11 +40,14 @@ func main() {
 	if err != nil {
 		logger.Fatal("db init failed", zap.Error(err))
 	}
+	logger.Info("db initialized")
 
 	bark := notify.NewBarkNotifier(config.C.BarkURL)
 	setupCron(logger, redisService, db, bark)
+	logger.Info("cron service initialized")
 
 	e := setupEcho(redisService, db, bark, logger)
+	logger.Info("echo server initialized")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
