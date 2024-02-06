@@ -24,7 +24,7 @@ func getFormatFuncs() []formatFunc {
 //
 // more info: format_funcs_test.go
 func replaceBookMarkUp(input string) (string, error) {
-	const bookMarkUpPattern = `<e type="web" href="(https?://|https?%3A%2F%2F)[^"]*" title="([^"]+)" style="book" />`
+	const bookMarkUpPattern = `(?i)<e type="web" href="(https?://|https?%3A%2F%2F)[^"]*" title="([^"]+)" style="book" />`
 	re := regexp.MustCompile(bookMarkUpPattern)
 
 	replaceFunc := func(s string) string {

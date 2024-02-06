@@ -7,6 +7,11 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/log"
 )
 
+type testCase struct {
+	input string
+	want  string
+}
+
 func TestFormatTags(t *testing.T) {
 	logger := log.NewLogger()
 	service := NewMarkdownRenderService(nil, logger)
@@ -24,29 +29,26 @@ func TestFormatTags(t *testing.T) {
 }
 
 func TestBookMarkup(t *testing.T) {
-	testText := []string{
-		`<e type="web" href="https%3A%2F%2Fwx.zsxq.com%2Fmweb%2Fviews%2Fweread%2Fsearch.html%3Fkeyword%3D%E4%BA%BA%E6%80%A7%E7%9A%84%E5%BC%B1%E7%82%B9" title="人性的弱点" style="book" />`,
-		`作者：默苍离
-
-多次推荐《<e type="web" href="https%3A%2F%2Fwx.zsxq.com%2Fmweb%2Fviews%2Fweread%2Fsearch.html%3Fkeyword%3D%E4%BA%BA%E6%80%A7%E7%9A%84%E5%BC%B1%E7%82%B9" title="人性的弱点" style="book" />》这本书。
-
-有些朋友仔细看完会有一些回想，感觉之前有时候自己对待别人的方式不合适，过分了。
-
-我们的基础教育和原生家庭教育，不训练认知共情，都在训练道德正确。用道德伦理宗法、小社会共识，这些东西在规定人的行为，把人的交互规定了一堆思想钢印。
-
-并不重视教育孩子去通过认知共情去给予别人信任和好感、驱动。
-
-所以我们的年轻人认知共情的范围比较小，普适度也不够。然后需要大量的社会毒打和二次学习才能获得比较广泛的认知共情。
-
-而我们的教育对情绪共情很推崇，导致情绪共情很重视又忽视认知共情，这就造成很多圣母，以及你妈觉得你冷这样的奇葩状况，也是为什么有一堆，点个赞转发一下，就感觉自己很善良。
-
-所以我建议大家从破除这种问题的角度去读一下这本书。#成长小谈`,
-		`多次推荐《<e type="web" href="https%3A%2F%2Fwx.zsxq.com%2Fmweb%2Fviews%2Fweread%2Fsearch.html%3Fkeyword%3D%E4%BA%BA%E6%80%A7%E7%9A%84%E5%BC%B1%E7%82%B9" title="人性的弱点" style="book" />》这本书。`,
+	testCases := []testCase{
+		{
+			`<e type="web" href="https%3A%2F%2Fwx.zsxq.com%2Fmweb%2Fviews%2Fweread%2Fsearch.html%3Fkeyword%3D%E4%BA%BA%E6%80%A7%E7%9A%84%E5%BC%B1%E7%82%B9" title="人性的弱点" style="book" />`,
+			`人性的弱点`,
+		},
+		{
+			`<e type="web" href="https%3a%2f%2fwx.zsxq.com%2fmweb%2fviews%2fweread%2fsearch.html%3fkeyword%3d%e8%87%aa%e6%81%8b%e5%88%91%e8%ad%a6" title="%e8%87%aa%e6%81%8b%e5%88%91%e8%ad%a6" style="book" />`,
+			`自恋刑警`,
+		},
+		{
+			`多次推荐《<e type="web" href="https%3A%2F%2Fwx.zsxq.com%2Fmweb%2Fviews%2Fweread%2Fsearch.html%3Fkeyword%3D%E4%BA%BA%E6%80%A7%E7%9A%84%E5%BC%B1%E7%82%B9" title="人性的弱点" style="book" />》这本书。`,
+			`多次推荐《人性的弱点》这本书。`,
+		},
 	}
 
-	for _, text := range testText {
-		output, _ := replaceBookMarkUp(text)
-		fmt.Println(output)
+	for _, tc := range testCases {
+		output, _ := replaceBookMarkUp(tc.input)
+		if output != tc.want {
+			t.Errorf("got\n%+v\nwant\n%+v\n", output, tc.want)
+		}
 	}
 }
 
