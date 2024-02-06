@@ -63,10 +63,18 @@ func (p *Parser) ParsePin(content []byte) (text string, err error) {
 	}
 	logger.Info("save author to db successfully")
 
+	title, err := p.ai.Conclude(formattedText)
+	if err != nil {
+		logger.Error("failed to conclude", zap.Error(err))
+		err = fmt.Errorf("failed to conclude: %w", err)
+		return "", err
+	}
+
 	if err = p.db.SavePin(&db.Pin{
 		ID:       pinID,
 		AuthorID: pin.Author.ID,
 		CreateAt: time.Unix(pin.CreateAt, 0),
+		Title:    title,
 		Text:     formattedText,
 		Raw:      content,
 	}); err != nil {

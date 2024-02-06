@@ -68,7 +68,7 @@ func TestArticle(t *testing.T) {
 	}
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
 	imageParser := NewImageParserOnline(requester, &mockFileService, &mockDBService, logger)
-	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, imageParser, logger)
+	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, nil, imageParser, logger)
 	text, err := parser.ParseArticle(bytes)
 	if err != nil {
 		t.Fatal(err)

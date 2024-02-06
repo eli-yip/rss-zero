@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -12,36 +12,35 @@ import (
 )
 
 type SetCookieReq struct {
-	Cookies string `json:"cookies"`
+	Cookie string `json:"cookie"`
 }
 
-type SetCookieResp struct {
-	Message string `json:"message"`
-}
-
-func (h *ZsxqController) UpdateZsxqCookies(c echo.Context) (err error) {
+func (h *ZsxqController) UpdateZsxqCookie(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req SetCookieReq
 	if err = c.Bind(&req); err != nil {
-		logger.Error("update zsxq cookies failed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &SetCookieResp{Message: err.Error()})
+		err = errors.Join(errors.New("invalid request"), err)
+		logger.Error("Error updating zsxq cookie", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
 	}
-	logger.Info("get zsxq cookies", zap.String("cookies", req.Cookies))
+	logger.Info("Retrieved zsxq cookie", zap.String("cookie", req.Cookie))
 
-	if err = h.redis.Set("zsxq_cookies", req.Cookies, redis.Forever); err != nil {
-		logger.Error("update zsxq cookies failed", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &SetCookieResp{Message: err.Error()})
-	}
-
-	requestService := zsxqRequest.NewRequestService(req.Cookies, h.redis, logger)
-	const invalidCookies = "invalid cookies"
+	requestService := zsxqRequest.NewRequestService(req.Cookie, h.redis, logger)
 	if _, err = requestService.Limit(config.C.ZsxqTestURL); err != nil {
-		err = fmt.Errorf("%s: %s", invalidCookies, err.Error())
-		logger.Error("update zsxq cookies failed", zap.Error(err))
+		err = errors.Join(errors.New("invalid cookie"), err)
+		logger.Error("Error updating zsxq cookie",
+			zap.String("cookie", req.Cookie), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError,
-			&SetCookieResp{Message: err.Error()})
+			&ApiResp{Message: "invalid cookie"})
 	}
+	logger.Info("Validated zsxq cookie", zap.String("cookie", req.Cookie))
 
-	return c.JSON(http.StatusOK, &SetCookieResp{Message: "update zsxq cookies success"})
+	if err = h.redis.Set(redis.ZsxqCookiePath, req.Cookie, redis.Forever); err != nil {
+		logger.Error("Error updating zsxq cookie", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &ApiResp{Message: err.Error()})
+	}
+	logger.Info("Updated zsxq cookie", zap.String("cookie", req.Cookie))
+
+	return c.JSON(http.StatusOK, &ApiResp{Message: "success"})
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
+	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	log "github.com/eli-yip/rss-zero/pkg/log"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -52,7 +53,8 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 		imageParser := parse.NewImageParserOnline(requestService, fileService, dbService, logger)
 		logger.Info("zhihu image parser initialized")
 
-		parser := parse.NewParser(htmlToMarkdown, requestService, fileService, dbService, imageParser, logger)
+		aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+		parser := parse.NewParser(htmlToMarkdown, requestService, fileService, dbService, aiService, imageParser, logger)
 		logger.Info("zhihu parser initialized")
 
 		subs, err := dbService.GetSubs()

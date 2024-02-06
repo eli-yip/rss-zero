@@ -111,6 +111,16 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (text string,
 	}
 	logger.Info("successfully generate share link", zap.String("share_link", result.ShareLink))
 
+	if result.Topic.Title == nil {
+		title, err := s.AI.Conclude(result.Text)
+		if err != nil {
+			logger.Error("failed to conclude title", zap.Error(err))
+			err = fmt.Errorf("failed to conclude title: %w", err)
+			return "", err
+		}
+		result.Topic.Title = &title
+	}
+
 	// Save topic to database
 	if err = s.DB.SaveTopic(&dbModels.Topic{
 		ID:        result.Topic.TopicID,

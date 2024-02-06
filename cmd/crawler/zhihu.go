@@ -9,6 +9,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
+	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
@@ -105,7 +106,8 @@ func handleZhihu(opt option, logger *zap.Logger) {
 	logger.Info("init html to markdown service successfully")
 
 	imageParser := parse.NewImageParserOnline(requestService, minioService, zhihuDBService, logger)
-	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, imageParser, logger)
+	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, aiService, imageParser, logger)
 
 	if opt.zhihu.answer {
 		latestTimeInDB, err := zhihuDBService.GetLatestAnswerTime(opt.zhihu.userID)

@@ -36,21 +36,21 @@ func CrawlZsxq(redisService *redis.RedisService, db *gorm.DB, notifier notify.No
 			}
 		}()
 
-		// Get cookies from redis, if not exist, log an cookies error.
-		cookies, err := redisService.Get("zsxq_cookies")
+		// Get cookie from redis, if not exist, log an cookie error.
+		cookie, err := redisService.Get(redis.ZsxqCookiePath)
 		if err != nil {
 			if errors.Is(err, redis.ErrKeyNotExist) {
-				logger.Error("cookies not found in redis, notify user")
-				_ = notifier.Notify("No cookies for zsxq", "not found in redis")
+				logger.Error("cookie not found in redis, notify user")
+				_ = notifier.Notify("No cookie for zsxq", "not found in redis")
 			}
-			logger.Error("failed to get cookies from redis", zap.Error(err))
+			logger.Error("failed to get cookie from redis", zap.Error(err))
 			return
 		}
 
 		dbService := zsxqDB.NewZsxqDBService(db)
 		logger.Info("zsxq database service initialized")
 
-		requestService := request.NewRequestService(cookies, redisService, logger)
+		requestService := request.NewRequestService(cookie, redisService, logger)
 		logger.Info("request service initialized")
 
 		fileService, err := file.NewFileServiceMinio(config.C.Minio, logger)

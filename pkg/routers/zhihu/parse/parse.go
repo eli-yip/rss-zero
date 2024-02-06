@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -17,6 +18,7 @@ type Parser struct {
 	request        request.Requester
 	file           file.FileIface
 	db             db.DB
+	ai             ai.AIIface
 	logger         *zap.Logger
 	mdfmt          *md.MarkdownFormatter
 	Imager
@@ -24,13 +26,14 @@ type Parser struct {
 
 func NewParser(htmlToMarkdown render.HTMLToMarkdownConverter,
 	r request.Requester, f file.FileIface, db db.DB,
-	i Imager, logger *zap.Logger) *Parser {
+	ai ai.AIIface, i Imager, logger *zap.Logger) *Parser {
 	return &Parser{
 		htmlToMarkdown: htmlToMarkdown,
 		request:        r,
 		file:           f,
 		db:             db,
 		Imager:         i,
+		ai:             ai,
 		logger:         logger,
 		mdfmt:          md.NewMarkdownFormatter(),
 	}

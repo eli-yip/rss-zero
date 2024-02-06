@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -26,27 +27,16 @@ import (
 
 func main() {
 	var err error
-	logger := log.NewLogger()
 
-	config.InitFromEnv()
-	logger.Info("config initialized", zap.Any("config", config.C))
-
-	redisService, err := redis.NewRedisService(config.C.Redis)
+	redisService, db, bark, logger, err := initService()
 	if err != nil {
-		logger.Fatal("redis service init failed", zap.Error(err))
+		logger.Fatal("fail to init service", zap.Error(err))
 	}
-	logger.Info("redis service initialized")
+	logger.Info("service initialized")
 
-	db, err := db.NewPostgresDB(config.C.DB)
-	if err != nil {
-		logger.Fatal("db init failed", zap.Error(err))
+	if err = setupCron(logger, redisService, db, bark); err != nil {
+		logger.Fatal("fail to setup cron", zap.Error(err))
 	}
-	logger.Info("db initialized")
-
-	bark := notify.NewBarkNotifier(config.C.BarkURL)
-	logger.Info("bark notifier initialized")
-
-	setupCron(logger, redisService, db, bark)
 	logger.Info("cron service initialized")
 
 	e := setupEcho(redisService, db, bark, logger)
@@ -69,6 +59,43 @@ func main() {
 	}
 
 	logger.Info("server shutdown")
+}
+
+// initService initializes services
+//
+// r: redis service
+//
+// d: postgres db
+//
+// n: notifier
+//
+// l: logger
+func initService() (r *redis.RedisService,
+	d *gorm.DB,
+	n notify.Notifier,
+	l *zap.Logger,
+	err error) {
+	l = log.NewLogger()
+
+	config.InitFromEnv()
+	l.Info("config initialized", zap.Any("config", config.C))
+
+	r, err = redis.NewRedisService(config.C.Redis)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("fail to init redis service: %w", err)
+	}
+	l.Info("redis service initialized")
+
+	d, err = db.NewPostgresDB(config.C.DB)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("fail to init db: %w", err)
+	}
+	l.Info("db initialized")
+
+	bark := notify.NewBarkNotifier(config.C.BarkURL)
+	l.Info("bark notifier initialized")
+
+	return r, d, bark, l, nil
 }
 
 func setupEcho(redisService *redis.RedisService,
@@ -131,17 +158,17 @@ func setupEcho(redisService *redis.RedisService,
 	// /api/v1/cookie
 	cookieApi := apiGroup.Group("/cookie")
 	// /api/v1/cookie/zsxq
-	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateZsxqCookies)
-	zsxqCookieApi.Name = "Update cookies route for zsxq"
+	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateZsxqCookie)
+	zsxqCookieApi.Name = "Cookie updating route for zsxq"
 
 	// /api/v1/refmt
 	refmtApi := apiGroup.Group("/refmt")
 	// /api/v1/refmt/zsxq
-	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Refmt)
-	refmtZsxqApi.Name = "Re-format route for zsxq"
+	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Reformat)
+	refmtZsxqApi.Name = "Reformat route for zsxq"
 	// /api/v1/refmt/zhihu
-	refmtZhihuApi := refmtApi.POST("/zhihu", zhihuHandler.Refmt)
-	refmtZhihuApi.Name = "Re-format route for zhihu"
+	refmtZhihuApi := refmtApi.POST("/zhihu", zhihuHandler.Reformat)
+	refmtZhihuApi.Name = "Reformat route for zhihu"
 
 	// /api/v1/export
 	exportApi := apiGroup.Group("/export")
@@ -170,7 +197,11 @@ func setupEcho(redisService *redis.RedisService,
 }
 
 // setupCron sets up cron jobs
-func setupCron(logger *zap.Logger, redisService *redis.RedisService, db *gorm.DB, notifier notify.Notifier) {
+func setupCron(logger *zap.Logger,
+	redisService *redis.RedisService,
+	db *gorm.DB,
+	notifier notify.Notifier,
+) (err error) {
 	type cronFunc func(*redis.RedisService, *gorm.DB, notify.Notifier) func()
 	cronFuncs := []cronFunc{
 		cron.CrawlZsxq,
@@ -179,12 +210,14 @@ func setupCron(logger *zap.Logger, redisService *redis.RedisService, db *gorm.DB
 
 	s, err := cron.NewCronService(logger)
 	if err != nil {
-		logger.Fatal("cron service init failed", zap.Error(err))
+		return fmt.Errorf("cron service init failed: %w", err)
 	}
 
 	for _, f := range cronFuncs {
 		if err = s.AddJob(f(redisService, db, notifier)); err != nil {
-			logger.Fatal("add job failed", zap.Error(err))
+			return fmt.Errorf("fail to add job: %w", err)
 		}
 	}
+
+	return nil
 }

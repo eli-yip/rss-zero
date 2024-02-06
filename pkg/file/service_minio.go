@@ -70,7 +70,7 @@ func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, si
 	if err != nil {
 		return err
 	}
-	s.logger.Info("Upload to minio successfully",
+	s.logger.Info("upload to minio successfully",
 		zap.String("bucket", info.Bucket),
 		zap.String("key", info.Key),
 		zap.String("type", contentType),

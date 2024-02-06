@@ -22,27 +22,35 @@ type ZhihuExportReq struct {
 	EndTime   *string `json:"end_time"`   // end time is included
 }
 
+// ZhihuExportResp represents the response structure for exporting data from Zhihu.
 type ZhihuExportResp struct {
-	Message  string `json:"message"`
 	FileName string `json:"file_name"`
 	URL      string `json:"url"`
 }
 
+// Export handles the export request for ZhihuController.
+// It reads the export request from the context, parses the options,
+// and starts the export process in a separate goroutine.
+// The exported file is saved to Minio and a notification is sent upon completion.
+// The function returns a JSON response with the export status and file information.
 func (h *ZhihuController) Export(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req ZhihuExportReq
 	if err = c.Bind(&req); err != nil {
-		logger.Error("read json error", zap.Error(err))
-		return c.String(http.StatusBadRequest, err.Error())
+		err = errors.Join(err, errors.New("read export request error"))
+		logger.Error("Error exporting zhihu", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
 	}
+	logger.Info("Retrieved zhihu export request", zap.Any("req", req))
 
 	options, err := h.parseOption(req)
 	if err != nil {
-		logger.Error("parse option error", zap.Error(err))
-		return c.String(http.StatusBadRequest, err.Error())
+		err = errors.Join(err, errors.New("parse zhihu export option error"))
+		logger.Error("Error parse zhihu export option", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid export option"})
 	}
-	logger.Info("parse option successfully", zap.Any("options", options))
+	logger.Info("Parse export option success", zap.Any("options", options))
 
 	fullTextRender := zhihuRender.NewRender(md.NewMarkdownFormatter())
 	exportService := zhihuExport.NewExportService(h.db, fullTextRender)
@@ -50,17 +58,17 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	fileName := exportService.FileName(options)
 	objectKey := fmt.Sprintf("export/zhihu/%s", fileName)
 	go func() {
-		logger.Info("start to export", zap.String("file_name", objectKey))
+		logger := logger.With(zap.String("object_key", objectKey))
+		logger.Info("Start to export")
 
 		pr, pw := io.Pipe()
 
 		go func() {
 			defer pw.Close()
 
-			logger := logger.With(zap.String("file_name", objectKey))
-
 			if err := exportService.Export(pw, options); err != nil {
-				logger.Error("export error", zap.Error(err))
+				err = errors.Join(err, errors.New("export service error"))
+				logger.Error("Error exporting", zap.Error(err))
 				_ = h.notifier.Notify("fail to export", err.Error())
 				return
 			}
@@ -68,33 +76,33 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 
 		minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
-			logger.Error("create minio service error", zap.Error(err))
-			_ = h.notifier.Notify("fail to init minio", err.Error())
+			logger.Error("Failed init minio service", zap.Error(err))
+			_ = h.notifier.Notify("Failed init minio service", err.Error())
 			return
 		}
-		logger.Info("start to upload to minio")
+		logger.Info("Start uploading file to minio")
 
 		if err := minioService.SaveStream(objectKey, pr, -1); err != nil {
-			logger.Error("fail to save stream", zap.Error(err))
-			_ = h.notifier.Notify("fail to save stream", err.Error())
+			logger.Error("Failed saving file", zap.Error(err))
+			_ = h.notifier.Notify("Failed saving file", err.Error())
 			return
 		}
+		logger.Info("Export success")
 
-		err = h.notifier.Notify("export successfully", objectKey)
-		if err != nil {
-			logger.Error("fail to notify", zap.Error(err))
-		}
-
-		logger.Info("export successfully")
+		_ = h.notifier.Notify("Export zhihu success", objectKey)
 	}()
 
-	return c.JSON(http.StatusOK, &ZhihuExportResp{
-		Message:  "start exporting",
-		FileName: fileName,
-		URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
+	return c.JSON(http.StatusOK, &ApiResp{
+		Message: "start to export, you'll be notified when it's done",
+		Data: &ZhihuExportResp{
+			FileName: fileName,
+			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
+		},
 	})
 }
 
+// parseOption parses the ZhihuExportReq and returns the corresponding zhihuExport.Option.
+// It validates the input parameters and returns an error if any of the required fields are missing or invalid.
 func (h *ZhihuController) parseOption(req ZhihuExportReq) (opts zhihuExport.Option, err error) {
 	if req.Author == nil {
 		return opts, errors.New("author is required")

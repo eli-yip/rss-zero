@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/eli-yip/rss-zero/pkg/log"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -44,7 +45,8 @@ func TestPin(t *testing.T) {
 	}
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
 	imageParser := NewImageParserOnline(requester, &mockFileService, &mockDBService, logger)
-	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, imageParser, logger)
+	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, aiService, imageParser, logger)
 	text, err := parser.ParsePin(bytes)
 	if err != nil {
 		t.Fatal(err)
@@ -66,7 +68,8 @@ func TestPinContent(t *testing.T) {
 	}
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
 	imageParser := NewImageParserOnline(requester, &mockFileService, &mockDBService, logger)
-	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, imageParser, logger)
+	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, aiService, imageParser, logger)
 
 	bytes, err := os.ReadFile(filepath.Join("examples", "pin_with_problem.json"))
 	if err != nil {

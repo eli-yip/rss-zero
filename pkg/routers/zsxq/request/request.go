@@ -33,7 +33,7 @@ type RequestService struct {
 	log          *zap.Logger
 }
 
-func NewRequestService(cookies string, redisService *redis.RedisService,
+func NewRequestService(cookie string, redisService *redis.RedisService,
 	logger *zap.Logger) *RequestService {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 
@@ -47,7 +47,7 @@ func NewRequestService(cookies string, redisService *redis.RedisService,
 		log:          logger,
 	}
 
-	s.SetCookies(cookies)
+	s.SetCookies(cookie)
 
 	go func() {
 		for {
@@ -70,11 +70,12 @@ func (r *RequestService) SetCookies(c string) {
 		// split cookies by ";" into cookie parts
 		for _, cp := range strings.SplitN(c, ";", -1) {
 			if n, v, ok := strings.Cut(strings.TrimSpace(cp), "="); ok {
-				cookies := &http.Cookie{Name: n, Value: v}
-				r.client.Jar.SetCookies(u, []*http.Cookie{cookies})
+				cookie := &http.Cookie{Name: n, Value: v}
+				r.client.Jar.SetCookies(u, []*http.Cookie{cookie})
 			}
 		}
-		r.log.Info("set cookies successfully", zap.String("cookies", c), zap.String("domain", d))
+		r.log.Info("set cookie successfully",
+			zap.String("cookie", c), zap.String("domain", d))
 	}
 }
 
@@ -87,7 +88,7 @@ type apiResp struct {
 type badAPIResp struct {
 	// - 1059 for too many requests
 	//
-	// - 401 for invalid cookies
+	// - 401 for invalid cookie
 	Code int `json:"code"`
 }
 
@@ -140,8 +141,8 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 		}
 		switch badResp.Code {
 		case 401:
-			logger.Error("invalid cookies, clear cookies in i time")
-			_ = r.redisService.Set("zsxq_cookies", "", 0)
+			logger.Error("invalid cookie, clear cookie in i time")
+			_ = r.redisService.Set(redis.ZsxqCookiePath, "", 0)
 			return nil, ErrInvalidCookie
 		case 1059:
 			logger.Error("too many requests, sleep 10s")

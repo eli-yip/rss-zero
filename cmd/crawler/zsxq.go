@@ -102,16 +102,16 @@ func handleZsxq(opt option, logger *zap.Logger) {
 	}
 	logger.Info("redis connected")
 
-	cookies, err := redisService.Get("zsxq_cookies")
+	cookie, err := redisService.Get(redis.ZsxqCookiePath)
 	if err != nil {
 		if errors.Is(err, redis.ErrKeyNotExist) {
-			logger.Fatal("cookies not found in redis")
+			logger.Fatal("cookie not found in redis")
 		}
-		logger.Fatal("failed to get cookies from redis", zap.Error(err))
+		logger.Fatal("failed to get cookie from redis", zap.Error(err))
 	}
-	logger.Info("cookies fetched", zap.String("cookies", cookies))
+	logger.Info("cookie fetched", zap.String("cookie", cookie))
 
-	requestService := request.NewRequestService(cookies, redisService, logger)
+	requestService := request.NewRequestService(cookie, redisService, logger)
 	logger.Info("request service initialized")
 
 	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
@@ -14,27 +15,25 @@ type RefmtReq struct {
 	GroupID int `json:"group_id"`
 }
 
-type ZsxqResp struct {
-	Message string `json:"message"`
-}
-
-var failedToReFmt = "failed to re-format"
-
-func (h *ZsxqController) Refmt(c echo.Context) (err error) {
+func (h *ZsxqController) Reformat(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req RefmtReq
 	if err = c.Bind(&req); err != nil {
-		logger.Error(failedToReFmt, zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ZsxqResp{Message: failedToReFmt})
+		err = errors.Join(err, errors.New("invalid request"))
+		logger.Error("Error reformat zsxq", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
 	}
-	logger.Info("get re-fmt request", zap.Int("group_id", req.GroupID))
+	logger.Info("Retrieved zsxq reformat group", zap.Int("group_id", req.GroupID))
 
 	zsxqDBService := zsxqDB.NewZsxqDBService(h.db)
 	refmtService := zsxqRefmt.NewRefmtService(logger, zsxqDBService,
 		zsxqRender.NewMarkdownRenderService(zsxqDBService, logger),
 		h.notifier)
 	go refmtService.ReFmt(req.GroupID)
+	logger.Info("Start to reformat zsxq")
 
-	return c.JSON(http.StatusOK, &ZsxqResp{Message: "re-fmt started"})
+	return c.JSON(http.StatusOK, &ApiResp{
+		Message: "start to reformat zsxq content, you'll be notified when it's done",
+	})
 }

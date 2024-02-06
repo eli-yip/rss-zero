@@ -11,13 +11,13 @@ import (
 )
 
 func TestLimitRaw(t *testing.T) {
-	cookies := os.Getenv("COOKIES")
-	if cookies == "" {
+	cookie := os.Getenv("COOKIE")
+	if cookie == "" {
 		t.Fatal("env COOKIES is empty")
 	}
-	t.Log(cookies)
+	t.Log(cookie)
 	log := log.NewLogger()
-	rs := NewRequestService(cookies, nil, log)
+	rs := NewRequestService(cookie, nil, log)
 	u := "https://articles.zsxq.com/id_wsktlsarlkes.html"
 	bytes, err := rs.LimitRaw(u)
 	if err != nil {
@@ -33,12 +33,12 @@ func TestLimitRaw(t *testing.T) {
 }
 
 func TestRequest(t *testing.T) {
-	cookies := os.Getenv("COOKIES")
-	if cookies == "" {
+	cookie := os.Getenv("COOKIE")
+	if cookie == "" {
 		t.Fatal("env COOKIES is empty")
 	}
 	log := log.NewLogger()
-	rs := NewRequestService(cookies, nil, log)
+	rs := NewRequestService(cookie, nil, log)
 	u := "https://api.zsxq.com/v2/groups/28855218411241/topics?scope=all&count=20"
 	bytes, err := rs.Limit(u)
 	if err != nil {
