@@ -57,10 +57,10 @@ steps:
     commands:
       - echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin
       - echo $DOCKER_PRIVATE_TOKEN | docker login $${DOCKER_PRIVATE_HUB} -u $DOCKER_PRIVATE_USERNAME --password-stdin
-      - docker build -t "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}" -f docker/Dockerfile.server .
-      - docker tag "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}" $${DOCKER_REPO}/rss-zero:latest
-      - docker run -v /var/run/docker.sock:/var/run/docker.sock $${DOCKER_HUB_USERNAME}/slim:1.40.11 build --tag "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}-slim" --http-probe=false --target "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}"
-      - docker tag "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}-slim" $${DOCKER_REPO}/rss-zero:latest-slim
+      - docker build -t "$${DOCKER_PRIVATE_HUB}/rss-zero:${DRONE_TAG##v}" -f docker/Dockerfile.server .
+      - docker tag "$${DOCKER_PRIVATE_HUB}/rss-zero:${DRONE_TAG##v}" $${DOCKER_PRIVATE_HUB}/rss-zero:latest
+      - docker run -v /var/run/docker.sock:/var/run/docker.sock $${DOCKER_HUB_USERNAME}/slim:1.40.11 build --tag "$${DOCKER_PRIVATE_HUB}/rss-zero:${DRONE_TAG##v}-slim" --http-probe=false --target "$${DOCKER_PRIVATE_HUB}/rss-zero:${DRONE_TAG##v}"
+      - docker tag "$${DOCKER_PRIVATE_HUB}/rss-zero:${DRONE_TAG##v}-slim" $${DOCKER_PRIVATE_HUB}/rss-zero:latest-slim
     depends_on:
       - wait-for-dind
     when:
@@ -82,7 +82,7 @@ steps:
     commands:
       - echo $DOCKER_PRIVATE_TOKEN | docker login $${DOCKER_PRIVATE_HUB} -u $DOCKER_PRIVATE_USERNAME --password-stdin
       - |
-        docker images $${DOCKER_REPO}/rss-zero --format "{{.Repository}}:{{.Tag}}" | while read image; do
+        docker images $${DOCKER_PRIVATE_HUB}/rss-zero --format "{{.Repository}}:{{.Tag}}" | while read image; do
           docker push "$image"
         done
     depends_on:
