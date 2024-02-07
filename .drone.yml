@@ -44,27 +44,23 @@ steps:
       - name: dockersock
         path: /var/run
     environment:
-      DOCKER_REPO:
-        from_secret: docker_repo
-      DOCKER_USERNAME:
-        from_secret: docker_username
-      DOCKER_PASSWORD:
-        from_secret: docker_password
+      DOCKER_PRIVATE_HUB:
+        from_secret: docker_private_hub
+      DOCKER_PRIVATE_USERNAME:
+        from_secret: docker_private_username
+      DOCKER_PRIVATE_TOKEN:
+        from_secret: docker_private_token
       DOCKER_HUB_USERNAME:
         from_secret: docker_hub_username
       DOCKER_HUB_TOKEN:
         from_secret: docker_hub_token
     commands:
       - echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-      - echo $DOCKER_PASSWORD | docker login $${DOCKER_REPO} -u $DOCKER_USERNAME --password-stdin
+      - echo $DOCKER_PRIVATE_TOKEN | docker login $${DOCKER_PRIVATE_HUB} -u $DOCKER_PRIVATE_USERNAME --password-stdin
       - docker build -t "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}" -f docker/Dockerfile.server .
       - docker tag "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}" $${DOCKER_REPO}/rss-zero:latest
       - docker run -v /var/run/docker.sock:/var/run/docker.sock $${DOCKER_HUB_USERNAME}/slim:1.40.11 build --tag "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}-slim" --http-probe=false --target "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}"
       - docker tag "$${DOCKER_REPO}/rss-zero:${DRONE_TAG##v}-slim" $${DOCKER_REPO}/rss-zero:latest-slim
-      - docker build -t "$${DOCKER_REPO}/rss-zhihu-encrypt:${DRONE_TAG##v}" -f docker/Dockerfile.zhihu .
-      - docker tag "$${DOCKER_REPO}/rss-zhihu-encrypt:${DRONE_TAG##v}" $${DOCKER_REPO}/rss-zhihu-encrypt:latest
-      - docker run -v /var/run/docker.sock:/var/run/docker.sock $${DOCKER_HUB_USERNAME}/slim:1.40.11 build --tag "$${DOCKER_REPO}/rss-zhihu-encrypt:${DRONE_TAG##v}-slim" --http-probe=false --target "$${DOCKER_REPO}/rss-zhihu-encrypt:${DRONE_TAG##v}"
-      - docker tag "$${DOCKER_REPO}/rss-zhihu-encrypt:${DRONE_TAG##v}-slim" $${DOCKER_REPO}/rss-zhihu-encrypt:latest-slim
     depends_on:
       - wait-for-dind
     when:
@@ -77,20 +73,16 @@ steps:
       - name: dockersock
         path: /var/run
     environment:
-      DOCKER_REPO:
-        from_secret: docker_repo
-      DOCKER_USERNAME:
-        from_secret: docker_username
-      DOCKER_PASSWORD:
-        from_secret: docker_password
+      DOCKER_PRIVATE_HUB:
+        from_secret: docker_private_hub
+      DOCKER_PRIVATE_USERNAME:
+        from_secret: docker_private_username
+      DOCKER_PRIVATE_TOKEN:
+        from_secret: docker_private_token
     commands:
-      - echo $DOCKER_PASSWORD | docker login $${DOCKER_REPO} -u $DOCKER_USERNAME --password-stdin
+      - echo $DOCKER_PRIVATE_TOKEN | docker login $${DOCKER_PRIVATE_HUB} -u $DOCKER_PRIVATE_USERNAME --password-stdin
       - |
         docker images $${DOCKER_REPO}/rss-zero --format "{{.Repository}}:{{.Tag}}" | while read image; do
-          docker push "$image"
-        done
-      - |
-        docker images $${DOCKER_REPO}/rss-zhihu-encrypt --format "{{.Repository}}:{{.Tag}}" | while read image; do
           docker push "$image"
         done
     depends_on:

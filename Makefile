@@ -11,18 +11,6 @@ server:
 crawler:
 	$(GOCMD) build -o crawler ${CURRENT_DIR}/cmd/crawler
 
-.PHONY: zsxq-crawler
-zsxq-crawler:
-	$(GOCMD) build -o zsxq-crawler ${CURRENT_DIR}/cmd/zsxq/crawler
-
-.PHONY: zsxq-re-fmt
-zsxq-re-fmt:
-	$(GOCMD) build -o zsxq-re-fmt ${CURRENT_DIR}/cmd/zsxq/re-fmt
-
-.PHONY: zhihu-encrypt
-zhihu-encrypt:
-	node cmd/zhihu_encrypt/server.js
-
 .PHONY: lint
 lint:
 	golangci-lint run -v --timeout 5m
