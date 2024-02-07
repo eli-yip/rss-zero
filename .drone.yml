@@ -4,7 +4,7 @@ name: default
 
 steps:
   - name: lint
-    image: golangci/golangci-lint:v1.55-alpine
+    image: golangci/golangci-lint:v1.56-alpine
     environment:
       GOCACHE: /cache
       GOLANGCI_LINT_CACHE: /cache
@@ -25,7 +25,7 @@ steps:
           - tag
 
   - name: wait-for-dind
-    image: docker:24.0.7-cli
+    image: docker:25-cli
     volumes:
       - name: dockersock
         path: /var/run
@@ -39,7 +39,7 @@ steps:
         - tag
 
   - name: build
-    image: docker:24.0.7-cli
+    image: docker:25-cli
     volumes:
       - name: dockersock
         path: /var/run
@@ -68,7 +68,7 @@ steps:
         - tag
 
   - name: publish
-    image: docker:24.0.7-cli
+    image: docker:25-cli
     volumes:
       - name: dockersock
         path: /var/run
@@ -108,7 +108,7 @@ steps:
 
 services:
   - name: docker
-    image: docker:24.0.7-dind
+    image: docker:25-dind
     privileged: true
     volumes:
       - name: dockersock
