@@ -53,7 +53,7 @@ func CrawlPin(user string, request request.Requester, parser *parse.Parser,
 		for _, pin := range pinList {
 			logger := logger.With(zap.String("pin_id", pin.ID))
 
-			if targetTime.After(time.Unix(pin.CreateAt, 0)) {
+			if !time.Unix(pin.CreateAt, 0).After(targetTime) {
 				logger.Info("target time reached, break")
 				return nil
 			}

@@ -58,7 +58,7 @@ func CrawlAnswer(user string, request request.Requester, parser *parse.Parser,
 		for _, answer := range answerList {
 			logger := logger.With(zap.Int("answer_id", answer.ID))
 
-			if targetTime.After(time.Unix(answer.CreateAt, 0)) {
+			if !time.Unix(answer.CreateAt, 0).After(targetTime) {
 				logger.Info("target time reached, break")
 				return nil
 			}

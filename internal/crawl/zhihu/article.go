@@ -52,7 +52,7 @@ func CrawlArticle(user string, request request.Requester, parser *parse.Parser,
 		for _, article := range articleList {
 			logger := logger.With(zap.Int("article_id", article.ID))
 
-			if targetTime.After(time.Unix(article.CreateAt, 0)) {
+			if !time.Unix(article.CreateAt, 0).After(targetTime) {
 				logger.Info("target time reached, break")
 				return nil
 			}
