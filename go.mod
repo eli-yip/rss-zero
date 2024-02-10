@@ -1,6 +1,6 @@
 module github.com/eli-yip/rss-zero
 
-go 1.21
+go 1.22
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.5.0
@@ -14,7 +14,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/lib/pq v1.10.9
-	github.com/minio/minio-go/v7 v7.0.66
+	github.com/minio/minio-go/v7 v7.0.67
 	github.com/redis/go-redis/v9 v9.4.0
 	github.com/sashabaranov/go-openai v1.19.3
 	github.com/stretchr/testify v1.8.4

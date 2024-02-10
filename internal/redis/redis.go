@@ -12,6 +12,7 @@ var ErrKeyNotExist = errors.New("key does not exist")
 
 const Forever = 0
 const ZsxqCookiePath = "zsxq_cookie"
+const XiaobotTokenPath = "xiaobot_token"
 
 var RSSTTL = time.Hour * 2
 
