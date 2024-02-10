@@ -10,7 +10,7 @@ import (
 )
 
 type Imager interface {
-	ParseImages(text string, id int, logger *zap.Logger) (result string, err error)
+	ParseImages(text string, id int, t int, logger *zap.Logger) (result string, err error)
 }
 
 type ImageParserOnline struct {
@@ -31,7 +31,7 @@ func NewImageParserOnline(r request.Requester, f file.FileIface,
 }
 
 // ParseImages download images and replace image links in markdown content
-func (p *ImageParserOnline) ParseImages(text string, id int, logger *zap.Logger) (result string, err error) {
+func (p *ImageParserOnline) ParseImages(text string, id int, t int, logger *zap.Logger) (result string, err error) {
 	for _, l := range findImageLinks(text) {
 		logger := logger.With(zap.String("url", l))
 		picID := URLToID(l) // generate a unique int id from url by hash
@@ -51,9 +51,9 @@ func (p *ImageParserOnline) ParseImages(text string, id int, logger *zap.Logger)
 
 		if err = p.db.SaveObjectInfo(&db.Object{
 			ID:              picID,
-			Type:            db.ObjectImageType,
-			ContentType:     db.ContentTypeAnswer,
+			Type:            db.ObjectTypeImage,
 			ContentID:       id,
+			ContentType:     t,
 			ObjectKey:       objectKey,
 			URL:             l,
 			StorageProvider: []string{p.file.AssetsDomain()},
@@ -82,7 +82,7 @@ func NewImageParserOffline(db db.DB, l *zap.Logger) *ImageParserOffline {
 	}
 }
 
-func (p *ImageParserOffline) ParseImages(text string, id int, logger *zap.Logger) (result string, err error) {
+func (p *ImageParserOffline) ParseImages(text string, id int, t int, logger *zap.Logger) (result string, err error) {
 	for _, l := range findImageLinks(text) {
 		logger := logger.With(zap.String("url", l))
 		picID := URLToID(l)

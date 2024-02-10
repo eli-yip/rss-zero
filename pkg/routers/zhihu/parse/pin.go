@@ -138,8 +138,8 @@ func (p *Parser) parsePinContent(content []json.RawMessage, id int, logger *zap.
 
 			if err = p.db.SaveObjectInfo(&db.Object{
 				ID:              picID,
-				Type:            db.ObjectImageType,
-				ContentType:     db.ContentTypeAnswer,
+				Type:            db.ObjectTypeImage,
+				ContentType:     db.TypePin,
 				ContentID:       id,
 				ObjectKey:       objectKey,
 				URL:             imageContent.OriginalURL,

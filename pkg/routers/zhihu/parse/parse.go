@@ -66,12 +66,12 @@ func replaceImageLink(content, name, from, to string) (result string) {
 
 // parseHTML convert html content to markdown content
 // it also download images and replace image links in markdown content
-func (p *Parser) parseHTML(html string, id int, logger *zap.Logger) (string, error) {
+func (p *Parser) parseHTML(html string, id int, t int, logger *zap.Logger) (string, error) {
 	bytes, err := p.htmlToMarkdown.Convert([]byte(html))
 	if err != nil {
 		return "", err
 	}
 	logger.Info("convert html to markdown successfully")
 
-	return p.ParseImages(string(bytes), id, logger)
+	return p.ParseImages(string(bytes), id, t, logger)
 }
