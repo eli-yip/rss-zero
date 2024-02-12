@@ -77,7 +77,7 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 	}
 
 	for _, file := range files {
-		downloadLink, err := s.DownloadLink(file.FileID)
+		downloadLink, err := s.downloadLink(file.FileID)
 		if err != nil {
 			return err
 		}

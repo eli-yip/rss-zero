@@ -11,9 +11,10 @@ import (
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/log"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
+	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
-	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
+	xiaobotRender "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -42,18 +43,25 @@ func CrawlXiaobot(r redis.RedisIface, db *gorm.DB, notifier notify.Notifier) fun
 			return
 		}
 
-		d := xiaobotDB.NewDBService(db)
+		var (
+			d      xiaobotDB.DB
+			req    requestIface.Requester
+			render renderIface.HTMLToMarkdownConverter
+			p      parse.Parser
+		)
+
+		d = xiaobotDB.NewDBService(db)
 		l.Info("Init xiaobot database service")
 
-		req := request.NewRequestService(r, token, l)
+		req = request.NewRequestService(r, token, l)
 		l.Info("Init xiaobot request service")
 
-		render := renderIface.NewHTMLToMarkdownService(l, render.GetHtmlRules()...)
+		render = renderIface.NewHTMLToMarkdownService(l, xiaobotRender.GetHtmlRules()...)
 		l.Info("Init xiaobot render service")
 
 		mdfmt := md.NewMarkdownFormatter()
 
-		p := parse.NewParseService(render, mdfmt, d, l)
+		p = parse.NewParseService(render, mdfmt, d, l)
 
 		papers, err := d.GetPapers()
 		if err != nil {

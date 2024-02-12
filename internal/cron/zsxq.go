@@ -12,6 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	log "github.com/eli-yip/rss-zero/pkg/log"
+	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
@@ -47,28 +48,37 @@ func CrawlZsxq(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notif
 			return
 		}
 
-		dbService := zsxqDB.NewZsxqDBService(db)
+		var (
+			dbService      zsxqDB.DB
+			requestService requestIface.Requester
+			fileService    file.FileIface
+			aiService      ai.AIIface
+			parseService   parse.Parser
+			markdownRender render.MarkdownRenderer
+		)
+
+		dbService = zsxqDB.NewZsxqDBService(db)
 		logger.Info("zsxq database service initialized")
 
-		requestService := request.NewRequestService(cookie, redisService, logger)
+		requestService = request.NewRequestService(cookie, redisService, logger)
 		logger.Info("request service initialized")
 
-		fileService, err := file.NewFileServiceMinio(config.C.Minio, logger)
+		fileService, err = file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
 			logger.Error("failed to initialize file service", zap.Error(err))
 			return
 		}
 		logger.Info("file service initialized")
 
-		aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+		aiService = ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
 		logger.Info("ai service initialized",
 			zap.String("api key", config.C.OpenAIApiKey),
 			zap.String("api url", config.C.OpenAIBaseURL))
 
-		renderer := render.NewMarkdownRenderService(dbService, logger)
+		markdownRender = render.NewMarkdownRenderService(dbService, logger)
 		logger.Info("markdown render service initialized")
 
-		parseService := parse.NewParseService(fileService, requestService, dbService, aiService, renderer, logger)
+		parseService = parse.NewParseService(fileService, requestService, dbService, aiService, markdownRender, logger)
 		logger.Info("parse service initialized")
 
 		// Get group IDs from database, which is a list of int.

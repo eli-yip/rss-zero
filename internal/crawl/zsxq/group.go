@@ -18,7 +18,7 @@ const (
 )
 
 func CrawlGroup(groupID int, request request.Requester,
-	parser *parse.ParseService, targetTime time.Time,
+	parser parse.Parser, targetTime time.Time,
 	oneTime bool, backtrack bool, earliestTopicTimeInDB time.Time,
 	logger *zap.Logger) (err error) {
 	logger.Info("start to crawl zsxq group", zap.Int("group id", groupID))

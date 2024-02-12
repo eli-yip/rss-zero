@@ -10,6 +10,16 @@ import (
 	"go.uber.org/zap"
 )
 
+var location *time.Location
+
+func init() {
+	var err error
+	location, err = time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		panic(err)
+	}
+}
+
 type option struct {
 	crawl     bool
 	backtrack bool
@@ -212,6 +222,5 @@ func parseExportTime(ts string) (t time.Time, err error) {
 		return time.Time{}, err
 	}
 
-	location, _ := time.LoadLocation("Asia/Shanghai")
 	return t.In(location), nil
 }

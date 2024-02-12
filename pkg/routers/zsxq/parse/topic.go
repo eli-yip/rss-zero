@@ -15,6 +15,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type Parser interface {
+	SplitTopics(respBytes []byte) (rawTopics []json.RawMessage, err error)
+	ParseTopic(result *models.TopicParseResult) (text string, err error)
+}
+
 type ParseService struct {
 	File     file.FileIface
 	Request  request.Requester
@@ -31,7 +36,7 @@ func NewParseService(
 	aiService ai.AIIface,
 	renderer render.MarkdownRenderer,
 	logger *zap.Logger,
-) *ParseService {
+) Parser {
 	return &ParseService{
 		File:     fileIface,
 		Request:  requestService,
@@ -150,7 +155,7 @@ type FileDownload struct {
 	} `json:"resp_data"`
 }
 
-func (s *ParseService) DownloadLink(fileID int) (link string, err error) {
+func (s *ParseService) downloadLink(fileID int) (link string, err error) {
 	url := fmt.Sprintf(ZsxqFileBaseURL, fileID)
 	s.log.Info("Start get download link", zap.String("url", url))
 
