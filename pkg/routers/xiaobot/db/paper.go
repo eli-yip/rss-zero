@@ -7,7 +7,7 @@ import (
 )
 
 type Paper struct {
-	ID        string `gorm:"type:text;column:id;primaryKey"`
+	ID        string `gorm:"column:id;type:text;primaryKey"`
 	Name      string `gorm:"column:name;type:text"`
 	CreatorID string `gorm:"column:creator_id;type:text"`
 	Intro     string `gorm:"column:intro;type:text"`

@@ -8,7 +8,7 @@ import (
 )
 
 type Post struct {
-	ID       string    `gorm:"column:id;type:int;primaryKey"`
+	ID       string    `gorm:"column:id;type:text;primaryKey"`
 	PaperID  string    `gorm:"column:paper_id;type:text"`
 	CreateAt time.Time `gorm:"column:create_at;type:timestamptz"`
 	Title    string    `gorm:"column:title;type:text"`
