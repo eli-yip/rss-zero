@@ -7,14 +7,14 @@ import (
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"go.uber.org/zap"
 )
 
 type Parser struct {
-	htmlToMarkdown render.HTMLToMarkdownConverter
+	htmlToMarkdown renderIface.HTMLToMarkdownConverter
 	request        request.Requester
 	file           file.FileIface
 	db             db.DB
@@ -24,7 +24,7 @@ type Parser struct {
 	Imager
 }
 
-func NewParser(htmlToMarkdown render.HTMLToMarkdownConverter,
+func NewParser(htmlToMarkdown renderIface.HTMLToMarkdownConverter,
 	r request.Requester, f file.FileIface, db db.DB,
 	ai ai.AIIface, i Imager, logger *zap.Logger) *Parser {
 	return &Parser{

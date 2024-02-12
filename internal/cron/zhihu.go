@@ -9,9 +9,10 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	log "github.com/eli-yip/rss-zero/pkg/log"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
-	render "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -47,7 +48,7 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 		}
 		logger.Info("zhihu file service initialized")
 
-		htmlToMarkdown := render.NewHTMLToMarkdownService(logger)
+		htmlToMarkdown := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 		logger.Info("zhihu html to markdown service initialized")
 
 		imageParser := parse.NewImageParserOnline(requestService, fileService, dbService, logger)

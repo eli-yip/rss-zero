@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	gomd "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/pkg/render"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
@@ -34,22 +34,22 @@ type MarkdownRenderer interface {
 }
 
 type MarkdownRenderService struct {
-	db          zsxqDB.DB
-	converter   *gomd.Converter // Used to convert html to markdown
-	mdFmt       *md.MarkdownFormatter
-	formatFuncs []formatFunc
-	logger      *zap.Logger
+	db             zsxqDB.DB
+	htmlToMarkdown render.HTMLToMarkdownConverter
+	mdFmt          *md.MarkdownFormatter
+	formatFuncs    []formatFunc
+	logger         *zap.Logger
 }
 
 func NewMarkdownRenderService(dbService zsxqDB.DB, logger *zap.Logger) MarkdownRenderer {
 	logger.Info("start to create markdown render service")
 
 	s := &MarkdownRenderService{
-		db:          dbService,
-		converter:   newHTML2MdConverter(logger),
-		mdFmt:       md.NewMarkdownFormatter(),
-		formatFuncs: getFormatFuncs(),
-		logger:      logger,
+		db:             dbService,
+		htmlToMarkdown: render.NewHTMLToMarkdownService(logger, getArticleRules()...),
+		mdFmt:          md.NewMarkdownFormatter(),
+		formatFuncs:    getFormatFuncs(),
+		logger:         logger,
 	}
 	logger.Info("create markdown render service successfully")
 
@@ -125,7 +125,7 @@ func (m *MarkdownRenderService) formatText(text string) (output string, err erro
 
 func (m *MarkdownRenderService) Article(article []byte) (text string, err error) {
 	m.logger.Info("start to render article to text")
-	bytes, err := m.converter.ConvertBytes(article)
+	bytes, err := m.htmlToMarkdown.Convert(article)
 	if err != nil {
 		return "", err
 	}

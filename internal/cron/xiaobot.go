@@ -10,9 +10,10 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/log"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
-	render "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
+	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -47,7 +48,7 @@ func CrawlXiaobot(r *redis.RedisService, db *gorm.DB, notifier notify.Notifier) 
 		req := request.NewRequestService(r, token, l)
 		l.Info("Init xiaobot request service")
 
-		render := render.NewHTMLToMarkdownService(l)
+		render := renderIface.NewHTMLToMarkdownService(l, render.GetHtmlRules()...)
 		l.Info("Init xiaobot render service")
 
 		mdfmt := md.NewMarkdownFormatter()

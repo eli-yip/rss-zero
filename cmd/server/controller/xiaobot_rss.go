@@ -9,6 +9,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
@@ -140,7 +141,7 @@ func (h *XiaobotController) checkPaper(paperID string, l *zap.Logger) (err error
 		}
 		l.Info("Retrieved paper from xiaobot")
 
-		htmlToMarkdown := render.NewHTMLToMarkdownService(h.l)
+		htmlToMarkdown := renderIface.NewHTMLToMarkdownService(h.l, render.GetHtmlRules()...)
 		mdfmt := md.NewMarkdownFormatter()
 		parser := parse.NewParseService(htmlToMarkdown, mdfmt, h.db, h.l)
 		_, err = parser.ParsePaper(data)

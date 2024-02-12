@@ -59,7 +59,7 @@ func (p *ParseService) ParsePaperPost(data []byte, paperID string) (text string,
 		return "", nil
 	}
 
-	textBytes, err := p.ConvertHTMLToMarkdown([]byte(post.HTML))
+	textBytes, err := p.Convert([]byte(post.HTML))
 	if err != nil {
 		return "", err
 	}

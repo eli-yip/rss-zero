@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/internal/md"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse/api_models"
-	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 	"go.uber.org/zap"
 )
 
@@ -19,13 +19,13 @@ type Parser interface {
 }
 
 type ParseService struct {
-	render.HTMLToMarkdownConverter
+	renderIface.HTMLToMarkdownConverter
 	*md.MarkdownFormatter
 	db     db.DB
 	logger *zap.Logger
 }
 
-func NewParseService(r render.HTMLToMarkdownConverter,
+func NewParseService(r renderIface.HTMLToMarkdownConverter,
 	m *md.MarkdownFormatter,
 	d db.DB,
 	l *zap.Logger) Parser {

@@ -11,6 +11,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
@@ -103,7 +104,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 	}
 	logger.Info("init minio service successfully")
 
-	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
+	htmlToMarkdownService := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	logger.Info("init html to markdown service successfully")
 
 	imageParser := parse.NewImageParserOnline(requestService, minioService, zhihuDBService, logger)
@@ -192,7 +193,7 @@ func refmtZhihu(opt option, logger *zap.Logger) {
 	zhihuDBService := zhihuDB.NewDBService(db)
 	logger.Info("init zhihu db service successfully")
 
-	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
+	htmlToMarkdownService := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	logger.Info("init html to markdown service successfully")
 
 	imageParser := parse.NewImageParserOffline(zhihuDBService, logger)
