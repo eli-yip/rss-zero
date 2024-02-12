@@ -18,7 +18,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.Notifier) func() {
+func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		logger := log.NewLogger()
 		var err error

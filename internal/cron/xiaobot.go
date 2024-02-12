@@ -19,7 +19,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CrawlXiaobot(r *redis.RedisService, db *gorm.DB, notifier notify.Notifier) func() {
+func CrawlXiaobot(r redis.RedisIface, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		l := log.NewLogger()
 		var err error

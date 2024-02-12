@@ -8,14 +8,14 @@ import (
 )
 
 type XiaobotController struct {
-	redis    *redis.RedisService
+	redis    redis.RedisIface
 	db       xiaobotDB.DB
 	taskCh   chan task
 	l        *zap.Logger
 	notifier notify.Notifier
 }
 
-func NewXiaobotController(redis *redis.RedisService,
+func NewXiaobotController(redis redis.RedisIface,
 	db xiaobotDB.DB,
 	n notify.Notifier,
 	l *zap.Logger) *XiaobotController {

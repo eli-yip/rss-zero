@@ -16,6 +16,12 @@ const XiaobotTokenPath = "xiaobot_token"
 
 var RSSTTL = time.Hour * 2
 
+type RedisIface interface {
+	Set(key string, value interface{}, duration time.Duration) (err error)
+	Get(key string) (value string, err error)
+	Del(key string) (err error)
+}
+
 type RedisService struct {
 	client *redis.Client
 	ctx    context.Context
@@ -27,23 +33,23 @@ type RedisConfig struct {
 	DB       int
 }
 
-func NewRedisService(c RedisConfig) (service *RedisService, err error) {
+func NewRedisService(c RedisConfig) (service RedisIface, err error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     c.Addr,
 		Password: c.Password,
 		DB:       c.DB,
 	})
 
-	service = &RedisService{
+	s := &RedisService{
 		client: client,
 		ctx:    context.Background(),
 	}
 
-	_, err = service.client.Ping(service.ctx).Result()
+	_, err = s.client.Ping(s.ctx).Result()
 	if err != nil {
 		return nil, err
 	}
-	return service, nil
+	return s, nil
 }
 
 func (s *RedisService) Set(key string, value interface{}, duration time.Duration) (err error) {

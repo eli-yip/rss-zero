@@ -15,15 +15,21 @@ import (
 )
 
 func TestZsxq(t *testing.T) {
+	var err error
 	t.Log("TestZsxq")
 	config.InitFromEnv()
 
-	redisService, _ := redis.NewRedisService(config.C.Redis)
+	var redisImpl redis.RedisIface
+	redisImpl, err = redis.NewRedisService(config.C.Redis)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	db, _ := db.NewPostgresDB(config.C.DB)
 
 	logger := log.NewLogger()
 	bark := notify.NewBarkNotifier(os.Getenv("BARK_URL"))
-	zsxqCrawler := CrawlZsxq(redisService, db, bark)
+	zsxqCrawler := CrawlZsxq(redisImpl, db, bark)
 
 	location, _ := time.LoadLocation("Asia/Shanghai")
 	s, err := gocron.NewScheduler(gocron.WithLocation(location))

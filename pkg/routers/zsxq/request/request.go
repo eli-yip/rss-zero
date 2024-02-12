@@ -30,11 +30,11 @@ type RequestService struct {
 	emptyClient  *http.Client
 	limiter      chan struct{}
 	maxRetry     int
-	redisService *redis.RedisService
+	redisService redis.RedisIface
 	log          *zap.Logger
 }
 
-func NewRequestService(cookie string, redisService *redis.RedisService,
+func NewRequestService(cookie string, redisService redis.RedisIface,
 	logger *zap.Logger) request.Requester {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 
