@@ -36,11 +36,26 @@ services:
       - REDIS_ADDR=rss-zero-redis:6379
       - REDIS_PASSWORD=
 
-      - BARK_URL=
+      - BARK_URL=https://api.day.app/xGRiymXNCxxxxxx5fY
 
-      - ZSXQ_TEST_URL=
+      - ZSXQ_TEST_URL="https://api.zsxq.com/v2/groups/${your_group_id}/topics?scope=all&count=20"
+      - XIAOBOT_TEST_URL="https://api.xiaobot.net/paper/subscribed"
+
+      - ZHIHU_ENCRYPTION_URL="https://rss-zero-zhihu:3000/encrypt"
+
+      - SERVER_URL="https://rss-zero.example.com"
+      - INTERNAL_SERVER_URL="http://rss-zero:8080"
     ports:
       - 8080:8080
+
+  rss-zero-zhihu:
+    image: hub.momoai.me/rss-zhihu-encrypt:1.0.0
+    container_name: rss-zero-zhihu
+    restart: always
+    expose:
+      - 3000
+    networks:
+      - traefik-network
 
   rss-zero-db:
     image: "postgres:15.5-apline"
@@ -107,8 +122,8 @@ For example, if I want to crawl all answers of zhihu user `canglimo`, I should u
 I plan to support following websites, both crawler and rss:
 
 - [x] [Zhishixingqiu](https://zsxq.com/): Need cookies and valid payments
-- [ ] [Zhihu](https://www.zhihu.com): No need for cookies, only support answers, articles and pins.  
+- [x] [Zhihu](https://www.zhihu.com): No need for cookies, only support answers, articles and pins.  
       **With db and cache, it can get zhihu content more safely and properly**.
-- [ ] [Xiaobaotong](https://xiaobot.net): Need `authorization` header and valid payments.
+- [x] [Xiaobaotong](https://xiaobot.net): Need `authorization` header and valid payments.
 
 Development progress can be seen in [project milestones](https://git.momoai.me/yezi/rss-zero/milestones).
