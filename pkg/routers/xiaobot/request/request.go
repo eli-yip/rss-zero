@@ -3,7 +3,6 @@ package request
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -19,10 +18,8 @@ const userAgent = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 
 
 var (
 	ErrBadResponse = errors.New("bad response")
-	ErrInvalidSign = errors.New("invalid cookie")
+	ErrInvalidSign = errors.New("invalid sign")
 	ErrMaxRetry    = errors.New("max retry")
-	ErrUnreachable = errors.New("unreachable")
-	ErrNewRequest  = errors.New("fail to new a request")
 	ErrNeedLogin   = errors.New("need login")
 )
 
@@ -81,8 +78,6 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 			continue
 		}
 
-		fmt.Printf("resp: %+v\n", resp)
-
 		bytes, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
@@ -91,7 +86,6 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 		}
 
 		var apiResp baseResp
-		fmt.Println(string(bytes))
 		if err := json.Unmarshal(bytes, &apiResp); err != nil {
 			logger.Error("Failed unmarshaling response bytes", zap.Error(err))
 			continue
@@ -187,7 +181,10 @@ func (r *RequestService) setAPIReq(u string) (req *http.Request, err error) {
 	if err != nil {
 		return nil, err
 	}
-	timestamp, sign := encrypt.Sign(time.Now())
+	timestamp, sign, err := encrypt.Sign(time.Now(), u)
+	if err != nil {
+		return nil, err
+	}
 
 	req.Header.Add("Host", "api.xiaobot.net")
 	req.Header.Add("Connection", "keep-alive")

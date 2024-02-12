@@ -3,7 +3,11 @@ package encrypt
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
+	"net/url"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,8 +29,44 @@ import (
 
 const key = `dbbc1dd37360b4084c3a69346e0ce2b2.`
 
-func Sign(t time.Time) (timeStr string, sign string) {
+// keyword=&limit=20&offset=0&order_by=created_at undefined&tag_name=
+// limit=20&offset=0&tag_name=&keyword=&order_by=created_at+undefined
+
+func Sign(t time.Time, u string) (timeStr string, sign string, err error) {
 	timestamp := strconv.FormatInt(t.Unix(), 10)
-	hash := md5.Sum([]byte(key + timestamp))
-	return timestamp, hex.EncodeToString(hash[:])
+	parsedParams, err := parseQuery(u)
+	if err != nil {
+		return "", "", err
+	}
+	hash := md5.Sum([]byte(parsedParams + key + timestamp))
+	return timestamp, hex.EncodeToString(hash[:]), nil
+}
+
+func parseQuery(u string) (string, error) {
+	parseURL, err := url.Parse(u)
+	if err != nil {
+		return "", err
+	}
+
+	values, err := url.ParseQuery(parseURL.RawQuery)
+	if err != nil {
+		return "", err
+	}
+
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var sortedQueryParts []string
+	for _, key := range keys {
+		for _, value := range values[key] {
+			sortedQueryParts = append(sortedQueryParts, fmt.Sprintf("%s=%s", key, url.QueryEscape(value)))
+		}
+	}
+	sortedQuery := strings.Join(sortedQueryParts, "&")
+	sortedQuery = strings.ReplaceAll(sortedQuery, "+", " ")
+
+	return sortedQuery, nil
 }

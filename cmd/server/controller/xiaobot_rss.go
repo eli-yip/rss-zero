@@ -31,6 +31,7 @@ func (h *XiaobotController) RSS(c echo.Context) (err error) {
 		l.Error("Failed checking paper", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "failed to check paper")
 	}
+	l.Info("Checked paper")
 
 	const rssPath = "xiaobot_rss_%s"
 	rss, err := h.getRSS(fmt.Sprintf(rssPath, paperID), l)
@@ -122,18 +123,22 @@ func (h *XiaobotController) checkPaper(paperID string, l *zap.Logger) (err error
 	if err != nil {
 		return err
 	}
+	l.Info("Checked paper existence")
 
 	if !exist {
+		l.Info("Paper does not exist in db")
 		token, err := h.redis.Get(redis.XiaobotTokenPath)
 		if err != nil {
 			return err
 		}
+		l.Info("Retrieved xiaobot token from redis")
 
 		requestService := request.NewRequestService(h.redis, token, h.l)
 		data, err := requestService.Limit(fmt.Sprintf("https://api.xiaobot.net/paper/%s?refer_channel=", paperID))
 		if err != nil {
 			return err
 		}
+		l.Info("Retrieved paper from xiaobot")
 
 		htmlToMarkdown := render.NewHTMLToMarkdownService(h.l)
 		mdfmt := md.NewMarkdownFormatter()
@@ -142,6 +147,7 @@ func (h *XiaobotController) checkPaper(paperID string, l *zap.Logger) (err error
 		if err != nil {
 			return err
 		}
+		l.Info("Parsed paper")
 	}
 
 	return nil
