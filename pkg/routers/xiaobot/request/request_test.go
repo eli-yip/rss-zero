@@ -12,7 +12,7 @@ func TestRequest(t *testing.T) {
 		`1758768|dAJhME4IMWOVf18FZVup5tBztopHzMvIsW21zwD6`,
 		logger)
 
-	data, err := rs.Limit("https://api.xiaobot.net/paper/subscribed")
+	data, err := rs.Limit("https://api.xiaobot.net/paper/pmthinking2023?refer_channel=")
 	if err != nil {
 		t.Error(err)
 	}

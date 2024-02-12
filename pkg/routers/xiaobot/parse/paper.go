@@ -29,6 +29,7 @@ func (p *ParseService) ParsePaper(data []byte) (paperName string, err error) {
 	}); err != nil {
 		return "", err
 	}
+	p.logger.Info("Save creator to db", zap.String("id", paper.Creator.NickName))
 
 	if err = p.db.SavePaper(&db.Paper{
 		ID:        paper.Slug,
@@ -38,6 +39,7 @@ func (p *ParseService) ParsePaper(data []byte) (paperName string, err error) {
 	}); err != nil {
 		return "", err
 	}
+	p.logger.Info("Save paper to db", zap.String("name", paper.Name))
 
 	return paper.Name, nil
 }

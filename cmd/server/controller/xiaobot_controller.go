@@ -22,6 +22,7 @@ func NewXiaobotController(redis *redis.RedisService,
 	h := &XiaobotController{
 		redis:    redis,
 		db:       db,
+		taskCh:   make(chan task, 100),
 		notifier: n,
 		l:        l,
 	}
