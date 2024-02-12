@@ -14,12 +14,12 @@ import (
 
 type RSSRenderer interface {
 	// RenderRSS render render.topics to rss feed
-	RenderRSS([]Topic) (string, error)
+	RenderRSS([]RSSTopic) (string, error)
 }
 
 type RSSRenderService struct{ HTMLRender goldmark.Markdown }
 
-func NewRSSRenderService() *RSSRenderService {
+func NewRSSRenderService() RSSRenderer {
 	return &RSSRenderService{HTMLRender: goldmark.New(
 		goldmark.WithExtensions(extension.GFM,
 			extension.NewCJK(extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksCSS3Draft))),

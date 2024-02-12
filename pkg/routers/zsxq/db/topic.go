@@ -7,6 +7,23 @@ import (
 	"gorm.io/gorm"
 )
 
+type DBTopic interface {
+	// Save topic to zsxq_topic table
+	SaveTopic(t *models.Topic) error
+	// Get latest topic time from zsxq_topic table
+	GetLatestTopicTime(tid int) (t time.Time, err error)
+	// Get earliest topic time from zsxq_topic table
+	GetEarliestTopicTime(tid int) (t time.Time, err error)
+	// Get latest n topics from zsxq_topic table
+	GetLatestNTopics(gid int, n int) (ts []models.Topic, err error)
+	// Get All ids from zsxq_topic table
+	GetAllTopicIDs(gid int) (ids []int, err error)
+	// Fetch n topics before time from zsxq_topic table
+	FetchNTopicsBeforeTime(gid int, n int, t time.Time) (ts []models.Topic, err error)
+	// Fetch n topics with options from zsxq_topic table
+	FetchNTopics(n int, opt Options) (ts []models.Topic, err error)
+}
+
 func (s *ZsxqDBService) SaveTopic(t *models.Topic) error {
 	return s.db.Save(t).Error
 }

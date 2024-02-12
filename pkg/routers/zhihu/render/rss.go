@@ -23,13 +23,13 @@ type RSS struct {
 }
 
 type RSSRender interface {
-	Render(t string, rs []RSS) (string, error)
-	RenderEmpty(t string, authorID string, authorName string) (string, error)
+	Render(t int, rs []RSS) (string, error)
+	RenderEmpty(t int, authorID string, authorName string) (string, string, error)
 }
 
 type RSSRenderService struct{ goldmark.Markdown }
 
-func NewRSSRenderService() *RSSRenderService {
+func NewRSSRenderService() RSSRender {
 	return &RSSRenderService{goldmark.New(
 		goldmark.WithExtensions(extension.GFM,
 			extension.NewCJK(extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksCSS3Draft))),

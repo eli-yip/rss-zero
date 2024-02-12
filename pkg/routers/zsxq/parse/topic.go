@@ -18,7 +18,7 @@ import (
 type ParseService struct {
 	File     file.FileIface
 	Request  request.Requester
-	DB       db.DataBaseIface
+	DB       db.DB
 	AI       ai.AIIface
 	Renderer render.MarkdownRenderer
 	log      *zap.Logger
@@ -27,7 +27,7 @@ type ParseService struct {
 func NewParseService(
 	fileIface file.FileIface,
 	requestService request.Requester,
-	dbService db.DataBaseIface,
+	dbService db.DB,
 	aiService ai.AIIface,
 	renderer render.MarkdownRenderer,
 	logger *zap.Logger,

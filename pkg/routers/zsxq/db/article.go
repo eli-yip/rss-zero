@@ -1,8 +1,15 @@
 package db
 
-import (
-	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
-)
+import "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+
+type DBArticle interface {
+	// Save article to zsxq_article table
+	SaveArticle(a *models.Article) error
+	// Get article
+	GetArticle(aid string) (a *models.Article, err error)
+	// Get article text by id from zsxq_article table
+	GetArticleText(aid string) (text string, err error)
+}
 
 func (s *ZsxqDBService) SaveArticle(a *models.Article) error {
 	return s.db.Save(a).Error

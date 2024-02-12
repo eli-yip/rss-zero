@@ -11,6 +11,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
+	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
@@ -85,7 +86,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		return
 	}
 
-	var requestService *request.RequestService
+	var requestService requestIface.Requester
 	if opt.zhihu.dC0 != "" {
 		requestService, err = request.NewRequestService(&opt.zhihu.dC0, logger)
 	} else {

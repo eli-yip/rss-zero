@@ -34,14 +34,14 @@ type MarkdownRenderer interface {
 }
 
 type MarkdownRenderService struct {
-	db          zsxqDB.DataBaseIface
+	db          zsxqDB.DB
 	converter   *gomd.Converter // Used to convert html to markdown
 	mdFmt       *md.MarkdownFormatter
 	formatFuncs []formatFunc
 	logger      *zap.Logger
 }
 
-func NewMarkdownRenderService(dbService zsxqDB.DataBaseIface, logger *zap.Logger) *MarkdownRenderService {
+func NewMarkdownRenderService(dbService zsxqDB.DB, logger *zap.Logger) MarkdownRenderer {
 	logger.Info("start to create markdown render service")
 
 	s := &MarkdownRenderService{

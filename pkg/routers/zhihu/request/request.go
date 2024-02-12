@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/encrypt"
 	"go.uber.org/zap"
 )
@@ -36,7 +37,7 @@ type RequestService struct {
 	log      *zap.Logger
 }
 
-func NewRequestService(dC0 *string, logger *zap.Logger) (*RequestService, error) {
+func NewRequestService(dC0 *string, logger *zap.Logger) (request.Requester, error) {
 	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:   &http.Client{},

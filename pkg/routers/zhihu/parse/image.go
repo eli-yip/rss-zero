@@ -21,7 +21,7 @@ type ImageParserOnline struct {
 }
 
 func NewImageParserOnline(r request.Requester, f file.FileIface,
-	db db.DB, l *zap.Logger) *ImageParserOnline {
+	db db.DB, l *zap.Logger) Imager {
 	return &ImageParserOnline{
 		request: r,
 		file:    f,
@@ -75,11 +75,8 @@ type ImageParserOffline struct {
 	logger *zap.Logger
 }
 
-func NewImageParserOffline(db db.DB, l *zap.Logger) *ImageParserOffline {
-	return &ImageParserOffline{
-		db:     db,
-		logger: l,
-	}
+func NewImageParserOffline(db db.DB, l *zap.Logger) Imager {
+	return &ImageParserOffline{db: db, logger: l}
 }
 
 func (p *ImageParserOffline) ParseImages(text string, id int, t int, logger *zap.Logger) (result string, err error) {

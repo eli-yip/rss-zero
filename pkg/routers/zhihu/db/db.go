@@ -18,7 +18,7 @@ type DB interface {
 
 type DBService struct{ *gorm.DB }
 
-func NewDBService(db *gorm.DB) *DBService { return &DBService{db} }
+func NewDBService(db *gorm.DB) DB { return &DBService{db} }
 
 type FetchOptionBase struct {
 	UserID    *string

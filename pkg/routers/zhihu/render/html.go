@@ -15,7 +15,7 @@ type HTMLToMarkdownConverter interface {
 
 type HTMLToMarkdownService struct{ converter *gomd.Converter }
 
-func NewHTMLToMarkdownService(logger *zap.Logger) *HTMLToMarkdownService {
+func NewHTMLToMarkdownService(logger *zap.Logger) HTMLToMarkdownConverter {
 	return &HTMLToMarkdownService{converter: newHTMLToMdConverter(logger)}
 }
 

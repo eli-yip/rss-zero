@@ -6,6 +6,19 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 )
 
+type DBGroup interface {
+	// Get all zsxq group ids from zsxq_group table
+	GetZsxqGroupIDs() (ids []int, err error)
+	// Get group name by group id from zsxq_group table
+	GetGroupName(gid int) (name string, err error)
+	// Save latest crawl time to zsxq_group table
+	UpdateCrawlTime(gid int, t time.Time) (err error)
+	// Get crawl status from zsxq_group table
+	GetCrawlStatus(gid int) (finished bool, err error)
+	// Save crawl status to zsxq_group table
+	SaveCrawlStatus(gid int, finished bool) (err error)
+}
+
 func (s *ZsxqDBService) GetZsxqGroupIDs() ([]int, error) {
 	var groups []models.Group
 	if err := s.db.Find(&groups).Error; err != nil {

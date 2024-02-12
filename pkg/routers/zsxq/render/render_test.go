@@ -469,10 +469,11 @@ test-text
 
 	mockDBService := NewMockDBService()
 	logger := log.NewLogger()
-	MarkdownRenderService := NewMarkdownRenderService(mockDBService, logger)
+	markdownRender := NewMarkdownRenderService(mockDBService, logger)
+	markdownRenderService := markdownRender.(*MarkdownRenderService)
 	for _, c := range cases {
 		var buffer bytes.Buffer
-		if err := MarkdownRenderService.renderTalk(&c.talk, c.author, &buffer); err != nil {
+		if err := markdownRenderService.renderTalk(&c.talk, c.author, &buffer); err != nil {
 			t.Errorf("renderTalk() error = %v", err)
 		}
 		if buffer.String() != c.result {

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/request"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
 )
@@ -34,7 +35,7 @@ type RequestService struct {
 }
 
 func NewRequestService(cookie string, redisService *redis.RedisService,
-	logger *zap.Logger) *RequestService {
+	logger *zap.Logger) request.Requester {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 
 	const defaultMaxRetry = 5

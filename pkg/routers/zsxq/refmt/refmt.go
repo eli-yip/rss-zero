@@ -17,12 +17,12 @@ import (
 
 type RefmtService struct {
 	logger   *zap.Logger
-	db       zsxqDB.DataBaseIface
+	db       zsxqDB.DB
 	mdRender render.MarkdownRenderer
 	notifier notify.Notifier
 }
 
-func NewRefmtService(logger *zap.Logger, db zsxqDB.DataBaseIface,
+func NewRefmtService(logger *zap.Logger, db zsxqDB.DB,
 	mdrender render.MarkdownRenderer, notifier notify.Notifier,
 ) *RefmtService {
 	return &RefmtService{

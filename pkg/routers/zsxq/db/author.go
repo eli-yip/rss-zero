@@ -2,6 +2,15 @@ package db
 
 import "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 
+type DBAuthor interface {
+	// Save author info to zsxq_author table
+	SaveAuthorInfo(a *models.Author) error
+	// Get author name by id from zsxq_author table
+	GetAuthorName(aid int) (name string, err error)
+	// Get author id by name or alias from zsxq_author table
+	GetAuthorID(name string) (id int, err error)
+}
+
 func (s *ZsxqDBService) SaveAuthorInfo(a *models.Author) error {
 	return s.db.Save(a).Error
 }
