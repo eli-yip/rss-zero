@@ -18,6 +18,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/log"
+	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -122,6 +123,8 @@ func setupEcho(redisService *redis.RedisService,
 
 	zhihuDBService := zhihuDB.NewDBService(db)
 	zhihuHandler := controller.NewZhihuHandler(redisService, zhihuDBService, notifier, logger)
+	xiaobotDBService := xiaobotDB.NewDBService(db)
+	xiaobotHandler := controller.NewXiaobotController(redisService, xiaobotDBService, notifier, logger)
 
 	// /rss
 	rssGroup := e.Group("/rss")
@@ -146,6 +149,9 @@ func setupEcho(redisService *redis.RedisService,
 	rssZhihuPin := rssZhihu.GET("/pin/:feed", zhihuHandler.PinRSS)
 	rssZhihuPin.Name = "RSS route for zhihu pin"
 
+	rssXiaobot := rssGroup.GET("/xiaobot/:feed", xiaobotHandler.RSS)
+	rssXiaobot.Name = "RSS route for xiaobot"
+
 	// /api/v1
 	apiGroup := e.Group("/api/v1")
 
@@ -160,6 +166,9 @@ func setupEcho(redisService *redis.RedisService,
 	// /api/v1/cookie/zsxq
 	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateZsxqCookie)
 	zsxqCookieApi.Name = "Cookie updating route for zsxq"
+	// /api/v1/cookie/xiaobot
+	xiaobotCookieApi := cookieApi.POST("/xiaobot", xiaobotHandler.UpdateToken)
+	xiaobotCookieApi.Name = "Token updating route for xiaobot"
 
 	// /api/v1/refmt
 	refmtApi := apiGroup.Group("/refmt")
@@ -206,6 +215,7 @@ func setupCron(logger *zap.Logger,
 	cronFuncs := []cronFunc{
 		cron.CrawlZsxq,
 		cron.CrawlZhihu,
+		cron.CrawlXiaobot,
 	}
 
 	s, err := cron.NewCronService(logger)

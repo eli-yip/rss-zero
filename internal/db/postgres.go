@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zsxqDBModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 	"gorm.io/driver/postgres"
@@ -55,6 +56,10 @@ func NewPostgresDB(c PostgresConfig) (db *gorm.DB, err error) {
 		&zhihuDB.Article{},
 		&zhihuDB.Pin{},
 		&zhihuDB.Sub{},
+
+		&xiaobotDB.Paper{},
+		&xiaobotDB.Post{},
+		&xiaobotDB.Creator{},
 	); err != nil {
 		return nil, err
 	}

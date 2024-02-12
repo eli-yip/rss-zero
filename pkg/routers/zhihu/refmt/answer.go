@@ -77,7 +77,7 @@ func (s *RefmtService) refmtAnswer(authorID string) (err error) {
 					return
 				}
 
-				text, err := s.ParseImages(string(textBytes), a.ID, logger)
+				text, err := s.ParseImages(string(textBytes), a.ID, db.TypeAnswer, logger)
 				if err != nil {
 					logger.Error("fail to replace image links", zap.Error(err))
 					return

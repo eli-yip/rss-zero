@@ -30,7 +30,7 @@ func (p *Parser) ParseArticle(content []byte) (text string, err error) {
 	logger := p.logger.With(zap.Int("article_id", article.ID))
 	logger.Info("unmarshal article successfully")
 
-	text, err = p.parseHTML(article.HTML, article.ID, logger)
+	text, err = p.parseHTML(article.HTML, article.ID, db.TypeArticle, logger)
 	if err != nil {
 		return "", err
 	}

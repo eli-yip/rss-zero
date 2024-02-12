@@ -14,8 +14,6 @@ const (
 	TypePin
 )
 
-const defaultFetchCount = 20
-
 func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB) (path string, result string, err error) {
 	rssRender := render.NewRSSRenderService()
 
