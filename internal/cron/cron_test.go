@@ -31,8 +31,7 @@ func TestZsxq(t *testing.T) {
 	bark := notify.NewBarkNotifier(os.Getenv("BARK_URL"))
 	zsxqCrawler := CrawlZsxq(redisImpl, db, bark)
 
-	location, _ := time.LoadLocation("Asia/Shanghai")
-	s, err := gocron.NewScheduler(gocron.WithLocation(location))
+	s, err := gocron.NewScheduler(gocron.WithLocation(config.BJT))
 	if err != nil {
 		t.Fatal(err)
 	}

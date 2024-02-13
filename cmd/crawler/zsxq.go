@@ -39,8 +39,7 @@ func handleZsxq(opt option, logger *zap.Logger) {
 			logger.Fatal("fail to parse start time", zap.Error(err))
 		}
 		if opt.endTime == "" {
-			location, _ := time.LoadLocation("Asia/Shanghai")
-			opt.endTime = time.Now().In(location).Format("2006-01-02")
+			opt.endTime = time.Now().In(config.BJT).Format("2006-01-02")
 		}
 		endT, err := parseExportTime(opt.endTime)
 		if err != nil {

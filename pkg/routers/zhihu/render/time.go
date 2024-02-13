@@ -1,9 +1,12 @@
 package render
 
-import "time"
+import (
+	"time"
+
+	"github.com/eli-yip/rss-zero/config"
+)
 
 func formatTimeForRead(t time.Time) string {
-	location, _ := time.LoadLocation("Asia/Shanghai")
-	t = t.In(location)
+	t = t.In(config.BJT)
 	return t.Format("2006年1月2日 15:04")
 }

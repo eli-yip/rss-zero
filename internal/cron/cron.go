@@ -3,6 +3,7 @@ package cron
 import (
 	"time"
 
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/go-co-op/gocron/v2"
 	"go.uber.org/zap"
 )
@@ -13,11 +14,7 @@ type CronService struct {
 }
 
 func NewCronService(logger *zap.Logger) (*CronService, error) {
-	location, err := time.LoadLocation("Asia/Shanghai")
-	if err != nil {
-		return nil, err
-	}
-	s, err := gocron.NewScheduler(gocron.WithLocation(location))
+	s, err := gocron.NewScheduler(gocron.WithLocation(config.BJT))
 	if err != nil {
 		return nil, err
 	}
