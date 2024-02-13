@@ -1,50 +1,137 @@
 package export
 
 import (
-	"os"
+	"bytes"
 	"testing"
 	"time"
 
-	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/internal/db"
+	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
+
 	log "github.com/eli-yip/rss-zero/pkg/log"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	zsxqDBModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 	render "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 )
 
+type mockZsxqDBService struct{ zsxqDB.DB }
+
+func (m *mockZsxqDBService) GetAuthorID(name string) (int, error) {
+	const authorID = 11111
+	if name == "author" {
+		return authorID, nil
+	}
+	return 0, gorm.ErrRecordNotFound
+}
+
+func (m *mockZsxqDBService) FetchNTopics(groupID int, opt zsxqDB.Options) ([]zsxqDBModels.Topic, error) {
+	return []zsxqDBModels.Topic{
+		{
+			ID:        1,
+			Time:      time.Date(2022, 11, 20, 0, 0, 0, 0, time.Local),
+			GroupID:   28855218411241,
+			Type:      "q&a",
+			Digested:  true,
+			AuthorID:  11111,
+			ShareLink: "https://wx.zsxq.com/dweb2/index/topic/28855218411241",
+			Title:     func() *string { s := "title"; return &s }(),
+			Text:      "text",
+		},
+		{
+			ID:        22222,
+			Time:      time.Date(2022, 11, 20, 0, 0, 0, 0, time.Local),
+			GroupID:   28855218411241,
+			Type:      "q&a",
+			Digested:  false,
+			AuthorID:  11111,
+			ShareLink: "https://wx.zsxq.com/dweb2/index/topic/28855218411241",
+			Title:     func() *string { s := "title2"; return &s }(),
+			Text:      "text",
+		},
+	}, nil
+}
+
 func TestExport(t *testing.T) {
 	t.Log("TestExport")
-	db, err := db.NewPostgresDB(config.C.DB)
-	if err != nil {
-		t.Fatal(err)
+
+	type testCase struct {
+		option Option
+		expect string
 	}
 
-	zsxqDB := zsxqDB.NewZsxqDBService(db)
-	logger := log.NewLogger()
-	mr := render.NewMarkdownRenderService(zsxqDB, logger)
+	testCases := []testCase{
+		{
+			option: Option{},
+			expect: `# [精华]title
 
-	exportService := NewExportService(zsxqDB, mr)
+时间：2022年11月20日
 
-	Options := Option{
-		GroupID:    28855218411241,
-		Type:       nil,
-		Digested:   nil,
-		AuthorName: nil,
-		StartTime:  time.Date(2022, 11, 20, 0, 0, 0, 0, time.Local),
-		EndTime:    time.Date(2022, 11, 25, 0, 0, 0, 0, time.Local),
+链接：[https://wx.zsxq.com/dweb2/index/topic/28855218411241](https://wx.zsxq.com/dweb2/index/topic/28855218411241)
+
+text
+
+# title2
+
+时间：2022年11月20日
+
+链接：[https://wx.zsxq.com/dweb2/index/topic/28855218411241](https://wx.zsxq.com/dweb2/index/topic/28855218411241)
+
+text
+`,
+		},
 	}
 
-	file, err := os.Create("test.md")
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert := assert.New(t)
 
-	err = exportService.Export(file, Options)
-	if err != nil {
-		t.Fatal(err)
+	zsxqDB := &mockZsxqDBService{}
+	exportService := NewExportService(zsxqDB, render.NewMarkdownRenderService(zsxqDB, log.NewLogger()))
+
+	var buf bytes.Buffer
+	for _, v := range testCases {
+		err := exportService.Export(&buf, v.option)
+		assert.Nil(err)
+		assert.Equal(v.expect, buf.String())
 	}
 
 	t.Log("TestExport done")
+}
+
+func TestExportOptionError(t *testing.T) {
+	t.Log("TestExportOptionError")
+
+	type testCase struct {
+		option Option
+		err    error
+	}
+
+	testCases := []testCase{
+		{
+			option: Option{
+				AuthorName: func() *string { s := "author_abc"; return &s }(),
+			},
+			err: ErrNoAuthor,
+		},
+		{
+			option: Option{
+				StartTime: time.Date(2022, 11, 20, 0, 0, 0, 0, time.Local),
+				EndTime:   time.Date(2022, 11, 19, 0, 0, 0, 0, time.Local),
+			},
+			err: ErrTimeOrder,
+		},
+	}
+
+	assert := assert.New(t)
+
+	zsxqDB := &mockZsxqDBService{}
+	exportService := NewExportService(zsxqDB, render.NewMarkdownRenderService(zsxqDB, log.NewLogger()))
+
+	for _, v := range testCases {
+		var buf bytes.Buffer
+		err := exportService.Export(&buf, v.option)
+		assert.Equal(v.err, err)
+	}
+
+	t.Log("TestExportOptionError done")
 }
 
 func TestFileName(t *testing.T) {
@@ -78,10 +165,10 @@ func TestFileName(t *testing.T) {
 		},
 	}
 
+	assert := assert.New(t)
+
 	for _, v := range options {
 		got := exportService.FileName(v.Option)
-		if got != v.Expect {
-			t.Fatalf("FileName: got %s, expect %s", got, v.Expect)
-		}
+		assert.Equal(v.Expect, got)
 	}
 }

@@ -40,7 +40,7 @@ func DecodeZsxqAPITime(ts string) (result time.Time, err error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	return result, nil
+	return result.In(config.BJT), nil
 }
 
 // FmtForRead format time.Time to a time string like "2006年1月2日".

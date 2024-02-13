@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/stretchr/testify/assert"
 )
 
 type testCase struct {
@@ -36,14 +37,12 @@ func TestSign(t *testing.T) {
 		},
 	}
 
+	assert := assert.New(t)
 	for _, c := range cases {
 		timestamp, sign, err := Sign(c.t, c.u)
-		if err != nil {
-			t.Error(err)
-		}
-		if timestamp != c.timestamp || sign != c.want {
-			t.Errorf("Sign(%v) == (%v, %v), want (%v, %v)", c.t, timestamp, sign, c.timestamp, c.want)
-		}
+		assert.Nil(err)
+		assert.Equal(c.timestamp, timestamp)
+		assert.Equal(c.want, sign)
 	}
 }
 
@@ -58,13 +57,10 @@ func TestParseParams(t *testing.T) {
 		},
 	}
 
+	assert := assert.New(t)
 	for _, c := range cases {
 		got, err := parseQuery(c.u)
-		if err != nil {
-			t.Error(err)
-		}
-		if got != c.want {
-			t.Errorf("parseQuery(%v) == %v, want %v", c.u, got, c.want)
-		}
+		assert.Nil(err)
+		assert.Equal(c.want, got)
 	}
 }
