@@ -15,7 +15,7 @@ import (
 // offset: number of articles have been crawled
 // set it to 0 if you want to crawl articles from the beginning
 // oneTime: if true, only crawl one time
-func CrawlArticle(user string, request request.Requester, parser *parse.Parser,
+func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	logger.Info("start to crawl zhihu articles", zap.String("user url token", user))
 

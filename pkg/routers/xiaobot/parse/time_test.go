@@ -22,7 +22,7 @@ func TestTimeParse(t *testing.T) {
 		},
 	}
 
-	parseService := NewParseService(nil, nil, nil, nil)
+	parseService := initTest()
 
 	for _, tt := range timeTests {
 		tt := tt

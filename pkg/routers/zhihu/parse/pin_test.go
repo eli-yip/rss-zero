@@ -47,7 +47,10 @@ func TestPin(t *testing.T) {
 	htmlToMarkdownService := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	imageParser := NewImageParserOnline(requester, &mockFileService, &mockDBService, logger)
 	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
-	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, aiService, imageParser, logger)
+	parser, err := NewParseService(WithAI(aiService), WithLogger(logger), WithImager(imageParser), WithHTMLToMarkdownConverter(htmlToMarkdownService))
+	if err != nil {
+		t.Fatal(err)
+	}
 	text, err := parser.ParsePin(bytes)
 	if err != nil {
 		t.Fatal(err)
@@ -70,8 +73,10 @@ func TestPinContent(t *testing.T) {
 	htmlToMarkdownService := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	imageParser := NewImageParserOnline(requester, &mockFileService, &mockDBService, logger)
 	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
-	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, aiService, imageParser, logger)
-
+	parser, err := NewParseService(WithAI(aiService), WithLogger(logger), WithImager(imageParser), WithHTMLToMarkdownConverter(htmlToMarkdownService))
+	if err != nil {
+		t.Fatal(err)
+	}
 	bytes, err := os.ReadFile(filepath.Join("examples", "pin_with_problem.json"))
 	if err != nil {
 		t.Fatal(err)

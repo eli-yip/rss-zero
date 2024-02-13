@@ -39,7 +39,10 @@ func TestAnswer(t *testing.T) {
 	}
 	htmlToMarkdownService := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	imageParser := NewImageParserOnline(requester, &mockFileService, &mockDBService, logger)
-	parser := NewParser(htmlToMarkdownService, requester, &mockFileService, &mockDBService, nil, imageParser, logger)
+	parser, err := NewParseService(WithLogger(logger), WithImager(imageParser), WithHTMLToMarkdownConverter(htmlToMarkdownService))
+	if err != nil {
+		t.Fatal(err)
+	}
 	text, err := parser.ParseAnswer(bytes)
 	if err != nil {
 		t.Fatal(err)

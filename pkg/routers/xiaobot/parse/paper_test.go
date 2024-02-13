@@ -7,19 +7,16 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/eli-yip/rss-zero/internal/md"
-	"github.com/eli-yip/rss-zero/pkg/log"
-	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
-	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 )
 
 func initTest() Parser {
-	logger := log.NewLogger()
-	htmlToMarkdown := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
-	mdfmt := md.NewMarkdownFormatter()
 	db := db.NewDBMock()
-	return NewParseService(htmlToMarkdown, mdfmt, db, logger)
+	p, err := NewParseService(WithDB(db))
+	if err != nil {
+		panic(err)
+	}
+	return p
 }
 
 func TestParsePaperPost(t *testing.T) {

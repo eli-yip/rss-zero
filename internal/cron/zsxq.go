@@ -78,7 +78,17 @@ func CrawlZsxq(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notif
 		markdownRender = render.NewMarkdownRenderService(dbService, logger)
 		logger.Info("markdown render service initialized")
 
-		parseService = parse.NewParseService(fileService, requestService, dbService, aiService, markdownRender, logger)
+		parseService, err = parse.NewParseService(
+			parse.WithFileIface(fileService),
+			parse.WithRequestService(requestService),
+			parse.WithRenderer(markdownRender),
+			parse.WithDBService(dbService),
+			parse.WithLogger(logger),
+			parse.WithAIService(aiService))
+		if err != nil {
+			logger.Error("failed to initialize parse service", zap.Error(err))
+			return
+		}
 		logger.Info("parse service initialized")
 
 		// Get group IDs from database, which is a list of int.

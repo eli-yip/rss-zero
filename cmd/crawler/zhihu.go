@@ -86,7 +86,15 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		return
 	}
 
-	var requestService requestIface.Requester
+	var (
+		requestService        requestIface.Requester
+		minioService          file.FileIface
+		htmlToMarkdownService renderIface.HTMLToMarkdownConverter
+		imageParser           parse.Imager
+		aiService             ai.AIIface
+		parser                parse.Parser
+	)
+
 	if opt.zhihu.dC0 != "" {
 		requestService, err = request.NewRequestService(&opt.zhihu.dC0, logger)
 	} else {
@@ -97,18 +105,29 @@ func handleZhihu(opt option, logger *zap.Logger) {
 	}
 	logger.Info("init request service successfully")
 
-	minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
+	minioService, err = file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {
 		logger.Fatal("fail to connect minio", zap.Error(err))
 	}
 	logger.Info("init minio service successfully")
 
-	htmlToMarkdownService := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
+	htmlToMarkdownService = renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	logger.Info("init html to markdown service successfully")
 
-	imageParser := parse.NewImageParserOnline(requestService, minioService, zhihuDBService, logger)
-	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
-	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, aiService, imageParser, logger)
+	imageParser = parse.NewImageParserOnline(requestService, minioService, zhihuDBService, logger)
+
+	aiService = ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+
+	parser, err = parse.NewParseService(
+		parse.WithHTMLToMarkdownConverter(htmlToMarkdownService),
+		parse.WithAI(aiService),
+		parse.WithRequester(requestService),
+		parse.WithFile(minioService),
+		parse.WithImager(imageParser),
+		parse.WithLogger(logger))
+	if err != nil {
+		logger.Fatal("fail to init parser", zap.Error(err))
+	}
 
 	if opt.zhihu.answer {
 		latestTimeInDB, err := zhihuDBService.GetLatestAnswerTime(opt.zhihu.userID)

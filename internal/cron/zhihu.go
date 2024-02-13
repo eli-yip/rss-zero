@@ -39,6 +39,7 @@ func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Noti
 			htmlToMarkdown renderIface.HTMLToMarkdownConverter
 			imageParser    parse.Imager
 			aiService      ai.AIIface
+			parser         parse.Parser
 		)
 
 		dbService = zhihuDB.NewDBService(db)
@@ -65,7 +66,13 @@ func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Noti
 		logger.Info("zhihu image parser initialized")
 
 		aiService = ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
-		parser := parse.NewParser(htmlToMarkdown, requestService, fileService, dbService, aiService, imageParser, logger)
+		parser, err = parse.NewParseService(parse.WithAI(aiService),
+			parse.WithLogger(logger),
+			parse.WithImager(imageParser),
+			parse.WithHTMLToMarkdownConverter(htmlToMarkdown),
+			parse.WithRequester(requestService),
+			parse.WithFile(fileService),
+			parse.WithDB(dbService))
 		logger.Info("zhihu parser initialized")
 
 		subs, err := dbService.GetSubs()

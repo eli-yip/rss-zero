@@ -5,16 +5,13 @@ import (
 	"time"
 
 	crawl "github.com/eli-yip/rss-zero/internal/crawl/xiaobot"
-	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/log"
-	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
-	xiaobotRender "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -44,10 +41,9 @@ func CrawlXiaobot(r redis.RedisIface, db *gorm.DB, notifier notify.Notifier) fun
 		}
 
 		var (
-			d      xiaobotDB.DB
-			req    requestIface.Requester
-			render renderIface.HTMLToMarkdownConverter
-			p      parse.Parser
+			d   xiaobotDB.DB
+			req requestIface.Requester
+			p   parse.Parser
 		)
 
 		d = xiaobotDB.NewDBService(db)
@@ -56,12 +52,11 @@ func CrawlXiaobot(r redis.RedisIface, db *gorm.DB, notifier notify.Notifier) fun
 		req = request.NewRequestService(r, token, l)
 		l.Info("Init xiaobot request service")
 
-		render = renderIface.NewHTMLToMarkdownService(l, xiaobotRender.GetHtmlRules()...)
-		l.Info("Init xiaobot render service")
-
-		mdfmt := md.NewMarkdownFormatter()
-
-		p = parse.NewParseService(render, mdfmt, d, l)
+		p, err = parse.NewParseService(parse.WithLogger(l), parse.WithDB(d))
+		if err != nil {
+			l.Error("Failed to init xiaobot parse service", zap.Error(err))
+			return
+		}
 
 		papers, err := d.GetPapers()
 		if err != nil {
