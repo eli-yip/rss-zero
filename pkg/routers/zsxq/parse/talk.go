@@ -48,17 +48,17 @@ func (s *ParseService) parseArticle(a *models.Article) (err error) {
 		return nil
 	}
 
-	html, err := s.Request.LimitRaw(a.ArticleURL)
+	html, err := s.request.LimitRaw(a.ArticleURL)
 	if err != nil {
 		return err
 	}
 
-	text, err := s.Renderer.Article(html)
+	text, err := s.render.Article(html)
 	if err != nil {
 		return err
 	}
 
-	if err = s.DB.SaveArticle(&dbModels.Article{
+	if err = s.db.SaveArticle(&dbModels.Article{
 		ID:    a.ArticleID,
 		URL:   a.ArticleURL,
 		Title: a.Title,
@@ -77,17 +77,17 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 	}
 
 	for _, file := range files {
-		downloadLink, err := s.DownloadLink(file.FileID)
+		downloadLink, err := s.downloadLink(file.FileID)
 		if err != nil {
 			return err
 		}
 
 		objectKey := fmt.Sprintf("zsxq/%d-%s", file.FileID, file.Name)
-		resp, err := s.Request.LimitStream(downloadLink)
+		resp, err := s.request.LimitStream(downloadLink)
 		if err != nil {
 			return err
 		}
-		if err = s.File.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
+		if err = s.file.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
 			return err
 		}
 
@@ -96,13 +96,13 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 			return err
 		}
 
-		if err = s.DB.SaveObjectInfo(&dbModels.Object{
+		if err = s.db.SaveObjectInfo(&dbModels.Object{
 			ID:              file.FileID,
 			TopicID:         topicID,
 			Time:            createTime,
 			Type:            "file",
 			ObjectKey:       objectKey,
-			StorageProvider: []string{s.File.AssetsDomain()},
+			StorageProvider: []string{s.file.AssetsDomain()},
 		}); err != nil {
 			return err
 		}

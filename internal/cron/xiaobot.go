@@ -5,25 +5,25 @@ import (
 	"time"
 
 	crawl "github.com/eli-yip/rss-zero/internal/crawl/xiaobot"
-	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/log"
+	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
-	render "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
-func CrawlXiaobot(r *redis.RedisService, db *gorm.DB, notifier notify.Notifier) func() {
+func CrawlXiaobot(r redis.RedisIface, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		l := log.NewLogger()
 		var err error
 		defer func() {
 			if err != nil {
+				_ = notifier.Notify("CrawlXiaobot() failed", err.Error())
 				l.Error("CrawlXiaobot() failed", zap.Error(err))
 			}
 			if err := recover(); err != nil {
@@ -41,18 +41,23 @@ func CrawlXiaobot(r *redis.RedisService, db *gorm.DB, notifier notify.Notifier) 
 			return
 		}
 
-		d := xiaobotDB.NewDBService(db)
+		var (
+			d   xiaobotDB.DB
+			req requestIface.Requester
+			p   parse.Parser
+		)
+
+		d = xiaobotDB.NewDBService(db)
 		l.Info("Init xiaobot database service")
 
-		req := request.NewRequestService(r, token, l)
+		req = request.NewRequestService(r, token, l)
 		l.Info("Init xiaobot request service")
 
-		render := render.NewHTMLToMarkdownService(l)
-		l.Info("Init xiaobot render service")
-
-		mdfmt := md.NewMarkdownFormatter()
-
-		p := parse.NewParseService(render, mdfmt, d, l)
+		p, err = parse.NewParseService(parse.WithLogger(l), parse.WithDB(d))
+		if err != nil {
+			l.Error("Failed to init xiaobot parse service", zap.Error(err))
+			return
+		}
 
 		papers, err := d.GetPapers()
 		if err != nil {

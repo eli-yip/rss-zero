@@ -212,6 +212,5 @@ func parseExportTime(ts string) (t time.Time, err error) {
 		return time.Time{}, err
 	}
 
-	location, _ := time.LoadLocation("Asia/Shanghai")
-	return t.In(location), nil
+	return t.In(config.BJT), nil
 }

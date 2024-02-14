@@ -17,7 +17,7 @@ import (
 // offset: number of answers have been crawled
 // set it to 0 if you want to crawl answers from the beginning
 // oneTime: if true, only crawl one time
-func CrawlAnswer(user string, request request.Requester, parser *parse.Parser,
+func CrawlAnswer(user string, request request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	logger.Info("start to crawl zhihu answers", zap.String("user url token", user))
 

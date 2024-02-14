@@ -5,9 +5,9 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
-	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"go.uber.org/zap"
 )
 
@@ -16,14 +16,14 @@ var longLongAgo = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 type RefmtService struct {
 	logger      *zap.Logger
 	db          db.DB
-	htmlConvert render.HTMLToMarkdownConverter
+	htmlConvert renderIface.HTMLToMarkdownConverter
 	mdfmt       *md.MarkdownFormatter
 	parse.Imager
 	notifier notify.Notifier
 }
 
 func NewRefmtService(logger *zap.Logger, db db.DB,
-	htmlConvert render.HTMLToMarkdownConverter,
+	htmlConvert renderIface.HTMLToMarkdownConverter,
 	i parse.Imager, notifier notify.Notifier,
 	mdfmt *md.MarkdownFormatter) *RefmtService {
 	return &RefmtService{

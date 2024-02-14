@@ -30,7 +30,7 @@ func (h *ZsxqController) Reformat(c echo.Context) (err error) {
 	refmtService := zsxqRefmt.NewRefmtService(logger, zsxqDBService,
 		zsxqRender.NewMarkdownRenderService(zsxqDBService, logger),
 		h.notifier)
-	go refmtService.ReFmt(req.GroupID)
+	go refmtService.Reformat(req.GroupID)
 	logger.Info("Start to reformat zsxq")
 
 	return c.JSON(http.StatusOK, &ApiResp{

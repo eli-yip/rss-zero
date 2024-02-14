@@ -16,7 +16,7 @@ import (
 // offset: number of pins have been crawled
 // set it to 0 if you want to crawl pins from the beginning
 // oneTime: if true, only crawl one time
-func CrawlPin(user string, request request.Requester, parser *parse.Parser,
+func CrawlPin(user string, request request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	logger.Info("start to crawl zhihu pins", zap.String("user url token", user))
 

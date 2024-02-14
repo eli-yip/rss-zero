@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/eli-yip/rss-zero/internal/md"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/refmt"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
@@ -31,7 +32,7 @@ func (h *ZhihuController) Reformat(c echo.Context) error {
 	logger.Info("Retieved zhihu reformat request", zap.String("author_id", req.AuthorID))
 
 	imageParser := parse.NewImageParserOffline(h.db, logger)
-	htmlToMarkdown := render.NewHTMLToMarkdownService(logger)
+	htmlToMarkdown := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	refmtService := refmt.NewRefmtService(logger, h.db, htmlToMarkdown, imageParser, h.notifier, md.NewMarkdownFormatter())
 	go refmtService.ReFmt(req.AuthorID)
 

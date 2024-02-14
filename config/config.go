@@ -2,12 +2,23 @@ package config
 
 import (
 	"os"
+	"time"
 
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/joho/godotenv"
 )
+
+var BJT *time.Location
+
+func init() {
+	var err error
+	BJT, err = time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		panic(err)
+	}
+}
 
 type Config struct {
 	Minio file.MinioConfig

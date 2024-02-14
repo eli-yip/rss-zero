@@ -3,35 +3,36 @@ package time
 import (
 	"testing"
 	"time"
+
+	"github.com/eli-yip/rss-zero/config"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestEncodeTimeForQuery(t *testing.T) {
-	type testCase struct {
-		input time.Time
-		want  string
-	}
+type testCase struct {
+	input time.Time
+	want  string
+}
 
-	location, _ := time.LoadLocation("Asia/Shanghai")
+func TestEncodeTimeForQuery(t *testing.T) {
 	testCases := []testCase{
 		{
 			// equals to zsxq api time str "2023-09-14T21:51:50.943+0800"
 			// Use 943000000 to ensure nanosecond is 9 digits,
 			// 943 is millisecond, 943000000 is nanosecond
-			time.Date(2023, 9, 14, 21, 51, 50, 943000000, location),
+			time.Date(2023, 9, 14, 21, 51, 50, 943000000, config.BJT),
 			"2023-09-14T21%3A51%3A50.942%2B0800",
 		},
 		{
 			// equals to zsxq api time str "2023-08-30T19:59:22.593+0800"
-			time.Date(2023, 8, 30, 19, 59, 22, 593000000, location),
+			time.Date(2023, 8, 30, 19, 59, 22, 593000000, config.BJT),
 			"2023-08-30T19%3A59%3A22.592%2B0800",
 		},
 	}
 
+	assert := assert.New(t)
 	for _, tc := range testCases {
 		got := EncodeTimeForQuery(tc.input)
-		if got != tc.want {
-			t.Errorf("EncodeTimeForQuery(%v) =\n%v, want\n%v", tc.input, got, tc.want)
-		}
+		assert.Equal(tc.want, got)
 	}
 }
 
@@ -41,42 +42,31 @@ func TestDecodeZsxqAPITime(t *testing.T) {
 		want  time.Time
 	}
 
-	location, _ := time.LoadLocation("Asia/Shanghai")
 	testCases := []testCase{
 		{
 			"2024-01-22T14:56:02.297+0800",
-			time.Date(2024, 1, 22, 14, 56, 02, 297000000, location),
+			time.Date(2024, 1, 22, 14, 56, 02, 297000000, config.BJT),
 		},
 		{
 			// equals to zsxq api time str "2023-08-30T19:59:22.593+0800"
 			"2024-01-22T12:19:44.405+0800",
-			time.Date(2024, 1, 22, 12, 19, 44, 405000000, location),
+			time.Date(2024, 1, 22, 12, 19, 44, 405000000, config.BJT),
 		},
 	}
 
+	assert := assert.New(t)
 	for _, tc := range testCases {
 		got, err := DecodeZsxqAPITime(tc.input)
-		if err != nil {
-			t.Errorf("DecodeZsxqAPITime(%v) error:\n%v", tc.input, err)
-		}
-		// Use time.Equal() to compare time.Time
-		if !got.Equal(tc.want) {
-			t.Errorf("DecodeZsxqAPITime(%v) =\n%v, want\n%v", tc.input, got, tc.want)
-		}
+		assert.Nil(err)
+		assert.Equal(tc.want, got)
 	}
 }
 
 func TestFmtForRead(t *testing.T) {
-	type testCase struct {
-		input time.Time
-		want  string
-	}
-
-	location, _ := time.LoadLocation("Asia/Shanghai")
 	testCases := []testCase{
 		{
 			// equals to zsxq api time str "2023-08-30T19:59:22.593+0800"
-			time.Date(2023, 8, 30, 19, 59, 22, 593000000, location),
+			time.Date(2023, 8, 30, 19, 59, 22, 593000000, config.BJT),
 			"2023年8月30日",
 		},
 		{
@@ -86,13 +76,10 @@ func TestFmtForRead(t *testing.T) {
 		},
 	}
 
+	assert := assert.New(t)
 	for _, tc := range testCases {
 		got, err := FmtForRead(tc.input)
-		if err != nil {
-			t.Errorf("FmtForRead(%v) error:\n%v", tc.input, err)
-		}
-		if got != tc.want {
-			t.Errorf("FmtForRead(%v) =\n%v, want\n%v", tc.input, got, tc.want)
-		}
+		assert.Nil(err)
+		assert.Equal(tc.want, got)
 	}
 }

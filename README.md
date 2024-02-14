@@ -1,5 +1,8 @@
 # RSS-ZERO
 
+> [!CAUTION]
+> This repository is a mirror of rss-zero in my own gitea server.
+
 An all-in-zero rss aggregator like [rsshub](https://docs.rsshub.app/), but support more private websites.
 
 By the way, you can only run the crawlers for Zhishixingqiu or Zhihu if you only want to save content to db.
@@ -54,8 +57,6 @@ services:
     restart: always
     expose:
       - 3000
-    networks:
-      - traefik-network
 
   rss-zero-db:
     image: "postgres:15.5-apline"
@@ -126,4 +127,4 @@ I plan to support following websites, both crawler and rss:
       **With db and cache, it can get zhihu content more safely and properly**.
 - [x] [Xiaobaotong](https://xiaobot.net): Need `authorization` header and valid payments.
 
-Development progress can be seen in [project milestones](https://git.momoai.me/yezi/rss-zero/milestones).
+Development progress can be seen in [project milestones](https://gitea.momoai.me/yezi/rss-zero/milestones).

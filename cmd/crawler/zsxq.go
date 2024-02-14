@@ -39,8 +39,7 @@ func handleZsxq(opt option, logger *zap.Logger) {
 			logger.Fatal("fail to parse start time", zap.Error(err))
 		}
 		if opt.endTime == "" {
-			location, _ := time.LoadLocation("Asia/Shanghai")
-			opt.endTime = time.Now().In(location).Format("2006-01-02")
+			opt.endTime = time.Now().In(config.BJT).Format("2006-01-02")
 		}
 		endT, err := parseExportTime(opt.endTime)
 		if err != nil {
@@ -122,7 +121,16 @@ func handleZsxq(opt option, logger *zap.Logger) {
 	renderer := render.NewMarkdownRenderService(dbService, logger)
 	logger.Info("markdown render service initialized")
 
-	parseService := parse.NewParseService(fileService, requestService, dbService, aiService, renderer, logger)
+	parseService, err := parse.NewParseService(
+		parse.WithFileIface(fileService),
+		parse.WithRenderer(renderer),
+		parse.WithRequestService(requestService),
+		parse.WithDBService(dbService),
+		parse.WithAIService(aiService),
+		parse.WithLogger(logger))
+	if err != nil {
+		logger.Fatal("failed to initialize parse service", zap.Error(err))
+	}
 	logger.Info("parse service initialized")
 
 	groupID := opt.zsxq.groupID

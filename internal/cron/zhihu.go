@@ -9,20 +9,23 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	log "github.com/eli-yip/rss-zero/pkg/log"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
+	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
-	render "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
-func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.Notifier) func() {
+func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		logger := log.NewLogger()
 		var err error
 		defer func() {
 			if err != nil {
+				_ = notifier.Notify("CrawlZhihu() failed", err.Error())
 				logger.Error("CrawlZhihu() failed", zap.Error(err))
 			}
 			if err := recover(); err != nil {
@@ -30,31 +33,47 @@ func CrawlZhihu(redisService *redis.RedisService, db *gorm.DB, notifier notify.N
 			}
 		}()
 
-		dbService := zhihuDB.NewDBService(db)
+		var (
+			dbService      zhihuDB.DB
+			requestService requestIface.Requester
+			fileService    file.FileIface
+			htmlToMarkdown renderIface.HTMLToMarkdownConverter
+			imageParser    parse.Imager
+			aiService      ai.AIIface
+			parser         parse.Parser
+		)
+
+		dbService = zhihuDB.NewDBService(db)
 		logger.Info("zhihu database service initialized")
 
-		requestService, err := request.NewRequestService(nil, logger)
+		requestService, err = request.NewRequestService(nil, logger)
 		if err != nil {
 			logger.Error("fail to create request service", zap.Error(err))
 			return
 		}
 		logger.Info("zhihu request service initialized")
 
-		fileService, err := file.NewFileServiceMinio(config.C.Minio, logger)
+		fileService, err = file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
 			logger.Error("fail to create file service", zap.Error(err))
 			return
 		}
 		logger.Info("zhihu file service initialized")
 
-		htmlToMarkdown := render.NewHTMLToMarkdownService(logger)
+		htmlToMarkdown = renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 		logger.Info("zhihu html to markdown service initialized")
 
-		imageParser := parse.NewImageParserOnline(requestService, fileService, dbService, logger)
+		imageParser = parse.NewImageParserOnline(requestService, fileService, dbService, logger)
 		logger.Info("zhihu image parser initialized")
 
-		aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
-		parser := parse.NewParser(htmlToMarkdown, requestService, fileService, dbService, aiService, imageParser, logger)
+		aiService = ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+		parser, err = parse.NewParseService(parse.WithAI(aiService),
+			parse.WithLogger(logger),
+			parse.WithImager(imageParser),
+			parse.WithHTMLToMarkdownConverter(htmlToMarkdown),
+			parse.WithRequester(requestService),
+			parse.WithFile(fileService),
+			parse.WithDB(dbService))
 		logger.Info("zhihu parser initialized")
 
 		subs, err := dbService.GetSubs()

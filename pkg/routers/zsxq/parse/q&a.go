@@ -46,11 +46,11 @@ func (s *ParseService) parseVoice(logger *zap.Logger, voice *models.Voice, topic
 	}
 
 	objectKey := fmt.Sprintf("zsxq/%d.%s", voice.VoiceID, "wav")
-	resp, err := s.Request.LimitStream(voice.URL)
+	resp, err := s.request.LimitStream(voice.URL)
 	if err != nil {
 		return err
 	}
-	if err = s.File.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
+	if err = s.file.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
 		return err
 	}
 	logger.Info("voice saved", zap.String("object_key", objectKey))
@@ -58,18 +58,18 @@ func (s *ParseService) parseVoice(logger *zap.Logger, voice *models.Voice, topic
 	// Get voice stream from file service,
 	// then send it to ai service to get transcript
 	logger.Info("get voice stream", zap.String("object_key", objectKey))
-	voiceStream, err := s.File.Get(objectKey)
+	voiceStream, err := s.file.Get(objectKey)
 	if err != nil {
 		return err
 	}
 	defer voiceStream.Close()
 
-	transcript, err := s.AI.Text(voiceStream)
+	transcript, err := s.ai.Text(voiceStream)
 	if err != nil {
 		return err
 	}
 
-	polishedTranscript, err := s.AI.Polish(transcript)
+	polishedTranscript, err := s.ai.Polish(transcript)
 	if err != nil {
 		return err
 	}
@@ -79,13 +79,13 @@ func (s *ParseService) parseVoice(logger *zap.Logger, voice *models.Voice, topic
 		return err
 	}
 
-	if err = s.DB.SaveObjectInfo(&dbModels.Object{
+	if err = s.db.SaveObjectInfo(&dbModels.Object{
 		ID:              voice.VoiceID,
 		TopicID:         topicID,
 		Time:            createTime,
 		Type:            "voice",
 		ObjectKey:       objectKey,
-		StorageProvider: []string{s.File.AssetsDomain()},
+		StorageProvider: []string{s.file.AssetsDomain()},
 		Transcript:      polishedTranscript,
 	}); err != nil {
 		return err

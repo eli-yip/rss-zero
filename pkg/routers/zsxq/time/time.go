@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"time"
+
+	"github.com/eli-yip/rss-zero/config"
 )
 
 // EncodeTimeForQuery encode time.Time for zsxq query time param.
@@ -30,7 +32,7 @@ func EncodeTimeForQuery(t time.Time) string {
 
 // DecodeZsxqAPITime parse zsxq time string to time.Time.
 //
-// e.g.: "2024-01-22T12:19:44.405+0800" -> time.Date(2024, 1, 22, 12, 19, 44, 405000000, location),
+// e.g.: "2024-01-22T12:19:44.405+0800" -> time.Date(2024, 1, 22, 12, 19, 44, 405000000, config.BJT),
 func DecodeZsxqAPITime(ts string) (result time.Time, err error) {
 	const zsxqTimeLayout = "2006-01-02T15:04:05.000-0700"
 
@@ -38,19 +40,14 @@ func DecodeZsxqAPITime(ts string) (result time.Time, err error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	return result, nil
+	return result.In(config.BJT), nil
 }
 
 // FmtForRead format time.Time to a time string like "2006年1月2日".
 func FmtForRead(t time.Time) (string, error) {
 	const ZsxqTimeLayoutForRead = "2006年1月2日"
 
-	// set location to China
-	location, err := time.LoadLocation("Asia/Shanghai")
-	if err != nil {
-		return "", err
-	}
-	t = t.In(location)
+	t = t.In(config.BJT)
 
 	return t.Format(ZsxqTimeLayoutForRead), nil
 }

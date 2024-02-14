@@ -6,11 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
-	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -140,9 +138,10 @@ func (h *XiaobotController) checkPaper(paperID string, l *zap.Logger) (err error
 		}
 		l.Info("Retrieved paper from xiaobot")
 
-		htmlToMarkdown := render.NewHTMLToMarkdownService(h.l)
-		mdfmt := md.NewMarkdownFormatter()
-		parser := parse.NewParseService(htmlToMarkdown, mdfmt, h.db, h.l)
+		parser, err := parse.NewParseService(parse.WithDB(h.db))
+		if err != nil {
+			return err
+		}
 		_, err = parser.ParsePaper(data)
 		if err != nil {
 			return err

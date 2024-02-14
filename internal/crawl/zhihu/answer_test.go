@@ -59,7 +59,10 @@ func TestAnswerListPaging(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	parser := parse.NewParser(nil, nil, nil, nil, nil, nil, logger)
+	parser, err := parse.NewParseService(parse.WithLogger(logger))
+	if err != nil {
+		t.Fatal(err)
+	}
 	paging, answerList, err := parser.ParseAnswerList(bytes, 0)
 	if err != nil {
 		t.Fatal(err)

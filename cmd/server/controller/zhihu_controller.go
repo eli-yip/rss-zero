@@ -9,14 +9,14 @@ import (
 
 // ZhihuController represents a controller for handling Zhihu related operations.
 type ZhihuController struct {
-	redis    *redis.RedisService
+	redis    redis.RedisIface
 	db       zhihuDB.DB
 	logger   *zap.Logger
 	taskCh   chan task
 	notifier notify.Notifier
 }
 
-func NewZhihuHandler(redis *redis.RedisService, db zhihuDB.DB, notifier notify.Notifier, logger *zap.Logger) *ZhihuController {
+func NewZhihuHandler(redis redis.RedisIface, db zhihuDB.DB, notifier notify.Notifier, logger *zap.Logger) *ZhihuController {
 	h := &ZhihuController{
 		redis:    redis,
 		db:       db,

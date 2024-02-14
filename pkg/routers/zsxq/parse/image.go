@@ -33,11 +33,11 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 			url = image.Original.URL
 		}
 		objectKey := fmt.Sprintf("zsxq/%d.%s", image.ImageID, image.Type)
-		resp, err := s.Request.LimitStream(url)
+		resp, err := s.request.LimitStream(url)
 		if err != nil {
 			return err
 		}
-		if err = s.File.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
+		if err = s.file.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
 			return err
 		}
 
@@ -46,12 +46,12 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 			return err
 		}
 
-		if err = s.DB.SaveObjectInfo(&dbModels.Object{
+		if err = s.db.SaveObjectInfo(&dbModels.Object{
 			ID:              image.ImageID,
 			TopicID:         topicID,
 			Time:            createTime,
 			ObjectKey:       objectKey,
-			StorageProvider: []string{s.File.AssetsDomain()},
+			StorageProvider: []string{s.file.AssetsDomain()},
 			Type:            "image",
 		}); err != nil {
 			return err

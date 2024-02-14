@@ -265,7 +265,11 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 		return "", errors.Join(err, errors.New("failed to get author name"))
 	}
 
-	parser := parse.NewParser(nil, nil, nil, h.db, nil, nil, logger)
+	parser, err := parse.NewParseService(parse.WithDB(h.db), parse.WithLogger(logger))
+	if err != nil {
+		logger.Error("Error creating parse service", zap.Error(err))
+		return "", errors.Join(err, errors.New("failed to create parse service"))
+	}
 
 	authorName, err = parser.ParseAuthorName(bytes)
 	if err != nil {

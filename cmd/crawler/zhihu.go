@@ -11,6 +11,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
@@ -40,8 +41,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 			logger.Fatal("fail to parse start time", zap.Error(err))
 		}
 		if opt.endTime == "" {
-			location, _ := time.LoadLocation("Asia/Shanghai")
-			opt.endTime = time.Now().In(location).Format("2006-01-02")
+			opt.endTime = time.Now().In(config.BJT).Format("2006-01-02")
 		}
 		endT, err := parseExportTime(opt.endTime)
 		if err != nil {
@@ -86,7 +86,15 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		return
 	}
 
-	var requestService requestIface.Requester
+	var (
+		requestService        requestIface.Requester
+		minioService          file.FileIface
+		htmlToMarkdownService renderIface.HTMLToMarkdownConverter
+		imageParser           parse.Imager
+		aiService             ai.AIIface
+		parser                parse.Parser
+	)
+
 	if opt.zhihu.dC0 != "" {
 		requestService, err = request.NewRequestService(&opt.zhihu.dC0, logger)
 	} else {
@@ -97,18 +105,29 @@ func handleZhihu(opt option, logger *zap.Logger) {
 	}
 	logger.Info("init request service successfully")
 
-	minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
+	minioService, err = file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {
 		logger.Fatal("fail to connect minio", zap.Error(err))
 	}
 	logger.Info("init minio service successfully")
 
-	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
+	htmlToMarkdownService = renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	logger.Info("init html to markdown service successfully")
 
-	imageParser := parse.NewImageParserOnline(requestService, minioService, zhihuDBService, logger)
-	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
-	parser := parse.NewParser(htmlToMarkdownService, requestService, minioService, zhihuDBService, aiService, imageParser, logger)
+	imageParser = parse.NewImageParserOnline(requestService, minioService, zhihuDBService, logger)
+
+	aiService = ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+
+	parser, err = parse.NewParseService(
+		parse.WithHTMLToMarkdownConverter(htmlToMarkdownService),
+		parse.WithAI(aiService),
+		parse.WithRequester(requestService),
+		parse.WithFile(minioService),
+		parse.WithImager(imageParser),
+		parse.WithLogger(logger))
+	if err != nil {
+		logger.Fatal("fail to init parser", zap.Error(err))
+	}
 
 	if opt.zhihu.answer {
 		latestTimeInDB, err := zhihuDBService.GetLatestAnswerTime(opt.zhihu.userID)
@@ -192,7 +211,7 @@ func refmtZhihu(opt option, logger *zap.Logger) {
 	zhihuDBService := zhihuDB.NewDBService(db)
 	logger.Info("init zhihu db service successfully")
 
-	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
+	htmlToMarkdownService := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	logger.Info("init html to markdown service successfully")
 
 	imageParser := parse.NewImageParserOffline(zhihuDBService, logger)

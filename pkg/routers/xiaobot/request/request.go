@@ -28,11 +28,11 @@ type RequestService struct {
 	limiter      chan struct{}
 	maxRetry     int
 	token        string
-	redisService *redis.RedisService
+	redisService redis.RedisIface
 	log          *zap.Logger
 }
 
-func NewRequestService(r *redis.RedisService, token string, logger *zap.Logger) request.Requester {
+func NewRequestService(r redis.RedisIface, token string, logger *zap.Logger) request.Requester {
 	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:       &http.Client{},

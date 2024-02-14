@@ -71,7 +71,7 @@ func main() {
 // n: notifier
 //
 // l: logger
-func initService() (r *redis.RedisService,
+func initService() (r redis.RedisIface,
 	d *gorm.DB,
 	n notify.Notifier,
 	l *zap.Logger,
@@ -99,7 +99,7 @@ func initService() (r *redis.RedisService,
 	return r, d, bark, l, nil
 }
 
-func setupEcho(redisService *redis.RedisService,
+func setupEcho(redisService redis.RedisIface,
 	db *gorm.DB,
 	notifier notify.Notifier,
 	logger *zap.Logger) (e *echo.Echo) {
@@ -207,11 +207,11 @@ func setupEcho(redisService *redis.RedisService,
 
 // setupCron sets up cron jobs
 func setupCron(logger *zap.Logger,
-	redisService *redis.RedisService,
+	redisService redis.RedisIface,
 	db *gorm.DB,
 	notifier notify.Notifier,
 ) (err error) {
-	type cronFunc func(*redis.RedisService, *gorm.DB, notify.Notifier) func()
+	type cronFunc func(redis.RedisIface, *gorm.DB, notify.Notifier) func()
 	cronFuncs := []cronFunc{
 		cron.CrawlZsxq,
 		cron.CrawlZhihu,

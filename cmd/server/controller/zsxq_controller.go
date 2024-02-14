@@ -8,14 +8,14 @@ import (
 )
 
 type ZsxqController struct {
-	redis    *redis.RedisService
+	redis    redis.RedisIface
 	db       *gorm.DB
 	logger   *zap.Logger
 	taskCh   chan task
 	notifier notify.Notifier
 }
 
-func NewZsxqHandler(redis *redis.RedisService, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *ZsxqController {
+func NewZsxqHandler(redis redis.RedisIface, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *ZsxqController {
 	h := &ZsxqController{
 		redis:    redis,
 		db:       db,
