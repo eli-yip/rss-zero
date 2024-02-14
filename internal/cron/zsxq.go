@@ -30,6 +30,7 @@ func CrawlZsxq(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notif
 		var err error
 		defer func() {
 			if err != nil {
+				_ = notifier.Notify("CrawlZsxq() failed", err.Error())
 				logger.Error("CrawlZsxq() failed", zap.Error(err))
 			}
 			if err := recover(); err != nil {

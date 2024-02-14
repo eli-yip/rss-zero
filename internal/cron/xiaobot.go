@@ -23,6 +23,7 @@ func CrawlXiaobot(r redis.RedisIface, db *gorm.DB, notifier notify.Notifier) fun
 		var err error
 		defer func() {
 			if err != nil {
+				_ = notifier.Notify("CrawlXiaobot() failed", err.Error())
 				l.Error("CrawlXiaobot() failed", zap.Error(err))
 			}
 			if err := recover(); err != nil {

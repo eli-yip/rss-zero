@@ -25,6 +25,7 @@ func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Noti
 		var err error
 		defer func() {
 			if err != nil {
+				_ = notifier.Notify("CrawlZhihu() failed", err.Error())
 				logger.Error("CrawlZhihu() failed", zap.Error(err))
 			}
 			if err := recover(); err != nil {
