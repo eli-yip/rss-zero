@@ -39,7 +39,7 @@ func main() {
 	var notifier localNotifier
 
 	refmtService := zsxqRefmt.NewRefmtService(logger, dbService, mdRender, &notifier)
-	refmtService.ReFmt(func() int {
+	refmtService.Reformat(func() int {
 		os.Getenv("ZSXQ_GROUP_ID")
 		var gid int
 		if gid, err = strconv.Atoi(os.Getenv("ZSXQ_GROUP_ID")); err != nil {

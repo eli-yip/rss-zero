@@ -10,6 +10,11 @@ type Notifier interface {
 	Notify(title, content string) error
 }
 
+type Message struct {
+	Title   string
+	Content string
+}
+
 type BarkNotifier struct{ url string }
 
 func NewBarkNotifier(url string) *BarkNotifier {

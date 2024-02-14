@@ -5,14 +5,15 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestEncodeTimeForQuery(t *testing.T) {
-	type testCase struct {
-		input time.Time
-		want  string
-	}
+type testCase struct {
+	input time.Time
+	want  string
+}
 
+func TestEncodeTimeForQuery(t *testing.T) {
 	testCases := []testCase{
 		{
 			// equals to zsxq api time str "2023-09-14T21:51:50.943+0800"
@@ -28,11 +29,10 @@ func TestEncodeTimeForQuery(t *testing.T) {
 		},
 	}
 
+	assert := assert.New(t)
 	for _, tc := range testCases {
 		got := EncodeTimeForQuery(tc.input)
-		if got != tc.want {
-			t.Errorf("EncodeTimeForQuery(%v) =\n%v, want\n%v", tc.input, got, tc.want)
-		}
+		assert.Equal(tc.want, got)
 	}
 }
 
@@ -54,24 +54,15 @@ func TestDecodeZsxqAPITime(t *testing.T) {
 		},
 	}
 
+	assert := assert.New(t)
 	for _, tc := range testCases {
 		got, err := DecodeZsxqAPITime(tc.input)
-		if err != nil {
-			t.Errorf("DecodeZsxqAPITime(%v) error:\n%v", tc.input, err)
-		}
-		// Use time.Equal() to compare time.Time
-		if !got.Equal(tc.want) {
-			t.Errorf("DecodeZsxqAPITime(%v) =\n%v, want\n%v", tc.input, got, tc.want)
-		}
+		assert.Nil(err)
+		assert.Equal(tc.want, got)
 	}
 }
 
 func TestFmtForRead(t *testing.T) {
-	type testCase struct {
-		input time.Time
-		want  string
-	}
-
 	testCases := []testCase{
 		{
 			// equals to zsxq api time str "2023-08-30T19:59:22.593+0800"
@@ -85,13 +76,10 @@ func TestFmtForRead(t *testing.T) {
 		},
 	}
 
+	assert := assert.New(t)
 	for _, tc := range testCases {
 		got, err := FmtForRead(tc.input)
-		if err != nil {
-			t.Errorf("FmtForRead(%v) error:\n%v", tc.input, err)
-		}
-		if got != tc.want {
-			t.Errorf("FmtForRead(%v) =\n%v, want\n%v", tc.input, got, tc.want)
-		}
+		assert.Nil(err)
+		assert.Equal(tc.want, got)
 	}
 }

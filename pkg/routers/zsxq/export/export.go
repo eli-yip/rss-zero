@@ -56,7 +56,7 @@ func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
 	if opt.AuthorName != nil {
 		aid, err := s.db.GetAuthorID(*opt.AuthorName)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return ErrNoAuthor
 			}
 			return err
