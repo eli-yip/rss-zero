@@ -22,7 +22,8 @@ func newMdFormatter() goldmark.Markdown {
 		goldmark.WithRenderer(mr),
 		goldmark.WithExtensions(
 			extension.GFM,
-			extension.NewCJK(extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksSimple)),
+			extension.NewCJK(extension.WithEscapedSpace(),
+				extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksSimple)),
 		),
 	)
 

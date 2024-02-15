@@ -84,6 +84,11 @@ func TestFormatMarkdown(t *testing.T) {
 			output: `我是 中文
 `,
 		},
+		{
+			input: `直到最近我在玩一个游戏的时候**《immortality》。**`,
+			output: `直到最近我在玩一个游戏的时候**《immortality》。**
+`,
+		},
 	}
 
 	s := NewMarkdownFormatter()
