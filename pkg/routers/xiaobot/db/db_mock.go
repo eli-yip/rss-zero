@@ -23,3 +23,5 @@ func (d *DBMock) GetLatestNPost(paperID string, n int) ([]Post, error) { return 
 func (d *DBMock) SaveCreator(creator *Creator) (err error) { return nil }
 
 func (d *DBMock) GetCreatorName(id string) (string, error) { return "", nil }
+
+func (d *DBMock) FetchNPost(n int, opt Option) (ps []Post, err error) { return nil, nil }

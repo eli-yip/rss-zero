@@ -19,8 +19,9 @@ type option struct {
 	startTime string
 	endTime   string
 
-	zhihu *zhihuOption
-	zsxq  *zsxqOption
+	zhihu   *zhihuOption
+	zsxq    *zsxqOption
+	xiaobot *xiaobotOption
 }
 
 type zhihuOption struct {
@@ -37,6 +38,8 @@ type zsxqOption struct {
 	digest  bool
 	author  string
 }
+
+type xiaobotOption struct{ paperID string }
 
 func main() {
 	logger := log.NewLogger()
@@ -71,6 +74,12 @@ func main() {
 	if opt.zsxq != nil {
 		handleZsxq(opt, logger)
 	}
+
+	if opt.xiaobot != nil {
+		if opt.export {
+			exportXiaobot(opt, logger)
+		}
+	}
 }
 
 func parseArgs() (opt option, err error) {
@@ -87,6 +96,8 @@ func parseArgs() (opt option, err error) {
 	authorID := flag.String("author", "", "author id")
 	t := flag.String("type", "", "type")
 	digest := flag.Bool("digest", false, "digest")
+
+	paperID := flag.String("paper", "", "paper id")
 
 	export := flag.Bool("export", false, "whether to export")
 	startTime := flag.String("start", "", "start time")
@@ -110,12 +121,22 @@ func parseArgs() (opt option, err error) {
 		return option{}, errors.New("only support one of crawl, export and refmt")
 	}
 
-	if *userID == "" && *groupID == 0 {
+	if *userID == "" && *groupID == 0 && *paperID == "" {
 		return option{}, errors.New("user id or group id is required")
 	}
 
-	if *userID != "" && *groupID != 0 {
-		return option{}, errors.New("user id and group id can't be set at the same time")
+	setFlag = 0
+	if *userID != "" {
+		setFlag++
+	}
+	if *groupID != 0 {
+		setFlag++
+	}
+	if *paperID != "" {
+		setFlag++
+	}
+	if setFlag != 1 {
+		return option{}, errors.New("only support one of user id, group id and paper id")
 	}
 
 	if *crawl {
@@ -178,6 +199,12 @@ func parseArgs() (opt option, err error) {
 			opt.zsxq.author = *authorID
 			opt.zsxq.t = *t
 			opt.zsxq.digest = *digest
+		}
+
+		if *paperID != "" {
+			opt.xiaobot = &xiaobotOption{}
+			opt.export = true
+			opt.xiaobot.paperID = *paperID
 		}
 
 		return opt, nil
