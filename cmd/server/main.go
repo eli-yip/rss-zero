@@ -187,6 +187,9 @@ func setupEcho(redisService redis.RedisIface,
 	// /api/v1/export/zhihu
 	exportZhihuApi := exportApi.POST("/zhihu", zhihuHandler.Export)
 	exportZhihuApi.Name = "Export route for zhihu"
+	// /api/v1/export/xiaobot
+	exportXiaobotApi := exportApi.POST("/xiaobot", xiaobotHandler.Export)
+	exportXiaobotApi.Name = "Export route for xiaobot"
 
 	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {

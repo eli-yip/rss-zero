@@ -52,9 +52,6 @@ func (r *Render) Answer(a *Answer) (text string, err error) {
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))
 
 	timePart := formatTimeForRead(a.Answer.CreateAt)
-	if err != nil {
-		return "", err
-	}
 
 	text = md.Join(titlePart, a.Answer.Text, timePart, linkPart)
 

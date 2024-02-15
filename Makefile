@@ -7,9 +7,9 @@ CURRENT_DIR := $(CURDIR)
 server:
 	$(GOCMD) build -o server ${CURRENT_DIR}/cmd/server
 
-.PHONY: crawler
-crawler:
-	$(GOCMD) build -o crawler ${CURRENT_DIR}/cmd/crawler
+.PHONY: cli
+cli:
+	$(GOCMD) build -o crawler ${CURRENT_DIR}/cmd/cli
 
 .PHONY: lint
 lint:
