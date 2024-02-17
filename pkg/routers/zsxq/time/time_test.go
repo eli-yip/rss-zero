@@ -78,8 +78,7 @@ func TestFmtForRead(t *testing.T) {
 
 	assert := assert.New(t)
 	for _, tc := range testCases {
-		got, err := FmtForRead(tc.input)
-		assert.Nil(err)
+		got := FmtForRead(tc.input)
 		assert.Equal(tc.want, got)
 	}
 }

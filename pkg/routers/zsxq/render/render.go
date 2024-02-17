@@ -57,6 +57,14 @@ func NewMarkdownRenderService(dbService zsxqDB.DB, logger *zap.Logger) MarkdownR
 }
 
 func (m *MarkdownRenderService) ToFullText(t *Topic) (text string, err error) {
+	titlePart := trimRightSpace(md.H1(m.generateTitle(t)))
+	timePart := fmt.Sprintf("时间：%s", zsxqTime.FmtForRead(t.Time))
+	linkPart := trimRightSpace(fmt.Sprintf("链接：[%s](%s)", t.ShareLink, t.ShareLink))
+	text = md.Join(titlePart, t.Text, timePart, linkPart)
+	return m.mdFmt.FormatStr(text)
+}
+
+func (m *MarkdownRenderService) generateTitle(t *Topic) string {
 	titlePart := ""
 	if t.Title == nil {
 		titlePart = strconv.Itoa(t.ID)
@@ -66,18 +74,7 @@ func (m *MarkdownRenderService) ToFullText(t *Topic) (text string, err error) {
 	if t.Digested {
 		titlePart = fmt.Sprintf("[%s]%s", "精华", titlePart)
 	}
-	titlePart = trimRightSpace(md.H1(titlePart))
-
-	timeStr, err := zsxqTime.FmtForRead(t.Time)
-	if err != nil {
-		return "", err
-	}
-	timePart := fmt.Sprintf("时间：%s", timeStr)
-
-	linkPart := trimRightSpace(fmt.Sprintf("链接：[%s](%s)", t.ShareLink, t.ShareLink))
-
-	text = md.Join(titlePart, timePart, linkPart, t.Text)
-	return m.mdFmt.FormatStr(text)
+	return titlePart
 }
 
 func (m *MarkdownRenderService) ToText(t *Topic) (text string, err error) {

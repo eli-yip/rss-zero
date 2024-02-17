@@ -9,7 +9,7 @@ server:
 
 .PHONY: cli
 cli:
-	$(GOCMD) build -o crawler ${CURRENT_DIR}/cmd/cli
+	$(GOCMD) build -o cli ${CURRENT_DIR}/cmd/cli
 
 .PHONY: lint
 lint:

@@ -57,14 +57,6 @@ func NewParseService(options ...Option) (Parser, error) {
 		s.htmlToMarkdown = renderIface.NewHTMLToMarkdownService(s.logger, render.GetHtmlRules()...)
 	}
 
-	if s.request == nil {
-		return nil, fmt.Errorf("requester is required")
-	}
-
-	if s.file == nil {
-		return nil, fmt.Errorf("file is required")
-	}
-
 	if s.db == nil {
 		return nil, fmt.Errorf("db is required")
 	}
