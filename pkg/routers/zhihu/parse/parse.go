@@ -12,22 +12,15 @@ import (
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"go.uber.org/zap"
 )
 
 type Parser interface {
-	ParseAnswerList(content []byte, index int) (paging apiModels.Paging, answers []apiModels.Answer, err error)
-	ParseAnswer(content []byte) (text string, err error)
-
-	ParseArticleList(content []byte, index int) (paging apiModels.Paging, articles []apiModels.Article, err error)
-	ParseArticle(content []byte) (text string, err error)
-
-	ParsePinList(content []byte, index int) (paging apiModels.Paging, pins []apiModels.Pin, err error)
-	ParsePin(content []byte) (text string, err error)
-
-	ParseAuthorName(content []byte) (authorName string, err error)
+	AnswerParser
+	ArticleParser
+	PinParser
+	AuthorParser
 }
 
 type ParseService struct {
@@ -36,7 +29,7 @@ type ParseService struct {
 	file           file.FileIface
 	db             db.DB
 	ai             ai.AIIface
-	logger         *zap.Logger
+	l              *zap.Logger
 	mdfmt          *md.MarkdownFormatter
 	Imager
 }
@@ -45,20 +38,25 @@ type Option func(*ParseService)
 
 func NewParseService(options ...Option) (Parser, error) {
 	s := &ParseService{}
-	for _, o := range options {
-		o(s)
-	}
 
-	if s.logger == nil {
-		s.logger = log.NewLogger()
-	}
-
-	if s.htmlToMarkdown == nil {
-		s.htmlToMarkdown = renderIface.NewHTMLToMarkdownService(s.logger, render.GetHtmlRules()...)
+	for _, opt := range options {
+		opt(s)
 	}
 
 	if s.db == nil {
-		return nil, fmt.Errorf("db is required")
+		return nil, fmt.Errorf("zhihu.DB is required")
+	}
+
+	if s.l == nil {
+		s.l = log.NewLogger()
+	}
+
+	if s.htmlToMarkdown == nil {
+		s.htmlToMarkdown = renderIface.NewHTMLToMarkdownService(s.l, render.GetHtmlRules()...)
+	}
+
+	if s.Imager == nil {
+		s.Imager = NewImageParserOnline(s.request, s.file, s.db, s.l)
 	}
 
 	if s.ai == nil {
@@ -67,10 +65,6 @@ func NewParseService(options ...Option) (Parser, error) {
 
 	if s.mdfmt == nil {
 		s.mdfmt = md.NewMarkdownFormatter()
-	}
-
-	if s.Imager == nil {
-		s.Imager = NewImageParserOnline(s.request, s.file, s.db, s.logger)
 	}
 
 	return s, nil
@@ -97,7 +91,7 @@ func WithAI(ai ai.AIIface) Option {
 }
 
 func WithLogger(l *zap.Logger) Option {
-	return func(s *ParseService) { s.logger = l }
+	return func(s *ParseService) { s.l = l }
 }
 
 func WithImager(i Imager) Option {

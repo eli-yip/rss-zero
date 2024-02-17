@@ -9,8 +9,13 @@ import (
 	"go.uber.org/zap"
 )
 
+type ArticleParser interface {
+	ParseArticleList(content []byte, index int) (paging apiModels.Paging, articles []apiModels.Article, err error)
+	ParseArticle(content []byte) (text string, err error)
+}
+
 func (p *ParseService) ParseArticleList(content []byte, index int) (paging apiModels.Paging, articles []apiModels.Article, err error) {
-	logger := p.logger.With(zap.Int("article list page", index))
+	logger := p.l.With(zap.Int("article list page", index))
 
 	articleList := apiModels.ArticleList{}
 	if err = json.Unmarshal(content, &articleList); err != nil {
@@ -27,7 +32,7 @@ func (p *ParseService) ParseArticle(content []byte) (text string, err error) {
 	if err = json.Unmarshal(content, &article); err != nil {
 		return "", err
 	}
-	logger := p.logger.With(zap.Int("article_id", article.ID))
+	logger := p.l.With(zap.Int("article_id", article.ID))
 	logger.Info("unmarshal article successfully")
 
 	text, err = p.parseHTML(article.HTML, article.ID, db.TypeArticle, logger)
