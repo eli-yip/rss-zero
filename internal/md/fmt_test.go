@@ -1,11 +1,9 @@
 package md
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFormatMarkdown(t *testing.T) {
@@ -93,27 +91,10 @@ func TestFormatMarkdown(t *testing.T) {
 
 	s := NewMarkdownFormatter()
 
-	for i, test := range tests {
-		t.Logf("test %d", i)
+	assert := assert.New(t)
+	for _, test := range tests {
 		output, err := s.FormatStr(test.input)
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Logf("%s\n", string(output))
-		if string(output) != test.output {
-			t.Fatalf("expected\n%+v\ngot\n%+v\n", test.output, string(output))
-		}
-
-		path := filepath.Join("testdata", fmt.Sprintf("test%d.md", i))
-		file, err := os.Create(path)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer file.Close()
-
-		_, err = file.ReadFrom(strings.NewReader(output))
-		if err != nil {
-			t.Fatal(err)
-		}
+		assert.Nil(err)
+		assert.Equal(test.output, output)
 	}
 }

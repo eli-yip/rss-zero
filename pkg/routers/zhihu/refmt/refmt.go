@@ -13,6 +13,10 @@ import (
 
 var longLongAgo = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 
+type ReformatIface interface {
+	ReFmt(string)
+}
+
 type RefmtService struct {
 	logger      *zap.Logger
 	db          db.DB
@@ -25,7 +29,7 @@ type RefmtService struct {
 func NewRefmtService(logger *zap.Logger, db db.DB,
 	htmlConvert renderIface.HTMLToMarkdownConverter,
 	i parse.Imager, notifier notify.Notifier,
-	mdfmt *md.MarkdownFormatter) *RefmtService {
+	mdfmt *md.MarkdownFormatter) ReformatIface {
 	return &RefmtService{
 		logger:      logger,
 		db:          db,
@@ -53,20 +57,21 @@ func (s *RefmtService) ReFmt(authorID string) {
 		}
 	}()
 
-	if err = s.refmtAnswer(authorID); err != nil {
-		s.logger.Error("fail to format answers", zap.Error(err))
-		return
+	var refmtFuncs = []struct {
+		name string
+		f    func(string) error
+	}{
+		{"answer", s.refmtAnswer},
+		{"article", s.refmtArticle},
+		{"pin", s.refmtPin},
 	}
 
-	if err = s.refmtArticle(authorID); err != nil {
-		s.logger.Error("fail to format articles", zap.Error(err))
-		return
+	for _, f := range refmtFuncs {
+		if err = f.f(authorID); err != nil {
+			s.logger.Error("Fail to format", zap.String("type", f.name), zap.Error(err))
+			return
+		}
 	}
 
-	if err = s.refmtPin(authorID); err != nil {
-		s.logger.Error("fail to format pins", zap.Error(err))
-		return
-	}
-
-	s.logger.Info("re-fmt successfully")
+	s.logger.Info("Reformat success")
 }

@@ -28,7 +28,7 @@ type MinioConfig struct {
 	AssetsPrefix    string
 }
 
-func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (*FileServiceMinio, error) {
+func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (FileIface, error) {
 	minioClient, err := minio.New(minioConfig.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(minioConfig.AccessKeyID, minioConfig.SecretAccessKey, ""),
 		Secure: minioConfig.UseSSL,
@@ -80,7 +80,7 @@ func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, si
 	return err
 }
 
-func (s *FileServiceMinio) Get(objectKey string) (stream io.ReadCloser, err error) {
+func (s *FileServiceMinio) GetStream(objectKey string) (stream io.ReadCloser, err error) {
 	ctx := context.Background()
 	o, err := s.MinioClient.GetObject(ctx, s.bucketName, objectKey, minio.GetObjectOptions{})
 	if err != nil {

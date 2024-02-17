@@ -7,6 +7,8 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
+const model = openai.GPT3Dot5Turbo0125
+
 // AIIface interface is for AIIface related services,
 // such as text generation based on gpt-3.5 model,
 // or speech to text based on whisper model.

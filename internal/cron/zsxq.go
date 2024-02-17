@@ -80,12 +80,12 @@ func CrawlZsxq(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notif
 		logger.Info("markdown render service initialized")
 
 		parseService, err = parse.NewParseService(
-			parse.WithFileIface(fileService),
-			parse.WithRequestService(requestService),
-			parse.WithRenderer(markdownRender),
-			parse.WithDBService(dbService),
-			parse.WithLogger(logger),
-			parse.WithAIService(aiService))
+			fileService,
+			requestService,
+			dbService,
+			aiService,
+			markdownRender,
+			parse.WithLogger(logger))
 		if err != nil {
 			logger.Error("failed to initialize parse service", zap.Error(err))
 			return
