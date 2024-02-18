@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	dbModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
 )
@@ -46,7 +46,7 @@ func (s *ParseService) parseImages(images []models.Image, topicID int, createTim
 			return err
 		}
 
-		if err = s.db.SaveObjectInfo(&dbModels.Object{
+		if err = s.db.SaveObjectInfo(&db.Object{
 			ID:              image.ImageID,
 			TopicID:         topicID,
 			Time:            createTime,

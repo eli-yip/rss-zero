@@ -1,30 +1,38 @@
 package db
 
-import "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+type Article struct {
+	ID    string `gorm:"column:id;primary_key"`
+	URL   string `gorm:"column:url;type:text"`
+	Title string `gorm:"column:title;type:text"`
+	Text  string `gorm:"column:text;type:text"`
+	Raw   []byte `gorm:"column:raw;type:bytea"`
+}
+
+func (a *Article) TableName() string { return "zsxq_article" }
 
 type DBArticle interface {
 	// Save article to zsxq_article table
-	SaveArticle(a *models.Article) error
+	SaveArticle(a *Article) error
 	// Get article
-	GetArticle(aid string) (a *models.Article, err error)
+	GetArticle(aid string) (a *Article, err error)
 	// Get article text by id from zsxq_article table
 	GetArticleText(aid string) (text string, err error)
 }
 
-func (s *ZsxqDBService) SaveArticle(a *models.Article) error {
+func (s *ZsxqDBService) SaveArticle(a *Article) error {
 	return s.db.Save(a).Error
 }
 
 func (s *ZsxqDBService) GetArticleText(aid string) (string, error) {
-	var article models.Article
+	var article Article
 	if err := s.db.Where("id = ?", aid).First(&article).Error; err != nil {
 		return "", err
 	}
 	return article.Text, nil
 }
 
-func (s *ZsxqDBService) GetArticle(aid string) (*models.Article, error) {
-	var article models.Article
+func (s *ZsxqDBService) GetArticle(aid string) (*Article, error) {
+	var article Article
 	if err := s.db.Where("id = ?", aid).First(&article).Error; err != nil {
 		return nil, err
 	}

@@ -1,14 +1,14 @@
 package parse
 
 import (
-	dbModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	"go.uber.org/zap"
 )
 
 func (s *ParseService) parseAuthor(logger *zap.Logger, u *models.User) (id int, name string, err error) {
 	go func(u *models.User) {
-		err = s.db.SaveAuthorInfo(&dbModels.Author{
+		err = s.db.SaveAuthorInfo(&db.Author{
 			ID:    u.UserID,
 			Name:  u.Name,
 			Alias: u.Alias,

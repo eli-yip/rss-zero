@@ -10,7 +10,6 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
-	zsxqDBModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"go.uber.org/zap"
@@ -100,7 +99,7 @@ func (s *RefmtService) Reformat(gid int) {
 			wg.Add(1)
 			lastTime = topic.Time
 
-			go func(topic *zsxqDBModels.Topic) {
+			go func(topic *zsxqDB.Topic) {
 				defer wg.Done()
 
 				atomic.AddInt64(&count, 1)
@@ -149,7 +148,7 @@ func (s *RefmtService) getLatestTime(gid int) (time.Time, error) {
 }
 
 // fetchTopic fetch topics from db
-func (s *RefmtService) fetchTopic(gid int, lastTime time.Time, limit int) (topics []zsxqDBModels.Topic, err error) {
+func (s *RefmtService) fetchTopic(gid int, lastTime time.Time, limit int) (topics []zsxqDB.Topic, err error) {
 	if topics, err = s.db.FetchNTopicsBeforeTime(gid, limit, lastTime); err != nil {
 		s.logger.Error("Failed fetching topics from db",
 			zap.Error(err), zap.Int("group_id", gid),
@@ -170,7 +169,7 @@ func (s *RefmtService) fetchTopic(gid int, lastTime time.Time, limit int) (topic
 }
 
 // formatTopic format topic and update it to db
-func (s *RefmtService) formatTopic(topic *zsxqDBModels.Topic, errCh chan errMessage) {
+func (s *RefmtService) formatTopic(topic *zsxqDB.Topic, errCh chan errMessage) {
 	logger := s.logger.With(zap.Int("topic_id", topic.ID))
 
 	// when topic type is not talk or q&a, skip,
@@ -220,7 +219,7 @@ func (s *RefmtService) formatTopic(topic *zsxqDBModels.Topic, errCh chan errMess
 	logger.Info("Render topic text")
 
 	// update topic
-	if err := s.db.SaveTopic(&zsxqDBModels.Topic{
+	if err := s.db.SaveTopic(&zsxqDB.Topic{
 		ID:        topic.ID,
 		Time:      topic.Time,
 		GroupID:   topic.GroupID,
@@ -259,7 +258,7 @@ func (s *RefmtService) formatArticle(result models.TopicParseResult, logger *zap
 			return err
 		}
 
-		if err := s.db.SaveArticle(&zsxqDBModels.Article{
+		if err := s.db.SaveArticle(&zsxqDB.Article{
 			ID:    article.ID,
 			URL:   article.URL,
 			Title: article.Title,

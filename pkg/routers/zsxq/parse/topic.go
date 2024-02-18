@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	dbModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
@@ -91,7 +91,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (text string,
 	}
 
 	// Save topic to database
-	if err = s.db.SaveTopic(&dbModels.Topic{
+	if err = s.db.SaveTopic(&db.Topic{
 		ID:        result.Topic.TopicID,
 		Time:      createTimeInTime,
 		GroupID:   result.Topic.Group.GroupID,

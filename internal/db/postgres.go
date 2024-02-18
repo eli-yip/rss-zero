@@ -8,7 +8,7 @@ import (
 
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	zsxqDBModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -43,11 +43,11 @@ func NewPostgresDB(c PostgresConfig) (db *gorm.DB, err error) {
 
 	// migrate
 	if err = db.AutoMigrate(
-		&zsxqDBModels.Topic{},
-		&zsxqDBModels.Group{},
-		&zsxqDBModels.Author{},
-		&zsxqDBModels.Object{},
-		&zsxqDBModels.Article{},
+		&zsxqDB.Topic{},
+		&zsxqDB.Group{},
+		&zsxqDB.Author{},
+		&zsxqDB.Object{},
+		&zsxqDB.Article{},
 
 		&zhihuDB.Answer{},
 		&zhihuDB.Question{},

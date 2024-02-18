@@ -3,7 +3,7 @@ package parse
 import (
 	"fmt"
 
-	dbModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
 	"go.uber.org/zap"
@@ -79,7 +79,7 @@ func (s *ParseService) parseVoice(logger *zap.Logger, voice *models.Voice, topic
 		return err
 	}
 
-	if err = s.db.SaveObjectInfo(&dbModels.Object{
+	if err = s.db.SaveObjectInfo(&db.Object{
 		ID:              voice.VoiceID,
 		TopicID:         topicID,
 		Time:            createTime,
