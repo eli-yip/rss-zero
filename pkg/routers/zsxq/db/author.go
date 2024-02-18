@@ -10,14 +10,14 @@ func (a *Author) TableName() string { return "zsxq_author" }
 
 type DBAuthor interface {
 	// Save author info to zsxq_author table
-	SaveAuthorInfo(a *Author) error
+	SaveAuthor(a *Author) error
 	// Get author name by id from zsxq_author table
 	GetAuthorName(aid int) (name string, err error)
 	// Get author id by name or alias from zsxq_author table
 	GetAuthorID(name string) (id int, err error)
 }
 
-func (s *ZsxqDBService) SaveAuthorInfo(a *Author) error {
+func (s *ZsxqDBService) SaveAuthor(a *Author) error {
 	return s.db.Save(a).Error
 }
 

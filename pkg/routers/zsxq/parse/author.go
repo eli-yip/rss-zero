@@ -8,7 +8,7 @@ import (
 
 func (s *ParseService) parseAuthor(logger *zap.Logger, u *models.User) (id int, name string, err error) {
 	go func(u *models.User) {
-		err = s.db.SaveAuthorInfo(&db.Author{
+		err = s.db.SaveAuthor(&db.Author{
 			ID:    u.UserID,
 			Name:  u.Name,
 			Alias: u.Alias,

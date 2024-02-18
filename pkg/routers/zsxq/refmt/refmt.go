@@ -149,7 +149,7 @@ func (s *RefmtService) getLatestTime(gid int) (time.Time, error) {
 
 // fetchTopic fetch topics from db
 func (s *RefmtService) fetchTopic(gid int, lastTime time.Time, limit int) (topics []zsxqDB.Topic, err error) {
-	if topics, err = s.db.FetchNTopicsBeforeTime(gid, limit, lastTime); err != nil {
+	if topics, err = s.db.FetchNTopicsBefore(gid, limit, lastTime); err != nil {
 		s.logger.Error("Failed fetching topics from db",
 			zap.Error(err), zap.Int("group_id", gid),
 			zap.Time("start_time", lastTime), zap.Int("limit", limit))

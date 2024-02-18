@@ -25,15 +25,15 @@ type DBTopic interface {
 	// Save topic to zsxq_topic table
 	SaveTopic(t *Topic) error
 	// Get latest topic time from zsxq_topic table
-	GetLatestTopicTime(tid int) (t time.Time, err error)
+	GetLatestTopicTime(gid int) (t time.Time, err error)
 	// Get earliest topic time from zsxq_topic table
-	GetEarliestTopicTime(tid int) (t time.Time, err error)
+	GetEarliestTopicTime(gid int) (t time.Time, err error)
 	// Get latest n topics from zsxq_topic table
 	GetLatestNTopics(gid int, n int) (ts []Topic, err error)
 	// Get All ids from zsxq_topic table
 	GetAllTopicIDs(gid int) (ids []int, err error)
 	// Fetch n topics before time from zsxq_topic table
-	FetchNTopicsBeforeTime(gid int, n int, t time.Time) (ts []Topic, err error)
+	FetchNTopicsBefore(gid int, n int, t time.Time) (ts []Topic, err error)
 	// Fetch n topics with options from zsxq_topic table
 	FetchNTopics(n int, opt Options) (ts []Topic, err error)
 }
@@ -69,7 +69,7 @@ func (s *ZsxqDBService) GetLatestNTopics(gid, n int) (ts []Topic, err error) {
 	return ts, err
 }
 
-func (s *ZsxqDBService) FetchNTopicsBeforeTime(gid, n int, t time.Time) (ts []Topic, err error) {
+func (s *ZsxqDBService) FetchNTopicsBefore(gid, n int, t time.Time) (ts []Topic, err error) {
 	err = s.db.Where("group_id = ? and time < ?", gid, t).Order("time desc").Limit(n).Find(&ts).Error
 	return ts, err
 }
