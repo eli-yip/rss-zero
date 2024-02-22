@@ -110,9 +110,9 @@ func (h *ZhihuController) parseOption(req ZhihuExportReq) (opts zhihuExport.Opti
 	opts.AuthorID = req.Author
 
 	typeMap := map[string]int{
-		"answer":  1,
-		"article": 2,
-		"pin":     3,
+		"answer":  0,
+		"article": 1,
+		"pin":     2,
 	}
 
 	if req.Type == nil {
