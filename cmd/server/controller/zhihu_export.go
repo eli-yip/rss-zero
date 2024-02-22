@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/md"
@@ -141,7 +142,7 @@ func (h *ZhihuController) parseOption(req ZhihuExportReq) (opts zhihuExport.Opti
 		if err != nil {
 			return opts, err
 		}
-		opts.EndTime = t
+		opts.EndTime = t.Add(24 * time.Hour)
 	}
 
 	return opts, nil
