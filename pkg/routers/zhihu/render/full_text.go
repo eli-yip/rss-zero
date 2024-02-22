@@ -45,7 +45,7 @@ func NewRender(mdfmt *md.MarkdownFormatter) *Render {
 
 func (r *Render) Answer(a *Answer) (text string, err error) {
 	titlePart := a.Question.Text
-	titlePart = trimRightSpace(md.H2(titlePart))
+	titlePart = trimRightSpace(md.H1(titlePart))
 
 	link := fmt.Sprintf("https://www.zhihu.com/question/%d/answer/%d",
 		a.Question.ID, a.Answer.ID)
