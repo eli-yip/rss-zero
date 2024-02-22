@@ -58,7 +58,7 @@ func (s *ParseService) parseVoice(logger *zap.Logger, voice *models.Voice, topic
 	// Get voice stream from file service,
 	// then send it to ai service to get transcript
 	logger.Info("get voice stream", zap.String("object_key", objectKey))
-	voiceStream, err := s.file.Get(objectKey)
+	voiceStream, err := s.file.GetStream(objectKey)
 	if err != nil {
 		return err
 	}

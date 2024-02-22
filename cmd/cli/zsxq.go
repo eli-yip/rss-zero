@@ -121,12 +121,13 @@ func handleZsxq(opt option, logger *zap.Logger) {
 	renderer := render.NewMarkdownRenderService(dbService, logger)
 	logger.Info("markdown render service initialized")
 
-	parseService, err := parse.NewParseService(
-		parse.WithFileIface(fileService),
-		parse.WithRenderer(renderer),
-		parse.WithRequestService(requestService),
-		parse.WithDBService(dbService),
-		parse.WithAIService(aiService),
+	var parseService parse.Parser
+	parseService, err = parse.NewParseService(
+		fileService,
+		requestService,
+		dbService,
+		aiService,
+		renderer,
 		parse.WithLogger(logger))
 	if err != nil {
 		logger.Fatal("failed to initialize parse service", zap.Error(err))

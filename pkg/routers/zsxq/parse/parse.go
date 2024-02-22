@@ -2,10 +2,10 @@ package parse
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
+	"github.com/eli-yip/rss-zero/pkg/log"
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
@@ -24,57 +24,33 @@ type ParseService struct {
 	db      db.DB
 	ai      ai.AIIface
 	render  render.MarkdownRenderer
-	log     *zap.Logger
+	l       *zap.Logger
 }
 
-func NewParseService(options ...Option) (Parser, error) {
-	service := &ParseService{}
-	for _, o := range options {
-		o(service)
+func NewParseService(f file.FileIface, r request.Requester, d db.DB,
+	ai ai.AIIface, render render.MarkdownRenderer, options ...Option,
+) (Parser, error) {
+	s := &ParseService{
+		file:    f,
+		request: r,
+		db:      d,
+		ai:      ai,
+		render:  render,
 	}
-	if service.file == nil {
-		return nil, fmt.Errorf("fileIface is nil")
+
+	for _, opt := range options {
+		opt(s)
 	}
-	if service.request == nil {
-		return nil, fmt.Errorf("requestService is nil")
+
+	if s.l == nil {
+		s.l = log.NewLogger()
 	}
-	if service.db == nil {
-		return nil, fmt.Errorf("dbService is nil")
-	}
-	if service.ai == nil {
-		return nil, fmt.Errorf("aiService is nil")
-	}
-	if service.render == nil {
-		return nil, fmt.Errorf("renderer is nil")
-	}
-	if service.log == nil {
-		return nil, fmt.Errorf("logger is nil")
-	}
-	return service, nil
+
+	return s, nil
 }
 
 type Option func(*ParseService)
 
-func WithFileIface(file file.FileIface) Option {
-	return func(s *ParseService) { s.file = file }
-}
-
-func WithRequestService(request request.Requester) Option {
-	return func(s *ParseService) { s.request = request }
-}
-
-func WithDBService(db db.DB) Option {
-	return func(s *ParseService) { s.db = db }
-}
-
-func WithAIService(ai ai.AIIface) Option {
-	return func(s *ParseService) { s.ai = ai }
-}
-
-func WithRenderer(renderer render.MarkdownRenderer) Option {
-	return func(s *ParseService) { s.render = renderer }
-}
-
 func WithLogger(logger *zap.Logger) Option {
-	return func(s *ParseService) { s.log = logger }
+	return func(s *ParseService) { s.l = logger }
 }

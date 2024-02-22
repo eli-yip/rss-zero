@@ -13,19 +13,19 @@ import (
 
 // SplitTopics split the api response bytes from zsxq api to raw topics
 func (s *ParseService) SplitTopics(respBytes []byte) (rawTopics []json.RawMessage, err error) {
-	s.log.Info("start split n topics")
+	s.l.Info("start split n topics")
 	resp := models.APIResponse{}
 	if err = json.Unmarshal(respBytes, &resp); err != nil {
-		s.log.Error("failed to unmarshal api response", zap.Error(err))
+		s.l.Error("failed to unmarshal api response", zap.Error(err))
 		return nil, err
 	}
-	s.log.Info("successfully split n topics", zap.Int("n", len(resp.RespData.RawTopics)))
+	s.l.Info("successfully split n topics", zap.Int("n", len(resp.RespData.RawTopics)))
 	return resp.RespData.RawTopics, nil
 }
 
 // ParseTopics parse the raw topics to topic parse result
 func (s *ParseService) ParseTopic(result *models.TopicParseResult) (text string, err error) {
-	logger := s.log.With(zap.Int("topic_id", result.Topic.TopicID))
+	logger := s.l.With(zap.Int("topic_id", result.Topic.TopicID))
 	// Parse topic and set result
 	switch result.Topic.Type {
 	case "talk":
@@ -35,7 +35,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (text string,
 				logger.Info("this topic is a talk without text")
 				return "", nil
 			}
-			s.log.Info("Failed to parse talk", zap.Error(err))
+			s.l.Info("Failed to parse talk", zap.Error(err))
 			return "", err
 		}
 	case "q&a":
@@ -121,20 +121,20 @@ type FileDownload struct {
 
 func (s *ParseService) downloadLink(fileID int) (link string, err error) {
 	url := fmt.Sprintf(ZsxqFileBaseURL, fileID)
-	s.log.Info("Start get download link", zap.String("url", url))
+	s.l.Info("Start get download link", zap.String("url", url))
 
 	resp, err := s.request.Limit(url)
 	if err != nil {
-		s.log.Error("Failed to get download link", zap.Error(err))
+		s.l.Error("Failed to get download link", zap.Error(err))
 		return "", err
 	}
 
 	download := FileDownload{}
 	if err = json.Unmarshal(resp, &download); err != nil {
-		s.log.Error("Failed to unmarshal download link", zap.Error(err))
+		s.l.Error("Failed to unmarshal download link", zap.Error(err))
 		return "", err
 	}
 
-	s.log.Info("Successfully unmarshal download link", zap.String("url", url))
+	s.l.Info("Successfully unmarshal download link", zap.String("url", url))
 	return download.RespData.DownloadURL, nil
 }
