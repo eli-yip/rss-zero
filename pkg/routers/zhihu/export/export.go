@@ -26,7 +26,7 @@ const (
 
 type Exporter interface {
 	Export(io.Writer, Option) error
-	FileName(Option) string
+	FileName(Option) (string, error)
 }
 
 type ExportService struct {
@@ -252,7 +252,7 @@ func (s *ExportService) ExportPin(writer io.Writer, opt Option) (err error) {
 	return nil
 }
 
-func (s ExportService) FileName(opt Option) string {
+func (s ExportService) FileName(opt Option) (filename string, err error) {
 	fileNameArr := []string{"知乎合集"}
 
 	switch *opt.Type {
@@ -264,11 +264,18 @@ func (s ExportService) FileName(opt Option) string {
 		fileNameArr = append(fileNameArr, "想法")
 	}
 
-	fileNameArr = append(fileNameArr, *opt.AuthorID)
+	authorName, err := s.db.GetAuthorName(*opt.AuthorID)
+	if err != nil {
+		return "", err
+	}
+	if strings.Contains(authorName, "-") {
+		authorName = strings.ReplaceAll(authorName, "-", "_")
+	}
+	fileNameArr = append(fileNameArr, authorName)
 
 	fileNameArr = append(fileNameArr, opt.StartTime.Format("2006-01-02"))
 	// HACK: -1 day to make the end time inclusive: https://git.momoai.me/yezi/rss-zero/issues/55
 	fileNameArr = append(fileNameArr, opt.EndTime.Add(-1*time.Hour*24).Format("2006-01-02"))
 
-	return fmt.Sprintf("%s.md", strings.Join(fileNameArr, "-"))
+	return fmt.Sprintf("%s.md", strings.Join(fileNameArr, "-")), nil
 }

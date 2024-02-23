@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	dbModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
 	"go.uber.org/zap"
@@ -58,7 +58,7 @@ func (s *ParseService) parseArticle(a *models.Article) (err error) {
 		return err
 	}
 
-	if err = s.db.SaveArticle(&dbModels.Article{
+	if err = s.db.SaveArticle(&db.Article{
 		ID:    a.ArticleID,
 		URL:   a.ArticleURL,
 		Title: a.Title,
@@ -96,7 +96,7 @@ func (s *ParseService) parseFiles(files []models.File, topicID int, createTimeSt
 			return err
 		}
 
-		if err = s.db.SaveObjectInfo(&dbModels.Object{
+		if err = s.db.SaveObjectInfo(&db.Object{
 			ID:              file.FileID,
 			TopicID:         topicID,
 			Time:            createTime,

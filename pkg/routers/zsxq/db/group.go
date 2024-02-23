@@ -2,9 +2,17 @@ package db
 
 import (
 	"time"
-
-	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 )
+
+type Group struct {
+	ID         int       `gorm:"column:id;primary_key"`
+	Name       string    `gorm:"column:name;type:text"`
+	UpdateAt   time.Time `gorm:"column:update_at"`
+	ErrorTimes int       `gorm:"column:error_times;type:int"`
+	Finished   bool      `gorm:"column:finished;type:bool"`
+}
+
+func (g *Group) TableName() string { return "zsxq_group" }
 
 type DBGroup interface {
 	// Get all zsxq group ids from zsxq_group table
@@ -20,7 +28,7 @@ type DBGroup interface {
 }
 
 func (s *ZsxqDBService) GetZsxqGroupIDs() ([]int, error) {
-	var groups []models.Group
+	var groups []Group
 	if err := s.db.Find(&groups).Error; err != nil {
 		return nil, err
 	}
@@ -33,7 +41,7 @@ func (s *ZsxqDBService) GetZsxqGroupIDs() ([]int, error) {
 }
 
 func (s *ZsxqDBService) GetGroupName(gid int) (name string, err error) {
-	var group models.Group
+	var group Group
 	if err := s.db.Where("id = ?", gid).First(&group).Error; err != nil {
 		return "", err
 	}
@@ -41,7 +49,7 @@ func (s *ZsxqDBService) GetGroupName(gid int) (name string, err error) {
 }
 
 func (s *ZsxqDBService) UpdateCrawlTime(gid int, t time.Time) error {
-	var group models.Group
+	var group Group
 	if err := s.db.Where("id = ?", gid).First(&group).Error; err != nil {
 		return err
 	}
@@ -50,7 +58,7 @@ func (s *ZsxqDBService) UpdateCrawlTime(gid int, t time.Time) error {
 }
 
 func (s *ZsxqDBService) GetCrawlStatus(gid int) (finished bool, err error) {
-	var group models.Group
+	var group Group
 	if err := s.db.Where("id = ?", gid).First(&group).Error; err != nil {
 		return false, err
 	}
@@ -58,7 +66,7 @@ func (s *ZsxqDBService) GetCrawlStatus(gid int) (finished bool, err error) {
 }
 
 func (s *ZsxqDBService) SaveCrawlStatus(gid int, finished bool) error {
-	var group models.Group
+	var group Group
 	if err := s.db.Where("id = ?", gid).First(&group).Error; err != nil {
 		return err
 	}

@@ -10,7 +10,6 @@ import (
 
 	log "github.com/eli-yip/rss-zero/pkg/log"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
-	zsxqDBModels "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 	render "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 )
 
@@ -24,8 +23,8 @@ func (m *mockZsxqDBService) GetAuthorID(name string) (int, error) {
 	return 0, gorm.ErrRecordNotFound
 }
 
-func (m *mockZsxqDBService) FetchNTopics(groupID int, opt zsxqDB.Options) ([]zsxqDBModels.Topic, error) {
-	return []zsxqDBModels.Topic{
+func (m *mockZsxqDBService) FetchNTopics(groupID int, opt zsxqDB.Options) ([]zsxqDB.Topic, error) {
+	return []zsxqDB.Topic{
 		{
 			ID:        1,
 			Time:      time.Date(2022, 11, 20, 0, 0, 0, 0, time.Local),

@@ -56,7 +56,12 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	fullTextRender := zhihuRender.NewRender(md.NewMarkdownFormatter())
 	exportService := zhihuExport.NewExportService(h.db, fullTextRender)
 
-	fileName := exportService.FileName(options)
+	fileName, err := exportService.FileName(options)
+	if err != nil {
+		err = errors.Join(err, errors.New("get file name error"))
+		logger.Error("Error getting file name", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &ApiResp{Message: "error getting file name"})
+	}
 	objectKey := fmt.Sprintf("export/zhihu/%s", fileName)
 	go func() {
 		logger := logger.With(zap.String("object_key", objectKey))

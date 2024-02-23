@@ -3,33 +3,47 @@ package db
 import (
 	"time"
 
-	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db/models"
 	"gorm.io/gorm"
 )
 
+type Topic struct {
+	ID        int       `gorm:"column:id;primary_key"`
+	Time      time.Time `gorm:"column:time"`
+	GroupID   int       `gorm:"column:group_id"`
+	Type      string    `gorm:"column:type;type:text"`
+	Digested  bool      `gorm:"column:digested;type:bool"`
+	AuthorID  int       `gorm:"column:author_id"`
+	ShareLink string    `gorm:"column:share_link;type:text"`
+	Title     *string   `gorm:"column:title;type:text"`
+	Text      string    `gorm:"column:text;type:text"`
+	Raw       []byte    `gorm:"column:raw;type:bytea"`
+}
+
+func (t *Topic) TableName() string { return "zsxq_topic" }
+
 type DBTopic interface {
 	// Save topic to zsxq_topic table
-	SaveTopic(t *models.Topic) error
+	SaveTopic(t *Topic) error
 	// Get latest topic time from zsxq_topic table
-	GetLatestTopicTime(tid int) (t time.Time, err error)
+	GetLatestTopicTime(gid int) (t time.Time, err error)
 	// Get earliest topic time from zsxq_topic table
-	GetEarliestTopicTime(tid int) (t time.Time, err error)
+	GetEarliestTopicTime(gid int) (t time.Time, err error)
 	// Get latest n topics from zsxq_topic table
-	GetLatestNTopics(gid int, n int) (ts []models.Topic, err error)
+	GetLatestNTopics(gid int, n int) (ts []Topic, err error)
 	// Get All ids from zsxq_topic table
 	GetAllTopicIDs(gid int) (ids []int, err error)
 	// Fetch n topics before time from zsxq_topic table
-	FetchNTopicsBeforeTime(gid int, n int, t time.Time) (ts []models.Topic, err error)
+	FetchNTopicsBefore(gid int, n int, t time.Time) (ts []Topic, err error)
 	// Fetch n topics with options from zsxq_topic table
-	FetchNTopics(n int, opt Options) (ts []models.Topic, err error)
+	FetchNTopics(n int, opt Options) (ts []Topic, err error)
 }
 
-func (s *ZsxqDBService) SaveTopic(t *models.Topic) error {
+func (s *ZsxqDBService) SaveTopic(t *Topic) error {
 	return s.db.Save(t).Error
 }
 
 func (s *ZsxqDBService) GetLatestTopicTime(gid int) (time.Time, error) {
-	var topic models.Topic
+	var topic Topic
 	if err := s.db.Where("group_id = ?", gid).Order("time desc").First(&topic).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return time.Time{}, nil
@@ -40,7 +54,7 @@ func (s *ZsxqDBService) GetLatestTopicTime(gid int) (time.Time, error) {
 }
 
 func (s *ZsxqDBService) GetEarliestTopicTime(gid int) (time.Time, error) {
-	var topic models.Topic
+	var topic Topic
 	if err := s.db.Where("group_id = ?", gid).Order("time asc").First(&topic).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return time.Time{}, nil
@@ -50,18 +64,18 @@ func (s *ZsxqDBService) GetEarliestTopicTime(gid int) (time.Time, error) {
 	return topic.Time, nil
 }
 
-func (s *ZsxqDBService) GetLatestNTopics(gid, n int) (ts []models.Topic, err error) {
+func (s *ZsxqDBService) GetLatestNTopics(gid, n int) (ts []Topic, err error) {
 	err = s.db.Where("group_id = ?", gid).Order("time desc").Limit(n).Find(&ts).Error
 	return ts, err
 }
 
-func (s *ZsxqDBService) FetchNTopicsBeforeTime(gid, n int, t time.Time) (ts []models.Topic, err error) {
+func (s *ZsxqDBService) FetchNTopicsBefore(gid, n int, t time.Time) (ts []Topic, err error) {
 	err = s.db.Where("group_id = ? and time < ?", gid, t).Order("time desc").Limit(n).Find(&ts).Error
 	return ts, err
 }
 
 func (s *ZsxqDBService) GetAllTopicIDs(gid int) (ids []int, err error) {
-	var topics []models.Topic
+	var topics []Topic
 	if err := s.db.Where("group_id = ?", gid).Order("time desc").Find(&topics).Error; err != nil {
 		return nil, err
 	}
@@ -80,8 +94,8 @@ type Options struct {
 	EndTime   time.Time
 }
 
-func (s *ZsxqDBService) FetchNTopics(n int, opt Options) (ts []models.Topic, err error) {
-	ts = make([]models.Topic, 0, n)
+func (s *ZsxqDBService) FetchNTopics(n int, opt Options) (ts []Topic, err error) {
+	ts = make([]Topic, 0, n)
 
 	query := s.db.Limit(n).Where("group_id = ?", opt.GroupID)
 

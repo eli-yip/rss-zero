@@ -44,6 +44,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 			opt.endTime = time.Now().In(config.BJT).Format("2006-01-02")
 		}
 		endT, err := parseExportTime(opt.endTime)
+		endT = endT.Add(24 * time.Hour)
 		if err != nil {
 			logger.Fatal("fail to parse end time", zap.Error(err))
 		}
@@ -71,7 +72,10 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		mr := render.NewRender(mdfmt)
 		exportService := export.NewExportService(zhihuDBService, mr)
 
-		fileName := exportService.FileName(exportOpt)
+		fileName, err := exportService.FileName(exportOpt)
+		if err != nil {
+			logger.Fatal("fail to get file name", zap.Error(err))
+		}
 		logger.Info("export file name", zap.String("file_name", fileName))
 
 		file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
