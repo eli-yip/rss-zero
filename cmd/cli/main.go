@@ -234,10 +234,5 @@ func parseExportTime(ts string) (t time.Time, err error) {
 		return time.Time{}, nil
 	}
 
-	t, err = time.Parse("2006-01-02", ts)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return t.In(config.BJT), nil
+	return time.ParseInLocation(ts, "2006-01-02", config.BJT)
 }
