@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/eli-yip/rss-zero/config"
+	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	zsxqExport "github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
@@ -106,6 +106,7 @@ var errGroupIDEmpty = errors.New("group id is empty")
 
 func (h *ZsxqController) parseOption(req *ZxsqExportReq) (zsxqExport.Option, error) {
 	var opts zsxqExport.Option
+	var err error
 
 	if req.GroupID == 0 {
 		return zsxqExport.Option{}, errGroupIDEmpty
@@ -116,20 +117,14 @@ func (h *ZsxqController) parseOption(req *ZxsqExportReq) (zsxqExport.Option, err
 		opts.Type = req.Type
 	}
 
-	if req.StartTime != nil {
-		t, err := parseTime(*req.StartTime)
-		if err != nil {
-			return zsxqExport.Option{}, err
-		}
-		opts.StartTime = t
+	opts.StartTime, err = exportTime.ParseStartTime(req.StartTime)
+	if err != nil {
+		return zsxqExport.Option{}, errors.Join(err, errors.New("parse start time error"))
 	}
 
-	if req.EndTime != nil {
-		t, err := parseTime(*req.EndTime)
-		if err != nil {
-			return zsxqExport.Option{}, err
-		}
-		opts.EndTime = t.Add(24 * time.Hour)
+	opts.EndTime, err = exportTime.ParseEndTime(req.EndTime)
+	if err != nil {
+		return zsxqExport.Option{}, errors.Join(err, errors.New("parse end time error"))
 	}
 
 	if req.Digest != nil {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/eli-yip/rss-zero/config"
+	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	zhihuExport "github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
@@ -134,20 +134,14 @@ func (h *ZhihuController) parseOption(req ZhihuExportReq) (opts zhihuExport.Opti
 		return &t
 	}()
 
-	if req.StartTime != nil {
-		t, err := parseTime(*req.StartTime)
-		if err != nil {
-			return opts, err
-		}
-		opts.StartTime = t
+	opts.StartTime, err = exportTime.ParseStartTime(req.StartTime)
+	if err != nil {
+		return opts, errors.Join(err, errors.New("parse start time error"))
 	}
 
-	if req.EndTime != nil {
-		t, err := parseTime(*req.EndTime)
-		if err != nil {
-			return opts, err
-		}
-		opts.EndTime = t.Add(24 * time.Hour)
+	opts.EndTime, err = exportTime.ParseEndTime(req.EndTime)
+	if err != nil {
+		return opts, errors.Join(err, errors.New("parse end time error"))
 	}
 
 	return opts, nil

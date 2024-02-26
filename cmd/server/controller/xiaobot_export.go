@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/eli-yip/rss-zero/config"
+	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/export"
@@ -100,20 +101,16 @@ func (h *XiaobotController) parseOption(req XiaobotExportReq) (opts export.Optio
 	}
 	opts.PaperID = *req.PaperID
 
-	if req.StartTime != nil {
-		t, err := parseTime(*req.StartTime)
-		if err != nil {
-			return opts, err
-		}
-		opts.StartTime = t
+	opts.StartTime, err = exportTime.ParseStartTime(req.StartTime)
+	if err != nil {
+		err = errors.Join(err, errors.New("parse start time error"))
+		return export.Option{}, err
 	}
 
-	if req.EndTime != nil {
-		t, err := parseTime(*req.EndTime)
-		if err != nil {
-			return opts, err
-		}
-		opts.EndTime = t
+	opts.EndTime, err = exportTime.ParseEndTime(req.EndTime)
+	if err != nil {
+		err = errors.Join(err, errors.New("parse end time error"))
+		return export.Option{}, err
 	}
 
 	return opts, nil
