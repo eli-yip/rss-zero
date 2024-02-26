@@ -8,7 +8,7 @@ import (
 
 func ParseStartTime(tStr *string) (time.Time, error) {
 	if tStr == nil {
-		return time.Time{}, nil
+		return time.Date(1970, 1, 1, 0, 0, 0, 0, config.BJT), nil
 	}
 
 	t, err := parseTime(*tStr)
@@ -20,7 +20,7 @@ func ParseStartTime(tStr *string) (time.Time, error) {
 
 func ParseEndTime(tStr *string) (time.Time, error) {
 	if tStr == nil {
-		return time.Time{}, nil
+		return time.Now().In(config.BJT), nil
 	}
 
 	t, err := parseTime(*tStr)

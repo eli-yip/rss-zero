@@ -7,6 +7,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	zhihuCrawl "github.com/eli-yip/rss-zero/internal/crawl/zhihu"
 	"github.com/eli-yip/rss-zero/internal/db"
+	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/ai"
@@ -33,22 +34,22 @@ func handleZhihu(opt option, logger *zap.Logger) {
 	logger.Info("init zhihu db service successfully")
 
 	if opt.export {
-		if opt.startTime == "" {
-			opt.startTime = "2014-01-01"
+		timePtr := func(tStr string) *string {
+			if tStr == "" {
+				return nil
+			}
+			return &tStr
 		}
-		startT, err := parseExportTime(opt.startTime)
+
+		startTime, err := exportTime.ParseStartTime(timePtr(opt.startTime))
 		if err != nil {
 			logger.Fatal("fail to parse start time", zap.Error(err))
 		}
-		if opt.endTime == "" {
-			opt.endTime = time.Now().In(config.BJT).Format("2006-01-02")
-		}
-		endT, err := parseExportTime(opt.endTime)
-		endT = endT.Add(24 * time.Hour)
+
+		endTime, err := exportTime.ParseEndTime(timePtr(opt.endTime))
 		if err != nil {
 			logger.Fatal("fail to parse end time", zap.Error(err))
 		}
-		endT = endT.Add(24 * time.Hour)
 
 		exportType := new(int)
 		if opt.zhihu.answer {
@@ -64,8 +65,8 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		exportOpt := export.Option{
 			AuthorID:  &opt.zhihu.userID,
 			Type:      exportType,
-			StartTime: startT,
-			EndTime:   endT,
+			StartTime: startTime,
+			EndTime:   endTime,
 		}
 
 		mdfmt := md.NewMarkdownFormatter()

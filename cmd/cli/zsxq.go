@@ -9,6 +9,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	crawl "github.com/eli-yip/rss-zero/internal/crawl/zsxq"
 	"github.com/eli-yip/rss-zero/internal/db"
+	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/ai"
 	"github.com/eli-yip/rss-zero/pkg/file"
@@ -31,21 +32,22 @@ func handleZsxq(opt option, logger *zap.Logger) {
 	logger.Info("database service initialized")
 
 	if opt.export {
-		if opt.startTime == "" {
-			opt.startTime = "2014-01-01"
+		timePtr := func(tStr string) *string {
+			if tStr == "" {
+				return nil
+			}
+			return &tStr
 		}
-		startT, err := parseExportTime(opt.startTime)
+
+		startTime, err := exportTime.ParseStartTime(timePtr(opt.startTime))
 		if err != nil {
 			logger.Fatal("fail to parse start time", zap.Error(err))
 		}
-		if opt.endTime == "" {
-			opt.endTime = time.Now().In(config.BJT).Format("2006-01-02")
-		}
-		endT, err := parseExportTime(opt.endTime)
+
+		endTime, err := exportTime.ParseEndTime(timePtr(opt.endTime))
 		if err != nil {
 			logger.Fatal("fail to parse end time", zap.Error(err))
 		}
-		endT = endT.Add(24 * time.Hour)
 
 		exportOpt := export.Option{
 			GroupID: opt.zsxq.groupID,
@@ -67,8 +69,8 @@ func handleZsxq(opt option, logger *zap.Logger) {
 				}
 				return &opt.zsxq.author
 			}(),
-			StartTime: startT,
-			EndTime:   endT,
+			StartTime: startTime,
+			EndTime:   endTime,
 		}
 
 		mr := render.NewMarkdownRenderService(dbService, logger)
