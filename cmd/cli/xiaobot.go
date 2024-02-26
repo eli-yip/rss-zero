@@ -7,11 +7,40 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/internal/notify"
+	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/export"
+	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
+	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/refmt"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 	"go.uber.org/zap"
 )
+
+func refmtXiaobot(opt option, l *zap.Logger) {
+	db, err := db.NewPostgresDB(config.C.DB)
+	if err != nil {
+		l.Fatal("failed to connect database", zap.Error(err))
+	}
+	l.Info("database connected")
+
+	dbService := xiaobotDB.NewDBService(db)
+	l.Info("database service initialized")
+
+	parser, err := parse.NewParseService(parse.WithLogger(l), parse.WithDB(dbService))
+	if err != nil {
+		l.Fatal("failed to init xiaobot parse service", zap.Error(err))
+	}
+	l.Info("parser service initialized")
+
+	htmlConverter := renderIface.NewHTMLToMarkdownService(l, render.GetHtmlRules()...)
+	mdfmt := md.NewMarkdownFormatter()
+	notifyService := notify.NewBarkNotifier(config.C.BarkURL)
+	reformatService := refmt.NewReformatService(l, dbService, htmlConverter, parser, notifyService, mdfmt)
+	l.Info("reformat service initialized")
+
+	reformatService.Reformat(opt.xiaobot.paperID)
+}
 
 func exportXiaobot(opt option, l *zap.Logger) {
 	db, err := db.NewPostgresDB(config.C.DB)
