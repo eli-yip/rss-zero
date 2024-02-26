@@ -23,6 +23,7 @@ type DBPost interface {
 	GetLatestTime(paperID string) (t time.Time, err error)
 	GetLatestNPost(paperID string, n int) ([]Post, error)
 	FetchNPost(n int, opt Option) (ps []Post, err error)
+	FetchNPostBeforeTime(n int, paperID string, t time.Time) ([]Post, error)
 }
 
 func (d *DBService) SavePost(post *Post) (err error) { return d.Save(post).Error }
@@ -68,4 +69,10 @@ func (d *DBService) FetchNPost(n int, opt Option) (ps []Post, err error) {
 	}
 
 	return ps, nil
+}
+
+func (d *DBService) FetchNPostBeforeTime(n int, paperID string, t time.Time) ([]Post, error) {
+	posts := make([]Post, 0, n)
+	err := d.Where("paper_id = ? AND create_at < ?", paperID, t).Order("create_at desc").Limit(n).Find(&posts).Error
+	return posts, err
 }

@@ -79,6 +79,9 @@ func main() {
 		if opt.export {
 			exportXiaobot(opt, logger)
 		}
+		if opt.refmt {
+			refmtXiaobot(opt, logger)
+		}
 	}
 }
 
@@ -221,6 +224,11 @@ func parseArgs() (opt option, err error) {
 		if *groupID != 0 {
 			opt.zsxq = &zsxqOption{}
 			opt.zsxq.groupID = *groupID
+		}
+
+		if *paperID != "" {
+			opt.xiaobot = &xiaobotOption{}
+			opt.xiaobot.paperID = *paperID
 		}
 
 		return opt, nil

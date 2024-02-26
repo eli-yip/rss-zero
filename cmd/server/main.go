@@ -178,6 +178,9 @@ func setupEcho(redisService redis.RedisIface,
 	// /api/v1/refmt/zhihu
 	refmtZhihuApi := refmtApi.POST("/zhihu", zhihuHandler.Reformat)
 	refmtZhihuApi.Name = "Reformat route for zhihu"
+	// /api/v1/refmt/xiaobot
+	refmtXiaobotApi := refmtApi.POST("/xiaobot", xiaobotHandler.Reformat)
+	refmtXiaobotApi.Name = "Reformat route for xiaobot"
 
 	// /api/v1/export
 	exportApi := apiGroup.Group("/export")
