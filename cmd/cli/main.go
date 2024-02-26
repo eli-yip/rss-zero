@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"flag"
-	"time"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/pkg/log"
@@ -235,12 +234,4 @@ func parseArgs() (opt option, err error) {
 	}
 
 	return option{}, errors.New("unknown error")
-}
-
-func parseExportTime(ts string) (t time.Time, err error) {
-	if ts == "" {
-		return time.Time{}, nil
-	}
-
-	return time.ParseInLocation(ts, "2006-01-02", config.BJT)
 }
