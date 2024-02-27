@@ -7,33 +7,44 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
-const model = openai.GPT3Dot5Turbo0125
+// gptModel is the gpt-3.5 gptModel used for text generation.
+//
+// It should be changed as openai updates their models.
+const gptModel = openai.GPT3Dot5Turbo0125
 
-// AIIface interface is for AIIface related services,
+// whisperModel is the whisper model used for speech to text.
+//
+// It should be changed as openai updates their models.
+const whisperModel = openai.Whisper1
+
+// AI interface is for AI related services,
 // such as text generation based on gpt-3.5 model,
 // or speech to text based on whisper model.
-// It must implement Polish and Text methods.
-// Polish method is for text generation,
-// It takes text as input and returns polished text as output.
-// Text method is for speech to text,
-// It takes path to audio file as input and returns text as output.
-type AIIface interface {
+type AI interface {
+	// Polish method will take a text and return a polished version of it.
 	Polish(text string) (result string, err error)
+	// Text method will take a io.Reader and return the transcribed text.
 	Text(path io.Reader) (text string, err error)
+	// Conclude method will take a text and return the conclusion of it.
 	Conclude(text string) (result string, err error)
 }
 
+// AIService implements AI interface.
+// It uses openai client to communicate with openai API,
+// and provides Polish and Text methods.
 type AIService struct{ client *openai.Client }
 
-func NewAIService(apiKey string, baseURL string) AIIface {
+// When API Key is not provided, it will use AIServiceWithoutAPI,
+// which is a mock service for testing purposes.
+func NewAIService(apiKey string, baseURL string) AI {
 	if apiKey == "" {
 		return &AIServiceWithoutAPI{}
 	}
+
 	clientConfig := openai.DefaultConfig(apiKey)
 	url, _ := url.Parse(baseURL)
 	clientConfig.BaseURL = url.String()
-	client := openai.NewClientWithConfig(clientConfig)
-	return &AIService{client: client}
+	return &AIService{client: openai.NewClientWithConfig(clientConfig)}
 }
 
 // AIServiceWithoutAPI is a mock service for testing purposes.

@@ -28,7 +28,7 @@ type ParseService struct {
 	request        request.Requester
 	file           file.FileIface
 	db             db.DB
-	ai             ai.AIIface
+	ai             ai.AI
 	l              *zap.Logger
 	mdfmt          *md.MarkdownFormatter
 	Imager
@@ -86,7 +86,7 @@ func WithDB(d db.DB) Option {
 	return func(s *ParseService) { s.db = d }
 }
 
-func WithAI(ai ai.AIIface) Option {
+func WithAI(ai ai.AI) Option {
 	return func(s *ParseService) { s.ai = ai }
 }
 

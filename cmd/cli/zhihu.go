@@ -96,7 +96,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		minioService          file.FileIface
 		htmlToMarkdownService renderIface.HTMLToMarkdownConverter
 		imageParser           parse.Imager
-		aiService             ai.AIIface
+		aiService             ai.AI
 		parser                parse.Parser
 	)
 

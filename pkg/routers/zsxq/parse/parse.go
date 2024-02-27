@@ -22,13 +22,13 @@ type ParseService struct {
 	file    file.FileIface
 	request request.Requester
 	db      db.DB
-	ai      ai.AIIface
+	ai      ai.AI
 	render  render.MarkdownRenderer
 	l       *zap.Logger
 }
 
 func NewParseService(f file.FileIface, r request.Requester, d db.DB,
-	ai ai.AIIface, render render.MarkdownRenderer, options ...Option,
+	ai ai.AI, render render.MarkdownRenderer, options ...Option,
 ) (Parser, error) {
 	s := &ParseService{
 		file:    f,
