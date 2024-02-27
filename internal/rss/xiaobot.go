@@ -3,33 +3,38 @@ package rss
 import (
 	"fmt"
 
+	"github.com/eli-yip/rss-zero/internal/redis"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	render "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 	"go.uber.org/zap"
 )
 
 func GenerateXiaobot(paperID string, d xiaobotDB.DB, l *zap.Logger) (path string, result string, err error) {
+	l.Info("Start to generate xiaobot rss")
 	rssRender := render.NewRSSRenderService()
 
 	paper, err := d.GetPaper(paperID)
 	if err != nil {
 		return "", "", err
 	}
+	l = l.With(zap.String("paper_name", paper.Name))
 	l.Info("Got paper name")
 
 	authorName, err := d.GetCreatorName(paper.CreatorID)
 	if err != nil {
 		return "", "", err
 	}
-	l.Info("Got author name")
+	l.Info("Got author name", zap.String("author_name", authorName))
 
-	path = fmt.Sprintf("xiaobot_rss_%s", paperID)
+	path = fmt.Sprintf(redis.XiaobotRSSPath, paperID)
+
 	posts, err := d.GetLatestNPost(paperID, defaultFetchCount)
 	if err != nil {
 		return "", "", err
 	}
 	if len(posts) == 0 {
 		result, err = rssRender.RenderEmpty(paperID, paper.Name)
+		l.Info("No post found, render empty rss")
 		return path, result, err
 	}
 
@@ -48,5 +53,6 @@ func GenerateXiaobot(paperID string, d xiaobotDB.DB, l *zap.Logger) (path string
 	}
 
 	output, err := rssRender.Render(rs)
+
 	return path, output, err
 }
