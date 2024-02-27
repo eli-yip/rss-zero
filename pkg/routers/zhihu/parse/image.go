@@ -15,12 +15,12 @@ type Imager interface {
 
 type ImageParserOnline struct {
 	request request.Requester
-	file    file.FileIface
+	file    file.File
 	db      db.DB
 	logger  *zap.Logger
 }
 
-func NewImageParserOnline(r request.Requester, f file.FileIface,
+func NewImageParserOnline(r request.Requester, f file.File,
 	db db.DB, l *zap.Logger) Imager {
 	return &ImageParserOnline{
 		request: r,

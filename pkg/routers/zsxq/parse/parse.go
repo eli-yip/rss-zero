@@ -19,7 +19,7 @@ type Parser interface {
 }
 
 type ParseService struct {
-	file    file.FileIface
+	file    file.File
 	request request.Requester
 	db      db.DB
 	ai      ai.AI
@@ -27,7 +27,7 @@ type ParseService struct {
 	l       *zap.Logger
 }
 
-func NewParseService(f file.FileIface, r request.Requester, d db.DB,
+func NewParseService(f file.File, r request.Requester, d db.DB,
 	ai ai.AI, render render.MarkdownRenderer, options ...Option,
 ) (Parser, error) {
 	s := &ParseService{

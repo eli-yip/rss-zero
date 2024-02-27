@@ -26,7 +26,7 @@ type Parser interface {
 type ParseService struct {
 	htmlToMarkdown renderIface.HTMLToMarkdownConverter
 	request        request.Requester
-	file           file.FileIface
+	file           file.File
 	db             db.DB
 	ai             ai.AI
 	l              *zap.Logger
@@ -78,7 +78,7 @@ func WithRequester(r request.Requester) Option {
 	return func(s *ParseService) { s.request = r }
 }
 
-func WithFile(f file.FileIface) Option {
+func WithFile(f file.File) Option {
 	return func(s *ParseService) { s.file = f }
 }
 

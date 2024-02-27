@@ -93,7 +93,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 
 	var (
 		requestService        requestIface.Requester
-		minioService          file.FileIface
+		minioService          file.File
 		htmlToMarkdownService renderIface.HTMLToMarkdownConverter
 		imageParser           parse.Imager
 		aiService             ai.AI

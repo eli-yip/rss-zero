@@ -36,7 +36,7 @@ func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Noti
 		var (
 			dbService      zhihuDB.DB
 			requestService requestIface.Requester
-			fileService    file.FileIface
+			fileService    file.File
 			htmlToMarkdown renderIface.HTMLToMarkdownConverter
 			imageParser    parse.Imager
 			aiService      ai.AI

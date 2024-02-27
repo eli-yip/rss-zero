@@ -52,7 +52,7 @@ func CrawlZsxq(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notif
 		var (
 			dbService      zsxqDB.DB
 			requestService requestIface.Requester
-			fileService    file.FileIface
+			fileService    file.File
 			aiService      ai.AI
 			parseService   parse.Parser
 			markdownRender render.MarkdownRenderer

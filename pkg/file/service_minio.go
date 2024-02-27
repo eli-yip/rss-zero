@@ -13,22 +13,22 @@ import (
 )
 
 type FileServiceMinio struct {
-	MinioClient  *minio.Client
+	minioClient  *minio.Client
 	bucketName   string
 	assetsDomain string
 	logger       *zap.Logger
 }
 
 type MinioConfig struct {
-	Endpoint        string
+	Endpoint        string // e.g.: play.min.io
 	AccessKeyID     string
 	SecretAccessKey string
 	UseSSL          bool
 	BucketName      string
-	AssetsPrefix    string
+	AssetsPrefix    string // e.g.: https://play.min.io/bucketName
 }
 
-func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (FileIface, error) {
+func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (File, error) {
 	minioClient, err := minio.New(minioConfig.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(minioConfig.AccessKeyID, minioConfig.SecretAccessKey, ""),
 		Secure: minioConfig.UseSSL,
@@ -38,7 +38,7 @@ func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (FileIface
 	}
 
 	return &FileServiceMinio{
-		MinioClient:  minioClient,
+		minioClient:  minioClient,
 		bucketName:   minioConfig.BucketName,
 		assetsDomain: minioConfig.AssetsPrefix,
 		logger:       logger,
@@ -53,40 +53,41 @@ func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, si
 	}
 	defer stream.Close()
 
-	ext := filepath.Ext(objectKey)
-	contentType := gomime.TypeByExtension(ext)
-	if ext == "" {
-		contentType = "application/octet-stream"
-	}
+	contentType := s.getContentType(objectKey)
 
 	var info minio.UploadInfo
-	info, err = s.MinioClient.PutObject(context.Background(),
+	if info, err = s.minioClient.PutObject(context.Background(),
 		s.bucketName,
 		objectKey,
 		stream,
 		size,
 		minio.PutObjectOptions{ContentType: contentType},
-	)
-	if err != nil {
+	); err != nil {
 		return err
 	}
-	s.logger.Info("upload to minio successfully",
+
+	s.logger.Info("Upload to minio",
 		zap.String("bucket", info.Bucket),
 		zap.String("key", info.Key),
 		zap.String("type", contentType),
-		zap.Int64("size", info.Size),
-	)
+		zap.Int64("size", info.Size))
 
-	return err
+	return nil
+}
+
+// getContentType will return the content type based on the file extension.
+// If the extension is not found, it will return "application/octet-stream".
+func (s *FileServiceMinio) getContentType(objectKey string) (contentType string) {
+	ext := filepath.Ext(objectKey)
+	contentType = gomime.TypeByExtension(ext)
+	if ext == "" {
+		contentType = "application/octet-stream"
+	}
+	return contentType
 }
 
 func (s *FileServiceMinio) GetStream(objectKey string) (stream io.ReadCloser, err error) {
-	ctx := context.Background()
-	o, err := s.MinioClient.GetObject(ctx, s.bucketName, objectKey, minio.GetObjectOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return o, nil
+	return s.minioClient.GetObject(context.Background(), s.bucketName, objectKey, minio.GetObjectOptions{})
 }
 
 func (s *FileServiceMinio) AssetsDomain() (url string) { return s.assetsDomain }
