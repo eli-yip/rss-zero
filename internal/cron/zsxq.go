@@ -129,13 +129,13 @@ func CrawlZsxq(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notif
 
 			// Output rss to redis
 			var rssTopics []render.RSSTopic
-			topics, err := dbService.GetLatestNTopics(groupID, defaultFetchCount)
+			topics, err := dbService.GetLatestNTopics(groupID, config.DefaultFetchCount)
 			if err != nil {
 				logger.Error("failed to get latest topics from database", zap.Error(err))
 				return
 			}
 
-			fetchCount := defaultFetchCount
+			fetchCount := config.DefaultFetchCount
 			for topics[len(topics)-1].Time.After(latestTopicTimeInDB) && len(topics) == fetchCount {
 				fetchCount += 10
 				topics, err = dbService.GetLatestNTopics(groupID, fetchCount)
@@ -173,7 +173,7 @@ func CrawlZsxq(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notif
 			if err != nil {
 				logger.Error("failed to render rss", zap.Error(err))
 			}
-			if err := redisService.Set(fmt.Sprintf(zsxqRssPath, groupID), result, rssTTL); err != nil {
+			if err := redisService.Set(fmt.Sprintf(zsxqRssPath, groupID), result, redis.DefaultTTL); err != nil {
 				logger.Error("failed to set rss to redis", zap.Error(err))
 			}
 		}

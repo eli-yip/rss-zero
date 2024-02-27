@@ -10,6 +10,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+const DefaultFetchCount = 20
+
 func init() {
 	var err error
 	C.BJT, err = time.LoadLocation("Asia/Shanghai")

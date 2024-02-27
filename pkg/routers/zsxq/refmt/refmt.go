@@ -8,6 +8,7 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
@@ -66,7 +67,6 @@ func (s *RefmtService) Reformat(gid int) {
 		}
 	}()
 
-	const defaultFetchLimit = 20 // fetch 20 topics each time
 	s.logger.Info("start to format topics", zap.Int("group_id", gid))
 
 	lastTime, err := s.getLatestTime(gid)
@@ -88,7 +88,7 @@ func (s *RefmtService) Reformat(gid int) {
 		}
 
 		// fetch topics from db
-		topics, err := s.fetchTopic(gid, lastTime, defaultFetchLimit)
+		topics, err := s.fetchTopic(gid, lastTime, config.DefaultFetchCount)
 		if err != nil {
 			return
 		}

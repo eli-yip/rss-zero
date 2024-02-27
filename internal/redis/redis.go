@@ -10,7 +10,10 @@ import (
 
 var ErrKeyNotExist = errors.New("key does not exist")
 
-const Forever = 0
+const (
+	Forever    = 0
+	DefaultTTL = time.Hour * 2
+)
 const ZsxqCookiePath = "zsxq_cookie"
 const XiaobotTokenPath = "xiaobot_token"
 

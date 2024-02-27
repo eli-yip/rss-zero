@@ -124,7 +124,7 @@ func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Noti
 				}
 				logger.Info("rss generated")
 
-				if err := redisService.Set(path, content, rssTTL); err != nil {
+				if err := redisService.Set(path, content, redis.DefaultTTL); err != nil {
 					logger.Error("failed to set rss to redis", zap.Error(err))
 				}
 				logger.Info("rss saved to redis")
@@ -165,7 +165,7 @@ func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Noti
 				}
 				logger.Info("rss generated")
 
-				if err := redisService.Set(path, content, rssTTL); err != nil {
+				if err := redisService.Set(path, content, redis.DefaultTTL); err != nil {
 					logger.Error("failed to set rss to redis", zap.Error(err))
 				}
 				logger.Info("rss saved to redis")
@@ -206,7 +206,7 @@ func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Noti
 				}
 				logger.Info("rss generated")
 
-				if err := redisService.Set(path, content, rssTTL); err != nil {
+				if err := redisService.Set(path, content, redis.DefaultTTL); err != nil {
 					logger.Error("failed to set rss to redis", zap.Error(err))
 				}
 				logger.Info("rss saved to redis")

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
@@ -40,8 +41,6 @@ func NewReformatService(logger *zap.Logger, db db.DB,
 		notifier:    notifier,
 	}
 }
-
-const defaultFetchLimit = 20
 
 func (s *ReformatService) Reformat(paperID string) {
 	var err error
@@ -84,7 +83,7 @@ func (s *ReformatService) Reformat(paperID string) {
 		}
 
 		var posts []db.Post
-		if posts, err = s.db.FetchNPostBeforeTime(defaultFetchLimit, paperID, latestTime); err != nil {
+		if posts, err = s.db.FetchNPostBeforeTime(config.DefaultFetchCount, paperID, latestTime); err != nil {
 			s.l.Info("fail to fetch paper from db", zap.String("paper_id", paperID),
 				zap.Error(err), zap.Time("end_time", latestTime))
 		}

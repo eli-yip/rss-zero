@@ -40,8 +40,6 @@ func NewRefmtService(logger *zap.Logger, db db.DB,
 	}
 }
 
-const defaultFetchLimit = 20 // fetch 20 answers each time
-
 func (s *RefmtService) ReFmt(authorID string) {
 	var err error
 

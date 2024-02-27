@@ -3,6 +3,7 @@ package rss
 import (
 	"fmt"
 
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	render "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
@@ -28,7 +29,7 @@ func GenerateXiaobot(paperID string, d xiaobotDB.DB, l *zap.Logger) (path string
 
 	path = fmt.Sprintf(redis.XiaobotRSSPath, paperID)
 
-	posts, err := d.GetLatestNPost(paperID, defaultFetchCount)
+	posts, err := d.GetLatestNPost(paperID, config.DefaultFetchCount)
 	if err != nil {
 		return "", "", err
 	}

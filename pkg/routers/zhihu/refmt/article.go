@@ -7,6 +7,7 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
 	"go.uber.org/zap"
@@ -38,10 +39,10 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 		}
 
 		var articles []db.Article
-		if articles, err = s.db.FetchNArticlesBeforeTime(defaultFetchLimit, latestTime, authorID); err != nil {
+		if articles, err = s.db.FetchNArticlesBeforeTime(config.DefaultFetchCount, latestTime, authorID); err != nil {
 			s.logger.Info("fail to fetch article from db",
 				zap.Error(err), zap.String("author_id", authorID),
-				zap.Time("end_time", latestTime), zap.Int("limit", defaultFetchLimit))
+				zap.Time("end_time", latestTime), zap.Int("limit", config.DefaultFetchCount))
 		}
 		if len(articles) == 0 {
 			s.logger.Info("there no more articles, break")
@@ -49,7 +50,7 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 		}
 		s.logger.Info("fetch articles from db successfully",
 			zap.Int("count", len(articles)),
-			zap.Time("end_time", latestTime), zap.Int("limit", defaultFetchLimit))
+			zap.Time("end_time", latestTime), zap.Int("limit", config.DefaultFetchCount))
 
 		for i, a := range articles {
 			a := a

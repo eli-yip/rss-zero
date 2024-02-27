@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
@@ -92,9 +93,8 @@ func (h *ZsxqController) generateRSS(key string) (content string, err error) {
 		return "", err
 	}
 
-	const defaultFetchCount = 20
 	zsxqDB := zsxqDB.NewZsxqDBService(h.db)
-	topics, err := zsxqDB.GetLatestNTopics(gid, defaultFetchCount)
+	topics, err := zsxqDB.GetLatestNTopics(gid, config.DefaultFetchCount)
 	if err != nil {
 		err = errors.Join(err, errors.New("get latest topics error"))
 		return "", err

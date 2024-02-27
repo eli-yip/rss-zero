@@ -9,6 +9,7 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
@@ -43,10 +44,10 @@ func (s *RefmtService) refmtPin(authorID string) (err error) {
 		}
 
 		var pins []db.Pin
-		if pins, err = s.db.FetchNPinsBeforeTime(defaultFetchLimit, latestTime, authorID); err != nil {
+		if pins, err = s.db.FetchNPinsBeforeTime(config.DefaultFetchCount, latestTime, authorID); err != nil {
 			s.logger.Info("fail to fetch pin from db",
 				zap.Error(err), zap.String("author_id", authorID),
-				zap.Time("end_time", latestTime), zap.Int("limit", defaultFetchLimit))
+				zap.Time("end_time", latestTime), zap.Int("limit", config.DefaultFetchCount))
 		}
 		if len(pins) == 0 {
 			s.logger.Info("there no more pins, break")
@@ -54,7 +55,7 @@ func (s *RefmtService) refmtPin(authorID string) (err error) {
 		}
 		s.logger.Info("fetch pins from db successfully",
 			zap.Int("count", len(pins)),
-			zap.Time("end_time", latestTime), zap.Int("limit", defaultFetchLimit))
+			zap.Time("end_time", latestTime), zap.Int("limit", config.DefaultFetchCount))
 
 		for i, p := range pins {
 			p := p

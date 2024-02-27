@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	render "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
@@ -53,7 +54,7 @@ func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB, l *zap.Log
 
 func generateZhihuAnswer(authorID string, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, l *zap.Logger) (result string, err error) {
 	l.Info("Start to generate zhihu answer rss")
-	answers, err := zhihuDBService.GetLatestNAnswer(defaultFetchCount, authorID)
+	answers, err := zhihuDBService.GetLatestNAnswer(config.DefaultFetchCount, authorID)
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +86,7 @@ func generateZhihuAnswer(authorID string, authorName string, rssRender render.RS
 
 func generateZhihuArticle(authorID string, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, l *zap.Logger) (result string, err error) {
 	l.Info("Start to generate zhihu article rss")
-	articles, err := zhihuDBService.GetLatestNArticle(defaultFetchCount, authorID)
+	articles, err := zhihuDBService.GetLatestNArticle(config.DefaultFetchCount, authorID)
 	if err != nil {
 		return "", err
 	}
@@ -112,7 +113,7 @@ func generateZhihuArticle(authorID string, authorName string, rssRender render.R
 
 func generateZhihuPin(authorID string, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, l *zap.Logger) (result string, err error) {
 	l.Info("Start to generate zhihu pin rss")
-	pins, err := zhihuDBService.GetLatestNPin(defaultFetchCount, authorID)
+	pins, err := zhihuDBService.GetLatestNPin(config.DefaultFetchCount, authorID)
 	if err != nil {
 		return "", err
 	}
