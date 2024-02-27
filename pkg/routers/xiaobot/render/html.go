@@ -1,9 +1,7 @@
 package render
 
-import (
-	"github.com/eli-yip/rss-zero/pkg/render"
-)
+import "github.com/eli-yip/rss-zero/pkg/render"
 
-type htmlRule = render.HtmlRule
+type convertRule = render.ConvertRule
 
-func GetHtmlRules() []htmlRule { return []htmlRule{} }
+func GetHtmlRules() []convertRule { return []convertRule{} }

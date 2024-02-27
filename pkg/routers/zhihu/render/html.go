@@ -1,30 +1,30 @@
 package render
 
 import (
-	gomd "github.com/JohannesKaufmann/html-to-markdown"
+	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/eli-yip/rss-zero/pkg/render"
 )
 
-type htmlRule = render.HtmlRule
+type convertRule = render.ConvertRule
 
-func GetHtmlRules() []htmlRule {
-	pics := htmlRule{
+func GetHtmlRules() []convertRule {
+	pics := convertRule{
 		Name: "pics",
-		Rule: gomd.Rule{
+		Rule: md.Rule{
 			Filter: []string{"figure"},
-			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
+			Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
 				imgTag := selec.Find("img")
 				dataOriginal, exists := imgTag.Attr("data-original")
 				if exists {
-					return gomd.String("![](" + dataOriginal + ")")
+					return md.String("![](" + dataOriginal + ")")
 				}
 				return nil
 			},
 		},
 	}
 
-	return []htmlRule{
+	return []convertRule{
 		pics,
 	}
 }

@@ -1,80 +1,80 @@
 package render
 
 import (
-	gomd "github.com/JohannesKaufmann/html-to-markdown"
+	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/eli-yip/rss-zero/pkg/render"
 )
 
-type htmlRule = render.HtmlRule
+type convertRule = render.ConvertRule
 
-func getArticleRules() []htmlRule {
-	h1 := htmlRule{
+func getArticleRules() []convertRule {
+	h1 := convertRule{
 		Name: "h1",
-		Rule: gomd.Rule{
+		Rule: md.Rule{
 			Filter: []string{"h1"},
-			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
+			Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
 				if !selec.HasClass("title") {
 					return nil
 				}
-				return gomd.String("")
+				return md.String("")
 			},
 		},
 	}
 
-	groupInfo := htmlRule{
+	groupInfo := convertRule{
 		Name: "group-info",
-		Rule: gomd.Rule{
+		Rule: md.Rule{
 			Filter: []string{"div"},
-			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
+			Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
 				if !selec.HasClass("group-info") {
 					return nil
 				}
-				return gomd.String("")
+				return md.String("")
 			},
 		},
 	}
 
-	authorInfo := htmlRule{
+	authorInfo := convertRule{
 		Name: "author-info",
-		Rule: gomd.Rule{
+		Rule: md.Rule{
 			Filter: []string{"div"},
-			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
+			Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
 				if !selec.HasClass("author-info") {
 					return nil
 				}
-				return gomd.String("")
+				return md.String("")
 			},
 		},
 	}
 
-	qrcodeContainer := htmlRule{
+	qrcodeContainer := convertRule{
 		Name: "qrcode-container",
-		Rule: gomd.Rule{
+		Rule: md.Rule{
 			Filter: []string{"div"},
-			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
+			Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
 				if !selec.HasClass("qrcode-container") {
 					return nil
 				}
-				return gomd.String("")
+				return md.String("")
 			},
 		},
 	}
 
-	qrcodeURL := htmlRule{
+	qrcodeURL := convertRule{
 		Name: "qrcode-url",
-		Rule: gomd.Rule{
+		Rule: md.Rule{
 			Filter: []string{"div"},
-			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
+			Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
 				if !selec.Is("div#qrcode-url") {
 					return nil
 				}
-				return gomd.String("")
+				return md.String("")
 			},
 		},
 	}
 
-	return []htmlRule{
+	return []convertRule{
 		h1,
 		groupInfo,
 		authorInfo,

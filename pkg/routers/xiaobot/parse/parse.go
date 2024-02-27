@@ -22,7 +22,7 @@ type Parser interface {
 }
 
 type ParseService struct {
-	renderIface.HTMLToMarkdownConverter
+	renderIface.HTMLToMarkdown
 	*md.MarkdownFormatter
 	db     db.DB
 	logger *zap.Logger
@@ -30,9 +30,9 @@ type ParseService struct {
 
 func NewParseService(options ...Option) (Parser, error) {
 	p := &ParseService{
-		HTMLToMarkdownConverter: renderIface.NewHTMLToMarkdownService(log.NewZapLogger(), render.GetHtmlRules()...),
-		MarkdownFormatter:       md.NewMarkdownFormatter(),
-		logger:                  log.NewZapLogger(),
+		HTMLToMarkdown:    renderIface.NewHTMLToMarkdownService(log.NewZapLogger(), render.GetHtmlRules()...),
+		MarkdownFormatter: md.NewMarkdownFormatter(),
+		logger:            log.NewZapLogger(),
 	}
 
 	for _, o := range options {
@@ -59,6 +59,6 @@ func WithMarkdownFormatter(m *md.MarkdownFormatter) Option {
 	return func(p *ParseService) { p.MarkdownFormatter = m }
 }
 
-func WithHTMLToMarkdownConverter(r renderIface.HTMLToMarkdownConverter) Option {
-	return func(p *ParseService) { p.HTMLToMarkdownConverter = r }
+func WithHTMLToMarkdownConverter(r renderIface.HTMLToMarkdown) Option {
+	return func(p *ParseService) { p.HTMLToMarkdown = r }
 }

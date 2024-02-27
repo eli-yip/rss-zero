@@ -35,7 +35,7 @@ type MarkdownRenderer interface {
 
 type MarkdownRenderService struct {
 	db             zsxqDB.DB
-	htmlToMarkdown render.HTMLToMarkdownConverter
+	htmlToMarkdown render.HTMLToMarkdown
 	mdFmt          *md.MarkdownFormatter
 	formatFuncs    []formatFunc
 	logger         *zap.Logger

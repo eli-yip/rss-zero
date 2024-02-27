@@ -22,14 +22,14 @@ var longLongAgo = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 type ReformatService struct {
 	l           *zap.Logger
 	db          db.DB
-	htmlConvert renderIface.HTMLToMarkdownConverter
+	htmlConvert renderIface.HTMLToMarkdown
 	mdfmt       *md.MarkdownFormatter
 	parse.Parser
 	notifier notify.Notifier
 }
 
 func NewReformatService(logger *zap.Logger, db db.DB,
-	htmlConvert renderIface.HTMLToMarkdownConverter,
+	htmlConvert renderIface.HTMLToMarkdown,
 	p parse.Parser, notifier notify.Notifier,
 	mdfmt *md.MarkdownFormatter) ReformatService {
 	return ReformatService{

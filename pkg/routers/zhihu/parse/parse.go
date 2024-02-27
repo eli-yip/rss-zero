@@ -24,7 +24,7 @@ type Parser interface {
 }
 
 type ParseService struct {
-	htmlToMarkdown renderIface.HTMLToMarkdownConverter
+	htmlToMarkdown renderIface.HTMLToMarkdown
 	request        request.Requester
 	file           file.File
 	db             db.DB
@@ -70,7 +70,7 @@ func NewParseService(options ...Option) (Parser, error) {
 	return s, nil
 }
 
-func WithHTMLToMarkdownConverter(c renderIface.HTMLToMarkdownConverter) Option {
+func WithHTMLToMarkdownConverter(c renderIface.HTMLToMarkdown) Option {
 	return func(s *ParseService) { s.htmlToMarkdown = c }
 }
 

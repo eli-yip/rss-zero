@@ -1,32 +1,41 @@
+// Package render provide a HTML to Markdown convert interface
 package render
 
 import (
 	"strings"
 
-	gomd "github.com/JohannesKaufmann/html-to-markdown"
-	gomdPlugin "github.com/JohannesKaufmann/html-to-markdown/plugin"
+	md "github.com/JohannesKaufmann/html-to-markdown"
+	"github.com/JohannesKaufmann/html-to-markdown/plugin"
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
 )
 
-type HTMLToMarkdownConverter interface {
+// HTMLToMarkdown is a interface for converting HTML to Markdown text
+type HTMLToMarkdown interface {
+	// Convert convert HTML bytes to Markdown bytes
 	Convert([]byte) ([]byte, error)
 }
 
-type HTMLToMarkdownService struct{ *gomd.Converter }
+type HTMLToMarkdownService struct{ *md.Converter }
 
-func NewHTMLToMarkdownService(logger *zap.Logger, rules ...HtmlRule) HTMLToMarkdownConverter {
-	converter := gomd.NewConverter("", true, nil)
-	defaultRules := getDefaultRules()
-	rules = append(defaultRules, rules...)
+// NewHTMLToMarkdownService create a new HTMLToMarkdown interface with custom rules.
+//
+// Default rules are:
+//  1. CJK strong tag
+//  2. GitHub Flavored Markdown
+//  3. Remove head and footer tag
+func NewHTMLToMarkdownService(logger *zap.Logger, rules ...ConvertRule) HTMLToMarkdown {
+	converter := md.NewConverter("", true, nil)
+
+	rules = append(getDefaultRules(), rules...)
 	for _, rule := range rules {
 		converter.AddRules(rule.Rule)
 		logger.Info("add article render rule", zap.String("name", rule.Name))
 	}
-	converter.Use(gomdPlugin.GitHubFlavored())
-	tagsToRemove := []string{"head", "footer"}
-	converter.Remove(tagsToRemove...)
-	logger.Info("add n rules to markdown converter", zap.Int("n", len(rules)+len(tagsToRemove)))
+
+	converter.Use(plugin.GitHubFlavored())
+
+	converter.Remove([]string{"head", "footer"}...)
 
 	return &HTMLToMarkdownService{Converter: converter}
 }
@@ -35,22 +44,22 @@ func (h *HTMLToMarkdownService) Convert(content []byte) ([]byte, error) {
 	return h.ConvertBytes(content)
 }
 
-type HtmlRule struct {
-	Name string
-	Rule gomd.Rule
+type ConvertRule struct {
+	Name string  // Name of the rule
+	Rule md.Rule // Rule for converting HTML to Markdown
 }
 
-func getDefaultRules() []HtmlRule {
-	cjk := HtmlRule{
+func getDefaultRules() []ConvertRule {
+	cjk := ConvertRule{
 		Name: "Default rule for CJK strong tag",
-		Rule: gomd.Rule{
+		Rule: md.Rule{
 			Filter: []string{"strong"},
-			Replacement: func(content string, selec *goquery.Selection, opt *gomd.Options) *string {
+			Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
 				content = strings.TrimSpace(content)
-				return gomd.String("**" + content + "**")
+				return md.String("**" + content + "**")
 			},
 		},
 	}
 
-	return []HtmlRule{cjk}
+	return []ConvertRule{cjk}
 }

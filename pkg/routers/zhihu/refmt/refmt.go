@@ -20,14 +20,14 @@ type ReformatIface interface {
 type RefmtService struct {
 	logger      *zap.Logger
 	db          db.DB
-	htmlConvert renderIface.HTMLToMarkdownConverter
+	htmlConvert renderIface.HTMLToMarkdown
 	mdfmt       *md.MarkdownFormatter
 	parse.Imager
 	notifier notify.Notifier
 }
 
 func NewRefmtService(logger *zap.Logger, db db.DB,
-	htmlConvert renderIface.HTMLToMarkdownConverter,
+	htmlConvert renderIface.HTMLToMarkdown,
 	i parse.Imager, notifier notify.Notifier,
 	mdfmt *md.MarkdownFormatter) ReformatIface {
 	return &RefmtService{
