@@ -172,7 +172,7 @@ func (h *ZhihuController) generateRSS(key string) (content string, err error) {
 		return "", err
 	}
 
-	_, content, err = rss.GenerateZhihu(t, authorID, h.db)
+	_, content, err = rss.GenerateZhihu(t, authorID, h.db, h.logger)
 	if err != nil {
 		return "", err
 	}

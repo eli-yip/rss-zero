@@ -117,7 +117,7 @@ func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Noti
 				}
 				logger.Info("crawl answer done")
 
-				path, content, err := rss.GenerateZhihu(rss.TypeAnswer, sub.AuthorID, dbService)
+				path, content, err := rss.GenerateZhihu(rss.TypeAnswer, sub.AuthorID, dbService, logger)
 				if err != nil {
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
@@ -158,7 +158,7 @@ func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Noti
 				}
 				logger.Info("crawl article done")
 
-				path, content, err := rss.GenerateZhihu(rss.TypeArticle, sub.AuthorID, dbService)
+				path, content, err := rss.GenerateZhihu(rss.TypeArticle, sub.AuthorID, dbService, logger)
 				if err != nil {
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
@@ -199,7 +199,7 @@ func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Noti
 				}
 				logger.Info("crawl pin done")
 
-				path, content, err := rss.GenerateZhihu(rss.TypePin, sub.AuthorID, dbService)
+				path, content, err := rss.GenerateZhihu(rss.TypePin, sub.AuthorID, dbService, logger)
 				if err != nil {
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue

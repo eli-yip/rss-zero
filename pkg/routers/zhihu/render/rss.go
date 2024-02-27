@@ -24,7 +24,7 @@ type RSS struct {
 
 type RSSRender interface {
 	Render(t int, rs []RSS) (string, error)
-	RenderEmpty(t int, authorID string, authorName string) (string, string, error)
+	RenderEmpty(t int, authorID string, authorName string) (string, error)
 }
 
 type RSSRenderService struct{ goldmark.Markdown }
@@ -42,17 +42,14 @@ const (
 	TypePin
 )
 
-func (r *RSSRenderService) RenderEmpty(t int, authorID string, authorName string) (path string, rss string, err error) {
+func (r *RSSRenderService) RenderEmpty(t int, authorID string, authorName string) (rss string, err error) {
 	var tt string
 	switch t {
 	case TypeAnswer:
-		path = "zhihu_rss_answer_%s"
 		tt = "回答"
 	case TypeArticle:
-		path = "zhihu_rss_article_%s"
 		tt = "文章"
 	case TypePin:
-		path = "zhihu_rss_pin_%s"
 		tt = "想法"
 	}
 
@@ -73,8 +70,7 @@ func (r *RSSRenderService) RenderEmpty(t int, authorID string, authorName string
 		Updated: defaultTime,
 	}
 
-	content, err := rssFeed.ToAtom()
-	return fmt.Sprintf(path, authorID), content, err
+	return rssFeed.ToAtom()
 }
 
 // t: "answers", "posts", "pins"
