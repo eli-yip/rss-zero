@@ -30,9 +30,9 @@ type ParseService struct {
 
 func NewParseService(options ...Option) (Parser, error) {
 	p := &ParseService{
-		HTMLToMarkdownConverter: renderIface.NewHTMLToMarkdownService(log.NewLogger(), render.GetHtmlRules()...),
+		HTMLToMarkdownConverter: renderIface.NewHTMLToMarkdownService(log.NewZapLogger(), render.GetHtmlRules()...),
 		MarkdownFormatter:       md.NewMarkdownFormatter(),
-		logger:                  log.NewLogger(),
+		logger:                  log.NewZapLogger(),
 	}
 
 	for _, o := range options {

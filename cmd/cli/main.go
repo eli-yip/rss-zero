@@ -41,7 +41,7 @@ type zsxqOption struct {
 type xiaobotOption struct{ paperID string }
 
 func main() {
-	logger := log.NewLogger()
+	logger := log.NewZapLogger()
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Fatal("panic", zap.Any("panic", r))

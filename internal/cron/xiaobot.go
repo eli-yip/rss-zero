@@ -19,7 +19,7 @@ import (
 
 func CrawlXiaobot(r redis.RedisIface, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
-		l := log.NewLogger()
+		l := log.NewZapLogger()
 		var err error
 		defer func() {
 			if err != nil {

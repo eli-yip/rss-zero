@@ -20,7 +20,7 @@ func TestAnswerList(t *testing.T) {
 	u = fmt.Sprintf("%s?include=%s&%s", u, escaped, "offset=0&limit=20&sort_by=created")
 	config.InitFromEnv()
 
-	logger := log.NewLogger()
+	logger := log.NewZapLogger()
 	requestService, err := zhihuRequest.NewRequestService(nil, logger)
 	if err != nil {
 		t.Fatal(err)
@@ -48,7 +48,7 @@ func TestAnswerList(t *testing.T) {
 // In the web, it is same. As 192 pages will have 3845 answers, but actually it has 3825 answers.
 func TestAnswerListPaging(t *testing.T) {
 	config.InitFromEnv()
-	logger := log.NewLogger()
+	logger := log.NewZapLogger()
 	requestService, err := zhihuRequest.NewRequestService(nil, logger)
 	if err != nil {
 		t.Fatal(err)

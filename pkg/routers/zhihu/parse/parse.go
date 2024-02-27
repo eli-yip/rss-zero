@@ -48,7 +48,7 @@ func NewParseService(options ...Option) (Parser, error) {
 	}
 
 	if s.l == nil {
-		s.l = log.NewLogger()
+		s.l = log.NewZapLogger()
 	}
 
 	if s.htmlToMarkdown == nil {

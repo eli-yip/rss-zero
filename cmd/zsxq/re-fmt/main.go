@@ -22,7 +22,7 @@ func (n *localNotifier) Notify(title, body string) error {
 
 func main() {
 	var err error
-	logger := log.NewLogger()
+	logger := log.NewZapLogger()
 
 	config.InitFromEnv()
 	logger.Info("config initialized")

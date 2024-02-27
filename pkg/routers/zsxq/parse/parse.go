@@ -43,7 +43,7 @@ func NewParseService(f file.File, r request.Requester, d db.DB,
 	}
 
 	if s.l == nil {
-		s.l = log.NewLogger()
+		s.l = log.NewZapLogger()
 	}
 
 	return s, nil

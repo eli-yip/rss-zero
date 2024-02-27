@@ -24,7 +24,7 @@ func testStrong(t *testing.T) {
 	}
 
 	assert := assert.New(t)
-	converter := renderIface.NewHTMLToMarkdownService(log.NewLogger(), GetHtmlRules()...)
+	converter := renderIface.NewHTMLToMarkdownService(log.NewZapLogger(), GetHtmlRules()...)
 	for _, c := range cases {
 		actual, err := converter.Convert([]byte(c.input))
 		assert.Nil(err)

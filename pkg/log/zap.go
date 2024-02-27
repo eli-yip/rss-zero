@@ -3,17 +3,27 @@ package log
 import (
 	"fmt"
 
+	"github.com/eli-yip/rss-zero/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-func NewLogger() *zap.Logger {
-	config := zap.NewProductionConfig()
-	config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
-
-	logger, err := config.Build()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to init logger: %v", err))
+// NewZapLogger returns a new zap logger.
+// To enable debug mode, add DEBUG=true to .env file.
+// It will use production config otherwise.
+func NewZapLogger() *zap.Logger {
+	var zapConfig zap.Config
+	if config.C.Debug {
+		zapConfig = zap.NewDevelopmentConfig()
+	} else {
+		zapConfig = zap.NewProductionConfig()
 	}
+	zapConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
+
+	logger, err := zapConfig.Build()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to init zap logger: %v", err))
+	}
+
 	return logger
 }

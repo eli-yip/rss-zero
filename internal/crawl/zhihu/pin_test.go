@@ -16,7 +16,7 @@ func TestPinList(t *testing.T) {
 	u = fmt.Sprintf("%s?%s", u, "offset=0&limit=20")
 	config.InitFromEnv()
 
-	logger := log.NewLogger()
+	logger := log.NewZapLogger()
 	requestService, err := zhihuRequest.NewRequestService(nil, logger)
 	if err != nil {
 		t.Fatal(err)

@@ -42,6 +42,8 @@ type Config struct {
 	InternalServerURL string
 
 	BJT *time.Location
+
+	Debug bool
 }
 
 var C Config
@@ -96,8 +98,12 @@ func readEnv() {
 	C.ServerURL = getEnv("SERVER_URL")
 
 	C.InternalServerURL = getEnv("INTERNAL_SERVER_URL")
+
+	C.Debug = getEnv("DEBUG") == "true"
 }
 
+// getEnv returns the value of the environment variable.
+// It will panic if the environment variable is not found.
 func getEnv(key string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value

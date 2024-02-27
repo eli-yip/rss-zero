@@ -21,7 +21,7 @@ import (
 
 func CrawlZhihu(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
-		logger := log.NewLogger()
+		logger := log.NewZapLogger()
 		var err error
 		defer func() {
 			if err != nil {
