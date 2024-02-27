@@ -10,11 +10,9 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var BJT *time.Location
-
 func init() {
 	var err error
-	BJT, err = time.LoadLocation("Asia/Shanghai")
+	C.BJT, err = time.LoadLocation("Asia/Shanghai")
 	if err != nil {
 		panic(err)
 	}
@@ -40,6 +38,8 @@ type Config struct {
 	ServerURL string
 
 	InternalServerURL string
+
+	BJT *time.Location
 }
 
 var C Config

@@ -43,6 +43,6 @@ func (r *RenderImpl) Post(p *Post) (text string, err error) {
 func trimRightSpace(text string) string { return strings.TrimRight(text, " \n") }
 
 func formatTimeForRead(t time.Time) string {
-	t = t.In(config.BJT)
+	t = t.In(config.C.BJT)
 	return t.Format("2006年1月2日 15:04")
 }

@@ -14,7 +14,7 @@ type CronService struct {
 }
 
 func NewCronService(logger *zap.Logger) (*CronService, error) {
-	s, err := gocron.NewScheduler(gocron.WithLocation(config.BJT))
+	s, err := gocron.NewScheduler(gocron.WithLocation(config.C.BJT))
 	if err != nil {
 		return nil, err
 	}

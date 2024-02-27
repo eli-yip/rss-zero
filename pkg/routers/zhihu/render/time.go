@@ -7,6 +7,6 @@ import (
 )
 
 func formatTimeForRead(t time.Time) string {
-	t = t.In(config.BJT)
+	t = t.In(config.C.BJT)
 	return t.Format("2006年1月2日 15:04")
 }

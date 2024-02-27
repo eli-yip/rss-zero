@@ -32,7 +32,7 @@ func EncodeTimeForQuery(t time.Time) string {
 
 // DecodeZsxqAPITime parse zsxq time string to time.Time.
 //
-// e.g.: "2024-01-22T12:19:44.405+0800" -> time.Date(2024, 1, 22, 12, 19, 44, 405000000, config.BJT),
+// e.g.: "2024-01-22T12:19:44.405+0800" -> time.Date(2024, 1, 22, 12, 19, 44, 405000000, config.C.BJT),
 func DecodeZsxqAPITime(ts string) (result time.Time, err error) {
 	const zsxqTimeLayout = "2006-01-02T15:04:05.000-0700"
 
@@ -40,14 +40,14 @@ func DecodeZsxqAPITime(ts string) (result time.Time, err error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	return result.In(config.BJT), nil
+	return result.In(config.C.BJT), nil
 }
 
 // FmtForRead format time.Time to a time string like "2006年1月2日".
 func FmtForRead(t time.Time) string {
 	const ZsxqTimeLayoutForRead = "2006年1月2日"
 
-	t = t.In(config.BJT)
+	t = t.In(config.C.BJT)
 
 	return t.Format(ZsxqTimeLayoutForRead)
 }
