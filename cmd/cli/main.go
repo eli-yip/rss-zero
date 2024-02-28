@@ -41,7 +41,11 @@ type zsxqOption struct {
 type xiaobotOption struct{ paperID string }
 
 func main() {
+	var err error
+
+	config.InitFromEnv()
 	logger := log.NewZapLogger()
+
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Fatal("panic", zap.Any("panic", r))
@@ -49,10 +53,6 @@ func main() {
 			logger.Info("done")
 		}
 	}()
-
-	var err error
-
-	config.InitFromEnv()
 	logger.Info("init config successfully")
 
 	opt, err := parseArgs()

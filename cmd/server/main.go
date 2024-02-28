@@ -76,9 +76,9 @@ func initService() (r redis.Redis,
 	n notify.Notifier,
 	l *zap.Logger,
 	err error) {
-	l = log.NewZapLogger()
-
 	config.InitFromEnv()
+
+	l = log.NewZapLogger()
 	l.Info("config initialized", zap.Any("config", config.C))
 
 	r, err = redis.NewRedisService(config.C.Redis)
