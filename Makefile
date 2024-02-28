@@ -23,10 +23,10 @@ full-lint:
 
 .PHONY: switch
 switch:
-	@if [ "$(CURRENT_BRANCH)" = "dev" ]; then \
-		echo "You are already on the dev branch."; \
+	@if [ "$(CURRENT_BRANCH)" = "master" ]; then \
+		echo "You are already on the master branch."; \
 	else \
-		git switch dev; \
+		git switch master; \
 		git branch -d $(CURRENT_BRANCH) || true; \
 		git branch -dr origin/$(CURRENT_BRANCH) || true; \
 	fi
