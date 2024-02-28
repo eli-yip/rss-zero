@@ -27,7 +27,7 @@ const (
 
 var RSSTTL = time.Hour * 2
 
-type RedisIface interface {
+type Redis interface {
 	Set(key string, value interface{}, duration time.Duration) (err error)
 	Get(key string) (value string, err error)
 	Del(key string) (err error)
@@ -44,7 +44,7 @@ type RedisConfig struct {
 	DB       int
 }
 
-func NewRedisService(c RedisConfig) (service RedisIface, err error) {
+func NewRedisService(c RedisConfig) (service Redis, err error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     c.Addr,
 		Password: c.Password,

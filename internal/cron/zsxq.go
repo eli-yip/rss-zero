@@ -23,7 +23,7 @@ import (
 
 const zsxqRssPath = "zsxq_rss_%d"
 
-func CrawlZsxq(redisService redis.RedisIface, db *gorm.DB, notifier notify.Notifier) func() {
+func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		// Init services
 		logger := log.NewZapLogger()
