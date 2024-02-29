@@ -14,6 +14,13 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 )
 
+var errParseHTML = errors.New("failed to parse html")
+
+// GetCookies get cookies from zhihu.
+//
+// if any bad request or too many requests, return error.
+//
+// if there is no d_c0 cookie, return error.
 func GetCookies() (cookies []*http.Cookie, err error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "https://www.zhihu.com/people/canglimo", nil)
@@ -38,27 +45,17 @@ func GetCookies() (cookies []*http.Cookie, err error) {
 		}
 	}
 
-	bytes, err := io.ReadAll(resp.Body)
-	if err != nil {
+	if err = checkTooManyRequest(resp.Body); err != nil {
 		return nil, err
-	}
-
-	tooManyRequest, err := checkBody(bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	if tooManyRequest {
-		return nil, errors.New("too many requests, please verify youself in browser and try again later")
 	}
 
 	return nil, errors.New("no d_c0 cookie")
 }
 
-func checkBody(body []byte) (tooManyRequest bool, err error) {
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
+func checkTooManyRequest(body io.Reader) (err error) {
+	doc, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
-		return false, err
+		return errors.Join(errParseHTML, err)
 	}
 
 	found := false
@@ -68,29 +65,36 @@ func checkBody(body []byte) (tooManyRequest bool, err error) {
 		}
 	})
 
-	return found, nil
+	if found {
+		return errors.New("too many requests")
+	}
+	return nil
 }
 
-type encryptReq struct {
-	CookieMes string `json:"cookie_mes"`
-	ApiPath   string `json:"api_path"`
-}
+type (
+	// this struct is used to send request to zhihu encryption api, see in https://gitea.momoai.me/yezi/zhihu-encrypt
+	encryptReq struct {
+		CookieMes string `json:"cookie_mes"`
+		ApiPath   string `json:"api_path"`
+	}
 
-type encryptResp struct {
-	XZSE96 string `json:"xzse96"`
-}
+	// this struct is used to parse response from zhihu encryption api, see in https://gitea.momoai.me/yezi/zhihu-encrypt
+	encryptResp struct {
+		XZSE96 string `json:"xzse96"`
+	}
+)
 
+// GetXZSE96 get xzse96 from zhihu encryption api.
 func GetXZSE96(url, dC0 string) (xzse96 string, err error) {
-	path, err := getPath(url)
+	pathAndQuery, err := getPathAndQuery(url)
 	if err != nil {
 		return "", err
 	}
 
-	reqData := encryptReq{
+	reqBody, err := json.Marshal(encryptReq{
 		CookieMes: dC0,
-		ApiPath:   path,
-	}
-	reqBody, err := json.Marshal(reqData)
+		ApiPath:   pathAndQuery,
+	})
 	if err != nil {
 		return "", err
 	}
@@ -109,7 +113,7 @@ func GetXZSE96(url, dC0 string) (xzse96 string, err error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("status code error")
+		return "", fmt.Errorf("status code error: %d", resp.StatusCode)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -118,29 +122,27 @@ func GetXZSE96(url, dC0 string) (xzse96 string, err error) {
 	}
 
 	var respData encryptResp
-	err = json.Unmarshal(respBody, &respData)
-	if err != nil {
+	if err = json.Unmarshal(respBody, &respData); err != nil {
 		return "", err
 	}
 
 	return respData.XZSE96, nil
 }
 
-func getPath(path string) (result string, err error) {
+// getPathAndQuery get url path and query string.
+func getPathAndQuery(path string) (result string, err error) {
 	u, err := url.Parse(path)
 	if err != nil {
 		return "", err
 	}
 
 	if u.RawQuery != "" {
-		result = fmt.Sprintf("%s?%s", u.Path, u.RawQuery)
-	} else {
-		result = u.Path
+		return fmt.Sprintf("%s?%s", u.Path, u.RawQuery), nil
 	}
-
-	return result, nil
+	return u.Path, nil
 }
 
+// CookiesToString convert cookies to string. Cookies are separated by comma and space.
 func CookiesToString(cookies []*http.Cookie) string {
 	var sb strings.Builder
 
