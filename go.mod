@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.5.0
 	github.com/Kunde21/markdownfmt/v3 v3.1.0
-	github.com/PuerkitoBio/goquery v1.9.0
+	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/brpaz/echozap v1.1.3
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.6.0
@@ -16,7 +16,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/minio/minio-go/v7 v7.0.67
 	github.com/redis/go-redis/v9 v9.5.1
-	github.com/sashabaranov/go-openai v1.20.1
+	github.com/sashabaranov/go-openai v1.20.2
 	github.com/stretchr/testify v1.8.4
 	github.com/yuin/goldmark v1.7.0
 	go.uber.org/zap v1.27.0
@@ -59,7 +59,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/crypto v0.20.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
