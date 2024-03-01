@@ -29,12 +29,10 @@ import (
 
 const key = `dbbc1dd37360b4084c3a69346e0ce2b2.`
 
-// keyword=&limit=20&offset=0&order_by=created_at undefined&tag_name=
-// limit=20&offset=0&tag_name=&keyword=&order_by=created_at+undefined
-
+// Sign returns the timestamp and sign for the given time and url
 func Sign(t time.Time, u string) (timeStr string, sign string, err error) {
 	timestamp := strconv.FormatInt(t.Unix(), 10)
-	parsedParams, err := parseQuery(u)
+	parsedParams, err := parseURLForSortedQuery(u)
 	if err != nil {
 		return "", "", err
 	}
@@ -42,7 +40,10 @@ func Sign(t time.Time, u string) (timeStr string, sign string, err error) {
 	return timestamp, hex.EncodeToString(hash[:]), nil
 }
 
-func parseQuery(u string) (string, error) {
+// raw: limit=20&offset=0&tag_name=&keyword=&order_by=created_at+undefined
+//
+// result: keyword=&limit=20&offset=0&order_by=created_at undefined&tag_name=
+func parseURLForSortedQuery(u string) (string, error) {
 	parseURL, err := url.Parse(u)
 	if err != nil {
 		return "", err
@@ -59,7 +60,7 @@ func parseQuery(u string) (string, error) {
 	}
 	sort.Strings(keys)
 
-	var sortedQueryParts []string
+	sortedQueryParts := make([]string, 0, len(values))
 	for _, key := range keys {
 		for _, value := range values[key] {
 			sortedQueryParts = append(sortedQueryParts, fmt.Sprintf("%s=%s", key, url.QueryEscape(value)))

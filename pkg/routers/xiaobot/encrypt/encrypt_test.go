@@ -59,7 +59,7 @@ func TestParseParams(t *testing.T) {
 
 	assert := assert.New(t)
 	for _, c := range cases {
-		got, err := parseQuery(c.u)
+		got, err := parseURLForSortedQuery(c.u)
 		assert.Nil(err)
 		assert.Equal(c.want, got)
 	}
