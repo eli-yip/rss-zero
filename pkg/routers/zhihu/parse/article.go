@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
 	"go.uber.org/zap"
@@ -35,7 +36,7 @@ func (p *ParseService) ParseArticle(content []byte) (text string, err error) {
 	logger := p.l.With(zap.Int("article_id", article.ID))
 	logger.Info("unmarshal article successfully")
 
-	text, err = p.parseHTML(article.HTML, article.ID, db.TypeArticle, logger)
+	text, err = p.parseHTML(article.HTML, article.ID, common.TypeZhihuArticle, logger)
 	if err != nil {
 		return "", err
 	}

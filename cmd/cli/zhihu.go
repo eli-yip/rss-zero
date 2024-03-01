@@ -11,6 +11,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/ai"
+	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	requestIface "github.com/eli-yip/rss-zero/pkg/request"
@@ -53,13 +54,13 @@ func handleZhihu(opt option, logger *zap.Logger) {
 
 		exportType := new(int)
 		if opt.zhihu.answer {
-			*exportType = export.TypeAnswer
+			*exportType = common.TypeZhihuAnswer
 		}
 		if opt.zhihu.article {
-			*exportType = export.TypeArticle
+			*exportType = common.TypeZhihuArticle
 		}
 		if opt.zhihu.pin {
-			*exportType = export.TypePin
+			*exportType = common.TypeZhihuPin
 		}
 
 		exportOpt := export.Option{

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
 	"go.uber.org/zap"
@@ -144,7 +145,7 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 			if err = p.db.SaveObjectInfo(&db.Object{
 				ID:              picID,
 				Type:            db.ObjectTypeImage,
-				ContentType:     db.TypePin,
+				ContentType:     common.TypeZhihuPin,
 				ContentID:       id,
 				ObjectKey:       objectKey,
 				URL:             imageContent.OriginalURL,

@@ -8,7 +8,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
-	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"github.com/labstack/echo/v4"
@@ -25,7 +25,7 @@ func (h *ZhihuController) AnswerRSS(c echo.Context) (err error) {
 	authorID := c.Get("feed_id").(string)
 	logger.Info("Retrieved rss request", zap.String("author id", authorID))
 
-	if err = h.checkSub(rss.TypeAnswer, authorID, logger); err != nil {
+	if err = h.checkSub(common.TypeZhihuAnswer, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
 			err = errors.Join(err, errors.New("author does not exist in zhihu"))
 			logger.Error("Error return rss", zap.String("author id", authorID), zap.Error(err))
@@ -57,7 +57,7 @@ func (h *ZhihuController) ArticleRSS(c echo.Context) (err error) {
 	authorID := c.Get("feed_id").(string)
 	logger.Info("Retrieved rss request", zap.String("author id", authorID))
 
-	if err := h.checkSub(rss.TypeArticle, authorID, logger); err != nil {
+	if err := h.checkSub(common.TypeZhihuArticle, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
 			err = errors.Join(err, errors.New("author does not exist in zhihu"))
 			logger.Error("Error return rss", zap.String("author id", authorID), zap.Error(err))
@@ -89,7 +89,7 @@ func (h *ZhihuController) PinRSS(c echo.Context) (err error) {
 	authorID := c.Get("feed_id").(string)
 	logger.Info("Retrieved rss request", zap.String("author id", authorID))
 
-	if err := h.checkSub(rss.TypePin, authorID, logger); err != nil {
+	if err := h.checkSub(common.TypeZhihuPin, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
 			err = errors.Join(err, errors.New("author does not exist in zhihu"))
 			logger.Error("Error return rss", zap.String("author id", authorID), zap.Error(err))
@@ -195,11 +195,11 @@ func (h *ZhihuController) extractTypeAuthorFromKey(key string) (t int, authorID 
 
 	switch strs[2] {
 	case "answer":
-		t = rss.TypeAnswer
+		t = common.TypeZhihuAnswer
 	case "article":
-		t = rss.TypeArticle
+		t = common.TypeZhihuArticle
 	case "pin":
-		t = rss.TypePin
+		t = common.TypeZhihuPin
 	default:
 		return 0, "", fmt.Errorf("invalid type: %s", strs[2])
 	}
@@ -211,16 +211,6 @@ func (h *ZhihuController) extractTypeAuthorFromKey(key string) (t int, authorID 
 
 // checkSub checks if the sub exists in db, if not, add it to db
 func (h *ZhihuController) checkSub(t int, authorID string, logger *zap.Logger) (err error) {
-	// convert rss type to db type
-	switch t {
-	case rss.TypeAnswer:
-		t = db.TypeAnswer
-	case rss.TypeArticle:
-		t = db.TypeArticle
-	case rss.TypePin:
-		t = db.TypePin
-	}
-
 	// check if sub exists
 	exist, err := h.db.CheckSub(authorID, t)
 	if err != nil {

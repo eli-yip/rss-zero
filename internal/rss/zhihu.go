@@ -6,15 +6,10 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/common"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	render "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"go.uber.org/zap"
-)
-
-const (
-	TypeAnswer = iota
-	TypeArticle
-	TypePin
 )
 
 func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB, l *zap.Logger) (path string, result string, err error) {
@@ -29,19 +24,19 @@ func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB, l *zap.Log
 
 	var output string
 	switch t {
-	case TypeAnswer:
+	case common.TypeZhihuAnswer:
 		output, err = generateZhihuAnswer(authorID, authorName, rssRender, zhihuDBService, l)
 		if err != nil {
 			return "", "", fmt.Errorf("generate zhihu answer rss failed: %w", err)
 		}
 		return fmt.Sprintf(redis.ZhihuAnswerPath, authorID), output, err
-	case TypeArticle:
+	case common.TypeZhihuArticle:
 		output, err = generateZhihuArticle(authorID, authorName, rssRender, zhihuDBService, l)
 		if err != nil {
 			return "", "", fmt.Errorf("generate zhihu article rss failed: %w", err)
 		}
 		return fmt.Sprintf(redis.ZhihuArticlePath, authorID), output, err
-	case TypePin:
+	case common.TypeZhihuPin:
 		output, err = generateZhihuPin(authorID, authorName, rssRender, zhihuDBService, l)
 		if err != nil {
 			return "", "", fmt.Errorf("generate zhihu pin rss failed: %w", err)
@@ -60,7 +55,7 @@ func generateZhihuAnswer(authorID string, authorName string, rssRender render.RS
 	}
 	if len(answers) == 0 {
 		l.Info("No answer found, render empty rss")
-		return rssRender.RenderEmpty(TypeAnswer, authorID, authorName)
+		return rssRender.RenderEmpty(common.TypeZhihuArticle, authorID, authorName)
 	}
 
 	var rs []render.RSS
@@ -81,7 +76,7 @@ func generateZhihuAnswer(authorID string, authorName string, rssRender render.RS
 		})
 	}
 
-	return rssRender.Render(render.TypeAnswer, rs)
+	return rssRender.Render(common.TypeZhihuAnswer, rs)
 }
 
 func generateZhihuArticle(authorID string, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, l *zap.Logger) (result string, err error) {
@@ -92,7 +87,7 @@ func generateZhihuArticle(authorID string, authorName string, rssRender render.R
 	}
 	if len(articles) == 0 {
 		l.Info("No article found, render empty rss")
-		return rssRender.RenderEmpty(render.TypeArticle, authorID, authorName)
+		return rssRender.RenderEmpty(common.TypeZhihuArticle, authorID, authorName)
 	}
 
 	var rs []render.RSS
@@ -108,7 +103,7 @@ func generateZhihuArticle(authorID string, authorName string, rssRender render.R
 		})
 	}
 
-	return rssRender.Render(render.TypeArticle, rs)
+	return rssRender.Render(common.TypeZhihuArticle, rs)
 }
 
 func generateZhihuPin(authorID string, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, l *zap.Logger) (result string, err error) {
@@ -119,7 +114,7 @@ func generateZhihuPin(authorID string, authorName string, rssRender render.RSSRe
 	}
 	if len(pins) == 0 {
 		l.Info("No pin found, render empty rss")
-		return rssRender.RenderEmpty(render.TypePin, authorID, authorName)
+		return rssRender.RenderEmpty(common.TypeZhihuPin, authorID, authorName)
 	}
 
 	var rs []render.RSS
@@ -139,5 +134,5 @@ func generateZhihuPin(authorID string, authorName string, rssRender render.RSSRe
 		})
 	}
 
-	return rssRender.Render(render.TypePin, rs)
+	return rssRender.Render(common.TypeZhihuPin, rs)
 }

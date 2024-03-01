@@ -7,6 +7,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/ai"
+	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	log "github.com/eli-yip/rss-zero/pkg/log"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
@@ -117,7 +118,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				}
 				logger.Info("crawl answer done")
 
-				path, content, err := rss.GenerateZhihu(rss.TypeAnswer, sub.AuthorID, dbService, logger)
+				path, content, err := rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, dbService, logger)
 				if err != nil {
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
@@ -158,7 +159,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				}
 				logger.Info("crawl article done")
 
-				path, content, err := rss.GenerateZhihu(rss.TypeArticle, sub.AuthorID, dbService, logger)
+				path, content, err := rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, dbService, logger)
 				if err != nil {
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
@@ -199,7 +200,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				}
 				logger.Info("crawl pin done")
 
-				path, content, err := rss.GenerateZhihu(rss.TypePin, sub.AuthorID, dbService, logger)
+				path, content, err := rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, dbService, logger)
 				if err != nil {
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
@@ -218,11 +219,11 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 // convert zhihuDB.Type to string
 func getSubType(subType int) (ts string) {
 	switch subType {
-	case zhihuDB.TypeAnswer:
+	case common.TypeZhihuAnswer:
 		ts = "answer"
-	case zhihuDB.TypeArticle:
+	case common.TypeZhihuArticle:
 		ts = "article"
-	case zhihuDB.TypePin:
+	case common.TypeZhihuPin:
 		ts = "pin"
 	}
 

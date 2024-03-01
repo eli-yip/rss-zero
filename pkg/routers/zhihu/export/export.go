@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
@@ -17,12 +18,6 @@ type Option struct {
 	StartTime time.Time
 	EndTime   time.Time
 }
-
-const (
-	TypeAnswer = iota
-	TypeArticle
-	TypePin
-)
 
 type Exporter interface {
 	Export(io.Writer, Option) error
@@ -57,11 +52,11 @@ func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
 	}
 
 	switch *opt.Type {
-	case TypeAnswer:
+	case common.TypeZhihuAnswer:
 		return s.ExportAnswer(writer, opt)
-	case TypeArticle:
+	case common.TypeZhihuArticle:
 		return s.ExportArticle(writer, opt)
-	case TypePin:
+	case common.TypeZhihuPin:
 		return s.ExportPin(writer, opt)
 	default:
 		return errors.New("unknown type")
@@ -256,11 +251,11 @@ func (s ExportService) FileName(opt Option) (filename string, err error) {
 	fileNameArr := []string{"知乎合集"}
 
 	switch *opt.Type {
-	case TypeAnswer:
+	case common.TypeZhihuAnswer:
 		fileNameArr = append(fileNameArr, "回答")
-	case TypeArticle:
+	case common.TypeZhihuArticle:
 		fileNameArr = append(fileNameArr, "文章")
-	case TypePin:
+	case common.TypeZhihuPin:
 		fileNameArr = append(fileNameArr, "想法")
 	}
 

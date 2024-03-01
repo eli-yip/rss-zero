@@ -66,9 +66,6 @@ func (r *Render) Article(a *Article) (text string, err error) {
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))
 
 	timePart := formatTimeForRead(a.CreateAt)
-	if err != nil {
-		return "", err
-	}
 
 	text = md.Join(titlePart, a.Text, timePart, linkPart)
 
@@ -82,9 +79,6 @@ func (r *Render) Pin(p *Pin) (text string, err error) {
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))
 
 	timePart := formatTimeForRead(p.CreateAt)
-	if err != nil {
-		return "", err
-	}
 
 	text = md.Join(titlePart, p.Text, timePart, linkPart)
 

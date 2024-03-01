@@ -8,6 +8,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
 	"go.uber.org/zap"
@@ -77,7 +78,7 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 					return
 				}
 
-				text, err := s.ParseImages(string(textBytes), a.ID, db.TypeArticle, logger)
+				text, err := s.ParseImages(string(textBytes), a.ID, common.TypeZhihuArticle, logger)
 				if err != nil {
 					logger.Error("fail to replace image links", zap.Error(err))
 					return

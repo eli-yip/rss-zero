@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/gorilla/feeds"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -36,36 +37,12 @@ func NewRSSRenderService() RSSRender {
 	)}
 }
 
-const (
-	TypeAnswer = iota
-	TypeArticle
-	TypePin
-)
-
 func (r *RSSRenderService) RenderEmpty(t int, authorID string, authorName string) (rss string, err error) {
-	var tt string
-	switch t {
-	case TypeAnswer:
-		tt = "回答"
-	case TypeArticle:
-		tt = "文章"
-	case TypePin:
-		tt = "想法"
-	}
-
-	var te string
-	switch t {
-	case TypeAnswer:
-		te = "answers"
-	case TypeArticle:
-		te = "posts"
-	case TypePin:
-		te = "pins"
-	}
+	titleType, linkType := r.generateTitleAndLinkType(t)
 
 	rssFeed := &feeds.Feed{
-		Title:   authorName + "的知乎" + tt,
-		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", authorID, te)},
+		Title:   authorName + "的知乎" + titleType,
+		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", authorID, linkType)},
 		Created: defaultTime,
 		Updated: defaultTime,
 	}
@@ -73,32 +50,13 @@ func (r *RSSRenderService) RenderEmpty(t int, authorID string, authorName string
 	return rssFeed.ToAtom()
 }
 
-// t: "answers", "posts", "pins"
 func (r *RSSRenderService) Render(t int, rs []RSS) (rss string, err error) {
-	var tt string
-	switch t {
-	case TypeAnswer:
-		tt = "回答"
-	case TypeArticle:
-		tt = "文章"
-	case TypePin:
-		tt = "想法"
-	}
-
-	var te string
-	switch t {
-	case TypeAnswer:
-		te = "answers"
-	case TypeArticle:
-		te = "posts"
-	case TypePin:
-		te = "pins"
-	}
+	titleType, linkType := r.generateTitleAndLinkType(t)
 
 	rssFeed := &feeds.Feed{
-		Title:   rs[0].AuthorName + "的知乎" + tt,
-		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", rs[0].AuthorID, te)},
-		Created: time.Now(),
+		Title:   rs[0].AuthorName + "的知乎" + titleType,
+		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", rs[0].AuthorID, linkType)},
+		Created: rs[0].CreateTime,
 		Updated: rs[0].CreateTime,
 	}
 
@@ -129,4 +87,18 @@ func (r *RSSRenderService) Render(t int, rs []RSS) (rss string, err error) {
 	}
 
 	return rssFeed.ToAtom()
+}
+
+// generateTitleAndLinkType returns title type and link type of zhihu item according to its type,
+// see pkg/common/type.go for type list
+func (r *RSSRenderService) generateTitleAndLinkType(t int) (titleType, linkType string) {
+	switch t {
+	case common.TypeZhihuAnswer:
+		return "回答", "answers"
+	case common.TypeZhihuArticle:
+		return "文章", "posts"
+	case common.TypeZhihuPin:
+		return "想法", "pins"
+	}
+	return "", ""
 }

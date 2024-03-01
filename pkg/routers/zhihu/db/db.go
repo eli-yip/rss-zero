@@ -25,9 +25,3 @@ type FetchOptionBase struct {
 	StartTime time.Time
 	EndTime   time.Time
 }
-
-const (
-	TypeAnswer = iota
-	TypeArticle
-	TypePin
-)
