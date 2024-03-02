@@ -44,23 +44,16 @@ steps:
       - name: dockersock
         path: /var/run
     environment:
-      DOCKER_PRIVATE_HUB:
-        from_secret: docker_private_hub
-      DOCKER_PRIVATE_USERNAME:
-        from_secret: docker_private_username
-      DOCKER_PRIVATE_TOKEN:
-        from_secret: docker_private_token
       DOCKER_HUB_USERNAME:
         from_secret: docker_hub_username
       DOCKER_HUB_TOKEN:
         from_secret: docker_hub_token
     commands:
       - echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-      - echo $DOCKER_PRIVATE_TOKEN | docker login $${DOCKER_PRIVATE_HUB} -u $DOCKER_PRIVATE_USERNAME --password-stdin
-      - docker build -t "$${DOCKER_PRIVATE_HUB}/rss-zero:${DRONE_TAG##v}" -f docker/Dockerfile.server .
-      - docker tag "$${DOCKER_PRIVATE_HUB}/rss-zero:${DRONE_TAG##v}" $${DOCKER_PRIVATE_HUB}/rss-zero:latest
-      - docker run -v /var/run/docker.sock:/var/run/docker.sock $${DOCKER_HUB_USERNAME}/slim:1.40.11 build --tag "$${DOCKER_PRIVATE_HUB}/rss-zero:${DRONE_TAG##v}-slim" --http-probe=false --target "$${DOCKER_PRIVATE_HUB}/rss-zero:${DRONE_TAG##v}"
-      - docker tag "$${DOCKER_PRIVATE_HUB}/rss-zero:${DRONE_TAG##v}-slim" $${DOCKER_PRIVATE_HUB}/rss-zero:latest-slim
+      - docker build -t "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}" -f docker/Dockerfile.server .
+      - docker tag "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}" $${DOCKER_HUB_USERNAME}/rss-zero:latest
+      - docker run -v /var/run/docker.sock:/var/run/docker.sock $${DOCKER_HUB_USERNAME}/slim:1.40.11 build --tag "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}-slim" --http-probe=false --target "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}"
+      - docker tag "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}-slim" $${DOCKER_HUB_USERNAME}/rss-zero:latest-slim
     depends_on:
       - wait-for-dind
     when:
@@ -73,16 +66,14 @@ steps:
       - name: dockersock
         path: /var/run
     environment:
-      DOCKER_PRIVATE_HUB:
-        from_secret: docker_private_hub
-      DOCKER_PRIVATE_USERNAME:
-        from_secret: docker_private_username
-      DOCKER_PRIVATE_TOKEN:
-        from_secret: docker_private_token
+      DOCKER_HUB_USERNAME:
+        from_secret: docker_hub_username
+      DOCKER_HUB_TOKEN:
+        from_secret: docker_hub_token
     commands:
-      - echo $DOCKER_PRIVATE_TOKEN | docker login $${DOCKER_PRIVATE_HUB} -u $DOCKER_PRIVATE_USERNAME --password-stdin
+      - echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin
       - |
-        docker images $${DOCKER_PRIVATE_HUB}/rss-zero --format "{{.Repository}}:{{.Tag}}" | while read image; do
+        docker images $${DOCKER_HUB_USERNAME}/rss-zero --format "{{.Repository}}:{{.Tag}}" | while read image; do
           docker push "$image"
         done
     depends_on:
