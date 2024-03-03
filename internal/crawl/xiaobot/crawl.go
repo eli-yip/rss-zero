@@ -1,4 +1,4 @@
-package crawler
+package crawl
 
 import (
 	"encoding/json"
@@ -7,61 +7,77 @@ import (
 
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
+
 	"go.uber.org/zap"
 )
 
-func CrawXiaobot(paperID string, r request.Requester, p parse.Parser,
-	targetTime time.Time, offset int, oneTime bool, l *zap.Logger) (err error) {
-	l.Info("Start to crawl xiaobot paper", zap.String("paper id", paperID))
-	next := ""
-	const urlLayout = "https://api.xiaobot.net/paper/%s/post?limit=20&offset=%d&tag_name=&keyword=&order_by=created_at+undefined"
-	next = fmt.Sprintf(urlLayout, paperID, offset)
+const limit = 20
+
+func CrawXiaobot(paperID string, request request.Requester, parser parse.Parser,
+	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
+	logger.Info("Start to crawl xiaobot paper", zap.String("paper id", paperID))
+
+	next := generateNextURL(paperID, offset)
 
 	for {
-		data, err := r.Limit(next)
+		data, err := request.Limit(next)
 		if err != nil {
-			l.Error("Failed requesting xiaobot api", zap.Error(err))
+			logger.Error("Failed requesting xiaobot api", zap.Error(err))
 			return err
 		}
 
-		posts, err := p.SplitPaper(data)
+		posts, err := parser.SplitPaper(data)
 		if err != nil {
-			l.Error("Failed splitting paper", zap.Error(err))
+			logger.Error("Failed splitting paper", zap.Error(err))
 			return err
 		}
 
 		for _, post := range posts {
-			l := l.With(zap.String("post_id", post.ID))
+			logger := logger.With(zap.String("post_id", post.ID))
 
-			t, err := p.ParseTime(post.CreateAt)
+			t, err := parser.ParseTime(post.CreateAt)
 			if err != nil {
-				l.Error("Failed parsing time", zap.Error(err))
+				logger.Error("Failed parsing time", zap.Error(err))
 				return err
 			}
 
-			if !t.After(targetTime) {
-				l.Info("Post time is before target time, stop crawling")
+			if t.Before(targetTime) || t.Equal(targetTime) {
+				logger.Info("Post time is before target time, stop crawling")
 				return nil
 			}
 
 			postBytes, err := json.Marshal(post)
 			if err != nil {
-				l.Error("Failed marshalling post", zap.Error(err))
+				logger.Error("Failed marshalling post", zap.Error(err))
 				return err
 			}
-			l.Info("Marshal post successfully")
+			logger.Info("Marshal post successfully")
 
-			_, err = p.ParsePaperPost(postBytes, paperID)
+			_, err = parser.ParsePaperPost(postBytes, paperID)
 			if err != nil {
-				l.Error("Failed parsing paper post", zap.Error(err))
+				logger.Error("Failed parsing paper post", zap.Error(err))
 				return err
 			}
-			l.Info("Parse paper post successfully")
+			logger.Info("Parse paper post successfully")
 		}
 
 		if oneTime {
-			l.Info("Crawl xiaobot paper one time only, break")
+			logger.Info("Crawl xiaobot paper one time only, break")
 			return nil
 		}
+
+		// use limit-1 to avoid api response with introduce post
+		if len(posts) < limit-1 {
+			logger.Info("No more posts, break")
+			return nil
+		}
+
+		next = generateNextURL(paperID, offset+20)
 	}
+}
+
+// generateNextURL generate next request url to xiaobot api
+func generateNextURL(paperID string, offset int) string {
+	const urlLayout = "https://api.xiaobot.net/paper/%s/post?limit=%d&offset=%d&tag_name=&keyword=&order_by=created_at+undefined"
+	return fmt.Sprintf(urlLayout, paperID, limit, offset)
 }

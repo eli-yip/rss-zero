@@ -18,6 +18,9 @@ type Parser interface {
 	SplitPaper(data json.RawMessage) (posts []apiModels.PaperPost, err error)
 	ParsePaper(data []byte) (paperName string, err error)
 	ParsePaperPost(data []byte, paperID string) (text string, err error)
+	// ParseTime parse xiaobot time string to time.Time
+	// 	input: 2024-02-07T14:30:14.000000Z
+	// 	output: time.Time
 	ParseTime(timeStr string) (t time.Time, err error)
 }
 
