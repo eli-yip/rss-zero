@@ -28,10 +28,12 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 		// Init services
 		logger := log.NewZapLogger()
 		var err error
+
 		defer func() {
 			if err != nil {
-				_ = notifier.Notify("CrawlZsxq() failed", err.Error())
-				logger.Error("CrawlZsxq() failed", zap.Error(err))
+				if err = notifier.Notify("CrawlZsxq failed", err.Error()); err != nil {
+					logger.Error("fail to send zsxq failure notification", zap.Error(err))
+				}
 			}
 			if err := recover(); err != nil {
 				logger.Error("CrawlZsxq() panic", zap.Any("err", err))
@@ -39,8 +41,8 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 		}()
 
 		// Get cookie from redis, if not exist, log an cookie error.
-		cookie, err := redisService.Get(redis.ZsxqCookiePath)
-		if err != nil {
+		var cookie string
+		if cookie, err = redisService.Get(redis.ZsxqCookiePath); err != nil {
 			if errors.Is(err, redis.ErrKeyNotExist) {
 				logger.Error("cookie not found in redis, notify user")
 				_ = notifier.Notify("No cookie for zsxq", "not found in redis")
@@ -93,8 +95,9 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 		logger.Info("parse service initialized")
 
 		// Get group IDs from database, which is a list of int.
-		groupIDs, err := dbService.GetZsxqGroupIDs()
-		if err != nil {
+		var groupIDs []int
+
+		if groupIDs, err = dbService.GetZsxqGroupIDs(); err != nil {
 			logger.Error("failed to get group IDs from database", zap.Error(err))
 			return
 		}
@@ -103,8 +106,8 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 		for _, groupID := range groupIDs {
 			logger.Info(fmt.Sprintf("crawling group %d", groupID))
 			// Get latest topic time from database
-			latestTopicTimeInDB, err := dbService.GetLatestTopicTime(groupID)
-			if err != nil {
+			var latestTopicTimeInDB time.Time
+			if latestTopicTimeInDB, err = dbService.GetLatestTopicTime(groupID); err != nil {
 				logger.Error("failed to get latest topic time from database", zap.Error(err))
 				return
 			}
@@ -122,15 +125,15 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 				return
 			}
 
-			if err := dbService.UpdateCrawlTime(groupID, time.Now()); err != nil {
+			if err = dbService.UpdateCrawlTime(groupID, time.Now()); err != nil {
 				logger.Error("failed to update crawl time", zap.Error(err))
 				return
 			}
 
 			// Output rss to redis
 			var rssTopics []render.RSSTopic
-			topics, err := dbService.GetLatestNTopics(groupID, config.DefaultFetchCount)
-			if err != nil {
+			var topics []zsxqDB.Topic
+			if topics, err = dbService.GetLatestNTopics(groupID, config.DefaultFetchCount); err != nil {
 				logger.Error("failed to get latest topics from database", zap.Error(err))
 				return
 			}
@@ -138,15 +141,14 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 			fetchCount := config.DefaultFetchCount
 			for topics[len(topics)-1].Time.After(latestTopicTimeInDB) && len(topics) == fetchCount {
 				fetchCount += 10
-				topics, err = dbService.GetLatestNTopics(groupID, fetchCount)
-				if err != nil {
+				if topics, err = dbService.GetLatestNTopics(groupID, fetchCount); err != nil {
 					logger.Error("failed to get latest topics from database", zap.Error(err))
 					return
 				}
 			}
 
-			groupName, err := dbService.GetGroupName(groupID)
-			if err != nil {
+			var groupName string
+			if groupName, err = dbService.GetGroupName(groupID); err != nil {
 				logger.Error("failed to get group name from database", zap.Error(err))
 				return
 			}
@@ -169,11 +171,12 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 				})
 			}
 			rssRenderer := render.NewRSSRenderService()
-			result, err := rssRenderer.RenderRSS(rssTopics)
+			var result string
+			result, err = rssRenderer.RenderRSS(rssTopics)
 			if err != nil {
 				logger.Error("failed to render rss", zap.Error(err))
 			}
-			if err := redisService.Set(fmt.Sprintf(zsxqRssPath, groupID), result, redis.DefaultTTL); err != nil {
+			if err = redisService.Set(fmt.Sprintf(zsxqRssPath, groupID), result, redis.DefaultTTL); err != nil {
 				logger.Error("failed to set rss to redis", zap.Error(err))
 			}
 		}

@@ -24,10 +24,12 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 	return func() {
 		logger := log.NewZapLogger()
 		var err error
+
 		defer func() {
 			if err != nil {
-				_ = notifier.Notify("CrawlZhihu() failed", err.Error())
-				logger.Error("CrawlZhihu() failed", zap.Error(err))
+				if err = notifier.Notify("CrawlZhihu failed", ""); err != nil {
+					logger.Error("fail to send zhihu failure notification", zap.Error(err))
+				}
 			}
 			if err := recover(); err != nil {
 				logger.Error("CrawlZhihu() panic", zap.Any("err", err))
@@ -77,13 +79,14 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 			parse.WithDB(dbService))
 		logger.Info("zhihu parser initialized")
 
-		subs, err := dbService.GetSubs()
-		if err != nil {
+		var subs []zhihuDB.Sub
+		if subs, err = dbService.GetSubs(); err != nil {
 			logger.Error("fail to get subs", zap.Error(err))
 			return
 		}
 		logger.Info("subs fetched")
 
+		var path, content string
 		for _, sub := range subs {
 			ts := getSubType(sub.Type) // type in string
 			logger := logger.With(zap.String("author id", sub.AuthorID), zap.String("type", ts))
@@ -92,8 +95,8 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 			switch ts {
 			case "answer":
 				// get answers from db to check if there is any answer for this sub
-				answers, err := dbService.GetLatestNAnswer(1, sub.AuthorID)
-				if err != nil {
+				var answers []zhihuDB.Answer
+				if answers, err = dbService.GetLatestNAnswer(1, sub.AuthorID); err != nil {
 					logger.Error("failed to get latest answer", zap.Error(err))
 					continue
 				}
@@ -118,21 +121,20 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				}
 				logger.Info("crawl answer done")
 
-				path, content, err := rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, dbService, logger)
-				if err != nil {
+				if path, content, err = rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, dbService, logger); err != nil {
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
 				}
 				logger.Info("rss generated")
 
-				if err := redisService.Set(path, content, redis.DefaultTTL); err != nil {
+				if err = redisService.Set(path, content, redis.DefaultTTL); err != nil {
 					logger.Error("failed to set rss to redis", zap.Error(err))
 				}
 				logger.Info("rss saved to redis")
 			case "article":
 				// get articles from db to check if there is any article for this sub
-				articles, err := dbService.GetLatestNArticle(1, sub.AuthorID)
-				if err != nil {
+				var articles []zhihuDB.Article
+				if articles, err = dbService.GetLatestNArticle(1, sub.AuthorID); err != nil {
 					logger.Error("failed to get latest article", zap.Error(err))
 					continue
 				}
@@ -159,21 +161,20 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				}
 				logger.Info("crawl article done")
 
-				path, content, err := rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, dbService, logger)
-				if err != nil {
+				if path, content, err = rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, dbService, logger); err != nil {
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
 				}
 				logger.Info("rss generated")
 
-				if err := redisService.Set(path, content, redis.DefaultTTL); err != nil {
+				if err = redisService.Set(path, content, redis.DefaultTTL); err != nil {
 					logger.Error("failed to set rss to redis", zap.Error(err))
 				}
 				logger.Info("rss saved to redis")
 			case "pin":
 				// get pins from db to check if there is any pin for this sub
-				pins, err := dbService.GetLatestNPin(1, sub.AuthorID)
-				if err != nil {
+				var pins []zhihuDB.Pin
+				if pins, err = dbService.GetLatestNPin(1, sub.AuthorID); err != nil {
 					logger.Error("failed to get latest pin", zap.Error(err))
 					continue
 				}
@@ -200,14 +201,13 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				}
 				logger.Info("crawl pin done")
 
-				path, content, err := rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, dbService, logger)
-				if err != nil {
+				if path, content, err = rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, dbService, logger); err != nil {
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
 				}
 				logger.Info("rss generated")
 
-				if err := redisService.Set(path, content, redis.DefaultTTL); err != nil {
+				if err = redisService.Set(path, content, redis.DefaultTTL); err != nil {
 					logger.Error("failed to set rss to redis", zap.Error(err))
 				}
 				logger.Info("rss saved to redis")
