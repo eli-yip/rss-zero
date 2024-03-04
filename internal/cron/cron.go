@@ -1,8 +1,6 @@
 package cron
 
 import (
-	"time"
-
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/go-co-op/gocron/v2"
 	"go.uber.org/zap"
@@ -25,7 +23,7 @@ func NewCronService(logger *zap.Logger) (*CronService, error) {
 
 func (c *CronService) AddJob(f func()) (err error) {
 	j, err := c.s.NewJob(
-		gocron.DurationJob(time.Hour*1),
+		gocron.CronJob("0 * * * *", false), // every hour
 		gocron.NewTask(f),
 		gocron.WithSingletonMode(gocron.LimitModeReschedule),
 	)
