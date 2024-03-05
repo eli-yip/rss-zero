@@ -16,30 +16,35 @@ type Paper struct {
 func (p *Paper) TableName() string { return "xiaobot_paper" }
 
 type DBPaper interface {
+	// GetPapers get all xiaobot paper info in db
 	GetPapers() ([]Paper, error)
+	// SavePaper save a xiaobot paper info to db
 	SavePaper(paper *Paper) (err error)
+	// GetPaper get a xiaobot paper info from db by id
 	GetPaper(id string) (*Paper, error)
-	CheckPaper(id string) (bool, error)
+	// CheckPaper check if a xiaobot paper exists in db by id
+	CheckPaper(id string) (exsit bool, err error)
 }
 
-func (d *DBService) GetPapers() ([]Paper, error) {
-	var papers []Paper
-	err := d.Find(&papers).Error
-	return papers, err
+func (d *DBService) GetPapers() (papers []Paper, err error) {
+	if err = d.Find(&papers).Error; err != nil {
+		return nil, err
+	}
+	return papers, nil
 }
 
 func (d *DBService) SavePaper(paper *Paper) (err error) { return d.Save(paper).Error }
 
-func (d *DBService) GetPaper(id string) (*Paper, error) {
-	var paper Paper
-	err := d.Where("id = ?", id).First(&paper).Error
-	return &paper, err
+func (d *DBService) GetPaper(id string) (paper *Paper, err error) {
+	if err = d.Where("id = ?", id).First(paper).Error; err != nil {
+		return nil, err
+	}
+	return paper, nil
 }
 
-func (d *DBService) CheckPaper(id string) (bool, error) {
+func (d *DBService) CheckPaper(id string) (exist bool, err error) {
 	var paper Paper
-	err := d.Where("id = ?", id).First(&paper).Error
-	if err != nil {
+	if err = d.Where("id = ?", id).First(&paper).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}

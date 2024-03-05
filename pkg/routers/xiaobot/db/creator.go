@@ -8,7 +8,9 @@ type Creator struct {
 func (c *Creator) TableName() string { return "xiaobot_creator" }
 
 type DBCreator interface {
+	// SaveCreator save a xiaobot creator to db
 	SaveCreator(creator *Creator) (err error)
+	// GetCreatorName get a xiaobot creator name from db by id
 	GetCreatorName(id string) (string, error)
 }
 

@@ -1,3 +1,4 @@
+// package db contains the interface and implementation of xiaobot database operations
 package db
 
 import "gorm.io/gorm"

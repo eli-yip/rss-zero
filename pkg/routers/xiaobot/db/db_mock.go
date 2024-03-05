@@ -26,6 +26,6 @@ func (d *DBMock) GetCreatorName(id string) (string, error) { return "", nil }
 
 func (d *DBMock) FetchNPost(n int, opt Option) (ps []Post, err error) { return nil, nil }
 
-func (d *DBMock) FetchNPostBeforeTime(n int, paperID string, t time.Time) ([]Post, error) {
+func (d *DBMock) FetchNPostBefore(n int, paperID string, t time.Time) ([]Post, error) {
 	return nil, nil
 }

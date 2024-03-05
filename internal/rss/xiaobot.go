@@ -2,6 +2,7 @@ package rss
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -29,7 +30,7 @@ func GenerateXiaobot(paperID string, d xiaobotDB.DB, l *zap.Logger) (path string
 
 	path = fmt.Sprintf(redis.XiaobotRSSPath, paperID)
 
-	posts, err := d.GetLatestNPost(paperID, config.DefaultFetchCount)
+	posts, err := d.FetchNPostBefore(config.DefaultFetchCount, paperID, time.Now().Add(1*time.Hour)) // add 1 hour to avoid the post created at the same time with the rss generated time
 	if err != nil {
 		return "", "", err
 	}

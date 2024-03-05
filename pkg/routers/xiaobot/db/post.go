@@ -19,11 +19,14 @@ type Post struct {
 func (p *Post) TableName() string { return "xiaobot_post" }
 
 type DBPost interface {
+	// SavePost save a xiaobot post to db
 	SavePost(post *Post) (err error)
+	// GetLatestTime get the latest post time of a paper
 	GetLatestTime(paperID string) (t time.Time, err error)
-	GetLatestNPost(paperID string, n int) ([]Post, error)
+	// FetchNPost get n post of a paper, create time ascending
 	FetchNPost(n int, opt Option) (ps []Post, err error)
-	FetchNPostBeforeTime(n int, paperID string, t time.Time) ([]Post, error)
+	// FetchNPostBefore get n post of a paper before a time
+	FetchNPostBefore(n int, paperID string, t time.Time) ([]Post, error)
 }
 
 func (d *DBService) SavePost(post *Post) (err error) { return d.Save(post).Error }
@@ -39,16 +42,11 @@ func (d *DBService) GetLatestTime(paperID string) (t time.Time, err error) {
 	return post.CreateAt, err
 }
 
-func (d *DBService) GetLatestNPost(paperID string, n int) ([]Post, error) {
-	posts := make([]Post, 0, n)
-	err := d.Where("paper_id = ?", paperID).Order("create_at desc").Limit(n).Find(&posts).Error
-	return posts, err
-}
-
+// Option is the option for FetchNPost
 type Option struct {
-	PaperID   string
-	StartTime time.Time
-	EndTime   time.Time
+	PaperID   string    // paper id
+	StartTime time.Time // start time, inclusive
+	EndTime   time.Time // end time, inclusive
 }
 
 func (d *DBService) FetchNPost(n int, opt Option) (ps []Post, err error) {
@@ -71,7 +69,7 @@ func (d *DBService) FetchNPost(n int, opt Option) (ps []Post, err error) {
 	return ps, nil
 }
 
-func (d *DBService) FetchNPostBeforeTime(n int, paperID string, t time.Time) ([]Post, error) {
+func (d *DBService) FetchNPostBefore(n int, paperID string, t time.Time) ([]Post, error) {
 	posts := make([]Post, 0, n)
 	err := d.Where("paper_id = ? AND create_at < ?", paperID, t).Order("create_at desc").Limit(n).Find(&posts).Error
 	return posts, err

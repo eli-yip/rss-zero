@@ -83,7 +83,7 @@ func (s *ReformatService) Reformat(paperID string) {
 		}
 
 		var posts []db.Post
-		if posts, err = s.db.FetchNPostBeforeTime(config.DefaultFetchCount, paperID, latestTime); err != nil {
+		if posts, err = s.db.FetchNPostBefore(config.DefaultFetchCount, paperID, latestTime); err != nil {
 			s.l.Info("fail to fetch paper from db", zap.String("paper_id", paperID),
 				zap.Error(err), zap.Time("end_time", latestTime))
 		}
