@@ -7,10 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/rss"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
-	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -19,17 +18,9 @@ func (h *ZsxqController) RSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	groupIDStr := c.Get("feed_id").(string)
-	groupID, err := strconv.Atoi(groupIDStr)
-	if err != nil {
-		err = errors.Join(err, errors.New("convert group id to int error"))
-		logger.Error("Error rss", zap.String("group_id_str", groupIDStr), zap.Error(err))
-		return c.String(http.StatusBadRequest, "invalid request")
-	}
-	logger.Info("Retrieved zsxq rss group id", zap.Int("group_id", groupID))
+	logger.Info("Retrieved zsxq rss group id", zap.String("group_id", groupIDStr))
 
-	const rssPath = "zsxq_rss_%d"
-
-	rssContent, err := h.getRSS(fmt.Sprintf(rssPath, groupID), logger)
+	rssContent, err := h.getRSS(fmt.Sprintf(redis.ZsxqRSSPath, groupIDStr), logger)
 	if err != nil {
 		err = errors.Join(err, errors.New("get rss content from redis error"))
 		logger.Error("Error rss", zap.Error(err))
@@ -86,72 +77,37 @@ func (h *ZsxqController) processTask() {
 	}
 }
 
-func (h *ZsxqController) generateRSS(key string) (content string, err error) {
-	gid, err := h.extractGroupIDFromKey(key)
+func (h *ZsxqController) generateRSS(key string) (output string, err error) {
+	groupID, err := h.extractGroupIDFromKey(key)
 	if err != nil {
-		err = errors.Join(err, errors.New("extract group id error"))
 		return "", err
 	}
 
-	zsxqDB := zsxqDB.NewZsxqDBService(h.db)
-	topics, err := zsxqDB.GetLatestNTopics(gid, config.DefaultFetchCount)
+	zsxqDBService := zsxqDB.NewZsxqDBService(h.db)
+
+	path, content, err := rss.GenerateZSXQ(groupID, zsxqDBService)
 	if err != nil {
-		err = errors.Join(err, errors.New("get latest topics error"))
 		return "", err
 	}
 
-	groupName, err := zsxqDB.GetGroupName(gid)
-	if err != nil {
-		err = errors.Join(err, errors.New("get group name error"))
-		return "", err
-	}
-
-	var rssTopics []render.RSSTopic
-	for _, topic := range topics {
-		var authorName string
-		if authorName, err = zsxqDB.GetAuthorName(topic.AuthorID); err != nil {
-			return "", err
-		}
-
-		rssTopics = append(rssTopics, render.RSSTopic{
-			TopicID:    topic.ID,
-			GroupName:  groupName,
-			GroupID:    topic.GroupID,
-			Title:      topic.Title,
-			AuthorName: authorName,
-			ShareLink:  topic.ShareLink,
-			CreateTime: topic.Time,
-			Text:       topic.Text,
-		})
-	}
-
-	rssRenderer := render.NewRSSRenderService()
-	if content, err = rssRenderer.RenderRSS(rssTopics); err != nil {
-		err = errors.Join(err, errors.New("render rss error"))
-		return "", err
-	}
-
-	if err := h.redis.Set(key, content, redis.RSSTTL); err != nil {
-		err = errors.Join(err, errors.New("set rss content to redis error"))
+	if err = h.redis.Set(path, content, redis.RSSTTL); err != nil {
 		return "", err
 	}
 
 	return content, nil
 }
 
-func (h *ZsxqController) extractGroupIDFromKey(key string) (gid int, err error) {
+func (h *ZsxqController) extractGroupIDFromKey(key string) (groupID int, err error) {
 	strs := strings.Split(key, "_")
-
 	if len(strs) != 3 {
-		err = errors.New("invalid key")
-		return 0, err
+		return 0, errors.New("invalid key")
 	}
 
-	gid, err = strconv.Atoi(strs[len(strs)-1])
+	groupID, err = strconv.Atoi(strs[len(strs)-1])
 	if err != nil {
 		err = errors.Join(err, errors.New("convert string to int error"))
 		return 0, err
 	}
 
-	return gid, nil
+	return groupID, nil
 }
