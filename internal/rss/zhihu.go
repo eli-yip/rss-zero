@@ -1,6 +1,7 @@
 package rss
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -8,42 +9,78 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	render "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"go.uber.org/zap"
 )
 
-func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB, l *zap.Logger) (path string, result string, err error) {
-	l.Info("Start to generate zhihu rss")
+// errUnknownZhihuType is returned when the zhihu type is unknown
+var errUnknownZhihuType = errors.New("unknown zhihu type")
+
+// GenerateZhihu generate zhihu rss by content type,
+// return rss path, rss content and error
+func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB, logger *zap.Logger) (path string, result string, err error) {
+	logger.Info("Start to generate zhihu rss")
+
 	rssRender := render.NewRSSRenderService()
 
 	authorName, err := zhihuDBService.GetAuthorName(authorID)
 	if err != nil {
 		return "", "", err
 	}
-	l.Info("Got author name", zap.String("author_name", authorName))
+	logger.Info("Got author name", zap.String("author_name", authorName))
 
-	var output string
+	output, err := generateZhihuRSS(t, authorID, authorName, rssRender, zhihuDBService, logger)
+	if err != nil {
+		logger.Error("Generate zhihu rss failed", zap.Error(err))
+		return "", "", err
+	}
+
+	path, err = generateZhihuRSSPath(t, authorID)
+	if err != nil {
+		logger.Error("Generate zhihu rss path failed", zap.Error(err))
+		return "", "", err
+	}
+
+	logger.Info("Generate zhihu rss success", zap.String("path", path))
+	return path, output, nil
+}
+
+// generateZhihuRSS generate zhihu rss content by content type
+func generateZhihuRSS(t int, authorID, authorName string, render render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (output string, err error) {
 	switch t {
 	case common.TypeZhihuAnswer:
-		output, err = generateZhihuAnswer(authorID, authorName, rssRender, zhihuDBService, l)
+		output, err = generateZhihuAnswer(authorID, authorName, render, zhihuDBService, logger)
 		if err != nil {
-			return "", "", fmt.Errorf("generate zhihu answer rss failed: %w", err)
+			return "", fmt.Errorf("generate zhihu answer rss failed: %w", err)
 		}
-		return fmt.Sprintf(redis.ZhihuAnswerPath, authorID), output, err
 	case common.TypeZhihuArticle:
-		output, err = generateZhihuArticle(authorID, authorName, rssRender, zhihuDBService, l)
+		output, err = generateZhihuArticle(authorID, authorName, render, zhihuDBService, logger)
 		if err != nil {
-			return "", "", fmt.Errorf("generate zhihu article rss failed: %w", err)
+			return "", fmt.Errorf("generate zhihu article rss failed: %w", err)
 		}
-		return fmt.Sprintf(redis.ZhihuArticlePath, authorID), output, err
 	case common.TypeZhihuPin:
-		output, err = generateZhihuPin(authorID, authorName, rssRender, zhihuDBService, l)
+		output, err = generateZhihuPin(authorID, authorName, render, zhihuDBService, logger)
 		if err != nil {
-			return "", "", fmt.Errorf("generate zhihu pin rss failed: %w", err)
+			return "", fmt.Errorf("generate zhihu pin rss failed: %w", err)
 		}
-		return fmt.Sprintf(redis.ZhihuPinPath, authorID), output, err
 	default:
-		return "", "", fmt.Errorf("unknown type %d", t)
+		return "", errUnknownZhihuType
+	}
+	return output, nil
+}
+
+// generateZhihuRSSPath generate zhihu rss redis cache path by content type
+// if t is unknown, return empty string
+func generateZhihuRSSPath(t int, authorID string) (string, error) {
+	switch t {
+	case common.TypeZhihuAnswer:
+		return fmt.Sprintf(redis.ZhihuAnswerPath, authorID), nil
+	case common.TypeZhihuArticle:
+		return fmt.Sprintf(redis.ZhihuArticlePath, authorID), nil
+	case common.TypeZhihuPin:
+		return fmt.Sprintf(redis.ZhihuPinPath, authorID), nil
+	default:
+		return "", errUnknownZhihuType
 	}
 }
 
