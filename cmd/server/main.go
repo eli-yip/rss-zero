@@ -227,19 +227,23 @@ func setupCron(logger *zap.Logger,
 	notifier notify.Notifier,
 ) (err error) {
 	type cronFunc func(redis.Redis, *gorm.DB, notify.Notifier) func()
-	cronFuncs := []cronFunc{
-		cron.CrawlZsxq,
-		cron.CrawlZhihu,
-		cron.CrawlXiaobot,
+	type cronJob struct {
+		name string
+		fn   cronFunc
+	}
+	cronjobs := []cronJob{
+		{"zsxq crawl", cron.CrawlZsxq},
+		{"zhihu crawl", cron.CrawlZhihu},
+		{"xiaobot crawl", cron.CrawlXiaobot},
 	}
 
-	s, err := cron.NewCronService(logger)
+	cronService, err := cron.NewCronService(logger)
 	if err != nil {
 		return fmt.Errorf("cron service init failed: %w", err)
 	}
 
-	for _, f := range cronFuncs {
-		if err = s.AddJob(f(redisService, db, notifier)); err != nil {
+	for _, job := range cronjobs {
+		if err = cronService.AddJob(job.name, job.fn(redisService, db, notifier)); err != nil {
 			return fmt.Errorf("fail to add job: %w", err)
 		}
 	}
