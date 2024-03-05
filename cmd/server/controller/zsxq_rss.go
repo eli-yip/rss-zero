@@ -52,8 +52,7 @@ func (h *ZsxqController) getRSS(key string, logger *zap.Logger) (content string,
 }
 
 func (h *ZsxqController) processTask() {
-	for {
-		task := <-h.taskCh
+	for task := range h.taskCh {
 		key := <-task.textCh
 
 		content, err := h.redis.Get(key)

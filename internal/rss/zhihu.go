@@ -18,7 +18,7 @@ var errUnknownZhihuType = errors.New("unknown zhihu type")
 
 // GenerateZhihu generate zhihu rss by content type,
 // return rss path, rss content and error
-func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB, logger *zap.Logger) (path string, result string, err error) {
+func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB, logger *zap.Logger) (path, result string, err error) {
 	logger.Info("Start to generate zhihu rss")
 
 	rssRender := render.NewRSSRenderService()

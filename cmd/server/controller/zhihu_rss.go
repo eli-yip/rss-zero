@@ -137,18 +137,15 @@ func (h *ZhihuController) getRSS(key string, logger *zap.Logger) (content string
 // It will get the RSS content from Redis and send it to the task channel.
 // If the content does not exist in Redis, it will generate the RSS content and set it to Redis.
 func (h *ZhihuController) processTask() {
-	for {
-		task := <-h.taskCh   // get task from task channel
-		key := <-task.textCh // get rss content key from task channel
+	for task := range h.taskCh {
+		key := <-task.textCh
 
-		content, err := h.redis.Get(key) // try to get rss content from redis
-		// if no error, send content to task channel
+		content, err := h.redis.Get(key)
 		if err == nil {
 			task.textCh <- content
 			continue
 		}
 
-		// if key does not exist, generate rss content and send it to task channel
 		if errors.Is(err, redis.ErrKeyNotExist) {
 			content, err = h.generateRSS(key)
 			if err != nil {
@@ -159,7 +156,6 @@ func (h *ZhihuController) processTask() {
 			continue
 		}
 
-		// if other error, send error to task channel
 		task.errCh <- err
 		continue
 	}
