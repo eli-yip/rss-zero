@@ -2,51 +2,70 @@ package md
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
+type testCase struct {
+	input  string
+	expect string
+}
+
 func TestH1(t *testing.T) {
-	input := "Hello"
-	expected := "# Hello"
-	if result := H1(input); result != expected {
-		t.Errorf("H1(%q) = %q; want %q", input, result, expected)
+	testCases := []testCase{
+		{"Hello", "# Hello"},
+	}
+
+	assert := assert.New(t)
+	for _, tc := range testCases {
+		assert.Equal(H1(tc.input), tc.expect)
 	}
 }
 
 func TestH2(t *testing.T) {
-	input := "Hello"
-	expected := "## Hello"
-	if result := H2(input); result != expected {
-		t.Errorf("H2(%q) = %q; want %q", input, result, expected)
+	testCases := []testCase{
+		{"Hello", "## Hello"},
+	}
+
+	assert := assert.New(t)
+	for _, tc := range testCases {
+		assert.Equal(H2(tc.input), tc.expect)
 	}
 }
 
 func TestH3(t *testing.T) {
-	input := "Hello"
-	expected := "### Hello"
-	if result := H3(input); result != expected {
-		t.Errorf("H3(%q) = %q; want %q", input, result, expected)
+	testCases := []testCase{
+		{"Hello", "### Hello"},
+	}
+
+	assert := assert.New(t)
+	for _, tc := range testCases {
+		assert.Equal(H3(tc.input), tc.expect)
 	}
 }
 
 func TestQuote(t *testing.T) {
-	cases := map[string]string{
-		"Hello":            "> Hello",
-		"Hello\nWorld":     "> Hello\n> World",
-		"Hello\nWorld\n\n": "> Hello\n> World",
-		"Hello\n\nWorld":   "> Hello\n> \n> World",
+	testCases := []testCase{
+		{"Hello", "> Hello"},
+		{"Hello\nWorld", "> Hello\n> World"},
+		{"Hello\nWorld\n\n", "> Hello\n> World"},
+		{"Hello\n\nWorld", "> Hello\n> \n> World"},
+		{"", ""},
 	}
-	for input, expected := range cases {
-		result := Quote(input)
-		if result != expected {
-			t.Errorf("Quote(%q) = %q; want %q", input, result, expected)
-		}
+
+	assert := assert.New(t)
+	for _, tc := range testCases {
+		assert.Equal(Quote(tc.input), tc.expect)
 	}
 }
 
 func TestBold(t *testing.T) {
-	input := "Hello"
-	expected := "**Hello**"
-	if result := Bold(input); result != expected {
-		t.Errorf("Bold(%q) = %q; want %q", input, result, expected)
+	testCases := []testCase{
+		{"Hello", "**Hello**"},
+	}
+
+	assert := assert.New(t)
+	for _, tc := range testCases {
+		assert.Equal(Bold(tc.input), tc.expect)
 	}
 }
