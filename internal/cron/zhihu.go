@@ -24,9 +24,10 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 	return func() {
 		logger := log.NewZapLogger()
 		var err error
+		var errCount int = 0
 
 		defer func() {
-			if err != nil {
+			if errCount > 0 {
 				if err = notifier.Notify("CrawlZhihu failed", ""); err != nil {
 					logger.Error("fail to send zhihu failure notification", zap.Error(err))
 				}
@@ -51,6 +52,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 
 		requestService, err = request.NewRequestService(nil, logger)
 		if err != nil {
+			errCount++
 			logger.Error("fail to create request service", zap.Error(err))
 			return
 		}
@@ -58,6 +60,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 
 		fileService, err = file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
+			errCount++
 			logger.Error("fail to create file service", zap.Error(err))
 			return
 		}
@@ -77,10 +80,16 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 			parse.WithRequester(requestService),
 			parse.WithFile(fileService),
 			parse.WithDB(dbService))
+		if err != nil {
+			errCount++
+			logger.Error("fail to create parser service", zap.Error(err))
+			return
+		}
 		logger.Info("zhihu parser initialized")
 
 		var subs []zhihuDB.Sub
 		if subs, err = dbService.GetSubs(); err != nil {
+			errCount++
 			logger.Error("fail to get subs", zap.Error(err))
 			return
 		}
@@ -97,6 +106,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				// get answers from db to check if there is any answer for this sub
 				var answers []zhihuDB.Answer
 				if answers, err = dbService.GetLatestNAnswer(1, sub.AuthorID); err != nil {
+					errCount++
 					logger.Error("failed to get latest answer", zap.Error(err))
 					continue
 				}
@@ -107,6 +117,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// enable one time mode as we do not know latest time in db(no answer found in db)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, longLongago, 0, true, logger); err != nil {
+						errCount++
 						logger.Error("failed to crawl answer", zap.Error(err))
 						continue
 					}
@@ -115,6 +126,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// disable one time mode, as we know when to stop(latest answer's create time)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, answers[0].CreateAt, 0, false, logger); err != nil {
+						errCount++
 						logger.Error("failed to crawl answer", zap.Error(err))
 						continue
 					}
@@ -122,19 +134,23 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				logger.Info("crawl answer done")
 
 				if path, content, err = rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, dbService, logger); err != nil {
+					errCount++
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
 				}
 				logger.Info("rss generated")
 
 				if err = redisService.Set(path, content, redis.DefaultTTL); err != nil {
+					errCount++
 					logger.Error("failed to set rss to redis", zap.Error(err))
+					continue
 				}
 				logger.Info("rss saved to redis")
 			case "article":
 				// get articles from db to check if there is any article for this sub
 				var articles []zhihuDB.Article
 				if articles, err = dbService.GetLatestNArticle(1, sub.AuthorID); err != nil {
+					errCount++
 					logger.Error("failed to get latest article", zap.Error(err))
 					continue
 				}
@@ -145,6 +161,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// enable one time mode as we do not know latest time in db(no article found in db)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, longLongago, 0, true, logger); err != nil {
+						errCount++
 						logger.Error("failed to crawl article", zap.Error(err))
 						continue
 					}
@@ -155,6 +172,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// disable one time mode, as we know when to stop(latest article's create time)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, articles[0].CreateAt, 0, false, logger); err != nil {
+						errCount++
 						logger.Error("failed to crawl article", zap.Error(err))
 						continue
 					}
@@ -162,19 +180,23 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				logger.Info("crawl article done")
 
 				if path, content, err = rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, dbService, logger); err != nil {
+					errCount++
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
 				}
 				logger.Info("rss generated")
 
 				if err = redisService.Set(path, content, redis.DefaultTTL); err != nil {
+					errCount++
 					logger.Error("failed to set rss to redis", zap.Error(err))
+					continue
 				}
 				logger.Info("rss saved to redis")
 			case "pin":
 				// get pins from db to check if there is any pin for this sub
 				var pins []zhihuDB.Pin
 				if pins, err = dbService.GetLatestNPin(1, sub.AuthorID); err != nil {
+					errCount++
 					logger.Error("failed to get latest pin", zap.Error(err))
 					continue
 				}
@@ -185,6 +207,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// enable one time mode as we do not know latest time in db(no pin found in db)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, longLongago, 0, true, logger); err != nil {
+						errCount++
 						logger.Error("failed to crawl pin", zap.Error(err))
 						continue
 					}
@@ -195,6 +218,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// disable one time mode, as we know when to stop(latest pin's create time)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, pins[0].CreateAt, 0, false, logger); err != nil {
+						errCount++
 						logger.Error("failed to crawl pin", zap.Error(err))
 						continue
 					}
@@ -202,12 +226,14 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				logger.Info("crawl pin done")
 
 				if path, content, err = rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, dbService, logger); err != nil {
+					errCount++
 					logger.Error("failed to generate rss", zap.Error(err))
 					continue
 				}
 				logger.Info("rss generated")
 
 				if err = redisService.Set(path, content, redis.DefaultTTL); err != nil {
+					errCount++
 					logger.Error("failed to set rss to redis", zap.Error(err))
 				}
 				logger.Info("rss saved to redis")
