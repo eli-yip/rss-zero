@@ -9,7 +9,7 @@ require (
 	github.com/brpaz/echozap v1.1.3
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.6.0
-	github.com/go-co-op/gocron/v2 v2.2.4
+	github.com/go-co-op/gocron/v2 v2.2.5
 	github.com/gorilla/feeds v1.1.2
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.11.4
