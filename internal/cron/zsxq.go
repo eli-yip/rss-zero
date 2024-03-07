@@ -156,7 +156,7 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 			for _, topic := range topics {
 				var authorName string
 				if authorName, err = dbService.GetAuthorName(topic.AuthorID); err != nil {
-					logger.Error("failed to get author name from database", zap.Error(err))
+					logger.Error("failed to get author name from database", zap.Error(err), zap.Int("author_id", topic.AuthorID))
 				}
 
 				rssTopics = append(rssTopics, render.RSSTopic{

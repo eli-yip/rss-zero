@@ -2,6 +2,7 @@ package parse
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/common"
@@ -16,7 +17,7 @@ type AnswerParser interface {
 }
 
 func (p *ParseService) ParseAnswerList(content []byte, index int) (paging apiModels.Paging, answers []apiModels.Answer, err error) {
-	logger := p.l.With(zap.Int("answer list page", index))
+	logger := p.l.With(zap.Int("answer list page index", index))
 
 	answerList := apiModels.AnswerList{}
 	if err = json.Unmarshal(content, &answerList); err != nil {
@@ -52,7 +53,7 @@ func (p *ParseService) ParseAnswer(content []byte) (text string, err error) {
 		ID:   answer.Author.ID,
 		Name: answer.Author.Name,
 	}); err != nil {
-		return "", err
+		return "", fmt.Errorf("fail to save author to db: %w, author_id: %s, author_name: %s", err, answer.Author.ID, answer.Author.Name)
 	}
 	logger.Info("save author to db successfully")
 
