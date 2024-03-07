@@ -155,9 +155,6 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 		}
 	}
 
-	if err == nil {
-		err = ErrMaxRetry
-	}
 	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
@@ -195,9 +192,6 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 		return body, nil
 	}
 
-	if err == nil {
-		err = ErrMaxRetry
-	}
 	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
@@ -230,9 +224,6 @@ func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) 
 		return resp, nil
 	}
 
-	if err == nil {
-		err = ErrMaxRetry
-	}
 	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
@@ -266,9 +257,6 @@ func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
 		}
 	}
 
-	if err == nil {
-		err = ErrMaxRetry
-	}
 	logger.Error("fail to get zsxq API response without limit", zap.Error(err))
 	return nil, err
 }

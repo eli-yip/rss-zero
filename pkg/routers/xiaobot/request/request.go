@@ -104,9 +104,6 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 		return okResp.Data, nil
 	}
 
-	if err == nil {
-		err = ErrMaxRetry
-	}
 	logger.Error("Failed getting xiaobot response", zap.Error(err))
 	return nil, err
 }
