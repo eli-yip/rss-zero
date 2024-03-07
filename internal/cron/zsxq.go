@@ -164,6 +164,17 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 			}
 
 			for _, topic := range topics {
+				logger := logger.With(zap.Int("topic_id", topic.ID))
+
+				supportTypes := map[string]struct{}{
+					"talk": {},
+					"q&a":  {},
+				}
+				if _, ok := supportTypes[topic.Type]; !ok {
+					logger.Info("unsupported topic type", zap.String("type", topic.Type))
+					continue
+				}
+
 				var authorName string
 				if authorName, err = dbService.GetAuthorName(topic.AuthorID); err != nil {
 					errCount++
