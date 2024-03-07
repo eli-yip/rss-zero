@@ -26,11 +26,11 @@ func CrawlXiaobot(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 		defer func() {
 			if errCount > 0 {
 				if err = notifier.Notify("CrawlXiaobot failed", err.Error()); err != nil {
-					logger.Error("fail to send xiaobot failure notification", zap.Error(err))
+					logger.Error("fail to send xiaobot crawl failure notification", zap.Error(err))
 				}
 			}
 			if err := recover(); err != nil {
-				logger.Error("CrawlXiaobot() panic", zap.Any("err", err))
+				logger.Error("xiaobot crawl function panic", zap.Any("err", err))
 			}
 		}()
 
@@ -38,10 +38,11 @@ func CrawlXiaobot(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 		if token, err = r.Get(redis.XiaobotTokenPath); err != nil {
 			errCount++
 			if errors.Is(err, redis.ErrKeyNotExist) {
-				logger.Error("token not found in redis, notify user")
-				_ = notifier.Notify("No token for xiaobot", "not found in redis")
+				logger.Error("xiaobot token not found in redis")
+				_ = notifier.Notify("No token for xiaobot", "")
+			} else {
+				logger.Error("failed to get xiaobot token from redis", zap.Error(err))
 			}
-			logger.Error("failed to get token from redis", zap.Error(err))
 			return
 		}
 
@@ -51,42 +52,28 @@ func CrawlXiaobot(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 			xiaobotParser         parse.Parser
 		)
 
-		xiaobotDBService = xiaobotDB.NewDBService(db)
-		logger.Info("Init xiaobot database service")
-
-		xiaobotRequestService = request.NewRequestService(r, token, logger)
-		logger.Info("Init xiaobot request service")
-
-		if xiaobotParser, err = parse.NewParseService(parse.WithLogger(logger), parse.WithDB(xiaobotDBService)); err != nil {
+		xiaobotDBService, xiaobotRequestService, xiaobotParser, err = initXiaobotServices(db, logger, r, token)
+		if err != nil {
 			errCount++
-			logger.Error("Failed to init xiaobot parse service", zap.Error(err))
 			return
 		}
 
 		var papers []xiaobotDB.Paper
 		if papers, err = xiaobotDBService.GetPapers(); err != nil {
 			errCount++
-			logger.Error("Failed getting papers from database", zap.Error(err))
+			logger.Error("Failed getting xiaobot paper subs from database", zap.Error(err))
 			return
 		}
-		logger.Info("Get papers from database")
+		logger.Info("Get xiaobot papers subs from database")
 
 		for _, paper := range papers {
 			logger := logger.With(zap.String("paper id", paper.ID))
 			logger.Info("Start to crawl xiaobot paper")
 
 			var latestPostTimeInDB time.Time
-			latestPostTimeInDB, err = xiaobotDBService.GetLatestTime(paper.ID)
-			if err != nil {
+			if latestPostTimeInDB, err = getXiaobotPaperLatestTime(xiaobotDBService, &paper, logger); err != nil {
 				errCount++
-				logger.Error("Failed getting latest time from database", zap.Error(err))
-				return
-			}
-			if latestPostTimeInDB.IsZero() {
-				latestPostTimeInDB = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
-				logger.Info("No post in database, set latest time to 1970-01-01")
-			} else {
-				logger.Info("Get latest time from database", zap.String("latest time", latestPostTimeInDB.Format(time.RFC3339)))
+				continue
 			}
 
 			if err = crawl.CrawXiaobot(paper.ID, xiaobotRequestService, xiaobotParser, latestPostTimeInDB, 0, true, logger); err != nil {
@@ -97,8 +84,7 @@ func CrawlXiaobot(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 			logger.Info("Crawl xiaobot paper successfully")
 
 			var path, content string
-			path, content, err = rss.GenerateXiaobot(paper.ID, xiaobotDBService, logger)
-			if err != nil {
+			if path, content, err = rss.GenerateXiaobot(paper.ID, xiaobotDBService, logger); err != nil {
 				errCount++
 				logger.Error("Failed generating rss for xiaobot paper", zap.Error(err))
 				return
@@ -113,4 +99,39 @@ func CrawlXiaobot(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 			logger.Info("Set rss content to redis")
 		}
 	}
+}
+
+func initXiaobotServices(db *gorm.DB, logger *zap.Logger, r redis.Redis, token string) (xiaobotDB.DB, requestIface.Requester, parse.Parser, error) {
+	var err error
+
+	xiaobotDBService := xiaobotDB.NewDBService(db)
+	logger.Info("Init xiaobot database service")
+
+	xiaobotRequestService := request.NewRequestService(r, token, logger)
+	logger.Info("Init xiaobot request service")
+
+	var xiaobotParser parse.Parser
+	if xiaobotParser, err = parse.NewParseService(parse.WithLogger(logger), parse.WithDB(xiaobotDBService)); err != nil {
+		logger.Error("Failed to init xiaobot parse service", zap.Error(err))
+		return nil, nil, nil, err
+	}
+	logger.Info("Init xiaobot parse service")
+
+	return xiaobotDBService, xiaobotRequestService, xiaobotParser, nil
+}
+
+func getXiaobotPaperLatestTime(xiaobotDBService xiaobotDB.DB, paper *xiaobotDB.Paper, logger *zap.Logger) (latestPostTimeInDB time.Time, err error) {
+	if latestPostTimeInDB, err = xiaobotDBService.GetLatestTime(paper.ID); err != nil {
+		logger.Error("Failed getting latest time from database", zap.Error(err))
+		return time.Time{}, err
+	}
+
+	if latestPostTimeInDB.IsZero() {
+		latestPostTimeInDB = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+		logger.Info("No post in database, set latest time to 1970-01-01")
+	} else {
+		logger.Info("Get latest time from database", zap.String("latest time", latestPostTimeInDB.Format(time.RFC3339)))
+	}
+
+	return latestPostTimeInDB, nil
 }
