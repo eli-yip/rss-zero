@@ -33,6 +33,7 @@ type Config struct {
 	BarkURL string
 
 	ZsxqTestURL    string
+	ZhihuTestURL   string
 	XiaobotTestURL string
 
 	ZhihuEncryptionURL string
@@ -93,6 +94,7 @@ func readEnv() {
 	C.BarkURL = getEnv("BARK_URL")
 
 	C.ZsxqTestURL = getEnv("ZSXQ_TEST_URL")
+	C.ZhihuTestURL = getEnv("ZHIHU_TEST_URL")
 	C.XiaobotTestURL = getEnv("XIAOBOT_TEST_URL")
 
 	C.ZhihuEncryptionURL = getEnv("ZHIHU_ENCRYPTION_URL")

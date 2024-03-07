@@ -101,13 +101,10 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 
 		req, err := r.setAPIReq(u)
 		if err != nil {
-			if err != nil {
-				if errors.Is(err, ErrGetXZSE96) {
-					logger.Error("fail to get x-zse-96", zap.Error(err))
-				} else {
-					logger.Error("fail to new a request", zap.Error(err))
-				}
-				continue
+			if errors.Is(err, ErrGetXZSE96) {
+				logger.Error("fail to get x-zse-96", zap.Error(err))
+			} else {
+				logger.Error("fail to new a request", zap.Error(err))
 			}
 			continue
 		}
@@ -152,9 +149,6 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 		return body, nil
 	}
 
-	if err == nil {
-		err = ErrMaxRetry
-	}
 	logger.Error("fail to get zhihu response with limit", zap.Error(err))
 	return nil, err
 }
@@ -196,9 +190,6 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 		return resp, nil
 	}
 
-	if err == nil {
-		err = ErrMaxRetry
-	}
 	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }

@@ -11,14 +11,14 @@ import (
 	"go.uber.org/zap"
 )
 
-type SetCookieReq struct {
+type ZsxqSetCookieReq struct {
 	Cookie string `json:"cookie"`
 }
 
 func (h *ZsxqController) UpdateZsxqCookie(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
-	var req SetCookieReq
+	var req ZsxqSetCookieReq
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(errors.New("invalid request"), err)
 		logger.Error("Error updating zsxq cookie", zap.Error(err))
