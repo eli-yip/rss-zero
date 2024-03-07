@@ -3,7 +3,6 @@ package apiModels
 type Answer struct {
 	ID       int      `json:"id"`
 	CreateAt int64    `json:"created_time"`
-	Author   Author   `json:"author"`
 	Question Question `json:"question"`
 	HTML     string   `json:"content"`
 }

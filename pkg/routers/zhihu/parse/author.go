@@ -8,6 +8,7 @@ import (
 )
 
 type AuthorParser interface {
+	// Parse result from api.zhihu.com/people/{url_token}
 	ParseAuthorName(content []byte) (authorName string, err error)
 }
 

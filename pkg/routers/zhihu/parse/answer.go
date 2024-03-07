@@ -2,7 +2,6 @@ package parse
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/common"
@@ -13,7 +12,7 @@ import (
 
 type AnswerParser interface {
 	ParseAnswerList(content []byte, index int) (paging apiModels.Paging, answers []apiModels.Answer, err error)
-	ParseAnswer(content []byte) (text string, err error)
+	ParseAnswer(content []byte, authorID string) (text string, err error)
 }
 
 func (p *ParseService) ParseAnswerList(content []byte, index int) (paging apiModels.Paging, answers []apiModels.Answer, err error) {
@@ -29,7 +28,7 @@ func (p *ParseService) ParseAnswerList(content []byte, index int) (paging apiMod
 }
 
 // ParseAnswer receives api.zhihu.com resp and parse it
-func (p *ParseService) ParseAnswer(content []byte) (text string, err error) {
+func (p *ParseService) ParseAnswer(content []byte, authorID string) (text string, err error) {
 	answer := apiModels.Answer{}
 	if err = json.Unmarshal(content, &answer); err != nil {
 		return "", err
@@ -49,14 +48,6 @@ func (p *ParseService) ParseAnswer(content []byte) (text string, err error) {
 	}
 	logger.Info("format markdown content successfully")
 
-	if err = p.db.SaveAuthor(&db.Author{
-		ID:   answer.Author.ID,
-		Name: answer.Author.Name,
-	}); err != nil {
-		return "", fmt.Errorf("fail to save author to db: %w, author_id: %s, author_name: %s", err, answer.Author.ID, answer.Author.Name)
-	}
-	logger.Info("save author to db successfully")
-
 	if err = p.db.SaveQuestion(&db.Question{
 		ID:       answer.Question.ID,
 		CreateAt: time.Unix(answer.Question.CreateAt, 0),
@@ -69,7 +60,7 @@ func (p *ParseService) ParseAnswer(content []byte) (text string, err error) {
 	if err = p.db.SaveAnswer(&db.Answer{
 		ID:         answer.ID,
 		QuestionID: answer.Question.ID,
-		AuthorID:   answer.Author.ID,
+		AuthorID:   authorID,
 		CreateAt:   time.Unix(answer.CreateAt, 0),
 		Text:       formattedText,
 		Raw:        content, // NOTE: see db.Answer.Raw comment

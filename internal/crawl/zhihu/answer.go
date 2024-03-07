@@ -69,8 +69,7 @@ func CrawlAnswer(user string, request request.Requester, parser parse.Parser,
 				return err
 			}
 
-			_, err = parser.ParseAnswer(answereBytes)
-			if err != nil {
+			if _, err = parser.ParseAnswer(answereBytes, user); err != nil {
 				logger.Error("fail to parse answer", zap.Error(err))
 				return err
 			}
