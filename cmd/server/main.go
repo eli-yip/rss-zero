@@ -194,6 +194,11 @@ func setupEcho(redisService redis.Redis,
 	exportXiaobotApi := exportApi.POST("/xiaobot", xiaobotHandler.Export)
 	exportXiaobotApi.Name = "Export route for xiaobot"
 
+	// /api/v1/rsshub
+	rssHubApi := apiGroup.Group("/rsshub")
+	feedGeneratorApi := rssHubApi.POST("/feed", controller.GenerateRSSHubFeed)
+	feedGeneratorApi.Name = "RSSHub feed generator route"
+
 	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
 			Status string `json:"status"`

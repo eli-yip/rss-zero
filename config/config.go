@@ -43,6 +43,8 @@ type Config struct {
 
 	BJT *time.Location
 
+	RSSHubURL string // e.g.: https://rsshub.example.com
+
 	Debug bool
 }
 
@@ -98,6 +100,8 @@ func readEnv() {
 	C.ServerURL = getEnv("SERVER_URL")
 
 	C.InternalServerURL = getEnv("INTERNAL_SERVER_URL")
+
+	C.RSSHubURL = getEnv("RSSHUB_URL")
 
 	C.Debug = getEnv("DEBUG") == "true"
 }
