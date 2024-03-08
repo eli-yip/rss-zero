@@ -56,7 +56,7 @@ func NewParseService(options ...Option) (Parser, error) {
 	}
 
 	if s.Imager == nil {
-		s.Imager = NewImageParserOnline(s.request, s.file, s.db, s.l)
+		s.Imager = NewOnlineImageParser(s.request, s.file, s.db, s.l)
 	}
 
 	if s.ai == nil {
@@ -109,9 +109,10 @@ func URLToID(str string) int {
 	return int(h.Sum32())
 }
 
-func findImageLinks(content string) (links []string) {
+// findImageLinks find all markdown links and return them as a list
+func findImageLinks(text string) (links []string) {
 	re := regexp.MustCompile(`!\[.*?\]\((.*?)\)`)
-	matches := re.FindAllStringSubmatch(string(content), -1)
+	matches := re.FindAllStringSubmatch(text, -1)
 
 	for _, match := range matches {
 		if len(match) > 1 {
@@ -121,9 +122,14 @@ func findImageLinks(content string) (links []string) {
 	return links
 }
 
-func replaceImageLink(content, name, from, to string) (result string) {
+// replaceImageLink replace image syntax in markdown text
+//   - text: raw markdown text
+//   - name: image name
+//   - from: origin image link
+//   - to: result image link
+func replaceImageLink(text, name, from, to string) (result string) {
 	re := regexp.MustCompile(`!\[[^\]]*\]\(` + regexp.QuoteMeta(from) + `\)`)
-	result = re.ReplaceAllString(content, `![`+name+`](`+to+`)`)
+	result = re.ReplaceAllString(text, `![`+name+`](`+to+`)`)
 	return result
 }
 

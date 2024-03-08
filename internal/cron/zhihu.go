@@ -69,7 +69,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 		htmlToMarkdown = renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 		logger.Info("zhihu html to markdown service initialized")
 
-		imageParser = parse.NewImageParserOnline(requestService, fileService, dbService, logger)
+		imageParser = parse.NewOnlineImageParser(requestService, fileService, dbService, logger)
 		logger.Info("zhihu image parser initialized")
 
 		aiService = ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
