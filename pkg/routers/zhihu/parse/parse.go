@@ -29,10 +29,12 @@ type ParseService struct {
 	file           file.File
 	db             db.DB
 	ai             ai.AI
-	l              *zap.Logger
+	logger         *zap.Logger
 	mdfmt          *md.MarkdownFormatter
 	Imager
 }
+
+const emptyString = ""
 
 type Option func(*ParseService)
 
@@ -47,16 +49,16 @@ func NewParseService(options ...Option) (Parser, error) {
 		return nil, fmt.Errorf("zhihu.DB is required")
 	}
 
-	if s.l == nil {
-		s.l = log.NewZapLogger()
+	if s.logger == nil {
+		s.logger = log.NewZapLogger()
 	}
 
 	if s.htmlToMarkdown == nil {
-		s.htmlToMarkdown = renderIface.NewHTMLToMarkdownService(s.l, render.GetHtmlRules()...)
+		s.htmlToMarkdown = renderIface.NewHTMLToMarkdownService(s.logger, render.GetHtmlRules()...)
 	}
 
 	if s.Imager == nil {
-		s.Imager = NewOnlineImageParser(s.request, s.file, s.db, s.l)
+		s.Imager = NewOnlineImageParser(s.request, s.file, s.db, s.logger)
 	}
 
 	if s.ai == nil {
@@ -91,7 +93,7 @@ func WithAI(ai ai.AI) Option {
 }
 
 func WithLogger(l *zap.Logger) Option {
-	return func(s *ParseService) { s.l = l }
+	return func(s *ParseService) { s.logger = l }
 }
 
 func WithImager(i Imager) Option {

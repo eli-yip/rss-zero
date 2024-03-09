@@ -16,7 +16,7 @@ type AnswerParser interface {
 }
 
 func (p *ParseService) ParseAnswerList(content []byte, index int) (paging apiModels.Paging, answers []apiModels.Answer, err error) {
-	logger := p.l.With(zap.Int("answer list page index", index))
+	logger := p.logger.With(zap.Int("answer list page index", index))
 
 	answerList := apiModels.AnswerList{}
 	if err = json.Unmarshal(content, &answerList); err != nil {
@@ -33,7 +33,7 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string) (text string
 	if err = json.Unmarshal(content, &answer); err != nil {
 		return "", err
 	}
-	logger := p.l.With(zap.Int("answer_id", answer.ID))
+	logger := p.logger.With(zap.Int("answer_id", answer.ID))
 	logger.Info("unmarshal answer successfully")
 
 	text, err = p.parseHTML(answer.HTML, answer.ID, common.TypeZhihuAnswer, logger)

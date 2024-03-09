@@ -20,7 +20,7 @@ type PinParser interface {
 }
 
 func (p *ParseService) ParsePinList(content []byte, index int) (paging apiModels.Paging, pins []apiModels.Pin, err error) {
-	logger := p.l.With(zap.Int("pin list page", index))
+	logger := p.logger.With(zap.Int("pin list page", index))
 
 	pinList := apiModels.PinList{}
 	if err = json.Unmarshal(content, &pinList); err != nil {
@@ -41,7 +41,7 @@ func (p *ParseService) ParsePin(content []byte) (text string, err error) {
 	if err != nil {
 		return "", err
 	}
-	logger := p.l.With(zap.Int("pin_id", pinID))
+	logger := p.logger.With(zap.Int("pin_id", pinID))
 	logger.Info("unmarshal pin successfully")
 
 	text, err = p.parsePinContent(pin.Content, pinID, logger)
