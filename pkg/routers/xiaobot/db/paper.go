@@ -36,6 +36,7 @@ func (d *DBService) GetPapers() (papers []Paper, err error) {
 func (d *DBService) SavePaper(paper *Paper) (err error) { return d.Save(paper).Error }
 
 func (d *DBService) GetPaper(id string) (paper *Paper, err error) {
+	paper = new(Paper)
 	if err = d.Where("id = ?", id).First(paper).Error; err != nil {
 		return nil, err
 	}
