@@ -11,34 +11,39 @@ import (
 	"go.uber.org/zap"
 )
 
-func GenerateXiaobot(paperID string, d xiaobotDB.DB, l *zap.Logger) (path string, result string, err error) {
-	l.Info("Start to generate xiaobot rss")
+func GenerateXiaobot(paperID string, dbService xiaobotDB.DB, logger *zap.Logger) (path string, result string, err error) {
+	logger.Info("Start to generate xiaobot rss")
 	rssRender := render.NewRSSRenderService()
+	logger.Info("Init xiaobot rss render service")
 
-	paper, err := d.GetPaper(paperID)
+	paper, err := dbService.GetPaper(paperID)
 	if err != nil {
+		logger.Error("Fail to get paper info from database", zap.Error(err), zap.String("paper id", paperID))
 		return "", "", err
 	}
-	l = l.With(zap.String("paper_name", paper.Name))
-	l.Info("Got paper name")
+	logger = logger.With(zap.String("paper_name", paper.Name))
+	logger.Info("Got paper name")
 
-	authorName, err := d.GetCreatorName(paper.CreatorID)
+	authorName, err := dbService.GetCreatorName(paper.CreatorID)
 	if err != nil {
+		logger.Error("Fail to get author name from database", zap.Error(err), zap.String("creator id", paper.CreatorID))
 		return "", "", err
 	}
-	l.Info("Got author name", zap.String("author_name", authorName))
+	logger.Info("Got author name", zap.String("author_name", authorName))
 
 	path = fmt.Sprintf(redis.XiaobotRSSPath, paperID)
 
-	posts, err := d.FetchNPostBefore(config.DefaultFetchCount, paperID, time.Now().Add(1*time.Hour)) // add 1 hour to avoid the post created at the same time with the rss generated time
+	posts, err := dbService.FetchNPostBefore(config.DefaultFetchCount, paperID, time.Now().Add(1*time.Hour)) // add 1 hour to avoid the post created at the same time with the rss generated time
 	if err != nil {
+		logger.Info("Fail to get xiaobot posts from database", zap.Error(err))
 		return "", "", err
 	}
 	if len(posts) == 0 {
 		result, err = rssRender.RenderEmpty(paperID, paper.Name)
-		l.Info("No post found, render empty rss")
+		logger.Info("No post found, render empty rss")
 		return path, result, err
 	}
+	logger.Info("Get posts from database", zap.Int("posts count", len(posts)))
 
 	rs := make([]render.RSS, 0, len(posts))
 	for _, p := range posts {
@@ -53,8 +58,13 @@ func GenerateXiaobot(paperID string, d xiaobotDB.DB, l *zap.Logger) (path string
 			Text:       p.Text,
 		})
 	}
+	logger.Info("Generate xiaobot rss raw slices", zap.Int("Slice length", len(rs)))
 
 	output, err := rssRender.Render(rs)
+	if err != nil {
+		logger.Error("Generate xiaobot rss output", zap.Error(err))
+		return "", "", nil
+	}
 
-	return path, output, err
+	return path, output, nil
 }
