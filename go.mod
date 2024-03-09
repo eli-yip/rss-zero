@@ -21,7 +21,7 @@ require (
 	github.com/yuin/goldmark v1.7.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.22.0
-	gorm.io/driver/postgres v1.5.6
+	gorm.io/driver/postgres v1.5.7
 	gorm.io/gorm v1.25.7
 )
 
