@@ -92,7 +92,7 @@ func generateZhihuAnswer(authorID string, authorName string, rssRender render.RS
 	}
 	if len(answers) == 0 {
 		l.Info("No answer found, render empty rss")
-		return rssRender.RenderEmpty(common.TypeZhihuArticle, authorID, authorName)
+		return rssRender.RenderEmpty(common.TypeZhihuAnswer, authorID, authorName)
 	}
 
 	var rs []render.RSS

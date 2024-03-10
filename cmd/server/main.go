@@ -70,33 +70,35 @@ func main() {
 //
 // n: notifier
 //
-// l: logger
+// logger: logger
 func initService() (r redis.Redis,
 	d *gorm.DB,
 	n notify.Notifier,
-	l *zap.Logger,
+	logger *zap.Logger,
 	err error) {
 	config.InitFromEnv()
 
-	l = log.NewZapLogger()
-	l.Info("config initialized", zap.Any("config", config.C))
+	logger = log.NewZapLogger()
+	logger.Info("config initialized", zap.Any("config", config.C))
 
 	r, err = redis.NewRedisService(config.C.Redis)
 	if err != nil {
+		logger.Error("Fail to init redis service", zap.Error(err))
 		return nil, nil, nil, nil, fmt.Errorf("fail to init redis service: %w", err)
 	}
-	l.Info("redis service initialized")
+	logger.Info("redis service initialized")
 
 	d, err = db.NewPostgresDB(config.C.DB)
 	if err != nil {
+		logger.Error("Fail to init postgres database service", zap.Error(err))
 		return nil, nil, nil, nil, fmt.Errorf("fail to init db: %w", err)
 	}
-	l.Info("db initialized")
+	logger.Info("db initialized")
 
 	bark := notify.NewBarkNotifier(config.C.BarkURL)
-	l.Info("bark notifier initialized")
+	logger.Info("bark notifier initialized")
 
-	return r, d, bark, l, nil
+	return r, d, bark, logger, nil
 }
 
 func setupEcho(redisService redis.Redis,
