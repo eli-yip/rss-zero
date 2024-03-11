@@ -2,6 +2,7 @@ package render
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"time"
 
@@ -19,13 +20,16 @@ type RSS struct {
 	CreateTime time.Time
 	AuthorID   string
 	AuthorName string
-	Title      string // title of zhihu item, e.g. question title, post title, pin id
+	Title      string // title of zhihu item, e.g. question title, post title, pin id(title)
 	Text       string // content of zhihu item
 }
 
 type RSSRender interface {
+	// Render receive zhihu content type and rss items, return rss content in atom format
 	Render(contentType int, rs []RSS) (string, error)
-	RenderEmpty(t int, authorID string, authorName string) (string, error)
+	// RenderEmpty receives zhihu content type, author id and name, returns rss content in atom format.
+	// It should be used when nothing is crawled to database.
+	RenderEmpty(contentType int, authorID string, authorName string) (string, error)
 }
 
 type RSSRenderService struct{ goldmark.Markdown }
@@ -37,8 +41,8 @@ func NewRSSRenderService() RSSRender {
 	)}
 }
 
-func (r *RSSRenderService) RenderEmpty(t int, authorID string, authorName string) (rss string, err error) {
-	titleType, linkType := r.generateTitleAndLinkType(t)
+func (r *RSSRenderService) RenderEmpty(contentType int, authorID string, authorName string) (rss string, err error) {
+	titleType, linkType := r.generateTitleAndLinkType(contentType)
 
 	rssFeed := &feeds.Feed{
 		Title:   authorName + "的知乎" + titleType,
@@ -51,6 +55,10 @@ func (r *RSSRenderService) RenderEmpty(t int, authorID string, authorName string
 }
 
 func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err error) {
+	if len(rs) == 0 {
+		return "", errors.New("empty rss topics to render, use RenderEmpty() instead")
+	}
+
 	titleType, linkType := r.generateTitleAndLinkType(contentType)
 
 	rssFeed := &feeds.Feed{
@@ -60,30 +68,28 @@ func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err er
 		Updated: rs[0].CreateTime,
 	}
 
-	for _, rr := range rs {
+	for _, item := range rs {
 		var buffer bytes.Buffer
-		if err := r.Convert([]byte(rr.Text), &buffer); err != nil {
+		if err = r.Convert([]byte(item.Text), &buffer); err != nil {
 			return "", err
 		}
 
-		feedItem := feeds.Item{
-			Title:  rr.Title,
-			Link:   &feeds.Link{Href: rr.Link},
-			Author: &feeds.Author{Name: rr.AuthorName},
-			Id:     fmt.Sprintf("%d", rr.ID),
+		rssFeed.Items = append(rssFeed.Items, &feeds.Item{
+			Title:  item.Title,
+			Link:   &feeds.Link{Href: item.Link},
+			Author: &feeds.Author{Name: item.AuthorName},
+			Id:     fmt.Sprintf("%d", item.ID),
 			Description: func() string {
 				// up to 100 word of text
-				if len(rr.Text) > 100 {
-					return rr.Text[:100]
+				if len(item.Text) > 100 {
+					return item.Text[:100]
 				}
-				return rr.Text
+				return item.Text
 			}(),
-			Created: rr.CreateTime,
-			Updated: rr.CreateTime,
+			Created: item.CreateTime,
+			Updated: item.CreateTime,
 			Content: buffer.String(),
-		}
-
-		rssFeed.Items = append(rssFeed.Items, &feedItem)
+		})
 	}
 
 	return rssFeed.ToAtom()
