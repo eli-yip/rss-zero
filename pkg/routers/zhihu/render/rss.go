@@ -42,7 +42,10 @@ func NewRSSRenderService() RSSRender {
 }
 
 func (r *RSSRenderService) RenderEmpty(contentType int, authorID string, authorName string) (rss string, err error) {
-	titleType, linkType := r.generateTitleAndLinkType(contentType)
+	titleType, linkType, err := r.generateTitleAndLinkType(contentType)
+	if err != nil {
+		return "", fmt.Errorf("%w: %d", err, contentType)
+	}
 
 	rssFeed := &feeds.Feed{
 		Title:   authorName + "的知乎" + titleType,
@@ -59,7 +62,10 @@ func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err er
 		return "", errors.New("empty rss topics to render, use RenderEmpty() instead")
 	}
 
-	titleType, linkType := r.generateTitleAndLinkType(contentType)
+	titleType, linkType, err := r.generateTitleAndLinkType(contentType)
+	if err != nil {
+		return "", fmt.Errorf("%w: %d", err, contentType)
+	}
 
 	rssFeed := &feeds.Feed{
 		Title:   rs[0].AuthorName + "的知乎" + titleType,
@@ -97,14 +103,15 @@ func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err er
 
 // generateTitleAndLinkType returns title type and link type of zhihu item according to its type,
 // see pkg/common/type.go for type list
-func (r *RSSRenderService) generateTitleAndLinkType(t int) (titleType, linkType string) {
+func (r *RSSRenderService) generateTitleAndLinkType(t int) (titleType, linkType string, err error) {
 	switch t {
 	case common.TypeZhihuAnswer:
-		return "回答", "answers"
+		return "回答", "answers", nil
 	case common.TypeZhihuArticle:
-		return "文章", "posts"
+		return "文章", "posts", nil
 	case common.TypeZhihuPin:
-		return "想法", "pins"
+		return "想法", "pins", nil
+	default:
+		return "", "", errors.New("unknow zhihu content type")
 	}
-	return "", ""
 }
