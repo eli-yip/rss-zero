@@ -24,7 +24,7 @@ type RSS struct {
 }
 
 type RSSRender interface {
-	Render(t int, rs []RSS) (string, error)
+	Render(contentType int, rs []RSS) (string, error)
 	RenderEmpty(t int, authorID string, authorName string) (string, error)
 }
 
@@ -50,8 +50,8 @@ func (r *RSSRenderService) RenderEmpty(t int, authorID string, authorName string
 	return rssFeed.ToAtom()
 }
 
-func (r *RSSRenderService) Render(t int, rs []RSS) (rss string, err error) {
-	titleType, linkType := r.generateTitleAndLinkType(t)
+func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err error) {
+	titleType, linkType := r.generateTitleAndLinkType(contentType)
 
 	rssFeed := &feeds.Feed{
 		Title:   rs[0].AuthorName + "的知乎" + titleType,

@@ -10,6 +10,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/common"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
+
 	"go.uber.org/zap"
 )
 
@@ -18,61 +19,62 @@ var errUnknownZhihuType = errors.New("unknown zhihu type")
 
 // GenerateZhihu generate zhihu rss by content type,
 // return rss path, rss content and error
-func GenerateZhihu(t int, authorID string, zhihuDBService zhihuDB.DB, logger *zap.Logger) (path, result string, err error) {
-	logger.Info("Start to generate zhihu rss")
+//   - contentType: see type list in pkg/common.type.go
+func GenerateZhihu(contentType int, authorID string, zhihuDBService zhihuDB.DB, logger *zap.Logger) (path, result string, err error) {
+	logger.Info("Start to generate zhihu rss", zap.Int("content type", contentType), zap.String("author id", authorID))
 
 	rssRender := render.NewRSSRenderService()
 
 	authorName, err := zhihuDBService.GetAuthorName(authorID)
 	if err != nil {
-		return "", "", err
+		logger.Error("Fail to get zhihu author name from database", zap.String("author id", authorID))
+		return emptyString, emptyString, err
 	}
 	logger.Info("Got author name", zap.String("author_name", authorName))
 
-	output, err := generateZhihuRSS(t, authorID, authorName, rssRender, zhihuDBService, logger)
+	output, err := generateZhihuRSS(contentType, authorID, authorName, rssRender, zhihuDBService, logger)
 	if err != nil {
-		logger.Error("Generate zhihu rss failed", zap.Error(err))
-		return "", "", err
+		logger.Error("Fail to generate zhihu rss content", zap.Error(err))
+		return emptyString, emptyString, err
 	}
+	logger.Info("Generated zhihu rss content")
 
-	path, err = generateZhihuRSSPath(t, authorID)
-	if err != nil {
+	if path, err = generateZhihuRSSPath(contentType, authorID); err != nil {
 		logger.Error("Generate zhihu rss path failed", zap.Error(err))
-		return "", "", err
+		return emptyString, emptyString, err
 	}
+	logger.Info("Generated zhihu rss cache path")
 
-	logger.Info("Generate zhihu rss success", zap.String("path", path))
+	logger.Info("Generated zhihu rss")
+
 	return path, output, nil
 }
 
 // generateZhihuRSS generate zhihu rss content by content type
-func generateZhihuRSS(t int, authorID, authorName string, render render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (output string, err error) {
-	switch t {
+func generateZhihuRSS(contentType int, authorID, authorName string, render render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (output string, err error) {
+	switch contentType {
 	case common.TypeZhihuAnswer:
-		output, err = generateZhihuAnswer(authorID, authorName, render, zhihuDBService, logger)
-		if err != nil {
-			return "", fmt.Errorf("generate zhihu answer rss failed: %w", err)
+		if output, err = generateZhihuAnswer(authorID, authorName, render, zhihuDBService, logger); err != nil {
+			return emptyString, fmt.Errorf("fail to generate zhihu answer rss content: %w", err)
 		}
 	case common.TypeZhihuArticle:
-		output, err = generateZhihuArticle(authorID, authorName, render, zhihuDBService, logger)
-		if err != nil {
-			return "", fmt.Errorf("generate zhihu article rss failed: %w", err)
+		if output, err = generateZhihuArticle(authorID, authorName, render, zhihuDBService, logger); err != nil {
+			return emptyString, fmt.Errorf("fail to generate zhihu article rss content: %w", err)
 		}
 	case common.TypeZhihuPin:
-		output, err = generateZhihuPin(authorID, authorName, render, zhihuDBService, logger)
-		if err != nil {
-			return "", fmt.Errorf("generate zhihu pin rss failed: %w", err)
+		if output, err = generateZhihuPin(authorID, authorName, render, zhihuDBService, logger); err != nil {
+			return emptyString, fmt.Errorf("fail to generate zhihu pin rss content: %w", err)
 		}
 	default:
-		return "", errUnknownZhihuType
+		return emptyString, errUnknownZhihuType
 	}
 	return output, nil
 }
 
 // generateZhihuRSSPath generate zhihu rss redis cache path by content type
-// if t is unknown, return empty string
-func generateZhihuRSSPath(t int, authorID string) (string, error) {
-	switch t {
+// if content type is unknown, return empty string
+func generateZhihuRSSPath(contentType int, authorID string) (string, error) {
+	switch contentType {
 	case common.TypeZhihuAnswer:
 		return fmt.Sprintf(redis.ZhihuAnswerPath, authorID), nil
 	case common.TypeZhihuArticle:
@@ -84,90 +86,100 @@ func generateZhihuRSSPath(t int, authorID string) (string, error) {
 	}
 }
 
-func generateZhihuAnswer(authorID string, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, l *zap.Logger) (result string, err error) {
-	l.Info("Start to generate zhihu answer rss")
+func generateZhihuAnswer(authorID, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
+	logger.Info("Start to generate zhihu answer rss content", zap.String("author name", authorName))
+
 	answers, err := zhihuDBService.GetLatestNAnswer(config.DefaultFetchCount, authorID)
 	if err != nil {
+		logger.Error("Fail to get latest answers from database")
 		return "", err
 	}
 	if len(answers) == 0 {
-		l.Info("No answer found, render empty rss")
-		return rssRender.RenderEmpty(common.TypeZhihuAnswer, authorID, authorName)
+		logger.Info("No answer found, render empty rss")
+		return rssRender.RenderEmpty(common.TypeZhihuArticle, authorID, authorName)
 	}
+	logger.Info("Get latest answers from database", zap.Int("answers count", len(answers)))
 
 	var rs []render.RSS
-	for _, a := range answers {
-		question, err := zhihuDBService.GetQuestion(a.QuestionID)
+	for _, answer := range answers {
+		question, err := zhihuDBService.GetQuestion(answer.QuestionID)
 		if err != nil {
+			logger.Error("Fail to get question info from database", zap.Int("question id", answer.QuestionID))
 			return "", err
 		}
 
 		rs = append(rs, render.RSS{
-			ID:         a.ID,
-			Link:       fmt.Sprintf("https://www.zhihu.com/question/%d/answer/%d", a.QuestionID, a.ID),
-			CreateTime: a.CreateAt,
-			AuthorID:   a.AuthorID,
+			ID:         answer.ID,
+			Link:       fmt.Sprintf("https://www.zhihu.com/question/%d/answer/%d", answer.QuestionID, answer.ID),
+			CreateTime: answer.CreateAt,
+			AuthorID:   answer.AuthorID,
 			AuthorName: authorName,
 			Title:      question.Title,
-			Text:       a.Text,
+			Text:       answer.Text,
 		})
 	}
 
 	return rssRender.Render(common.TypeZhihuAnswer, rs)
 }
 
-func generateZhihuArticle(authorID string, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, l *zap.Logger) (result string, err error) {
-	l.Info("Start to generate zhihu article rss")
+func generateZhihuArticle(authorID, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
+	logger.Info("Start to generate zhihu article rss content")
+
 	articles, err := zhihuDBService.GetLatestNArticle(config.DefaultFetchCount, authorID)
 	if err != nil {
+		logger.Error("Fail to get latest articles from database")
 		return "", err
 	}
 	if len(articles) == 0 {
-		l.Info("No article found, render empty rss")
+		logger.Info("No article found, render empty rss")
 		return rssRender.RenderEmpty(common.TypeZhihuArticle, authorID, authorName)
 	}
+	logger.Info("Get latest article from database", zap.Int("article count", len(articles)))
 
 	var rs []render.RSS
-	for _, a := range articles {
+	for _, article := range articles {
 		rs = append(rs, render.RSS{
-			ID:         a.ID,
-			Link:       fmt.Sprintf("https://zhuanlan.zhihu.com/p/%d", a.ID),
-			CreateTime: a.CreateAt,
-			AuthorID:   a.AuthorID,
+			ID:         article.ID,
+			Link:       fmt.Sprintf("https://zhuanlan.zhihu.com/p/%d", article.ID),
+			CreateTime: article.CreateAt,
+			AuthorID:   article.AuthorID,
 			AuthorName: authorName,
-			Title:      a.Title,
-			Text:       a.Text,
+			Title:      article.Title,
+			Text:       article.Text,
 		})
 	}
 
 	return rssRender.Render(common.TypeZhihuArticle, rs)
 }
 
-func generateZhihuPin(authorID string, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, l *zap.Logger) (result string, err error) {
-	l.Info("Start to generate zhihu pin rss")
+func generateZhihuPin(authorID, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
+	logger.Info("Start to generate zhihu pin rss content")
+
 	pins, err := zhihuDBService.GetLatestNPin(config.DefaultFetchCount, authorID)
 	if err != nil {
+		logger.Error("Fail to get latest pins from database")
 		return "", err
 	}
 	if len(pins) == 0 {
-		l.Info("No pin found, render empty rss")
+		logger.Info("No pin found, render empty rss")
 		return rssRender.RenderEmpty(common.TypeZhihuPin, authorID, authorName)
 	}
+	logger.Info("Get latest pins from database", zap.Int("pin count", len(pins)))
 
 	var rs []render.RSS
-	for _, p := range pins {
-		if p.Title == "" {
-			p.Title = strconv.Itoa(p.ID)
+	for _, pins := range pins {
+		if pins.Title == "" {
+			pins.Title = strconv.Itoa(pins.ID)
 		}
 
 		rs = append(rs, render.RSS{
-			ID:         p.ID,
-			Link:       fmt.Sprintf("https://www.zhihu.com/pin/%d", p.ID),
-			CreateTime: p.CreateAt,
-			AuthorID:   p.AuthorID,
+			ID:         pins.ID,
+			Link:       fmt.Sprintf("https://www.zhihu.com/pin/%d", pins.ID),
+			CreateTime: pins.CreateAt,
+			AuthorID:   pins.AuthorID,
 			AuthorName: authorName,
-			Title:      p.Title,
-			Text:       p.Text,
+			Title:      pins.Title,
+			Text:       pins.Text,
 		})
 	}
 

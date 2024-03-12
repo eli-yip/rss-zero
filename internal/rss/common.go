@@ -1,1 +1,3 @@
 package rss
+
+const emptyString = ""
