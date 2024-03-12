@@ -17,7 +17,7 @@ type Message struct {
 
 type BarkNotifier struct{ url string }
 
-func NewBarkNotifier(url string) *BarkNotifier {
+func NewBarkNotifier(url string) Notifier {
 	return &BarkNotifier{url: url}
 }
 

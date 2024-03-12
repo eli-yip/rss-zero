@@ -20,6 +20,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/log"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
@@ -45,6 +46,8 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+
+	// Start echo server
 	go func() {
 		logger.Info("start server", zap.String("address", ":8080"))
 		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
@@ -53,9 +56,11 @@ func main() {
 	}()
 
 	<-ctx.Done()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := e.Shutdown(ctx); err != nil {
+
+	if err = e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
 
@@ -71,34 +76,33 @@ func main() {
 // n: notifier
 //
 // logger: logger
-func initService() (r redis.Redis,
-	d *gorm.DB,
-	n notify.Notifier,
+func initService() (redisService redis.Redis,
+	dbService *gorm.DB,
+	notifier notify.Notifier,
 	logger *zap.Logger,
 	err error) {
 	config.InitFromEnv()
 
 	logger = log.NewZapLogger()
+	logger.Info("Init zap logger", zap.Bool("Debug Mode", config.C.Debug))
 	logger.Info("config initialized", zap.Any("config", config.C))
 
-	r, err = redis.NewRedisService(config.C.Redis)
-	if err != nil {
+	if redisService, err = redis.NewRedisService(config.C.Redis); err != nil {
 		logger.Error("Fail to init redis service", zap.Error(err))
 		return nil, nil, nil, nil, fmt.Errorf("fail to init redis service: %w", err)
 	}
 	logger.Info("redis service initialized")
 
-	d, err = db.NewPostgresDB(config.C.DB)
-	if err != nil {
+	if dbService, err = db.NewPostgresDB(config.C.DB); err != nil {
 		logger.Error("Fail to init postgres database service", zap.Error(err))
 		return nil, nil, nil, nil, fmt.Errorf("fail to init db: %w", err)
 	}
 	logger.Info("db initialized")
 
-	bark := notify.NewBarkNotifier(config.C.BarkURL)
+	notifier = notify.NewBarkNotifier(config.C.BarkURL)
 	logger.Info("bark notifier initialized")
 
-	return r, d, bark, logger, nil
+	return redisService, dbService, notifier, logger, nil
 }
 
 func setupEcho(redisService redis.Redis,
@@ -107,6 +111,7 @@ func setupEcho(redisService redis.Redis,
 	logger *zap.Logger) (e *echo.Echo) {
 	e = echo.New()
 	e.HideBanner = true
+	e.HidePort = true
 	e.IPExtractor = echo.ExtractIPFromXFFHeader(
 		echo.TrustIPRange(func(ip string) *net.IPNet {
 			_, ipNet, _ := net.ParseCIDR(ip)
