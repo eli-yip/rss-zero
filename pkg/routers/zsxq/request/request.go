@@ -32,7 +32,7 @@ type RequestService struct {
 	limiter      chan struct{}
 	maxRetry     int
 	redisService redis.Redis
-	log          *zap.Logger
+	logger       *zap.Logger
 }
 
 func NewRequestService(cookie string, redisService redis.Redis,
@@ -46,7 +46,7 @@ func NewRequestService(cookie string, redisService redis.Redis,
 		limiter:      make(chan struct{}),
 		maxRetry:     defaultMaxRetry,
 		redisService: redisService,
-		log:          logger,
+		logger:       logger,
 	}
 
 	s.SetCookies(cookie)
@@ -54,7 +54,7 @@ func NewRequestService(cookie string, redisService redis.Redis,
 	go func() {
 		for {
 			s.limiter <- struct{}{}
-			time.Sleep(time.Duration(7+rand.Intn(6)) * time.Second)
+			time.Sleep(time.Duration(30+rand.Intn(6)) * time.Second)
 		}
 	}()
 
@@ -76,7 +76,7 @@ func (r *RequestService) SetCookies(c string) {
 				r.client.Jar.SetCookies(u, []*http.Cookie{cookie})
 			}
 		}
-		r.log.Info("set cookie successfully",
+		r.logger.Info("set cookie successfully",
 			zap.String("cookie", c), zap.String("domain", d))
 	}
 }
@@ -96,7 +96,7 @@ type badAPIResp struct {
 
 // Send request with limiter, used for zsxq api.
 func (r *RequestService) Limit(u string) (respByte []byte, err error) {
-	logger := r.log.With(zap.String("url", u))
+	logger := r.logger.With(zap.String("url", u))
 
 	logger.Info("start to get zsxq API response with limit")
 	for i := 0; i < r.maxRetry; i++ {
@@ -164,7 +164,7 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 
 // Send request with limiter, used for zsxq article
 func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
-	logger := r.log.With(zap.String("url", u))
+	logger := r.logger.With(zap.String("url", u))
 	logger.Info("request with limiter for raw data", zap.String("url", u))
 
 	for i := 0; i < r.maxRetry; i++ {
@@ -205,7 +205,7 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 // Send request with limiter and get a stream result,
 // used for zsxq voices
 func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) {
-	logger := r.log.With(zap.String("url", u))
+	logger := r.logger.With(zap.String("url", u))
 	logger.Info("request with limiter for stream")
 
 	for i := 0; i < r.maxRetry; i++ {
@@ -239,7 +239,7 @@ func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) 
 
 // Send request without limiter, used for zsxq cdn
 func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
-	logger := r.log.With(zap.String("url", u))
+	logger := r.logger.With(zap.String("url", u))
 	logger.Info("without limiter", zap.String("url", u))
 	for i := 0; i < r.maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
