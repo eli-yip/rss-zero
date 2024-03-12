@@ -10,6 +10,7 @@ import (
 )
 
 type (
+	// BaseContent is the common part of answer, article and pin of zhihu content
 	BaseContent struct {
 		ID       int
 		CreateAt time.Time
@@ -29,60 +30,61 @@ type (
 	Pin struct{ BaseContent }
 )
 
-type FullTextRender interface {
-	Answer(a *Answer) (string, error)
-	Article(a *Article) (string, error)
-	Pin(p *Pin) (string, error)
+type FullTextRenderIface interface {
+	Answer(answer *Answer) (string, error)
+	Article(article *Article) (string, error)
+	Pin(pin *Pin) (string, error)
 }
 
-type Render struct{ *md.MarkdownFormatter }
+type FullTextRender struct{ *md.MarkdownFormatter }
 
-func NewRender(mdfmt *md.MarkdownFormatter) *Render {
-	return &Render{
-		MarkdownFormatter: mdfmt,
-	}
+func NewFullTextRender(mdfmtService *md.MarkdownFormatter) FullTextRenderIface {
+	return &FullTextRender{MarkdownFormatter: mdfmtService}
 }
 
-func (r *Render) Answer(a *Answer) (text string, err error) {
-	titlePart := a.Question.Text
+func (r *FullTextRender) Answer(answer *Answer) (text string, err error) {
+	titlePart := answer.Question.Text
 	titlePart = trimRightSpace(md.H1(titlePart))
 
-	link := fmt.Sprintf("https://www.zhihu.com/question/%d/answer/%d",
-		a.Question.ID, a.Answer.ID)
+	link := GenerateAnswerLink(answer.Question.ID, answer.Answer.ID)
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))
 
-	timePart := formatTimeForRead(a.Answer.CreateAt)
+	timePart := formatTimeForRead(answer.Answer.CreateAt)
 
-	text = md.Join(titlePart, a.Answer.Text, timePart, linkPart)
+	text = joinFullText(titlePart, answer.Answer.Text, timePart, linkPart)
 
 	return r.FormatStr(text)
 }
 
-func (r *Render) Article(a *Article) (text string, err error) {
-	titlePart := a.Title
+func (r *FullTextRender) Article(article *Article) (text string, err error) {
+	titlePart := article.Title
 	titlePart = trimRightSpace(md.H2(titlePart))
 
-	link := fmt.Sprintf("https://zhuanlan.zhihu.com/p/%d", a.ID)
+	link := GenerateArticleLink(article.ID)
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))
 
-	timePart := formatTimeForRead(a.CreateAt)
+	timePart := formatTimeForRead(article.CreateAt)
 
-	text = md.Join(titlePart, a.Text, timePart, linkPart)
+	text = joinFullText(titlePart, article.Text, timePart, linkPart)
 
 	return r.FormatStr(text)
 }
 
-func (r *Render) Pin(p *Pin) (text string, err error) {
-	titlePart := trimRightSpace(md.H3(strconv.Itoa(p.ID)))
+func (r *FullTextRender) Pin(pin *Pin) (text string, err error) {
+	titlePart := trimRightSpace(md.H3(strconv.Itoa(pin.ID)))
 
-	link := fmt.Sprintf("https://www.zhihu.com/pin/%d", p.ID)
+	link := GeneratePinLink(pin.ID)
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))
 
-	timePart := formatTimeForRead(p.CreateAt)
+	timePart := formatTimeForRead(pin.CreateAt)
 
-	text = md.Join(titlePart, p.Text, timePart, linkPart)
+	text = joinFullText(titlePart, pin.Text, timePart, linkPart)
 
 	return r.FormatStr(text)
+}
+
+func joinFullText(title, text, timeStr, linkStr string) (fullText string) {
+	return md.Join(title, text, timeStr, linkStr)
 }
 
 func trimRightSpace(text string) string { return strings.TrimRight(text, " \n") }

@@ -110,7 +110,7 @@ func generateZhihuAnswer(authorID, authorName string, rssRender render.RSSRender
 
 		rs = append(rs, render.RSS{
 			ID:         answer.ID,
-			Link:       fmt.Sprintf("https://www.zhihu.com/question/%d/answer/%d", answer.QuestionID, answer.ID),
+			Link:       render.GenerateAnswerLink(answer.QuestionID, answer.ID),
 			CreateTime: answer.CreateAt,
 			AuthorID:   answer.AuthorID,
 			AuthorName: authorName,
@@ -140,7 +140,7 @@ func generateZhihuArticle(authorID, authorName string, rssRender render.RSSRende
 	for _, article := range articles {
 		rs = append(rs, render.RSS{
 			ID:         article.ID,
-			Link:       fmt.Sprintf("https://zhuanlan.zhihu.com/p/%d", article.ID),
+			Link:       render.GenerateArticleLink(article.ID),
 			CreateTime: article.CreateAt,
 			AuthorID:   article.AuthorID,
 			AuthorName: authorName,
@@ -167,19 +167,19 @@ func generateZhihuPin(authorID, authorName string, rssRender render.RSSRender, z
 	logger.Info("Get latest pins from database", zap.Int("pin count", len(pins)))
 
 	var rs []render.RSS
-	for _, pins := range pins {
-		if pins.Title == "" {
-			pins.Title = strconv.Itoa(pins.ID)
+	for _, pin := range pins {
+		if pin.Title == "" {
+			pin.Title = strconv.Itoa(pin.ID)
 		}
 
 		rs = append(rs, render.RSS{
-			ID:         pins.ID,
-			Link:       fmt.Sprintf("https://www.zhihu.com/pin/%d", pins.ID),
-			CreateTime: pins.CreateAt,
-			AuthorID:   pins.AuthorID,
+			ID:         pin.ID,
+			Link:       render.GeneratePinLink(pin.ID),
+			CreateTime: pin.CreateAt,
+			AuthorID:   pin.AuthorID,
 			AuthorName: authorName,
-			Title:      pins.Title,
-			Text:       pins.Text,
+			Title:      pin.Title,
+			Text:       pin.Text,
 		})
 	}
 

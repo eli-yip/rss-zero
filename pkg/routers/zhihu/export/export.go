@@ -26,10 +26,10 @@ type Exporter interface {
 
 type ExportService struct {
 	db db.DB
-	mr render.FullTextRender
+	mr render.FullTextRenderIface
 }
 
-func NewExportService(db db.DB, mr render.FullTextRender) Exporter {
+func NewExportService(db db.DB, mr render.FullTextRenderIface) Exporter {
 	return &ExportService{db: db, mr: mr}
 }
 

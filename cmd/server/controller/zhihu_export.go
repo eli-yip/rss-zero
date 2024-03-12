@@ -53,7 +53,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	}
 	logger.Info("Parse export option success", zap.Any("options", options))
 
-	fullTextRender := zhihuRender.NewRender(md.NewMarkdownFormatter())
+	fullTextRender := zhihuRender.NewFullTextRender(md.NewMarkdownFormatter())
 	exportService := zhihuExport.NewExportService(h.db, fullTextRender)
 
 	fileName, err := exportService.FileName(options)

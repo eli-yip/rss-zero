@@ -71,7 +71,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		}
 
 		mdfmt := md.NewMarkdownFormatter()
-		mr := render.NewRender(mdfmt)
+		mr := render.NewFullTextRender(mdfmt)
 		exportService := export.NewExportService(zhihuDBService, mr)
 
 		fileName, err := exportService.FileName(exportOpt)
