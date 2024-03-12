@@ -32,7 +32,7 @@ func GetCookies(logger *zap.Logger) (cookies []*http.Cookie, err error) {
 	req.Header.Set("Accept", "*/*")
 
 	count := 3
-	for count <= 0 {
+	for count > 0 {
 		count--
 
 		resp, err := client.Do(req)
@@ -51,6 +51,7 @@ func GetCookies(logger *zap.Logger) (cookies []*http.Cookie, err error) {
 
 		for _, cookie := range resp.Cookies() {
 			if cookie.Name == "d_c0" {
+				logger.Info("Got zhihu d_c0 cookie, return it", zap.String("d_c0 cookie", cookie.Value))
 				return resp.Cookies(), nil
 			}
 		}
