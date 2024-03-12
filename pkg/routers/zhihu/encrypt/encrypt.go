@@ -29,6 +29,7 @@ func GetCookies(logger *zap.Logger) (cookies []*http.Cookie, err error) {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75")
+	req.Header.Set("Accept", "*/*")
 
 	count := 3
 	for count <= 0 {
@@ -46,6 +47,7 @@ func GetCookies(logger *zap.Logger) (cookies []*http.Cookie, err error) {
 			logger.Error("Bad response status", zap.Error(err))
 			continue
 		}
+		logger.Info("Got zhihu response from https://www.zhihu.com/people/canglimo, try to get d_c0 cookie")
 
 		for _, cookie := range resp.Cookies() {
 			if cookie.Name == "d_c0" {
@@ -56,12 +58,13 @@ func GetCookies(logger *zap.Logger) (cookies []*http.Cookie, err error) {
 		if err = checkTooManyRequest(resp.Body); err != nil {
 			logger.Error("Too many request", zap.Error(err))
 		}
+		logger.Info("Found no d_c0 cookie, try again")
 	}
 
 	if err == nil {
 		return nil, errors.New("no d_c0 cookie")
 	}
-	return nil, errors.New("no d_c0 cookie")
+	return nil, err
 }
 
 func checkTooManyRequest(body io.Reader) (err error) {
