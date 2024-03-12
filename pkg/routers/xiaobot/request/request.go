@@ -73,6 +73,7 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 			logger.Error("Failed request url", zap.Error(err))
 			continue
 		}
+		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			logger.Error("Status code not 200", zap.Int("status", resp.StatusCode))
@@ -80,7 +81,6 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 		}
 
 		bytes, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
 		if err != nil {
 			logger.Error("Failed reading response body", zap.Error(err))
 			continue

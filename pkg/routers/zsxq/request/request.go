@@ -3,6 +3,7 @@ package request
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -109,17 +110,19 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 		}
 
 		resp, err := r.client.Do(req)
-		if err != nil || resp.StatusCode != http.StatusOK {
-			if resp != nil && resp.Body != nil {
-				// Close response body when error.
-				resp.Body.Close()
-			}
+		if err != nil {
 			logger.Error("fail to request url", zap.Error(err))
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
+			logger.Error("Bad response status code", zap.Error(err))
 			continue
 		}
 
 		bytes, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
 		if err != nil {
 			logger.Error("fail to read response body", zap.Error(err))
 			continue
@@ -175,16 +178,19 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 		}
 
 		resp, err := r.client.Do(req)
-		if err != nil || resp.StatusCode != http.StatusOK {
-			if resp != nil && resp.Body != nil {
-				resp.Body.Close()
-			}
+		if err != nil {
 			logger.Error("fail to request url", zap.Error(err))
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
+			logger.Error("Bad response status code", zap.Error(err))
 			continue
 		}
 
 		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
 		if err != nil {
 			logger.Error("fail to read response body", zap.Error(err))
 			continue
@@ -211,13 +217,16 @@ func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) 
 			continue
 		}
 
-		resp, err = r.client.Do(req)
-		// When request failed or status code is not 200, error.
-		if err != nil || resp.StatusCode != http.StatusOK {
-			if resp != nil && resp.Body != nil {
-				resp.Body.Close()
-			}
+		resp, err := r.client.Do(req)
+		if err != nil {
 			logger.Error("fail to request url", zap.Error(err))
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
+			logger.Error("Bad response status code", zap.Error(err))
 			continue
 		}
 
@@ -242,16 +251,19 @@ func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
 		}
 
 		resp, err := r.client.Do(req)
-		if err != nil || resp.StatusCode != http.StatusOK {
-			if resp != nil && resp.Body != nil {
-				resp.Body.Close()
-			}
-			r.log.Error("fail to request url", zap.Error(err))
+		if err != nil {
+			logger.Error("fail to request url", zap.Error(err))
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
+			logger.Error("Bad response status code", zap.Error(err))
 			continue
 		}
 
 		bytes, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
 		if err == nil {
 			return bytes, nil
 		}
@@ -274,5 +286,5 @@ func (r *RequestService) setReq(u string) (req *http.Request, err error) {
 
 // Zsxq api does not support no limit stream
 func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error) {
-	return nil, nil
+	return nil, errors.New("NoLimitStream() should not be called in zsxq reqeust")
 }

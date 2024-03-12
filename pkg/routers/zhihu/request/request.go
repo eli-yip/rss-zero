@@ -3,6 +3,7 @@ package request
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -114,6 +115,7 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			logger.Error("fail to request url", zap.Error(err))
 			continue
 		}
+		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			bytes, _ := io.ReadAll(resp.Body)
@@ -121,27 +123,22 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 				var e403 Error403
 				if err = json.Unmarshal(bytes, &e403); err != nil {
 					logger.Error("fail to unmarshal 403 error", zap.Error(err))
-					resp.Body.Close()
 					continue
 				}
 				if e403.Error.NeedLogin {
 					logger.Error("need login")
-					resp.Body.Close()
 					return nil, ErrNeedLogin
 				}
 			}
 			if resp.StatusCode == http.StatusNotFound {
 				logger.Error("404 not found")
-				resp.Body.Close()
 				return nil, ErrUnreachable
 			}
 			logger.Error("status code error", zap.Int("status_code", resp.StatusCode))
-			resp.Body.Close()
 			continue
 		}
 
 		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
 		if err != nil {
 			logger.Error("fail to read response body", zap.Error(err))
 			continue
@@ -178,12 +175,16 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 		}
 
 		resp, err = r.client.Do(req)
-		// When request failed or status code is not 200, error.
-		if err != nil || resp.StatusCode != http.StatusOK {
-			if resp != nil && resp.Body != nil {
-				resp.Body.Close()
-			}
+		if err != nil {
 			logger.Error("fail to request url", zap.Error(err))
+			continue
+		}
+		// do not defer resp body close here because we will save it to minio
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
+			logger.Error("bad status code", zap.Error(err))
 			continue
 		}
 
