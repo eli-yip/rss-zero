@@ -12,6 +12,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/eli-yip/rss-zero/config"
+	"go.uber.org/zap"
 )
 
 var errParseHTML = errors.New("failed to parse html")
@@ -21,7 +22,7 @@ var errParseHTML = errors.New("failed to parse html")
 // if any bad request or too many requests, return error.
 //
 // if there is no d_c0 cookie, return error.
-func GetCookies() (cookies []*http.Cookie, err error) {
+func GetCookies(logger *zap.Logger) (cookies []*http.Cookie, err error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "https://www.zhihu.com/people/canglimo", nil)
 	if err != nil {
@@ -29,26 +30,37 @@ func GetCookies() (cookies []*http.Cookie, err error) {
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+	count := 3
+	for count <= 0 {
+		count--
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("status code error")
-	}
+		resp, err := client.Do(req)
+		if err != nil {
+			logger.Error("Fail to do request", zap.Error(err))
+			continue
+		}
+		defer resp.Body.Close()
 
-	for _, cookie := range resp.Cookies() {
-		if cookie.Name == "d_c0" {
-			return resp.Cookies(), nil
+		if resp.StatusCode != http.StatusOK {
+			err = fmt.Errorf("response status code error: %d", resp.StatusCode)
+			logger.Error("Bad response status", zap.Error(err))
+			continue
+		}
+
+		for _, cookie := range resp.Cookies() {
+			if cookie.Name == "d_c0" {
+				return resp.Cookies(), nil
+			}
+		}
+
+		if err = checkTooManyRequest(resp.Body); err != nil {
+			logger.Error("Too many request", zap.Error(err))
 		}
 	}
 
-	if err = checkTooManyRequest(resp.Body); err != nil {
-		return nil, err
+	if err == nil {
+		return nil, errors.New("no d_c0 cookie")
 	}
-
 	return nil, errors.New("no d_c0 cookie")
 }
 

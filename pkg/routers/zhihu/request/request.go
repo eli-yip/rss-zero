@@ -47,7 +47,7 @@ func NewRequestService(dC0 *string, logger *zap.Logger) (request.Requester, erro
 	}
 
 	if dC0 == nil {
-		cookies, err := encrypt.GetCookies()
+		cookies, err := encrypt.GetCookies(logger)
 		if err != nil {
 			return nil, err
 		}
