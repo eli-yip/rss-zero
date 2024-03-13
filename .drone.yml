@@ -50,8 +50,8 @@ steps:
         from_secret: docker_hub_token
     commands:
       - echo $DOCKER_HUB_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-      - docker build -t "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}" -f docker/Dockerfile.server .
-      - docker tag "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}" $${DOCKER_HUB_USERNAME}/rss-zero:latest
+      - docker build --build-arg "VERSION=${DRONE_TAG##v}" -t "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}" -f docker/Dockerfile.server .
+      - docker tag "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG}" $${DOCKER_HUB_USERNAME}/rss-zero:latest
       - docker run -v /var/run/docker.sock:/var/run/docker.sock $${DOCKER_HUB_USERNAME}/slim:1.40.11 build --tag "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}-slim" --http-probe=false --target "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}"
       - docker tag "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}-slim" $${DOCKER_HUB_USERNAME}/rss-zero:latest-slim
     depends_on:

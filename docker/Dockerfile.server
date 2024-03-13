@@ -1,5 +1,7 @@
 FROM golang:1.22-alpine3.19 AS builder
 
+ARG version="0.0.0"
+
 WORKDIR /app
 
 COPY go.mod go.sum ./
@@ -10,7 +12,7 @@ RUN go env -w GO111MODULE=on && \
 
 COPY . .
 
-RUN go build -tags="timetzdata" -o server ./cmd/server
+RUN go build -ldflags "-X github.com/eli-yip/rss-zero/config.Version=${VERSION}" -tags="timetzdata" -o server ./cmd/server
 
 FROM alpine:3.19
 

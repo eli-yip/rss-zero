@@ -49,7 +49,7 @@ func main() {
 
 	// Start echo server
 	go func() {
-		logger.Info("start server", zap.String("address", ":8080"))
+		logger.Info("start server", zap.String("address", ":8080"), zap.String("version", config.Version))
 		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal("shutting down the server")
 		}
