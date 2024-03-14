@@ -88,7 +88,7 @@ type apiResp struct {
 
 // badAPIResp zsxq api bad response
 type badAPIResp struct {
-	// - 1059 for too many requests
+	// - 1059 for too many requests due to no sign
 	//
 	// - 401 for invalid cookie
 	Code int `json:"code"`
@@ -149,7 +149,7 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 			_ = r.redisService.Set(redis.ZsxqCookiePath, "", 0)
 			return nil, ErrInvalidCookie
 		case 1059:
-			logger.Error("too many requests, sleep 10s")
+			logger.Error("too many requests due to no sign, sleep 10s")
 			time.Sleep(time.Second * 10)
 			continue
 		default:
