@@ -57,7 +57,7 @@ func (s *ParseService) ParseTopic(result *models.TopicParseResult) (text string,
 	logger.Info("successfully decode create time", zap.Time("create_time", createTimeInTime))
 
 	// Render topic to markdown text
-	if text, err := s.render.ToText(&render.Topic{
+	if text, err := s.render.Text(&render.Topic{
 		ID:         result.Topic.TopicID,
 		Type:       result.Topic.Type,
 		Talk:       result.Topic.Talk,

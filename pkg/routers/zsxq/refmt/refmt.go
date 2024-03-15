@@ -203,7 +203,7 @@ func (s *RefmtService) formatTopic(topic *zsxqDB.Topic, errCh chan errMessage) {
 	logger.Info("Got author name")
 
 	// render topic
-	textBytes, err := s.render.ToText(&render.Topic{
+	textBytes, err := s.render.Text(&render.Topic{
 		ID:         topic.ID,
 		Type:       result.Topic.Type,
 		Talk:       result.Topic.Talk,

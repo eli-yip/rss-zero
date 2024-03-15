@@ -2,6 +2,7 @@ package md
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/Kunde21/markdownfmt/v3/markdown"
 	"github.com/yuin/goldmark"
@@ -32,9 +33,8 @@ func newMdFormatter() goldmark.Markdown {
 
 func (m *MarkdownFormatter) FormatStr(src string) (string, error) {
 	var buf bytes.Buffer
-	err := m.formatter.Convert([]byte(src), &buf)
-	if err != nil {
-		return "", err
+	if err := m.formatter.Convert([]byte(src), &buf); err != nil {
+		return "", fmt.Errorf("fail to format text: %w", err)
 	}
 
 	return buf.String(), nil

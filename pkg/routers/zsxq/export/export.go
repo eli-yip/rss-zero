@@ -92,7 +92,7 @@ func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
 		}
 
 		for i, topic := range topics {
-			fullText, err := s.mr.ToFullText(
+			fullText, err := s.mr.FullText(
 				&render.Topic{
 					ID:        topic.ID,
 					Title:     topic.Title,
