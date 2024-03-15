@@ -1,6 +1,6 @@
 FROM golang:1.22-alpine3.19 AS builder
 
-ARG version="0.0.0"
+ARG VERSION="0.0.0"
 
 WORKDIR /app
 
