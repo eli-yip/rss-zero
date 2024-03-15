@@ -3,6 +3,7 @@ package request
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"math/rand/v2"
 	"net/http"
@@ -62,14 +63,14 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 		logger := logger.With(zap.Int("index", i))
 		<-r.limiter
 
-		req, err := r.setAPIReq(u)
-		if err != nil {
+		var req *http.Request
+		if req, err = r.setAPIReq(u); err != nil {
 			logger.Error("Failed newing a request", zap.Error(err))
 			continue
 		}
 
-		resp, err := r.client.Do(req)
-		if err != nil {
+		var resp *http.Response
+		if resp, err = r.client.Do(req); err != nil {
 			logger.Error("Failed request url", zap.Error(err))
 			continue
 		}
@@ -77,27 +78,28 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 
 		if resp.StatusCode != http.StatusOK {
 			logger.Error("Status code not 200", zap.Int("status", resp.StatusCode))
+			err = fmt.Errorf("status code not 200, %d", resp.StatusCode)
 			continue
 		}
 
-		bytes, err := io.ReadAll(resp.Body)
-		if err != nil {
+		var bytes []byte
+		if bytes, err = io.ReadAll(resp.Body); err != nil {
 			logger.Error("Failed reading response body", zap.Error(err))
 			continue
 		}
 
 		var apiResp baseResp
-		if err := json.Unmarshal(bytes, &apiResp); err != nil {
+		if err = json.Unmarshal(bytes, &apiResp); err != nil {
 			logger.Error("Failed unmarshaling response bytes", zap.Error(err))
 			continue
 		}
 
-		if err := r.validateAPIResp(apiResp.Code, bytes, logger); err != nil {
+		if err = r.validateAPIResp(apiResp.Code, bytes, logger); err != nil {
 			return nil, err
 		}
 
 		var okResp okResp
-		if err := json.Unmarshal(bytes, &okResp); err != nil {
+		if err = json.Unmarshal(bytes, &okResp); err != nil {
 			logger.Error("Failed unmarshaling response bytes", zap.Error(err))
 			return nil, err
 		}
