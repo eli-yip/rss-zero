@@ -116,7 +116,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// set target time to long long ago, as one time mode is enabled, this will not cause bugs
 					// enable one time mode as we do not know latest time in db(no answer found in db)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, longLongago, 0, true, logger); err != nil {
+					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, longLongAgo, 0, true, logger); err != nil {
 						errCount++
 						logger.Error("failed to crawl answer", zap.Error(err))
 						continue
@@ -160,7 +160,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// set target time to long long ago, as one time mode is enabled, this will not cause bugs
 					// enable one time mode as we do not know latest time in db(no article found in db)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, longLongago, 0, true, logger); err != nil {
+					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, longLongAgo, 0, true, logger); err != nil {
 						errCount++
 						logger.Error("failed to crawl article", zap.Error(err))
 						continue
@@ -206,7 +206,7 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// set target time to long long ago, as one time mode is enabled, this will not cause bugs
 					// enable one time mode as we do not know latest time in db(no pin found in db)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, longLongago, 0, true, logger); err != nil {
+					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, longLongAgo, 0, true, logger); err != nil {
 						errCount++
 						logger.Error("failed to crawl pin", zap.Error(err))
 						continue

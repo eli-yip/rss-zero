@@ -3,6 +3,7 @@ package cron
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -17,23 +18,23 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
+
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
-
-const zsxqRssPath = "zsxq_rss_%d"
 
 func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		// Init services
 		logger := log.NewZapLogger()
+
 		var err error
 		var errCount int = 0
 
 		defer func() {
 			if errCount > 0 {
 				if err = notifier.Notify("CrawlZsxq failed", ""); err != nil {
-					logger.Error("fail to send zsxq failure notification", zap.Error(err))
+					logger.Error("Fail to send zsxq failure notification", zap.Error(err))
 				}
 			}
 			if err := recover(); err != nil {
@@ -43,166 +44,213 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 
 		// Get cookie from redis, if not exist, log an cookie error.
 		var cookie string
-		if cookie, err = redisService.Get(redis.ZsxqCookiePath); err != nil {
-			errCount++
-			if errors.Is(err, redis.ErrKeyNotExist) {
-				logger.Error("cookie not found in redis, notify user")
-				_ = notifier.Notify("No cookie for zsxq", "not found in redis")
-			}
-			logger.Error("failed to get cookie from redis", zap.Error(err))
+		if cookie, err = getZsxqCookie(redisService, notifier, logger); err != nil {
+			logger.Error("Fail to get zsxq cookie", zap.Error(err))
 			return
 		}
+		logger.Info("Get zsxq cookie", zap.String("cookie", cookie))
 
-		var (
-			dbService      zsxqDB.DB
-			requestService requestIface.Requester
-			fileService    file.File
-			aiService      ai.AI
-			parseService   parse.Parser
-			markdownRender render.MarkdownRenderer
-		)
-
-		dbService = zsxqDB.NewZsxqDBService(db)
-		logger.Info("zsxq database service initialized")
-
-		requestService = request.NewRequestService(cookie, redisService, logger)
-		logger.Info("request service initialized")
-
-		fileService, err = file.NewFileServiceMinio(config.C.Minio, logger)
+		dbService, requestService, parseService, err := prepareZsxqServices(cookie, redisService, db, logger)
 		if err != nil {
-			errCount++
-			logger.Error("failed to initialize file service", zap.Error(err))
+			logger.Error("Fail to init zsxq services", zap.Error(err))
 			return
 		}
-		logger.Info("file service initialized")
-
-		aiService = ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
-		logger.Info("ai service initialized",
-			zap.String("api key", config.C.OpenAIApiKey),
-			zap.String("api url", config.C.OpenAIBaseURL))
-
-		markdownRender = render.NewMarkdownRenderService(dbService, logger)
-		logger.Info("markdown render service initialized")
-
-		parseService, err = parse.NewParseService(
-			fileService,
-			requestService,
-			dbService,
-			aiService,
-			markdownRender,
-			parse.WithLogger(logger))
-		if err != nil {
-			errCount++
-			logger.Error("failed to initialize parse service", zap.Error(err))
-			return
-		}
-		logger.Info("parse service initialized")
 
 		// Get group IDs from database, which is a list of int.
 		var groupIDs []int
-
 		if groupIDs, err = dbService.GetZsxqGroupIDs(); err != nil {
-			errCount++
-			logger.Error("failed to get group IDs from database", zap.Error(err))
+			logger.Error("Fail to get group IDs from database", zap.Error(err))
 			return
 		}
+		logger.Info("Get group ids from database", zap.Int("Group id count", len(groupIDs)))
 
+		rssRenderer := render.NewRSSRenderService()
+		logger.Info("Init zsxq rss render service")
+
+	crawl:
 		// Iterate group IDs
 		for _, groupID := range groupIDs {
-			logger.Info(fmt.Sprintf("crawling group %d", groupID))
+			logger.Info("Start to crawl gorup", zap.Int("group id", groupID))
+
 			// Get latest topic time from database
 			var latestTopicTimeInDB time.Time
-			if latestTopicTimeInDB, err = dbService.GetLatestTopicTime(groupID); err != nil {
+			if latestTopicTimeInDB, err = getTargetTime(groupID, dbService, logger); err != nil {
 				errCount++
-				logger.Error("failed to get latest topic time from database", zap.Error(err))
-				return
-			}
-			if latestTopicTimeInDB.IsZero() {
-				latestTopicTimeInDB = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
-				logger.Info("no topic in database, set latest topic time to 1970-01-01 00:00:00")
-			} else {
-				logger.Info(fmt.Sprintf("latest topic time in database: %s", latestTopicTimeInDB.Format("2006-01-02 15:04:05")))
+				logger.Error("Fail to get latest topic time from database", zap.Error(err))
+				goto crawl
 			}
 
 			// Get latest topics from zsxq
 			if err = crawl.CrawlGroup(groupID, requestService, parseService,
 				latestTopicTimeInDB, false, false, time.Time{}, logger); err != nil {
 				errCount++
-				logger.Error("failed to crawl group", zap.Error(err))
-				return
+				logger.Error("Fail to crawl group", zap.Error(err))
+				goto crawl
 			}
 
 			if err = dbService.UpdateCrawlTime(groupID, time.Now()); err != nil {
-				logger.Error("failed to update crawl time", zap.Error(err))
-				return
+				logger.Error("Fail to update crawl time", zap.Error(err))
+				goto crawl
 			}
 
-			// Output rss to redis
-			var rssTopics []render.RSSTopic
 			var topics []zsxqDB.Topic
-			if topics, err = dbService.GetLatestNTopics(groupID, config.DefaultFetchCount); err != nil {
+			if topics, err = fetchTopics(groupID, latestTopicTimeInDB, dbService, logger); err != nil {
 				errCount++
-				logger.Error("failed to get latest topics from database", zap.Error(err))
-				return
-			}
-
-			fetchCount := config.DefaultFetchCount
-			for topics[len(topics)-1].Time.After(latestTopicTimeInDB) && len(topics) == fetchCount {
-				fetchCount += 10
-				if topics, err = dbService.GetLatestNTopics(groupID, fetchCount); err != nil {
-					errCount++
-					logger.Error("failed to get latest topics from database", zap.Error(err))
-					return
-				}
+				logger.Error("Fail to get latest topics from database", zap.Error(err))
+				goto crawl
 			}
 
 			var groupName string
 			if groupName, err = dbService.GetGroupName(groupID); err != nil {
 				errCount++
-				logger.Error("failed to get group name from database", zap.Error(err))
-				return
+				logger.Error("Fail to get group name from database", zap.Error(err), zap.Int("group id", groupID))
+				goto crawl
 			}
 
-			for _, topic := range topics {
-				logger := logger.With(zap.Int("topic_id", topic.ID))
-
-				supportTypes := map[string]struct{}{
-					"talk": {},
-					"q&a":  {},
-				}
-				if _, ok := supportTypes[topic.Type]; !ok {
-					logger.Info("unsupported topic type", zap.String("type", topic.Type))
-					continue
-				}
-
-				var authorName string
-				if authorName, err = dbService.GetAuthorName(topic.AuthorID); err != nil {
-					errCount++
-					logger.Error("failed to get author name from database", zap.Error(err), zap.Int("author_id", topic.AuthorID))
-				}
-
-				rssTopics = append(rssTopics, render.RSSTopic{
-					TopicID:    topic.ID,
-					GroupName:  groupName,
-					GroupID:    topic.GroupID,
-					Title:      topic.Title,
-					AuthorName: authorName,
-					ShareLink:  topic.ShareLink,
-					CreateTime: topic.Time,
-					Text:       topic.Text,
-				})
-			}
-			rssRenderer := render.NewRSSRenderService()
-			var result string
-			result, err = rssRenderer.RenderRSS(rssTopics)
-			if err != nil {
+			var rssTopics []render.RSSTopic
+			if rssTopics, err = buildRSSTopic(topics, dbService, groupName, logger); err != nil {
 				errCount++
-				logger.Error("failed to render rss", zap.Error(err))
+				logger.Error("Fail to build rss topics", zap.Error(err))
+				goto crawl
 			}
-			if err = redisService.Set(fmt.Sprintf(zsxqRssPath, groupID), result, redis.DefaultTTL); err != nil {
+
+			var rssContent string
+			if rssContent, err = rssRenderer.RenderRSS(rssTopics); err != nil {
 				errCount++
-				logger.Error("failed to set rss to redis", zap.Error(err))
+				logger.Error("Fail to render rss content", zap.Error(err))
+			}
+
+			if err = redisService.Set(fmt.Sprintf(redis.ZsxqRSSPath, strconv.Itoa(groupID)), rssContent, redis.DefaultTTL); err != nil {
+				errCount++
+				logger.Error("Fail to save rss content to cache", zap.Error(err))
 			}
 		}
 	}
+}
+
+// getTargetTime get the latest time in database,
+// returns unix 0 in case that no topics in database.
+func getTargetTime(groupID int, dbService zsxqDB.DB, logger *zap.Logger) (targetTime time.Time, err error) {
+	if targetTime, err = dbService.GetLatestTopicTime(groupID); err != nil {
+		logger.Error("Fail to get latest topic time from database", zap.Error(err))
+		return time.Time{}, nil
+	}
+	if targetTime.IsZero() {
+		targetTime = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+		logger.Info("Found no topic in database, set latest topic time to 1970-01-01 00:00:00")
+	} else {
+		logger.Info("Found latest topic time in database", zap.String("latest topic time", targetTime.Format("2006-01-02 15:04:05")))
+	}
+	return targetTime, nil
+}
+
+func prepareZsxqServices(cookie string, redisService redis.Redis, db *gorm.DB, logger *zap.Logger,
+) (dbService zsxqDB.DB, requestService requestIface.Requester, parseService parse.Parser, err error) {
+	dbService = zsxqDB.NewZsxqDBService(db)
+	logger.Info("Init zsxq database service")
+
+	requestService = request.NewRequestService(cookie, redisService, logger)
+	logger.Info("Init zsxq request service")
+
+	var fileService file.File
+	if fileService, err = file.NewFileServiceMinio(config.C.Minio, logger); err != nil {
+		logger.Error("Fail to init file service", zap.Error(err))
+		return nil, nil, nil, err
+	}
+	logger.Info("Init file service")
+
+	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+	logger.Info("Init AI service",
+		zap.String("api key", config.C.OpenAIApiKey),
+		zap.String("openai base url", config.C.OpenAIBaseURL))
+
+	markdownRender := render.NewMarkdownRenderService(dbService, logger)
+	logger.Info("Init zsxq markdown render service")
+
+	if parseService, err = parse.NewParseService(
+		fileService,
+		requestService,
+		dbService,
+		aiService,
+		markdownRender,
+		parse.WithLogger(logger)); err != nil {
+		logger.Error("Fail to init zsxq parse service", zap.Error(err))
+		return nil, nil, nil, err
+	}
+	logger.Info("Init zsxq parse service")
+	return dbService, requestService, parseService, nil
+}
+
+func getZsxqCookie(redisService redis.Redis, notifier notify.Notifier, logger *zap.Logger) (cookie string, err error) {
+	if cookie, err = redisService.Get(redis.ZsxqCookiePath); err != nil {
+		if errors.Is(err, redis.ErrKeyNotExist) {
+			logger.Error("No zsxq cookie found in redis, notify user now")
+			if err = notifier.Notify("No zsxq cookie in redis", ""); err != nil {
+				logger.Error("Failed to notice user there is no zsxq cookie", zap.Error(err))
+			}
+		}
+		logger.Error("Failed to get zsxq cookie from redis", zap.Error(err))
+		return "", err
+	}
+	return cookie, nil
+}
+
+// fetchTopics gets all unrendered(if topics count is less then 20) or 20 topics,
+// the length of slice will be multiples of 10.
+func fetchTopics(groupID int, latestTopicTimeInDB time.Time, dbService zsxqDB.DB, logger *zap.Logger) (topics []zsxqDB.Topic, err error) {
+	fetchCount := config.DefaultFetchCount
+	for topics[len(topics)-1].Time.After(latestTopicTimeInDB) && len(topics) == fetchCount {
+		fetchCount += 10
+		if topics, err = dbService.GetLatestNTopics(groupID, fetchCount); err != nil {
+			logger.Error("Fail to get latest topics from database", zap.Error(err), zap.Int("fetch count", fetchCount))
+			return nil, err
+		}
+	}
+	return topics, nil
+}
+
+// buildRSSTopic returns rss topics slice for render service
+func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string, logger *zap.Logger) (rssTopics []render.RSSTopic, err error) {
+	for _, topic := range topics {
+		logger := logger.With(zap.Int("topic_id", topic.ID))
+
+		if !support(topic.Type) {
+			logger.Info("Found unsupported topic type", zap.String("topic type", topic.Type))
+			continue
+		}
+
+		var authorName string
+		if authorName, err = dbService.GetAuthorName(topic.AuthorID); err != nil {
+			logger.Error("Fail to get author name from database", zap.Error(err), zap.Int("author_id", topic.AuthorID))
+			return nil, err
+		}
+
+		rssTopics = append(rssTopics, render.RSSTopic{
+			TopicID:    topic.ID,
+			GroupName:  groupName,
+			GroupID:    topic.GroupID,
+			Title:      topic.Title,
+			AuthorName: authorName,
+			ShareLink:  topic.ShareLink,
+			CreateTime: topic.Time,
+			Text:       topic.Text,
+		})
+	}
+
+	return rssTopics, nil
+}
+
+// support check whether the topic is supported by render service
+//
+// TODO: put this function in render package
+func support(topicType string) (support bool) {
+	supportTypes := map[string]struct{}{
+		"talk": {},
+		"q&a":  {},
+	}
+
+	if _, ok := supportTypes[topicType]; !ok {
+		return false
+	}
+	return true
 }
