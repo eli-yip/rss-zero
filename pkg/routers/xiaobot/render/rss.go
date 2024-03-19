@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/gorilla/feeds"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -63,19 +64,14 @@ func (r *RSSRenderService) Render(rs []RSS) (rss string, err error) {
 		}
 
 		feedItem := feeds.Item{
-			Title:  rr.Title,
-			Link:   &feeds.Link{Href: rr.Link},
-			Author: &feeds.Author{Name: rr.AuthorName},
-			Id:     rr.ID,
-			Description: func() string {
-				if buffer.Len() > 200 {
-					return buffer.String()[:200]
-				}
-				return buffer.String()
-			}(),
-			Created: rr.CreateTime,
-			Updated: rr.CreateTime,
-			Content: buffer.String(),
+			Title:       rr.Title,
+			Link:        &feeds.Link{Href: rr.Link},
+			Author:      &feeds.Author{Name: rr.AuthorName},
+			Id:          rr.ID,
+			Description: render.ExtractExcerpt(rr.Text),
+			Created:     rr.CreateTime,
+			Updated:     rr.CreateTime,
+			Content:     buffer.String(),
 		}
 
 		rssFeed.Items = append(rssFeed.Items, &feedItem)

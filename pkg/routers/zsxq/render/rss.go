@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/gorilla/feeds"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
@@ -53,19 +54,13 @@ func (r *RSSRenderService) RenderRSS(ts []RSSTopic) (output string, err error) {
 				}
 				return strconv.Itoa(t.TopicID)
 			}(),
-			Link:   &feeds.Link{Href: t.ShareLink},
-			Author: &feeds.Author{Name: t.AuthorName},
-			Id:     strconv.Itoa(t.TopicID),
-			Description: func() string {
-				// up to 100 word of text
-				if len(t.Text) > 100 {
-					return t.Text[:100]
-				}
-				return t.Text
-			}(),
-			Created: t.CreateTime,
-			Updated: t.CreateTime,
-			Content: buffer.String(),
+			Link:        &feeds.Link{Href: t.ShareLink},
+			Author:      &feeds.Author{Name: t.AuthorName},
+			Id:          strconv.Itoa(t.TopicID),
+			Description: render.ExtractExcerpt(t.Text),
+			Created:     t.CreateTime,
+			Updated:     t.CreateTime,
+			Content:     buffer.String(),
 		}
 
 		rssFeed.Items = append(rssFeed.Items, &feedItem)
