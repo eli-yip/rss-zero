@@ -67,7 +67,6 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 		rssRenderer := render.NewRSSRenderService()
 		logger.Info("Init zsxq rss render service")
 
-	crawl:
 		// Iterate group IDs
 		for _, groupID := range groupIDs {
 			logger.Info("Start to crawl gorup", zap.Int("group id", groupID))
@@ -77,7 +76,7 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 			if latestTopicTimeInDB, err = getTargetTime(groupID, dbService, logger); err != nil {
 				errCount++
 				logger.Error("Fail to get latest topic time from database", zap.Error(err))
-				goto crawl
+				continue
 			}
 
 			// Get latest topics from zsxq
@@ -85,44 +84,38 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 				latestTopicTimeInDB, false, false, time.Time{}, logger); err != nil {
 				errCount++
 				logger.Error("Fail to crawl group", zap.Error(err))
-				goto crawl
+				continue
 			}
 
 			if err = dbService.UpdateCrawlTime(groupID, time.Now()); err != nil {
 				logger.Error("Fail to update crawl time", zap.Error(err))
-				goto crawl
+				continue
 			}
 
 			var topics []zsxqDB.Topic
 			if topics, err = fetchTopics(groupID, latestTopicTimeInDB, dbService, logger); err != nil {
 				errCount++
 				logger.Error("Fail to get latest topics from database", zap.Error(err))
-				goto crawl
+				continue
 			}
 
 			var groupName string
 			if groupName, err = dbService.GetGroupName(groupID); err != nil {
 				errCount++
 				logger.Error("Fail to get group name from database", zap.Error(err), zap.Int("group id", groupID))
-				goto crawl
+				continue
 			}
 
 			var rssTopics []render.RSSTopic
 			if rssTopics, err = buildRSSTopic(topics, dbService, groupName, logger); err != nil {
 				errCount++
 				logger.Error("Fail to build rss topics", zap.Error(err))
-				goto crawl
+				continue
 			}
 
-			var rssContent string
-			if rssContent, err = rssRenderer.RenderRSS(rssTopics); err != nil {
+			if err = renderAndSaveRSSContent(groupID, rssTopics, rssRenderer, redisService, logger); err != nil {
 				errCount++
-				logger.Error("Fail to render rss content", zap.Error(err))
-			}
-
-			if err = redisService.Set(fmt.Sprintf(redis.ZsxqRSSPath, strconv.Itoa(groupID)), rssContent, redis.DefaultTTL); err != nil {
-				errCount++
-				logger.Error("Fail to save rss content to cache", zap.Error(err))
+				logger.Error("Fail to render and save rss content", zap.Error(err))
 			}
 		}
 	}
@@ -214,7 +207,7 @@ func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string,
 	for _, topic := range topics {
 		logger := logger.With(zap.Int("topic_id", topic.ID))
 
-		if !support(topic.Type) {
+		if !render.Support(topic.Type) {
 			logger.Info("Found unsupported topic type", zap.String("topic type", topic.Type))
 			continue
 		}
@@ -240,17 +233,17 @@ func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string,
 	return rssTopics, nil
 }
 
-// support check whether the topic is supported by render service
-//
-// TODO: put this function in render package
-func support(topicType string) (support bool) {
-	supportTypes := map[string]struct{}{
-		"talk": {},
-		"q&a":  {},
+func renderAndSaveRSSContent(groupID int, rssTopics []render.RSSTopic, rssRenderService render.RSSRenderer, redisService redis.Redis, logger *zap.Logger) (err error) {
+	var rssContent string
+	if rssContent, err = rssRenderService.RenderRSS(rssTopics); err != nil {
+		logger.Error("Fail to render rss content", zap.Error(err))
+		return err
 	}
 
-	if _, ok := supportTypes[topicType]; !ok {
-		return false
+	if err = redisService.Set(fmt.Sprintf(redis.ZsxqRSSPath, strconv.Itoa(groupID)), rssContent, redis.DefaultTTL); err != nil {
+		logger.Error("Fail to save rss content to cache", zap.Error(err))
+		return err
 	}
-	return true
+
+	return nil
 }
