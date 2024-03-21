@@ -23,7 +23,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
+func CronZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		// Init services
 		logger := log.NewZapLogger()
@@ -50,7 +50,8 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 		}
 		logger.Info("Get zsxq cookie", zap.String("cookie", cookie))
 
-		dbService, requestService, parseService, err := prepareZsxqServices(cookie, redisService, db, logger)
+		// init services needed by cron crawl and render job
+		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(cookie, redisService, db, logger)
 		if err != nil {
 			logger.Error("Fail to init zsxq services", zap.Error(err))
 			return
@@ -64,61 +65,65 @@ func CrawlZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) 
 		}
 		logger.Info("Get group ids from database", zap.Int("Group id count", len(groupIDs)))
 
-		rssRenderer := render.NewRSSRenderService()
-		logger.Info("Init zsxq rss render service")
-
 		// Iterate group IDs
 		for _, groupID := range groupIDs {
 			logger.Info("Start to crawl gorup", zap.Int("group id", groupID))
 
-			// Get latest topic time from database
-			var latestTopicTimeInDB time.Time
-			if latestTopicTimeInDB, err = getTargetTime(groupID, dbService, logger); err != nil {
+			if err = cronGroup(groupID, requestService, parseService, redisService, rssRenderer, dbService, logger); err != nil {
 				errCount++
-				logger.Error("Fail to get latest topic time from database", zap.Error(err))
+				logger.Error("Fail to do cron job on group", zap.Error(err))
 				continue
 			}
 
-			// Get latest topics from zsxq
-			if err = crawl.CrawlGroup(groupID, requestService, parseService,
-				latestTopicTimeInDB, false, false, time.Time{}, logger); err != nil {
-				errCount++
-				logger.Error("Fail to crawl group", zap.Error(err))
-				continue
-			}
-
-			if err = dbService.UpdateCrawlTime(groupID, time.Now()); err != nil {
-				logger.Error("Fail to update crawl time", zap.Error(err))
-				continue
-			}
-
-			var topics []zsxqDB.Topic
-			if topics, err = fetchTopics(groupID, latestTopicTimeInDB, dbService, logger); err != nil {
-				errCount++
-				logger.Error("Fail to get latest topics from database", zap.Error(err))
-				continue
-			}
-
-			var groupName string
-			if groupName, err = dbService.GetGroupName(groupID); err != nil {
-				errCount++
-				logger.Error("Fail to get group name from database", zap.Error(err), zap.Int("group id", groupID))
-				continue
-			}
-
-			var rssTopics []render.RSSTopic
-			if rssTopics, err = buildRSSTopic(topics, dbService, groupName, logger); err != nil {
-				errCount++
-				logger.Error("Fail to build rss topics", zap.Error(err))
-				continue
-			}
-
-			if err = renderAndSaveRSSContent(groupID, rssTopics, rssRenderer, redisService, logger); err != nil {
-				errCount++
-				logger.Error("Fail to render and save rss content", zap.Error(err))
-			}
+			logger.Info("Done cron job on group")
 		}
 	}
+}
+
+func cronGroup(groupID int, requestService requestIface.Requester, parseService parse.Parser, redisService redis.Redis, rssRenderService render.RSSRenderer, dbService zsxqDB.DB, logger *zap.Logger) (err error) {
+	// Get latest topic time from database
+	var latestTopicTimeInDB time.Time
+	if latestTopicTimeInDB, err = getTargetTime(groupID, dbService, logger); err != nil {
+		logger.Error("Fail to get latest topic time from database", zap.Error(err))
+		return err
+	}
+
+	// Get latest topics from zsxq
+	if err = crawl.CrawlGroup(groupID, requestService, parseService,
+		latestTopicTimeInDB, false, false, time.Time{}, logger); err != nil {
+		logger.Error("Fail to crawl group", zap.Error(err))
+		return err
+	}
+
+	if err = dbService.UpdateCrawlTime(groupID, time.Now()); err != nil {
+		logger.Error("Fail to update crawl time", zap.Error(err))
+		return err
+	}
+
+	var topics []zsxqDB.Topic
+	if topics, err = fetchTopics(groupID, latestTopicTimeInDB, dbService, logger); err != nil {
+		logger.Error("Fail to get latest topics from database", zap.Error(err))
+		return err
+	}
+
+	var groupName string
+	if groupName, err = dbService.GetGroupName(groupID); err != nil {
+		logger.Error("Fail to get group name from database", zap.Error(err), zap.Int("group id", groupID))
+		return err
+	}
+
+	var rssTopics []render.RSSTopic
+	if rssTopics, err = buildRSSTopic(topics, dbService, groupName, logger); err != nil {
+		logger.Error("Fail to build rss topics", zap.Error(err))
+		return err
+	}
+
+	if err = renderAndSaveRSSContent(groupID, rssTopics, rssRenderService, redisService, logger); err != nil {
+		logger.Error("Fail to render and save rss content", zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 // getTargetTime get the latest time in database,
@@ -138,7 +143,7 @@ func getTargetTime(groupID int, dbService zsxqDB.DB, logger *zap.Logger) (target
 }
 
 func prepareZsxqServices(cookie string, redisService redis.Redis, db *gorm.DB, logger *zap.Logger,
-) (dbService zsxqDB.DB, requestService requestIface.Requester, parseService parse.Parser, err error) {
+) (dbService zsxqDB.DB, requestService requestIface.Requester, parseService parse.Parser, rssRenderService render.RSSRenderer, err error) {
 	dbService = zsxqDB.NewZsxqDBService(db)
 	logger.Info("Init zsxq database service")
 
@@ -148,7 +153,7 @@ func prepareZsxqServices(cookie string, redisService redis.Redis, db *gorm.DB, l
 	var fileService file.File
 	if fileService, err = file.NewFileServiceMinio(config.C.Minio, logger); err != nil {
 		logger.Error("Fail to init file service", zap.Error(err))
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	logger.Info("Init file service")
 
@@ -168,10 +173,14 @@ func prepareZsxqServices(cookie string, redisService redis.Redis, db *gorm.DB, l
 		markdownRender,
 		parse.WithLogger(logger)); err != nil {
 		logger.Error("Fail to init zsxq parse service", zap.Error(err))
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	logger.Info("Init zsxq parse service")
-	return dbService, requestService, parseService, nil
+
+	rssRenderService = render.NewRSSRenderService()
+	logger.Info("Init zsxq rss render service")
+
+	return dbService, requestService, parseService, rssRenderService, nil
 }
 
 func getZsxqCookie(redisService redis.Redis, notifier notify.Notifier, logger *zap.Logger) (cookie string, err error) {

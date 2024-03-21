@@ -239,7 +239,7 @@ func setupCron(logger *zap.Logger,
 		fn   cronFunc
 	}
 	cronjobs := []cronJob{
-		{"zsxq crawl", cron.CrawlZsxq},
+		{"zsxq crawl", cron.CronZsxq},
 		{"zhihu crawl", cron.CrawlZhihu},
 		{"xiaobot crawl", cron.CrawlXiaobot},
 	}
