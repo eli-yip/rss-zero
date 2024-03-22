@@ -1,7 +1,7 @@
 package db
 
 type Article struct {
-	ID    string `gorm:"column:id;primary_key"`
+	ID    string `gorm:"column:id;type:text;primary_key"`
 	URL   string `gorm:"column:url;type:text"`
 	Title string `gorm:"column:title;type:text"`
 	Text  string `gorm:"column:text;type:text"`
@@ -12,29 +12,27 @@ func (a *Article) TableName() string { return "zsxq_article" }
 
 type DBArticle interface {
 	// Save article to zsxq_article table
-	SaveArticle(a *Article) error
+	SaveArticle(article *Article) error
 	// Get article
-	GetArticle(aid string) (a *Article, err error)
+	GetArticle(articleID string) (*Article, error)
 	// Get article text by id from zsxq_article table
-	GetArticleText(aid string) (text string, err error)
+	GetArticleText(articleID string) (text string, err error)
 }
 
-func (s *ZsxqDBService) SaveArticle(a *Article) error {
-	return s.db.Save(a).Error
-}
+func (s *ZsxqDBService) SaveArticle(article *Article) error { return s.db.Save(article).Error }
 
-func (s *ZsxqDBService) GetArticleText(aid string) (string, error) {
+func (s *ZsxqDBService) GetArticle(articleID string) (*Article, error) {
 	var article Article
-	if err := s.db.Where("id = ?", aid).First(&article).Error; err != nil {
-		return "", err
-	}
-	return article.Text, nil
-}
-
-func (s *ZsxqDBService) GetArticle(aid string) (*Article, error) {
-	var article Article
-	if err := s.db.Where("id = ?", aid).First(&article).Error; err != nil {
+	if err := s.db.Where("id = ?", articleID).First(&article).Error; err != nil {
 		return nil, err
 	}
 	return &article, nil
+}
+
+func (s *ZsxqDBService) GetArticleText(articleID string) (string, error) {
+	var article Article
+	if err := s.db.Where("id = ?", articleID).First(&article).Error; err != nil {
+		return "", err
+	}
+	return article.Text, nil
 }

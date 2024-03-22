@@ -10,29 +10,27 @@ func (a *Author) TableName() string { return "zsxq_author" }
 
 type DBAuthor interface {
 	// Save author info to zsxq_author table
-	SaveAuthor(a *Author) error
+	SaveAuthor(author *Author) error
 	// Get author name by id from zsxq_author table
-	GetAuthorName(aid int) (name string, err error)
+	GetAuthorName(authorID int) (authorName string, err error)
 	// Get author id by name or alias from zsxq_author table
-	GetAuthorID(name string) (id int, err error)
+	GetAuthorID(authorName string) (authorID int, err error)
 }
 
-func (s *ZsxqDBService) SaveAuthor(a *Author) error {
-	return s.db.Save(a).Error
-}
+func (s *ZsxqDBService) SaveAuthor(author *Author) error { return s.db.Save(author).Error }
 
-func (s *ZsxqDBService) GetAuthorID(name string) (int, error) {
+func (s *ZsxqDBService) GetAuthorName(authorID int) (authorName string, err error) {
 	var author Author
-	if err := s.db.Where("alias = ? or name = ?", name, name).First(&author).Error; err != nil {
-		return 0, err
-	}
-	return author.ID, nil
-}
-
-func (s *ZsxqDBService) GetAuthorName(aid int) (string, error) {
-	var author Author
-	if err := s.db.Where("id = ?", aid).First(&author).Error; err != nil {
+	if err = s.db.Where("id = ?", authorID).First(&author).Error; err != nil {
 		return "", err
 	}
 	return author.Name, nil
+}
+
+func (s *ZsxqDBService) GetAuthorID(authorName string) (authorID int, err error) {
+	var author Author
+	if err = s.db.Where("alias = ? or name = ?", authorName, authorName).First(&author).Error; err != nil {
+		return 0, err
+	}
+	return author.ID, nil
 }
