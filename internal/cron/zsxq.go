@@ -201,6 +201,10 @@ func getZsxqCookie(redisService redis.Redis, notifier notify.Notifier, logger *z
 // the length of slice will be multiples of 10.
 func fetchTopics(groupID int, latestTopicTimeInDB time.Time, dbService zsxqDB.DB, logger *zap.Logger) (topics []zsxqDB.Topic, err error) {
 	fetchCount := config.DefaultFetchCount
+	if topics, err = dbService.GetLatestNTopics(groupID, fetchCount); err != nil {
+		logger.Error("Fail to get latest topics from database", zap.Error(err), zap.Int("fetch count", fetchCount))
+		return nil, err
+	}
 	for topics[len(topics)-1].Time.After(latestTopicTimeInDB) && len(topics) == fetchCount {
 		fetchCount += 10
 		if topics, err = dbService.GetLatestNTopics(groupID, fetchCount); err != nil {
