@@ -49,7 +49,7 @@ func (r *RSSRenderService) RenderEmpty(contentType int, authorID string, authorN
 	}
 
 	rssFeed := &feeds.Feed{
-		Title:   authorName + "的知乎" + titleType,
+		Title:   "[知乎-" + titleType + "]" + authorName,
 		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", authorID, linkType)},
 		Created: defaultTime,
 		Updated: defaultTime,
@@ -69,7 +69,7 @@ func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err er
 	}
 
 	rssFeed := &feeds.Feed{
-		Title:   rs[0].AuthorName + "的知乎" + titleType,
+		Title:   "[知乎-" + titleType + "]" + rs[0].AuthorName,
 		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", rs[0].AuthorID, linkType)},
 		Created: rs[0].CreateTime,
 		Updated: rs[0].CreateTime,
