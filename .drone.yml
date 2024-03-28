@@ -24,14 +24,15 @@ steps:
           - pull_request
           - tag
 
-  - name: wait-for-dind
-    image: docker:25-cli
+  - name: wait-for-docker-dind
+    image: docker:26-cli
     volumes:
       - name: dockersock
         path: /var/run
     commands:
       - sleep 5
-      - docker ps -a
+      - until docker ps -a; do sleep 1; done
+      - echo "Docker is ready"
     depends_on:
       - lint
     when:
@@ -39,7 +40,7 @@ steps:
         - tag
 
   - name: build
-    image: docker:25-cli
+    image: docker:26-cli
     volumes:
       - name: dockersock
         path: /var/run
@@ -55,13 +56,13 @@ steps:
       - docker run -v /var/run/docker.sock:/var/run/docker.sock $${DOCKER_HUB_USERNAME}/slim:1.40.11 build --tag "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}-slim" --http-probe=false --target "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}"
       - docker tag "$${DOCKER_HUB_USERNAME}/rss-zero:${DRONE_TAG##v}-slim" $${DOCKER_HUB_USERNAME}/rss-zero:latest-slim
     depends_on:
-      - wait-for-dind
+      - wait-for-docker-dind
     when:
       event:
         - tag
 
   - name: publish
-    image: docker:25-cli
+    image: docker:26-cli
     volumes:
       - name: dockersock
         path: /var/run
@@ -99,7 +100,7 @@ steps:
 
 services:
   - name: docker
-    image: docker:25-dind
+    image: docker:26-dind
     privileged: true
     volumes:
       - name: dockersock
