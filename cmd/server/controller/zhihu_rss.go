@@ -163,12 +163,12 @@ func (h *ZhihuController) processTask() {
 
 // generateRSS generates rss content and set it to redis.
 func (h *ZhihuController) generateRSS(key string) (content string, err error) {
-	t, authorID, err := h.extractTypeAuthorFromKey(key)
+	contentType, authorID, err := h.extractTypeAuthorFromKey(key)
 	if err != nil {
 		return "", err
 	}
 
-	_, content, err = rss.GenerateZhihu(t, authorID, h.db, h.logger)
+	_, content, err = rss.GenerateZhihu(contentType, authorID, h.db, h.logger)
 	if err != nil {
 		return "", err
 	}

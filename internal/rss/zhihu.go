@@ -96,7 +96,7 @@ func generateZhihuAnswer(authorID, authorName string, rssRender render.RSSRender
 	}
 	if len(answers) == 0 {
 		logger.Info("No answer found, render empty rss")
-		return rssRender.RenderEmpty(common.TypeZhihuArticle, authorID, authorName)
+		return rssRender.RenderEmpty(common.TypeZhihuAnswer, authorID, authorName)
 	}
 	logger.Info("Get latest answers from database", zap.Int("answers count", len(answers)))
 
