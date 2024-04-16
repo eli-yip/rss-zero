@@ -125,7 +125,7 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 			if err := json.Unmarshal(c, &imageContent); err != nil {
 				return "", err
 			}
-			logger = logger.With(zap.String("url", imageContent.OriginalURL))
+			logger := logger.With(zap.String("url", imageContent.OriginalURL))
 
 			picID := URLToID(imageContent.OriginalURL)
 

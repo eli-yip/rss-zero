@@ -167,7 +167,8 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 	for i := 0; i < r.maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
 
-		req, err := r.setReq(u)
+		var req *http.Request
+		req, err = r.setReq(u)
 		if err != nil {
 			logger.Error("fail to new a request", zap.Error(err))
 			continue
@@ -183,7 +184,7 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 		if resp.StatusCode != http.StatusOK {
 			resp.Body.Close()
 			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
-			logger.Error("bad status code", zap.Error(err))
+			logger.Error("bad status code", zap.Int("status code", resp.StatusCode))
 			continue
 		}
 
