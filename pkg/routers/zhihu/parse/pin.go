@@ -173,7 +173,6 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 			textPart = append(textPart, text)
 		case "video":
 		default:
-			fmt.Println(string(c))
 			return "", fmt.Errorf("unknown content type: %s", contentType.Type)
 		}
 	}
