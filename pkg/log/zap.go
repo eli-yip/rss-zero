@@ -18,7 +18,7 @@ func NewZapLogger() *zap.Logger {
 	} else {
 		zapConfig = zap.NewProductionConfig()
 	}
-	zapConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
+	zapConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000")
 
 	logger, err := zapConfig.Build()
 	if err != nil {
