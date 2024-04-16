@@ -160,7 +160,6 @@ func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
 	return nil, nil
 }
 
-// Zsxq api does not support no limit stream
 func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error) {
 	logger := r.log.With(zap.String("url", u))
 	logger.Info("request without limit for stream")
@@ -191,7 +190,7 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 		return resp, nil
 	}
 
-	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
+	logger.Error("fail to get zhihu no limit stream", zap.Error(err))
 	return nil, err
 }
 
