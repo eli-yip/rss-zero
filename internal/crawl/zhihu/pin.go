@@ -3,6 +3,7 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/request"
@@ -52,6 +53,13 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 
 		for _, pin := range pinList {
 			logger := logger.With(zap.String("pin_id", pin.ID))
+
+			// see more in https://gitea.darkeli.com/yezi/rss-zero/issues/95
+			skipPins := []string{"1762436566352252928"}
+			if slices.Contains(skipPins, pin.ID) {
+				logger.Info("skip pin because images in it returns 400 error")
+				continue
+			}
 
 			if !time.Unix(pin.CreateAt, 0).After(targetTime) {
 				logger.Info("target time reached, break")
