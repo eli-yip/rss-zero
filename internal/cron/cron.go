@@ -1,9 +1,10 @@
 package cron
 
 import (
-	"github.com/eli-yip/rss-zero/config"
 	"github.com/go-co-op/gocron/v2"
 	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/config"
 )
 
 type CronService struct {
