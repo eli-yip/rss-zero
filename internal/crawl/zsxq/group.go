@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
-	"go.uber.org/zap"
 )
 
 const (
@@ -38,7 +39,7 @@ func CrawlGroup(groupID int, request request.Requester,
 
 		respByte, err := request.Limit(url)
 		if err != nil {
-			logger.Error("failed to request", zap.String("url", url), zap.Error(err))
+			logger.Error("fail to request url", zap.String("url", url), zap.Error(err))
 			return err
 		}
 

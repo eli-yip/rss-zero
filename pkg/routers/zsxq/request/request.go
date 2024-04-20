@@ -5,17 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/eli-yip/rss-zero/internal/redis"
-	"github.com/eli-yip/rss-zero/pkg/request"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
+
+	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/request"
 )
 
 var (
@@ -54,7 +55,7 @@ func NewRequestService(cookie string, redisService redis.Redis,
 	go func() {
 		for {
 			s.limiter <- struct{}{}
-			time.Sleep(time.Duration(30+rand.Intn(6)) * time.Second)
+			time.Sleep(time.Duration(30+rand.IntN(6)) * time.Second)
 		}
 	}()
 
@@ -145,8 +146,10 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 		}
 		switch badResp.Code {
 		case 401:
-			logger.Error("invalid cookie, clear cookie in i time")
-			_ = r.redisService.Set(redis.ZsxqCookiePath, "", 0)
+			logger.Error("invalid zsxq cookie, clear cookie")
+			if err = r.redisService.Del(redis.ZsxqCookiePath); err != nil {
+				logger.Error("fail to delete zsxq cookie", zap.Error(err))
+			}
 			return nil, ErrInvalidCookie
 		case 1059:
 			logger.Error("too many requests due to no sign, sleep 10s")

@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"time"
 
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+
 	"github.com/eli-yip/rss-zero/config"
 	crawl "github.com/eli-yip/rss-zero/internal/crawl/zsxq"
 	"github.com/eli-yip/rss-zero/internal/notify"
@@ -18,9 +21,6 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
-
-	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 func CronZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
@@ -71,7 +71,7 @@ func CronZsxq(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) f
 
 			if err = cronGroup(groupID, requestService, parseService, redisService, rssRenderer, dbService, logger); err != nil {
 				errCount++
-				logger.Error("Fail to do cron job on group", zap.Error(err))
+				logger.Error("fail to do cron job on group", zap.Int("group id", groupID), zap.Error(err))
 				continue
 			}
 
@@ -91,8 +91,8 @@ func cronGroup(groupID int, requestService requestIface.Requester, parseService 
 	// Get latest topics from zsxq
 	if err = crawl.CrawlGroup(groupID, requestService, parseService,
 		latestTopicTimeInDB, false, false, time.Time{}, logger); err != nil {
-		logger.Error("Fail to crawl group", zap.Error(err))
-		return err
+		logger.Error("fail to crawl group", zap.Error(err))
+		return fmt.Errorf("fail to crawl group: %w", err)
 	}
 
 	if err = dbService.UpdateCrawlTime(groupID, time.Now()); err != nil {
@@ -186,14 +186,29 @@ func prepareZsxqServices(cookie string, redisService redis.Redis, db *gorm.DB, l
 func getZsxqCookie(redisService redis.Redis, notifier notify.Notifier, logger *zap.Logger) (cookie string, err error) {
 	if cookie, err = redisService.Get(redis.ZsxqCookiePath); err != nil {
 		if errors.Is(err, redis.ErrKeyNotExist) {
-			logger.Error("No zsxq cookie found in redis, notify user now")
-			if err = notifier.Notify("No zsxq cookie in redis", ""); err != nil {
-				logger.Error("Failed to notice user there is no zsxq cookie", zap.Error(err))
+			logger.Error("found no zsxq cookie in redis, notify user now")
+			if err = notifier.Notify("Found no zsxq cookie in redis", ""); err != nil {
+				logger.Error("fail to notice user there is no zsxq cookie in redis", zap.Error(err))
 			}
 		}
-		logger.Error("Failed to get zsxq cookie from redis", zap.Error(err))
+		logger.Error("fail to get zsxq cookie from redis", zap.Error(err))
 		return "", err
 	}
+
+	if cookie == "" {
+		logger.Error("found empty zsxq cookie in redis, notify user now")
+		if err = notifier.Notify("Found empty zsxq cookie in redis", ""); err != nil {
+			logger.Error("fail to notice user there is empty zsxq cookie in redis", zap.Error(err))
+		}
+		if err = redisService.Del(redis.ZsxqCookiePath); err != nil {
+			logger.Error("fail to delete empty zsxq cookie in redis", zap.Error(err))
+			if err = notifier.Notify("Fail to delete empty zsxq cookie key in redis", ""); err != nil {
+				logger.Error("fail to notice user that we failed to delete empty zsxq cookie key in redis", zap.Error(err))
+			}
+		}
+		return "", redis.ErrKeyNotExist
+	}
+
 	return cookie, nil
 }
 
