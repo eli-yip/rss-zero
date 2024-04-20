@@ -45,12 +45,12 @@ func (r *RSSRenderService) RenderRSS(product string, versionInfoList []versionIn
 	}
 
 	for _, v := range versionInfoList {
-		text := fmt.Sprintf("Version %s of %s was released on %s, Branch: %s", versionToVersionString(v.version), product, v.releaseDate.Format("2006-01-02"),
+		text := fmt.Sprintf("Version **%s** of **%s** was released on %s.\n\nBranch: %s", versionToVersionString(v.version), product, v.releaseDate.Format("2006-01-02"),
 			func() string {
 				if v.lts {
-					return "LTS"
+					return "**LTS**"
 				}
-				return "Latest"
+				return "**Latest**"
 			}(),
 		)
 
