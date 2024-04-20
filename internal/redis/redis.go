@@ -25,6 +25,8 @@ const (
 	ZhihuAnswerPath  = "zhihu_rss_answer_%s"
 	ZhihuArticlePath = "zhihu_rss_article_%s"
 	ZhihuPinPath     = "zhihu_rss_pin_%s"
+
+	EndOfLifePath = "endoflife_rss_%s"
 )
 
 var RSSTTL = time.Hour * 2

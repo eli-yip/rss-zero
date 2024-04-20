@@ -9,8 +9,14 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+
 	"github.com/brpaz/echozap"
 	"github.com/eli-yip/rss-zero/cmd/server/controller"
+	endoflifeController "github.com/eli-yip/rss-zero/cmd/server/controller/endoflife"
 	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/cron"
@@ -20,11 +26,6 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/log"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 func main() {
@@ -132,6 +133,7 @@ func setupEcho(redisService redis.Redis,
 	zhihuHandler := controller.NewZhihuHandler(redisService, zhihuDBService, notifier, logger)
 	xiaobotDBService := xiaobotDB.NewDBService(db)
 	xiaobotHandler := controller.NewXiaobotController(redisService, xiaobotDBService, notifier, logger)
+	endOfLifeHandler := endoflifeController.NewController(redisService, logger)
 
 	// /rss
 	rssGroup := e.Group("/rss")
@@ -158,6 +160,9 @@ func setupEcho(redisService redis.Redis,
 
 	rssXiaobot := rssGroup.GET("/xiaobot/:feed", xiaobotHandler.RSS)
 	rssXiaobot.Name = "RSS route for xiaobot"
+
+	rssEndOfLife := rssGroup.GET("/endoflife/:feed", endOfLifeHandler.RSS)
+	rssEndOfLife.Name = "RSS route for endoflife.date"
 
 	// /api/v1
 	apiGroup := e.Group("/api/v1")

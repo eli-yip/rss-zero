@@ -3,6 +3,10 @@ GORUN=$(GOCMD) run
 CURRENT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 CURRENT_DIR := $(CURDIR)
 
+.PHONY: serve
+serve:
+	godotenv -f ${CURRENT_DIR}/.env $(GORUN) ${CURRENT_DIR}/cmd/server
+
 .PHONY: server
 server:
 	$(GOCMD) build -o server ${CURRENT_DIR}/cmd/server
