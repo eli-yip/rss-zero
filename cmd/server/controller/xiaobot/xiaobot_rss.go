@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 func (h *XiaobotController) RSS(c echo.Context) (err error) {
@@ -45,18 +47,18 @@ func (h *XiaobotController) getRSS(key string, l *zap.Logger) (output string, er
 	l = l.With(zap.String("rss path", key))
 	defer l.Info("task chnnel closes")
 
-	task := task{textCh: make(chan string), errCh: make(chan error)}
-	defer close(task.textCh)
-	defer close(task.errCh)
+	task := common.Task{TextCh: make(chan string), ErrCh: make(chan error)}
+	defer close(task.TextCh)
+	defer close(task.ErrCh)
 
 	h.taskCh <- task
-	task.textCh <- key
+	task.TextCh <- key
 	l.Info("task sent to task channel")
 
 	select {
-	case output := <-task.textCh:
+	case output := <-task.TextCh:
 		return output, nil
-	case err := <-task.errCh:
+	case err := <-task.ErrCh:
 		return "", err
 	}
 }
@@ -65,25 +67,25 @@ var errPaperNotExistInXiaobot = errors.New("paper does not exist in xiaobot")
 
 func (h *XiaobotController) processTask() {
 	for task := range h.taskCh {
-		key := <-task.textCh
+		key := <-task.TextCh
 
 		content, err := h.redis.Get(key)
 		if err == nil {
-			task.textCh <- content
+			task.TextCh <- content
 			continue
 		}
 
 		if errors.Is(err, redis.ErrKeyNotExist) {
 			content, err = h.generateRSS(key)
 			if err != nil {
-				task.errCh <- err
+				task.ErrCh <- err
 				continue
 			}
-			task.textCh <- content
+			task.TextCh <- content
 			continue
 		}
 
-		task.errCh <- err
+		task.ErrCh <- err
 		continue
 	}
 }

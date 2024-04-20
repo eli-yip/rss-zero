@@ -6,14 +6,16 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/config"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	zhihuExport "github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 type ZhihuExportReq struct {
@@ -41,7 +43,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(err, errors.New("read export request error"))
 		logger.Error("Error exporting zhihu", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
 	logger.Info("Retrieved zhihu export request", zap.Any("req", req))
 
@@ -49,7 +51,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	if err != nil {
 		err = errors.Join(err, errors.New("parse zhihu export option error"))
 		logger.Error("Error parse zhihu export option", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid export option"})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid export option"})
 	}
 	logger.Info("Parse export option success", zap.Any("options", options))
 
@@ -60,7 +62,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	if err != nil {
 		err = errors.Join(err, errors.New("get file name error"))
 		logger.Error("Error getting file name", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &ApiResp{Message: "error getting file name"})
+		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "error getting file name"})
 	}
 	objectKey := fmt.Sprintf("export/zhihu/%s", fileName)
 	go func() {
@@ -98,7 +100,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 		_ = h.notifier.Notify("Export zhihu success", objectKey)
 	}()
 
-	return c.JSON(http.StatusOK, &ApiResp{
+	return c.JSON(http.StatusOK, &common.ApiResp{
 		Message: "start to export, you'll be notified when it's done",
 		Data: &ZhihuExportResp{
 			FileName: fileName,

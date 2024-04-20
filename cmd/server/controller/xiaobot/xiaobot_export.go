@@ -6,14 +6,16 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/config"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 type XiaobotExportReq struct {
@@ -33,7 +35,7 @@ func (h *XiaobotController) Export(c echo.Context) (err error) {
 	var req XiaobotExportReq
 	if err = c.Bind(&req); err != nil {
 		l.Error("Error exporting xiaobot", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
 	l.Info("Retrieved xiaobot export request", zap.Any("req", req))
 
@@ -41,7 +43,7 @@ func (h *XiaobotController) Export(c echo.Context) (err error) {
 	if err != nil {
 		err = errors.Join(err, errors.New("parse xiaobot export option error"))
 		l.Error("Error parse xiaobot export option", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid export option"})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid export option"})
 	}
 	l.Info("Parse export option success", zap.Any("options", options))
 
@@ -85,9 +87,9 @@ func (h *XiaobotController) Export(c echo.Context) (err error) {
 		_ = h.notifier.Notify("Export xiaobot success", objectKey)
 	}()
 
-	return c.JSON(http.StatusOK, &ApiResp{
+	return c.JSON(http.StatusOK, &common.ApiResp{
 		Message: "start to export, you'll be notified when it's done",
-		Data: &ZhihuExportResp{
+		Data: &XiaobotExportResp{
 			FileName: fileName,
 			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
 		},

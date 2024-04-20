@@ -6,9 +6,11 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/eli-yip/rss-zero/config"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
+	"github.com/eli-yip/rss-zero/config"
 )
 
 // FeedResp represents the response structure for the feed data.
@@ -62,20 +64,20 @@ func (h *ZhihuController) Feed(c echo.Context) error {
 	freshRSSAnswerFeed, err := generateFreshRSSFeed(config.C.FreshRSSURL, internalAnswerFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss answer feed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
 	}
 	freshRSSArticleFeed, err := generateFreshRSSFeed(config.C.FreshRSSURL, internalArticleFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss article feed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
 	}
 	freshRSSPinFeed, err := generateFreshRSSFeed(config.C.FreshRSSURL, internalPinFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss pin feed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, &ApiResp{
+	return c.JSON(http.StatusOK, &common.ApiResp{
 		Message: "success",
 		Data: FeedResp{
 			External: ExternalFeed{

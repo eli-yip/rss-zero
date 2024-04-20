@@ -1,16 +1,18 @@
 package controller
 
 import (
+	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
-	"go.uber.org/zap"
 )
 
 type XiaobotController struct {
 	redis    redis.Redis
 	db       xiaobotDB.DB
-	taskCh   chan task
+	taskCh   chan common.Task
 	l        *zap.Logger
 	notifier notify.Notifier
 }
@@ -22,7 +24,7 @@ func NewXiaobotController(redis redis.Redis,
 	h := &XiaobotController{
 		redis:    redis,
 		db:       db,
-		taskCh:   make(chan task, 100),
+		taskCh:   make(chan common.Task, 100),
 		notifier: n,
 		l:        l,
 	}

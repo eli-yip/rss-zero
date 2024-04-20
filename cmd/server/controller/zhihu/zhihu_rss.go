@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	serverCommon "github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/common"
@@ -117,18 +118,18 @@ func (h *ZhihuController) getRSS(key string, logger *zap.Logger) (content string
 	logger = logger.With(zap.String("key", key))
 	defer logger.Info("task channel closed")
 
-	task := task{textCh: make(chan string), errCh: make(chan error)}
-	defer close(task.textCh)
-	defer close(task.errCh)
+	task := serverCommon.Task{TextCh: make(chan string), ErrCh: make(chan error)}
+	defer close(task.TextCh)
+	defer close(task.ErrCh)
 
 	h.taskCh <- task
-	task.textCh <- key
+	task.TextCh <- key
 	logger.Info("task sent to task channel")
 
 	select {
-	case content := <-task.textCh:
+	case content := <-task.TextCh:
 		return content, nil
-	case err := <-task.errCh:
+	case err := <-task.ErrCh:
 		return "", err
 	}
 }
@@ -138,25 +139,25 @@ func (h *ZhihuController) getRSS(key string, logger *zap.Logger) (content string
 // If the content does not exist in Redis, it will generate the RSS content and set it to Redis.
 func (h *ZhihuController) processTask() {
 	for task := range h.taskCh {
-		key := <-task.textCh
+		key := <-task.TextCh
 
 		content, err := h.redis.Get(key)
 		if err == nil {
-			task.textCh <- content
+			task.TextCh <- content
 			continue
 		}
 
 		if errors.Is(err, redis.ErrKeyNotExist) {
 			content, err = h.generateRSS(key)
 			if err != nil {
-				task.errCh <- err
+				task.ErrCh <- err
 				continue
 			}
-			task.textCh <- content
+			task.TextCh <- content
 			continue
 		}
 
-		task.errCh <- err
+		task.ErrCh <- err
 		continue
 	}
 }

@@ -4,11 +4,13 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	zsxqRefmt "github.com/eli-yip/rss-zero/pkg/routers/zsxq/refmt"
 	zsxqRender "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 type RefmtReq struct {
@@ -22,7 +24,7 @@ func (h *ZsxqController) Reformat(c echo.Context) (err error) {
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(err, errors.New("invalid request"))
 		logger.Error("Error reformat zsxq", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
 	logger.Info("Retrieved zsxq reformat group", zap.Int("group_id", req.GroupID))
 
@@ -33,7 +35,7 @@ func (h *ZsxqController) Reformat(c echo.Context) (err error) {
 	go refmtService.Reformat(req.GroupID)
 	logger.Info("Start to reformat zsxq")
 
-	return c.JSON(http.StatusOK, &ApiResp{
+	return c.JSON(http.StatusOK, &common.ApiResp{
 		Message: "start to reformat zsxq content, you'll be notified when it's done",
 	})
 }

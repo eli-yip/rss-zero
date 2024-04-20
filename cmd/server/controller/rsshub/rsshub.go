@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/eli-yip/rss-zero/config"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
+	"github.com/eli-yip/rss-zero/config"
 )
 
 type RSSFeedReq struct {
@@ -20,17 +22,17 @@ func GenerateRSSHubFeed(c echo.Context) (err error) {
 	var req RSSFeedReq
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Error generating RSSHub feed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
 	logger.Info("Retrieved RSSHub feed request", zap.Any("req", req))
 
 	feedURL, err := generateRSSHubFeedURL(config.C.RSSHubURL, req.FeedType, req.Username)
 	if err != nil {
 		logger.Error("Error generating RSSHub feed URL", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &ApiResp{Message: "internal server error"})
+		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, &ApiResp{Message: "success", Data: map[string]string{"feed_url": feedURL}})
+	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: map[string]string{"feed_url": feedURL}})
 }
 
 // generateRSSHubFeedURL generates the RSSHub feed URL for the given feed type and username.

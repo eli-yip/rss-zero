@@ -6,14 +6,16 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/config"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/pkg/file"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	zsxqExport "github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 type ZxsqExportReq struct {
@@ -37,7 +39,7 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(err, errors.New("invalid request"))
 		logger.Error("Error exporting zsxq", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
 	logger.Info("Retrieved zsxq export", zap.Int("group_id", req.GroupID))
 
@@ -45,7 +47,7 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 	if err != nil {
 		err = errors.Join(err, errors.New("parse option error"))
 		logger.Error("Error exporting zsxq", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ApiResp{Message: "invalid export option"})
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid export option"})
 	}
 	logger.Info("Parsed zsxq export option", zap.Any("options", options))
 
@@ -93,7 +95,7 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 		_ = h.notifier.Notify("export successfully", objectKey)
 	}()
 
-	return c.JSON(http.StatusOK, &ApiResp{
+	return c.JSON(http.StatusOK, &common.ApiResp{
 		Message: "start to export zsxq, you'll be notified when it's done",
 		Data: ZsxqExportResp{
 			FileName: fileName,

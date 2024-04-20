@@ -15,8 +15,11 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/brpaz/echozap"
-	"github.com/eli-yip/rss-zero/cmd/server/controller"
 	endoflifeController "github.com/eli-yip/rss-zero/cmd/server/controller/endoflife"
+	rsshubController "github.com/eli-yip/rss-zero/cmd/server/controller/rsshub"
+	xiaobotController "github.com/eli-yip/rss-zero/cmd/server/controller/xiaobot"
+	zhihuController "github.com/eli-yip/rss-zero/cmd/server/controller/zhihu"
+	zsxqController "github.com/eli-yip/rss-zero/cmd/server/controller/zsxq"
 	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/cron"
@@ -127,12 +130,12 @@ func setupEcho(redisService redis.Redis,
 		myMiddleware.InjectLogger(logger), // inject logger to context
 	)
 
-	zsxqHandler := controller.NewZsxqHandler(redisService, db, notifier, logger)
+	zsxqHandler := zsxqController.NewZsxqHandler(redisService, db, notifier, logger)
 
 	zhihuDBService := zhihuDB.NewDBService(db)
-	zhihuHandler := controller.NewZhihuHandler(redisService, zhihuDBService, notifier, logger)
+	zhihuHandler := zhihuController.NewZhihuHandler(redisService, zhihuDBService, notifier, logger)
 	xiaobotDBService := xiaobotDB.NewDBService(db)
-	xiaobotHandler := controller.NewXiaobotController(redisService, xiaobotDBService, notifier, logger)
+	xiaobotHandler := xiaobotController.NewXiaobotController(redisService, xiaobotDBService, notifier, logger)
 	endOfLifeHandler := endoflifeController.NewController(redisService, logger)
 
 	// /rss
@@ -212,7 +215,7 @@ func setupEcho(redisService redis.Redis,
 
 	// /api/v1/rsshub
 	rssHubApi := apiGroup.Group("/rsshub")
-	feedGeneratorApi := rssHubApi.POST("/feed", controller.GenerateRSSHubFeed)
+	feedGeneratorApi := rssHubApi.POST("/feed", rsshubController.GenerateRSSHubFeed)
 	feedGeneratorApi.Name = "RSSHub feed generator route"
 
 	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
