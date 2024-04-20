@@ -31,8 +31,7 @@ func (h *XiaobotController) RSS(c echo.Context) (err error) {
 	}
 	l.Info("Checked paper")
 
-	const rssPath = "xiaobot_rss_%s"
-	rss, err := h.getRSS(fmt.Sprintf(rssPath, paperID), l)
+	rss, err := h.getRSS(fmt.Sprintf(redis.XiaobotRSSPath, paperID), l)
 	if err != nil {
 		l.Error("Failed getting rss from redis", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "Failed getting rss from redis")
