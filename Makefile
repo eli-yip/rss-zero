@@ -52,3 +52,7 @@ fpush:
 update:
 	go get -u ./...
 	go mod tidy
+
+.PHONY: conclude
+conclude:
+	git diff --stat @{0.day.ago.midnight} | sort -k3nr

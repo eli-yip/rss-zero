@@ -23,6 +23,7 @@ import (
 	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/cron"
+	zsxqCron "github.com/eli-yip/rss-zero/internal/cron/zsxq"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -248,7 +249,7 @@ func setupCron(logger *zap.Logger,
 		fn   cronFunc
 	}
 	cronjobs := []cronJob{
-		{"zsxq crawl", cron.CronZsxq},
+		{"zsxq crawl", zsxqCron.Cron},
 		{"zhihu crawl", cron.CrawlZhihu},
 		{"xiaobot crawl", cron.CrawlXiaobot},
 	}
