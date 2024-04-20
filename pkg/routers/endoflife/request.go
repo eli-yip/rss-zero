@@ -11,7 +11,7 @@ import (
 type cycle struct {
 	Cycle             string `json:"cycle"`
 	ReleaseDate       string `json:"releaseDate"`
-	Eol               string `json:"eol"`
+	Eol               any    `json:"eol"`
 	Latest            string `json:"latest"`
 	LatestReleaseDate string `json:"latestReleaseDate"`
 	Lts               bool   `json:"lts"`
