@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"time"
 
@@ -72,7 +72,7 @@ func NewRequestService(dC0 *string, logger *zap.Logger) (request.Requester, erro
 	go func() {
 		for {
 			s.limiter <- struct{}{}
-			time.Sleep(time.Duration(30+rand.Intn(6)) * time.Second)
+			time.Sleep(time.Duration(30+rand.IntN(6)) * time.Second)
 		}
 	}()
 
