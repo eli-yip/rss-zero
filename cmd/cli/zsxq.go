@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/eli-yip/rss-zero/config"
 	crawl "github.com/eli-yip/rss-zero/internal/crawl/zsxq"
 	"github.com/eli-yip/rss-zero/internal/db"
@@ -16,10 +18,16 @@ import (
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
+	zsxqRefmt "github.com/eli-yip/rss-zero/pkg/routers/zsxq/refmt"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
-	"go.uber.org/zap"
 )
+
+type localNotifier struct{}
+
+func (n *localNotifier) Notify(title, body string) error {
+	return nil
+}
 
 func handleZsxq(opt option, logger *zap.Logger) {
 	db, err := db.NewPostgresDB(config.C.DB)
@@ -89,6 +97,13 @@ func handleZsxq(opt option, logger *zap.Logger) {
 			logger.Fatal("fail to export", zap.Error(err))
 		}
 		return
+	}
+
+	if opt.refmt {
+		mdRender := render.NewMarkdownRenderService(dbService, logger)
+		var notifier localNotifier
+		refmtService := zsxqRefmt.NewRefmtService(logger, dbService, mdRender, &notifier)
+		refmtService.Reformat(opt.zsxq.groupID)
 	}
 
 	fileService, err := file.NewFileServiceMinio(config.C.Minio, logger)

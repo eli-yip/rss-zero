@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/pkg/log"
@@ -189,7 +190,7 @@ func parseArgs() (opt option, err error) {
 				setFlag++
 			}
 			if setFlag != 1 {
-				return option{}, errors.New("export type can only be set once")
+				return option{}, fmt.Errorf("each time only support one of answer, article and pin. Answer: %v, Article: %v, Pin: %v", *answer, *article, *pin)
 			}
 
 			opt.zhihu.userID = *userID
