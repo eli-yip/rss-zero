@@ -13,7 +13,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/md"
-	"github.com/eli-yip/rss-zero/pkg/file"
+	"github.com/eli-yip/rss-zero/internal/file"
 	zhihuExport "github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )

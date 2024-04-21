@@ -4,10 +4,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
+
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/redis"
-	"github.com/eli-yip/rss-zero/pkg/file"
-	"github.com/joho/godotenv"
+	"github.com/eli-yip/rss-zero/internal/file"
 )
 
 const DefaultFetchCount = 20

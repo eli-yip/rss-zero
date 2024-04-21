@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/pkg/log"
+	"github.com/eli-yip/rss-zero/internal/log"
 	"go.uber.org/zap"
 )
 

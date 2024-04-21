@@ -12,7 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/config"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
-	"github.com/eli-yip/rss-zero/pkg/file"
+	"github.com/eli-yip/rss-zero/internal/file"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	zsxqExport "github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"

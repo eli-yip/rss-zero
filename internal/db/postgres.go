@@ -6,12 +6,13 @@ import (
 	"os"
 	"time"
 
-	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
-	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
+	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 )
 
 type PostgresConfig struct {

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/pkg/log"
+	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/stretchr/testify/assert"
 )
 

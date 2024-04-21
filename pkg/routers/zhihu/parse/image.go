@@ -3,7 +3,7 @@ package parse
 import (
 	"fmt"
 
-	"github.com/eli-yip/rss-zero/pkg/file"
+	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 

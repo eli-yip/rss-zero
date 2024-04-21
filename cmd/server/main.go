@@ -23,12 +23,14 @@ import (
 	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/cron"
+	xiaobotCron "github.com/eli-yip/rss-zero/internal/cron/xiaobot"
+	zhihuCron "github.com/eli-yip/rss-zero/internal/cron/zhihu"
 	zsxqCron "github.com/eli-yip/rss-zero/internal/cron/zsxq"
 	"github.com/eli-yip/rss-zero/internal/db"
+	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/version"
-	"github.com/eli-yip/rss-zero/pkg/log"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
@@ -250,8 +252,8 @@ func setupCron(logger *zap.Logger,
 	}
 	cronjobs := []cronJob{
 		{"zsxq crawl", zsxqCron.Cron},
-		{"zhihu crawl", cron.CrawlZhihu},
-		{"xiaobot crawl", cron.CrawlXiaobot},
+		{"zhihu crawl", zhihuCron.CrawlZhihu},
+		{"xiaobot crawl", xiaobotCron.CrawlXiaobot},
 	}
 
 	cronService, err := cron.NewCronService(logger)

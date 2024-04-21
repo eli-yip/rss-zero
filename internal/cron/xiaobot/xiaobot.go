@@ -4,17 +4,18 @@ import (
 	"errors"
 	"time"
 
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+
 	crawl "github.com/eli-yip/rss-zero/internal/crawl/xiaobot"
+	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
-	"github.com/eli-yip/rss-zero/pkg/log"
 	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
-	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 func CrawlXiaobot(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/pkg/log"
+	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	zhihuRequest "github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )

@@ -3,9 +3,10 @@ package log
 import (
 	"fmt"
 
-	"github.com/eli-yip/rss-zero/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/eli-yip/rss-zero/config"
 )
 
 // NewZapLogger returns a new zap logger.

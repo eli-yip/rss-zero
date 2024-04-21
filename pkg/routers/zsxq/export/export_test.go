@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 
-	log "github.com/eli-yip/rss-zero/pkg/log"
+	log "github.com/eli-yip/rss-zero/internal/log"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	render "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 )

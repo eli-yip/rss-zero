@@ -6,9 +6,9 @@ import (
 	"regexp"
 
 	"github.com/eli-yip/rss-zero/internal/md"
-	"github.com/eli-yip/rss-zero/pkg/ai"
-	"github.com/eli-yip/rss-zero/pkg/file"
-	"github.com/eli-yip/rss-zero/pkg/log"
+	"github.com/eli-yip/rss-zero/internal/ai"
+	"github.com/eli-yip/rss-zero/internal/file"
+	"github.com/eli-yip/rss-zero/internal/log"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"

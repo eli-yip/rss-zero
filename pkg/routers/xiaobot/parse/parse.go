@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/internal/md"
-	"github.com/eli-yip/rss-zero/pkg/log"
+	"github.com/eli-yip/rss-zero/internal/log"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse/api_models"
