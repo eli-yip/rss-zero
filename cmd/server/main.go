@@ -26,6 +26,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/version"
 	"github.com/eli-yip/rss-zero/pkg/log"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -53,7 +54,7 @@ func main() {
 
 	// Start echo server
 	go func() {
-		logger.Info("start server", zap.String("address", ":8080"), zap.String("version", config.Version))
+		logger.Info("start server", zap.String("address", ":8080"), zap.String("version", version.Version))
 		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal("shutting down the server")
 		}

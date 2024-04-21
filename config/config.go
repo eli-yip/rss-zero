@@ -12,8 +12,6 @@ import (
 
 const DefaultFetchCount = 20
 
-var Version string
-
 func init() {
 	var err error
 	C.BJT, err = time.LoadLocation("Asia/Shanghai")
