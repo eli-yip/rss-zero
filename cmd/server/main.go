@@ -44,7 +44,7 @@ func main() {
 	}
 	logger.Info("service initialized")
 
-	if err = setupCron(logger, redisService, db, bark); err != nil {
+	if err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
 		logger.Fatal("fail to setup cron", zap.Error(err))
 	}
 	logger.Info("cron service initialized")
@@ -239,21 +239,21 @@ func setupEcho(redisService redis.Redis,
 	return e
 }
 
-// setupCron sets up cron jobs
-func setupCron(logger *zap.Logger,
+// setupCronCrawlJob sets up cron jobs
+func setupCronCrawlJob(logger *zap.Logger,
 	redisService redis.Redis,
 	db *gorm.DB,
 	notifier notify.Notifier,
 ) (err error) {
-	type cronFunc func(redis.Redis, *gorm.DB, notify.Notifier) func()
-	type cronJob struct {
+	type crawlFunc func(redis.Redis, *gorm.DB, notify.Notifier) func()
+	type crawlJob struct {
 		name string
-		fn   cronFunc
+		fn   crawlFunc
 	}
-	cronjobs := []cronJob{
-		{"zsxq crawl", zsxqCron.Cron},
-		{"zhihu crawl", zhihuCron.CrawlZhihu},
-		{"xiaobot crawl", xiaobotCron.CrawlXiaobot},
+	type exportFunc func() func()
+	type exportJob struct {
+		name string
+		fn   exportFunc
 	}
 
 	cronService, err := cron.NewCronService(logger)
@@ -261,8 +261,21 @@ func setupCron(logger *zap.Logger,
 		return fmt.Errorf("cron service init failed: %w", err)
 	}
 
-	for _, job := range cronjobs {
-		if err = cronService.AddJob(job.name, job.fn(redisService, db, notifier)); err != nil {
+	cronCrawlJobs := []crawlJob{
+		{"zsxq crawl", zsxqCron.Cron},
+		{"zhihu crawl", zhihuCron.CrawlZhihu},
+		{"xiaobot crawl", xiaobotCron.CrawlXiaobot},
+	}
+
+	for _, job := range cronCrawlJobs {
+		if err = cronService.AddCrawlJob(job.name, job.fn(redisService, db, notifier)); err != nil {
+			return fmt.Errorf("fail to add job: %w", err)
+		}
+	}
+
+	cronExportJobs := []exportJob{{"zhihu export", zhihuCron.ExportZhihu}}
+	for _, job := range cronExportJobs {
+		if err = cronService.AddExportJob(job.name, job.fn()); err != nil {
 			return fmt.Errorf("fail to add job: %w", err)
 		}
 	}
