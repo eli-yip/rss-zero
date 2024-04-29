@@ -12,8 +12,8 @@ import (
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/config"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
-	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/file"
+	"github.com/eli-yip/rss-zero/internal/md"
 	zhihuExport "github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
@@ -97,7 +97,9 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 		}
 		logger.Info("Export success")
 
-		_ = h.notifier.Notify("Export zhihu success", objectKey)
+		if err = h.notifier.Notify("Export zhihu content successfully", config.C.Minio.AssetsPrefix+"/"+objectKey); err != nil {
+			logger.Error("failed to notice export success", zap.Error(err))
+		}
 	}()
 
 	return c.JSON(http.StatusOK, &common.ApiResp{
