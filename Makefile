@@ -41,6 +41,7 @@ commit:
 .PHONY: push
 push:
 	git push -u origin $(CURRENT_BRANCH)
+	git push --tags
 
 .PHONY: fpush
 fpush:
