@@ -54,3 +54,7 @@ update:
 .PHONY: conclude
 conclude:
 	git diff --stat @{0.day.ago.midnight} | sort -k3nr
+
+.PHONY: list-tag
+list-tag:
+	git tag --sort=-v:refname
