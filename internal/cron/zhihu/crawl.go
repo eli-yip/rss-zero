@@ -8,7 +8,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/ai"
-	crawl "github.com/eli-yip/rss-zero/internal/crawl/zhihu"
+	crawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawler"
 	"github.com/eli-yip/rss-zero/internal/cron"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/log"

@@ -6,35 +6,38 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/log"
 	zhihuRequest "github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
 func TestPinList(t *testing.T) {
-	u := `https://www.zhihu.com/api/v4/members/canglimo/pins`
+	u := `https://www.zhihu.com/api/v4/members/daleige/pins`
 	u = fmt.Sprintf("%s?%s", u, "offset=0&limit=20")
 	config.InitFromEnv()
 
-	logger := log.NewZapLogger()
-	requestService, err := zhihuRequest.NewRequestService(nil, logger)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert := assert.New(t)
+	requestService, err := zhihuRequest.NewRequestService(nil, log.NewZapLogger())
+	assert.Nil(err)
 	bytes, err := requestService.LimitRaw(u)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(err)
 
 	path := filepath.Join("examples", "pin_list.json")
+	dir := filepath.Dir(path)
+	err = os.MkdirAll(dir, 0755)
+	assert.Nil(err)
+
 	_, err = os.Stat(path)
 	if err == nil {
-		fmt.Println("File already exists. Skipping write.")
-	} else if os.IsNotExist(err) {
+		t.Log("File already exists. Skipping write.")
+		return
+	}
+
+	if os.IsNotExist(err) {
 		err = os.WriteFile(path, bytes, 0644)
-		if err != nil {
-			t.Fatal(err)
-		}
+		assert.Nil(err)
 	} else {
 		t.Fatal(err)
 	}

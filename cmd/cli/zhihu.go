@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
-	zhihuCrawl "github.com/eli-yip/rss-zero/internal/crawl/zhihu"
+	zhihuCrawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawler"
 	"github.com/eli-yip/rss-zero/internal/db"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/md"
