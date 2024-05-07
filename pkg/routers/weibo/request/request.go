@@ -17,7 +17,8 @@ import (
 )
 
 type Requester interface {
-	LimitRaw(url string) ([]byte, error)
+	LimitRaw(u string) ([]byte, error)
+	GetPicStream(u string) (*http.Response, error)
 }
 
 type RequestService struct {
@@ -116,4 +117,30 @@ func (rs *RequestService) setReq(u string) (req *http.Request, err error) {
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
 	return req, nil
+}
+
+func (rs *RequestService) GetPicStream(u string) (resp *http.Response, err error) {
+	resp, err = rs.getPicStream(u)
+	if err == nil {
+		return resp, nil
+	}
+	return nil, fmt.Errorf("failed to download pic")
+}
+
+func (rs *RequestService) getPicStream(picLink string) (resp *http.Response, err error) {
+	req, err := http.NewRequest("GET", picLink, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to new a request: %w", err)
+	}
+	req.Header.Set("Referer", "https://weibo.com")
+
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to request url: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("bad status code: %d", resp.StatusCode)
+	}
+
+	return resp, nil
 }
