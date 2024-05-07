@@ -104,14 +104,14 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 		logger := logger.With(zap.Int("index", i))
 		<-r.limiter // block until get a token
 
-		req, err := r.setReq(u)
-		if err != nil {
+		var req *http.Request
+		if req, err = r.setReq(u); err != nil {
 			logger.Error("fail to new a request", zap.Error(err))
 			continue
 		}
 
-		resp, err := r.client.Do(req)
-		if err != nil {
+		var resp *http.Response
+		if resp, err = r.client.Do(req); err != nil {
 			logger.Error("fail to request url", zap.Error(err))
 			continue
 		}
@@ -123,14 +123,14 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 			continue
 		}
 
-		bytes, err := io.ReadAll(resp.Body)
-		if err != nil {
+		var bytes []byte
+		if bytes, err = io.ReadAll(resp.Body); err != nil {
 			logger.Error("fail to read response body", zap.Error(err))
 			continue
 		}
 
 		var respData apiResp
-		if err := json.Unmarshal(bytes, &respData); err != nil {
+		if err = json.Unmarshal(bytes, &respData); err != nil {
 			logger.Error("fail to unmarshal response", zap.Error(err))
 			continue
 		}
@@ -140,7 +140,7 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 		}
 
 		var badResp badAPIResp
-		if err := json.Unmarshal(bytes, &badResp); err != nil {
+		if err = json.Unmarshal(bytes, &badResp); err != nil {
 			logger.Error("fail to unmarshal bad resp", zap.Error(err), zap.Any("badResp", badResp))
 			continue
 		}
@@ -161,6 +161,9 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 		}
 	}
 
+	if err == nil {
+		err = ErrMaxRetry
+	}
 	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
@@ -174,14 +177,14 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 		logger := logger.With(zap.Int("index", i))
 		<-r.limiter
 
-		req, err := r.setReq(u)
-		if err != nil {
+		var req *http.Request
+		if req, err = r.setReq(u); err != nil {
 			logger.Error("fail to new a request", zap.Error(err))
 			continue
 		}
 
-		resp, err := r.client.Do(req)
-		if err != nil {
+		var resp *http.Response
+		if resp, err = r.client.Do(req); err != nil {
 			logger.Error("fail to request url", zap.Error(err))
 			continue
 		}
@@ -193,14 +196,17 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			continue
 		}
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
+		var body []byte
+		if body, err = io.ReadAll(resp.Body); err != nil {
 			logger.Error("fail to read response body", zap.Error(err))
 			continue
 		}
 		return body, nil
 	}
 
+	if err == nil {
+		err = ErrMaxRetry
+	}
 	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
@@ -214,14 +220,14 @@ func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) 
 	for i := 0; i < r.maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
 
-		req, err := r.setReq(u)
-		if err != nil {
+		var req *http.Request
+		if req, err = r.setReq(u); err != nil {
 			logger.Error("fail to new a request", zap.Error(err))
 			continue
 		}
 
-		resp, err := r.client.Do(req)
-		if err != nil {
+		var resp *http.Response
+		if resp, err = r.client.Do(req); err != nil {
 			logger.Error("fail to request url", zap.Error(err))
 			continue
 		}
@@ -236,6 +242,9 @@ func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) 
 		return resp, nil
 	}
 
+	if err == nil {
+		err = ErrMaxRetry
+	}
 	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
@@ -247,14 +256,14 @@ func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
 	for i := 0; i < r.maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
 
-		req, err := r.setReq(u)
-		if err != nil {
+		var req *http.Request
+		if req, err = r.setReq(u); err != nil {
 			logger.Error("fail to new a request", zap.Error(err))
 			continue
 		}
 
-		resp, err := r.client.Do(req)
-		if err != nil {
+		var resp *http.Response
+		if resp, err = r.client.Do(req); err != nil {
 			logger.Error("fail to request url", zap.Error(err))
 			continue
 		}
@@ -266,12 +275,15 @@ func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
 			continue
 		}
 
-		bytes, err := io.ReadAll(resp.Body)
-		if err == nil {
+		var bytes []byte
+		if bytes, err = io.ReadAll(resp.Body); err == nil {
 			return bytes, nil
 		}
 	}
 
+	if err == nil {
+		err = ErrMaxRetry
+	}
 	logger.Error("fail to get zsxq API response without limit", zap.Error(err))
 	return nil, err
 }

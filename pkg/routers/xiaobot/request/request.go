@@ -31,7 +31,7 @@ type RequestService struct {
 	maxRetry     int
 	token        string // token is used to request xiaobot api in authorization header
 	redisService redis.Redis
-	log          *zap.Logger
+	logger       *zap.Logger
 }
 
 func NewRequestService(redisService redis.Redis, token string, logger *zap.Logger) request.Requester {
@@ -42,7 +42,7 @@ func NewRequestService(redisService redis.Redis, token string, logger *zap.Logge
 		maxRetry:     defaultMaxRetry,
 		redisService: redisService,
 		token:        token,
-		log:          logger,
+		logger:       logger,
 	}
 
 	go func() {
@@ -56,7 +56,7 @@ func NewRequestService(redisService redis.Redis, token string, logger *zap.Logge
 }
 
 func (r *RequestService) Limit(u string) (data []byte, err error) {
-	logger := r.log.With(zap.String("url", u))
+	logger := r.logger.With(zap.String("url", u))
 	logger.Info("Start requesting url with limiter")
 
 	for i := 0; i < r.maxRetry; i++ {
@@ -156,7 +156,7 @@ func (r *RequestService) validateAPIResp(code int, bytes []byte, logger *zap.Log
 
 func (r *RequestService) getErrorMessage(bytes []byte) (message string, err error) {
 	var badResp badResp
-	if err := json.Unmarshal(bytes, &badResp); err != nil {
+	if err = json.Unmarshal(bytes, &badResp); err != nil {
 		return "", err
 	}
 	return badResp.Message, nil
@@ -221,17 +221,17 @@ func (r *RequestService) setAPIReq(u string) (req *http.Request, err error) {
 }
 
 func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
-	return nil, errors.Join(ErrUnimplemented, errors.New("LimitRaw"))
+	return nil, errors.Join(ErrUnimplemented, errors.New("Limit Raw should not be called in xiaobot"))
 }
 
 func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) {
-	return nil, errors.Join(ErrUnimplemented, errors.New("LimitStream"))
+	return nil, errors.Join(ErrUnimplemented, errors.New("LimitStream should not be called in xiaobot"))
 }
 
 func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
-	return nil, errors.Join(ErrUnimplemented, errors.New("NoLimit"))
+	return nil, errors.Join(ErrUnimplemented, errors.New("NoLimit should not be called in xiaobot"))
 }
 
 func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error) {
-	return nil, errors.Join(ErrUnimplemented, errors.New("NoLimitStream"))
+	return nil, errors.Join(ErrUnimplemented, errors.New("NoLimitStream should not be called in xiaobot"))
 }
