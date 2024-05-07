@@ -29,7 +29,7 @@ type RequestService struct {
 	logger       *zap.Logger
 }
 
-func NewRequestService(redisService redis.Redis, cookie string, logger *zap.Logger) (*RequestService, error) {
+func NewRequestService(redisService redis.Redis, cookie string, logger *zap.Logger) (Requester, error) {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	const defaultMaxRetry = 5
 
