@@ -120,11 +120,10 @@ func (rs *RequestService) setReq(u string) (req *http.Request, err error) {
 }
 
 func (rs *RequestService) GetPicStream(u string) (resp *http.Response, err error) {
-	resp, err = rs.getPicStream(u)
-	if err == nil {
-		return resp, nil
+	if resp, err = rs.getPicStream(u); err != nil {
+		return nil, fmt.Errorf("failed to get picture stream: %w", err)
 	}
-	return nil, fmt.Errorf("failed to download pic")
+	return resp, nil
 }
 
 func (rs *RequestService) getPicStream(picLink string) (resp *http.Response, err error) {
