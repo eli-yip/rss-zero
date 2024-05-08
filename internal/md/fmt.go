@@ -9,9 +9,7 @@ import (
 	"github.com/yuin/goldmark/extension"
 )
 
-type MarkdownFormatter struct {
-	formatter goldmark.Markdown
-}
+type MarkdownFormatter struct{ formatter goldmark.Markdown }
 
 func NewMarkdownFormatter() *MarkdownFormatter {
 	return &MarkdownFormatter{formatter: newMdFormatter()}
