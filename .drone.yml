@@ -114,4 +114,4 @@ volumes:
     temp: {}
   - name: gocache
     host:
-      path: /var/lib/cache/gocache
+      path: /var/cache/drone/go
