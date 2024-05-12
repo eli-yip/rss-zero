@@ -4,6 +4,8 @@ import "gorm.io/gorm"
 
 type DB interface {
 	DBObject
+	DBTweet
+	DBUser
 }
 
 type DBService struct{ *gorm.DB }
