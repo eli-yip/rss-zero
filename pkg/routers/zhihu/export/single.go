@@ -346,5 +346,5 @@ func (s ExportService) FilenameSingle(opt Option) (filename string, err error) {
 	// HACK: -1 day to make the end time inclusive: https://git.darkeli.com/yezi/rss-zero/issues/55
 	fileNameArr = append(fileNameArr, opt.EndTime.Add(-1*time.Hour*24).Format("2006-01-02"))
 
-	return fmt.Sprintf("%s.md", strings.Join(fileNameArr, "-")), nil
+	return fmt.Sprintf("%s.zip", strings.Join(fileNameArr, "-")), nil
 }
