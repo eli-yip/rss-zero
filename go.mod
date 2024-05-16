@@ -16,7 +16,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/minio/minio-go/v7 v7.0.70
 	github.com/redis/go-redis/v9 v9.5.1
-	github.com/sashabaranov/go-openai v1.23.1
+	github.com/sashabaranov/go-openai v1.24.0
 	github.com/stretchr/testify v1.9.0
 	github.com/yuin/goldmark v1.7.1
 	go.uber.org/zap v1.27.0
