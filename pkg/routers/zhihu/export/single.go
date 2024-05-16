@@ -318,7 +318,7 @@ func (s *ExportService) exportSinglePin(writer io.Writer, opt Option) (err error
 }
 
 func buildFilename(t time.Time, title string) (filename string) {
-	return fmt.Sprintf("%s-%s.md", t.Format("2006-01-02"), title)
+	return escapeFilename(fmt.Sprintf("%s-%s.md", t.Format("2006-01-02"), title))
 }
 
 func (s ExportService) FilenameSingle(opt Option) (filename string, err error) {
@@ -347,4 +347,43 @@ func (s ExportService) FilenameSingle(opt Option) (filename string, err error) {
 	fileNameArr = append(fileNameArr, opt.EndTime.Add(-1*time.Hour*24).Format("2006-01-02"))
 
 	return fmt.Sprintf("%s.zip", strings.Join(fileNameArr, "-")), nil
+}
+
+func escapeFilename(filename string) string {
+	escapeChars := map[rune]string{
+		' ':  "\\ ",
+		'!':  "\\!",
+		'$':  "\\$",
+		'&':  "\\&",
+		'\'': "\\'",
+		'(':  "\\(",
+		')':  "\\)",
+		'*':  "\\*",
+		';':  "\\;",
+		'<':  "\\<",
+		'=':  "\\=",
+		'>':  "\\>",
+		'?':  "\\?",
+		'[':  "\\[",
+		'\\': "\\\\",
+		']':  "\\]",
+		'^':  "\\^",
+		'`':  "\\`",
+		'{':  "\\{",
+		'|':  "\\|",
+		'}':  "\\}",
+		'~':  "\\~",
+	}
+
+	var escaped strings.Builder
+
+	for _, char := range filename {
+		if escapeSeq, ok := escapeChars[char]; ok {
+			escaped.WriteString(escapeSeq)
+		} else {
+			escaped.WriteRune(char)
+		}
+	}
+
+	return escaped.String()
 }
