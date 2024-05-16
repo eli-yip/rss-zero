@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"go.uber.org/zap"
 )
 
 type Notifier interface {
@@ -31,4 +33,10 @@ func (b *BarkNotifier) Notify(title, content string) error {
 	}
 
 	return err
+}
+
+func Notify(notifer Notifier, title, content string, logger *zap.Logger) {
+	if err := notifer.Notify(title, content); err != nil {
+		logger.Error("Failed to send notification", zap.Error(err), zap.String("title", title), zap.String("content", content))
+	}
 }

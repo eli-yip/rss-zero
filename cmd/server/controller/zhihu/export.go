@@ -17,6 +17,7 @@ import (
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/internal/notify"
 	zhihuExport "github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
@@ -63,18 +64,9 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	exportService := zhihuExport.NewExportService(h.db, fullTextRender)
 
 	var filename string
-	if req.Single != nil && *req.Single {
-		if filename, err = exportService.FilenameSingle(options); err != nil {
-			err = fmt.Errorf("failed to build single file name: %w", err)
-			logger.Error("Error getting single file name", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "error getting single file name"})
-		}
-	} else {
-		if filename, err = exportService.Filename(options); err != nil {
-			err = fmt.Errorf("failed to build file name: %w", err)
-			logger.Error("Error getting file name", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "error getting file name"})
-		}
+	if filename, err = buildFilename(exportService, req.Single, &options); err != nil {
+		logger.Error("failed to build filename", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to build filename"})
 	}
 
 	objectKey := fmt.Sprintf("export/zhihu/%s", filename)
@@ -82,80 +74,82 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 		logger := logger.With(zap.String("object_key", objectKey))
 		logger.Info("start to export zhihu content")
 
+		minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
+		if err != nil {
+			logger.Error("failed to init minio service", zap.Error(err))
+			notify.Notify(h.notifier, "Failed to create minio service", err.Error(), logger)
+			return
+		}
+
 		pr, pw := io.Pipe()
-		errCh := make(chan error, 1)
 
 		var wg sync.WaitGroup
 		wg.Add(2)
 
+		exportErrCh := make(chan error, 1)
 		go func() {
 			defer pw.Close()
 			defer wg.Done()
 
-			exportErrCh := make(chan error, 1)
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			exportErrCh2 := make(chan error, 1)
 			go func() {
 				// TODO: Add context time out in exportService.Export funcs
 				if req.Single != nil && *req.Single {
-					exportErrCh <- exportService.ExportSingle(pw, options)
+					exportErrCh2 <- exportService.ExportSingle(pw, options)
 				} else {
-					exportErrCh <- exportService.Export(pw, options)
+					exportErrCh2 <- exportService.Export(pw, options)
 				}
 			}()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-
 			select {
-			case err := <-exportErrCh:
-				errCh <- err
+			case err = <-exportErrCh2:
+				exportErrCh <- err
 			case <-ctx.Done():
-				errCh <- errors.New("export timeout")
+				exportErrCh <- errors.New("export timeout")
 			}
 		}()
 
-		minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
-		if err != nil {
-			logger.Error("failed to init minio service", zap.Error(err))
-			_ = h.notifier.Notify("Failed to init minio service", err.Error())
-			return
-		}
-
-		uploadErrCh, uploadErrCh2 := make(chan error, 1), make(chan error, 1)
+		uploadErrCh := make(chan error, 1)
 		go func() {
 			defer wg.Done()
+
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
+
+			uploadErrCh2 := make(chan error, 1)
 			uploadErrCh2 <- minioService.SaveStream(objectKey, pr, -1)
 
 			select {
 			case err := <-uploadErrCh2:
 				uploadErrCh <- err
 			case <-ctx.Done():
-				uploadErrCh <- errors.New("export timeout")
+				uploadErrCh <- errors.New("upload timeout")
 			}
 		}()
 
 		go func() {
 			wg.Wait()
-			close(errCh)
+			close(exportErrCh)
 			close(uploadErrCh)
 		}()
 
 		var exportErr, uploadErr error
 		for i := 0; i < 2; i++ {
 			select {
-			case exportErr = <-errCh:
+			case exportErr = <-exportErrCh:
 				if exportErr != nil {
-					logger.Error("failed to export, aborting upload")
-					_ = h.notifier.Notify("Failed to export zhihu content", exportErr.Error())
-					pr.Close()
+					logger.Error("failed to export, aborting upload", zap.Error(exportErr))
+					notify.Notify(h.notifier, "Failed to export zhihu content", exportErr.Error(), logger)
 				} else {
 					logger.Info("export zhihu content successfully")
 				}
 			case uploadErr = <-uploadErrCh:
 				if uploadErr != nil {
 					logger.Error("failed to save file stream", zap.Error(uploadErr))
-					_ = h.notifier.Notify("Failed saving file", uploadErr.Error())
+					notify.Notify(h.notifier, "Failed saving file", uploadErr.Error(), logger)
 				} else {
 					logger.Info("save file stream successfully")
 				}
@@ -164,16 +158,15 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 
 		if exportErr == nil && uploadErr == nil {
 			logger.Info("export and save zhihu content stream successfully")
-			if err = h.notifier.Notify("Export zhihu content successfully", config.C.Minio.AssetsPrefix+"/"+objectKey); err != nil {
-				logger.Error("failed to notice export success", zap.Error(err))
-			}
+			notify.Notify(h.notifier, "Export zhihu content successfully", config.C.Minio.AssetsPrefix+"/"+objectKey, logger)
+			return
+		}
+
+		if err = minioService.Delete(objectKey); err != nil {
+			logger.Error("failed to delete object", zap.Error(err))
+			notify.Notify(h.notifier, "Failed to delete object", err.Error(), logger)
 		} else {
-			if err = minioService.Delete(objectKey); err != nil {
-				logger.Error("failed to delete object", zap.Error(err))
-				_ = h.notifier.Notify("Failed to delete object", err.Error())
-			} else {
-				logger.Info("delete object due to export error successfully", zap.String("object_key", objectKey))
-			}
+			logger.Info("delete object due to export error successfully")
 		}
 	}()
 
@@ -224,4 +217,17 @@ func (h *ZhihuController) parseOption(req ZhihuExportReq) (opts zhihuExport.Opti
 	}
 
 	return opts, nil
+}
+
+func buildFilename(zhihuExportService zhihuExport.Exporter, single *bool, opt *zhihuExport.Option) (filename string, err error) {
+	if single != nil && *single {
+		if filename, err = zhihuExportService.FilenameSingle(*opt); err != nil {
+			return "", fmt.Errorf("failed to build single file name: %w", err)
+		}
+	} else {
+		if filename, err = zhihuExportService.Filename(*opt); err != nil {
+			return "", fmt.Errorf("failed to build file name: %w", err)
+		}
+	}
+	return filename, nil
 }
