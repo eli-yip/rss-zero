@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -373,16 +374,19 @@ func escapeFilename(filename string) string {
 		'|':  "\\|",
 		'}':  "\\}",
 		'~':  "\\~",
+		'/':  "\\/",
 	}
 
 	var escaped strings.Builder
 
-	for _, char := range filename {
-		if escapeSeq, ok := escapeChars[char]; ok {
+	for i := 0; i < len(filename); {
+		r, size := utf8.DecodeRuneInString(filename[i:])
+		if escapeSeq, ok := escapeChars[r]; ok {
 			escaped.WriteString(escapeSeq)
 		} else {
-			escaped.WriteRune(char)
+			escaped.WriteRune(r)
 		}
+		i += size
 	}
 
 	return escaped.String()

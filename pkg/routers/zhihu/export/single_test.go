@@ -45,3 +45,27 @@ func TestExportSingle(t *testing.T) {
 		assert.Nil(err)
 	})
 }
+
+func TestEscapeFilename(t *testing.T) {
+	assert := assert.New(t)
+
+	t.Run("escape filename", func(t *testing.T) {
+		cases := []struct {
+			filename string
+			expected string
+		}{
+			{
+				"test",
+				"test",
+			},
+			{
+				`2023-10-25-无神论者有任何理由阻止自己实施一场有利可图而确信不会被人发现/惩罚的犯罪吗？.md`,
+				`2023-10-25-无神论者有任何理由阻止自己实施一场有利可图而确信不会被人发现\/惩罚的犯罪吗？.md`,
+			},
+		}
+
+		for _, c := range cases {
+			assert.Equal(c.expected, escapeFilename(c.filename))
+		}
+	})
+}
