@@ -21,7 +21,9 @@ type Option struct {
 
 type Exporter interface {
 	Export(io.Writer, Option) error
-	FileName(Option) (string, error)
+	ExportSingle(io.Writer, Option) error
+	Filename(Option) (string, error)
+	FilenameSingle(Option) (string, error)
 }
 
 type ExportService struct {
@@ -53,17 +55,17 @@ func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
 
 	switch *opt.Type {
 	case common.TypeZhihuAnswer:
-		return s.ExportAnswer(writer, opt)
+		return s.exportAnswer(writer, opt)
 	case common.TypeZhihuArticle:
-		return s.ExportArticle(writer, opt)
+		return s.exportArticle(writer, opt)
 	case common.TypeZhihuPin:
-		return s.ExportPin(writer, opt)
+		return s.exportPin(writer, opt)
 	default:
 		return errors.New("unknown type")
 	}
 }
 
-func (s *ExportService) ExportAnswer(writer io.Writer, opt Option) (err error) {
+func (s *ExportService) exportAnswer(writer io.Writer, opt Option) (err error) {
 	var queryOpt db.FetchAnswerOption
 	queryOpt.UserID = opt.AuthorID
 	queryOpt.StartTime = opt.StartTime
@@ -131,7 +133,7 @@ func (s *ExportService) ExportAnswer(writer io.Writer, opt Option) (err error) {
 	return nil
 }
 
-func (s *ExportService) ExportArticle(writer io.Writer, opt Option) (err error) {
+func (s *ExportService) exportArticle(writer io.Writer, opt Option) (err error) {
 	var queryOpt db.FetchArticleOption
 	queryOpt.UserID = opt.AuthorID
 	queryOpt.StartTime = opt.StartTime
@@ -189,7 +191,7 @@ func (s *ExportService) ExportArticle(writer io.Writer, opt Option) (err error) 
 	return nil
 }
 
-func (s *ExportService) ExportPin(writer io.Writer, opt Option) (err error) {
+func (s *ExportService) exportPin(writer io.Writer, opt Option) (err error) {
 	var queryOpt db.FetchPinOption
 	queryOpt.UserID = opt.AuthorID
 	queryOpt.StartTime = opt.StartTime
@@ -247,7 +249,7 @@ func (s *ExportService) ExportPin(writer io.Writer, opt Option) (err error) {
 	return nil
 }
 
-func (s ExportService) FileName(opt Option) (filename string, err error) {
+func (s ExportService) Filename(opt Option) (filename string, err error) {
 	fileNameArr := []string{"知乎合集"}
 
 	switch *opt.Type {

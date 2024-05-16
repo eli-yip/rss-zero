@@ -58,7 +58,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	fullTextRender := zhihuRender.NewFullTextRender(md.NewMarkdownFormatter())
 	exportService := zhihuExport.NewExportService(h.db, fullTextRender)
 
-	fileName, err := exportService.FileName(options)
+	fileName, err := exportService.Filename(options)
 	if err != nil {
 		err = errors.Join(err, errors.New("get file name error"))
 		logger.Error("Error getting file name", zap.Error(err))

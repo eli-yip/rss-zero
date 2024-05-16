@@ -5,16 +5,16 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
-	zhihuCrawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawler"
+	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/db"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
+	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
-	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/pkg/common"
-	"github.com/eli-yip/rss-zero/internal/file"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	requestIface "github.com/eli-yip/rss-zero/pkg/request"
+	zhihuCrawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawler"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
@@ -74,7 +74,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		mr := render.NewFullTextRender(mdfmt)
 		exportService := export.NewExportService(zhihuDBService, mr)
 
-		fileName, err := exportService.FileName(exportOpt)
+		fileName, err := exportService.Filename(exportOpt)
 		if err != nil {
 			logger.Fatal("fail to get file name", zap.Error(err))
 		}
