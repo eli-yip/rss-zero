@@ -77,51 +77,66 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	objectKey := fmt.Sprintf("export/zhihu/%s", filename)
 	go func() {
 		logger := logger.With(zap.String("object_key", objectKey))
-		logger.Info("Start to export")
+		logger.Info("start to export zhihu content")
 
 		pr, pw := io.Pipe()
+		errCh := make(chan error, 1)
 
 		go func() {
 			defer pw.Close()
 
+			var err error
 			if req.Single != nil && *req.Single {
-				if err := exportService.ExportSingle(pw, options); err != nil {
-					err = errors.Join(err, errors.New("export single service error"))
-					logger.Error("Error exporting single", zap.Error(err))
-					_ = h.notifier.Notify("fail to export single", err.Error())
-					return
-				}
+				err = exportService.ExportSingle(pw, options)
 			} else {
-				if err := exportService.Export(pw, options); err != nil {
-					err = errors.Join(err, errors.New("export service error"))
-					logger.Error("Error exporting", zap.Error(err))
-					_ = h.notifier.Notify("fail to export", err.Error())
-				}
+				err = exportService.Export(pw, options)
 			}
+			errCh <- err
 		}()
 
 		minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
-			logger.Error("Failed init minio service", zap.Error(err))
-			_ = h.notifier.Notify("Failed init minio service", err.Error())
+			logger.Error("failed to init minio service", zap.Error(err))
+			_ = h.notifier.Notify("Failed to init minio service", err.Error())
 			return
 		}
-		logger.Info("Start uploading file to minio")
 
-		if err := minioService.SaveStream(objectKey, pr, -1); err != nil {
-			logger.Error("Failed saving file", zap.Error(err))
-			_ = h.notifier.Notify("Failed saving file", err.Error())
-			return
-		}
-		logger.Info("Export success")
+		uploadErrCh := make(chan error, 1)
+		go func() {
+			if err := minioService.SaveStream(objectKey, pr, -1); err != nil {
+				uploadErrCh <- err
+			} else {
+				uploadErrCh <- nil
+			}
+		}()
 
-		if err = h.notifier.Notify("Export zhihu content successfully", config.C.Minio.AssetsPrefix+"/"+objectKey); err != nil {
-			logger.Error("failed to notice export success", zap.Error(err))
+		select {
+		case exportErr := <-errCh:
+			if exportErr != nil {
+				logger.Error("failed to export file, aborting", zap.Error(exportErr))
+				_ = h.notifier.Notify("Failed to export zhihu content", exportErr.Error())
+				pr.Close()
+				if err = minioService.Delete(objectKey); err != nil {
+					logger.Error("failed to delete object from minio", zap.Error(err))
+					_ = h.notifier.Notify("Failed to delete object from minio", err.Error())
+				}
+				return
+			}
+		case uploadErr := <-uploadErrCh:
+			if uploadErr != nil {
+				logger.Error("failed to upload file stream to minio", zap.Error(uploadErr))
+				_ = h.notifier.Notify("Failed to save file stream to minio", uploadErr.Error())
+				return
+			}
+			logger.Info("Export and save zhihu content successfully")
+			if err = h.notifier.Notify("Export and save zhihu content successfully", config.C.Minio.AssetsPrefix+"/"+objectKey); err != nil {
+				logger.Error("failed to notice export success", zap.Error(err))
+			}
 		}
 	}()
 
 	return c.JSON(http.StatusOK, &common.ApiResp{
-		Message: "start to export, you'll be notified when it's done",
+		Message: "start to expor zhihu content, you'll be notified when it's done",
 		Data: &ZhihuExportResp{
 			FileName: filename,
 			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,

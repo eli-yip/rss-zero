@@ -91,3 +91,7 @@ func (s *FileServiceMinio) GetStream(objectKey string) (stream io.ReadCloser, er
 }
 
 func (s *FileServiceMinio) AssetsDomain() (url string) { return s.assetsDomain }
+
+func (s *FileServiceMinio) Delete(key string) (err error) {
+	return s.minioClient.RemoveObject(context.Background(), s.bucketName, key, minio.RemoveObjectOptions{})
+}

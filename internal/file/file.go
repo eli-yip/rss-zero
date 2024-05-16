@@ -10,4 +10,6 @@ type File interface {
 	GetStream(string) (io.ReadCloser, error)
 	// AssetsDomain is a getter for the assets domain
 	AssetsDomain() string
+	// Delete method will take a name, and delete the file from the file service
+	Delete(string) error
 }
