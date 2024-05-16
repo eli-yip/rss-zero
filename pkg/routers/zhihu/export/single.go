@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -351,47 +351,43 @@ func (s ExportService) FilenameSingle(opt Option) (filename string, err error) {
 }
 
 func escapeFilename(filename string) string {
-	return url.PathEscape(filename)
+	escapeChars := map[rune]string{
+		' ':  "\\ ",
+		'!':  "\\!",
+		'$':  "\\$",
+		'&':  "\\&",
+		'\'': "\\'",
+		'(':  "\\(",
+		')':  "\\)",
+		'*':  "\\*",
+		';':  "\\;",
+		'<':  "\\<",
+		'=':  "\\=",
+		'>':  "\\>",
+		'?':  "\\?",
+		'[':  "\\[",
+		'\\': "\\\\",
+		']':  "\\]",
+		'^':  "\\^",
+		'`':  "\\`",
+		'{':  "\\{",
+		'|':  "\\|",
+		'}':  "\\}",
+		'~':  "\\~",
+		'/':  "或",
+	}
+
+	var escaped strings.Builder
+
+	for i := 0; i < len(filename); {
+		r, size := utf8.DecodeRuneInString(filename[i:])
+		if escapeSeq, ok := escapeChars[r]; ok {
+			escaped.WriteString(escapeSeq)
+		} else {
+			escaped.WriteRune(r)
+		}
+		i += size
+	}
+
+	return escaped.String()
 }
-
-// func escapeFilename(filename string) string {
-// 	escapeChars := map[rune]string{
-// 		' ':  "\\ ",
-// 		'!':  "\\!",
-// 		'$':  "\\$",
-// 		'&':  "\\&",
-// 		'\'': "\\'",
-// 		'(':  "\\(",
-// 		')':  "\\)",
-// 		'*':  "\\*",
-// 		';':  "\\;",
-// 		'<':  "\\<",
-// 		'=':  "\\=",
-// 		'>':  "\\>",
-// 		'?':  "\\?",
-// 		'[':  "\\[",
-// 		'\\': "\\\\",
-// 		']':  "\\]",
-// 		'^':  "\\^",
-// 		'`':  "\\`",
-// 		'{':  "\\{",
-// 		'|':  "\\|",
-// 		'}':  "\\}",
-// 		'~':  "\\~",
-// 		'/':  "\\/",
-// 	}
-
-// 	var escaped strings.Builder
-
-// 	for i := 0; i < len(filename); {
-// 		r, size := utf8.DecodeRuneInString(filename[i:])
-// 		if escapeSeq, ok := escapeChars[r]; ok {
-// 			escaped.WriteString(escapeSeq)
-// 		} else {
-// 			escaped.WriteRune(r)
-// 		}
-// 		i += size
-// 	}
-
-// 	return escaped.String()
-// }
