@@ -263,7 +263,7 @@ func (s ExportService) Filename(opt Option) (filename string, err error) {
 
 	authorName, err := s.db.GetAuthorName(*opt.AuthorID)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get author name: %w", err)
 	}
 	if strings.Contains(authorName, "-") {
 		authorName = strings.ReplaceAll(authorName, "-", "_")

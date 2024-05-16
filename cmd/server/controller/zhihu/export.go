@@ -23,6 +23,7 @@ type ZhihuExportReq struct {
 	Type      *string `json:"type"`
 	StartTime *string `json:"start_time"` // start time is included
 	EndTime   *string `json:"end_time"`   // end time is included
+	Single    *bool   `json:"single"`
 }
 
 // ZhihuExportResp represents the response structure for exporting data from Zhihu.
@@ -58,13 +59,22 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	fullTextRender := zhihuRender.NewFullTextRender(md.NewMarkdownFormatter())
 	exportService := zhihuExport.NewExportService(h.db, fullTextRender)
 
-	fileName, err := exportService.Filename(options)
-	if err != nil {
-		err = errors.Join(err, errors.New("get file name error"))
-		logger.Error("Error getting file name", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "error getting file name"})
+	var filename string
+	if req.Single != nil && *req.Single {
+		if filename, err = exportService.FilenameSingle(options); err != nil {
+			err = fmt.Errorf("failed to build single file name: %w", err)
+			logger.Error("Error getting single file name", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "error getting single file name"})
+		}
+	} else {
+		if filename, err = exportService.Filename(options); err != nil {
+			err = fmt.Errorf("failed to build file name: %w", err)
+			logger.Error("Error getting file name", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "error getting file name"})
+		}
 	}
-	objectKey := fmt.Sprintf("export/zhihu/%s", fileName)
+
+	objectKey := fmt.Sprintf("export/zhihu/%s", filename)
 	go func() {
 		logger := logger.With(zap.String("object_key", objectKey))
 		logger.Info("Start to export")
@@ -74,11 +84,19 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 		go func() {
 			defer pw.Close()
 
-			if err := exportService.Export(pw, options); err != nil {
-				err = errors.Join(err, errors.New("export service error"))
-				logger.Error("Error exporting", zap.Error(err))
-				_ = h.notifier.Notify("fail to export", err.Error())
-				return
+			if req.Single != nil && *req.Single {
+				if err := exportService.ExportSingle(pw, options); err != nil {
+					err = errors.Join(err, errors.New("export single service error"))
+					logger.Error("Error exporting single", zap.Error(err))
+					_ = h.notifier.Notify("fail to export single", err.Error())
+					return
+				}
+			} else {
+				if err := exportService.Export(pw, options); err != nil {
+					err = errors.Join(err, errors.New("export service error"))
+					logger.Error("Error exporting", zap.Error(err))
+					_ = h.notifier.Notify("fail to export", err.Error())
+				}
 			}
 		}()
 
@@ -105,7 +123,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, &common.ApiResp{
 		Message: "start to export, you'll be notified when it's done",
 		Data: &ZhihuExportResp{
-			FileName: fileName,
+			FileName: filename,
 			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
 		},
 	})
