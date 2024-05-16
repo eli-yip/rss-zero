@@ -1,10 +1,13 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -82,16 +85,32 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 		pr, pw := io.Pipe()
 		errCh := make(chan error, 1)
 
+		var wg sync.WaitGroup
+		wg.Add(2)
+
 		go func() {
 			defer pw.Close()
+			defer wg.Done()
 
-			var err error
-			if req.Single != nil && *req.Single {
-				err = exportService.ExportSingle(pw, options)
-			} else {
-				err = exportService.Export(pw, options)
+			exportErrCh := make(chan error, 1)
+			go func() {
+				// TODO: Add context time out in exportService.Export funcs
+				if req.Single != nil && *req.Single {
+					exportErrCh <- exportService.ExportSingle(pw, options)
+				} else {
+					exportErrCh <- exportService.Export(pw, options)
+				}
+			}()
+
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			select {
+			case err := <-exportErrCh:
+				errCh <- err
+			case <-ctx.Done():
+				errCh <- errors.New("export timeout")
 			}
-			errCh <- err
 		}()
 
 		minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
@@ -101,30 +120,59 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 			return
 		}
 
-		uploadErrCh := make(chan error, 1)
-		go func() { uploadErrCh <- minioService.SaveStream(objectKey, pr, -1) }()
+		uploadErrCh, uploadErrCh2 := make(chan error, 1), make(chan error, 1)
+		go func() {
+			defer wg.Done()
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			uploadErrCh2 <- minioService.SaveStream(objectKey, pr, -1)
 
-		select {
-		case exportErr := <-errCh:
-			if exportErr != nil {
-				logger.Error("failed to export file, aborting", zap.Error(exportErr))
-				_ = h.notifier.Notify("Failed to export zhihu content", exportErr.Error())
-				pr.Close()
-				if err = minioService.Delete(objectKey); err != nil {
-					logger.Error("failed to delete object from minio", zap.Error(err))
-					_ = h.notifier.Notify("Failed to delete object from minio", err.Error())
+			select {
+			case err := <-uploadErrCh2:
+				uploadErrCh <- err
+			case <-ctx.Done():
+				uploadErrCh <- errors.New("export timeout")
+			}
+		}()
+
+		go func() {
+			wg.Wait()
+			close(errCh)
+			close(uploadErrCh)
+		}()
+
+		var exportErr, uploadErr error
+		for i := 0; i < 2; i++ {
+			select {
+			case exportErr = <-errCh:
+				if exportErr != nil {
+					logger.Error("failed to export, aborting upload")
+					_ = h.notifier.Notify("Failed to export zhihu content", exportErr.Error())
+					pr.Close()
+				} else {
+					logger.Info("export zhihu content successfully")
 				}
-				return
+			case uploadErr = <-uploadErrCh:
+				if uploadErr != nil {
+					logger.Error("failed to save file stream", zap.Error(uploadErr))
+					_ = h.notifier.Notify("Failed saving file", uploadErr.Error())
+				} else {
+					logger.Info("save file stream successfully")
+				}
 			}
-		case uploadErr := <-uploadErrCh:
-			if uploadErr != nil {
-				logger.Error("failed to upload file stream to minio", zap.Error(uploadErr))
-				_ = h.notifier.Notify("Failed to save file stream to minio", uploadErr.Error())
-				return
-			}
-			logger.Info("Export and save zhihu content successfully")
-			if err = h.notifier.Notify("Export and save zhihu content successfully", config.C.Minio.AssetsPrefix+"/"+objectKey); err != nil {
+		}
+
+		if exportErr == nil && uploadErr == nil {
+			logger.Info("export and save zhihu content stream successfully")
+			if err = h.notifier.Notify("Export zhihu content successfully", config.C.Minio.AssetsPrefix+"/"+objectKey); err != nil {
 				logger.Error("failed to notice export success", zap.Error(err))
+			}
+		} else {
+			if err = minioService.Delete(objectKey); err != nil {
+				logger.Error("failed to delete object", zap.Error(err))
+				_ = h.notifier.Notify("Failed to delete object", err.Error())
+			} else {
+				logger.Info("delete object due to export error successfully", zap.String("object_key", objectKey))
 			}
 		}
 	}()

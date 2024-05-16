@@ -56,7 +56,8 @@ func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, si
 	contentType := s.getContentType(objectKey)
 
 	var info minio.UploadInfo
-	if info, err = s.minioClient.PutObject(context.Background(),
+	if info, err = s.minioClient.PutObject(
+		context.Background(),
 		s.bucketName,
 		objectKey,
 		stream,

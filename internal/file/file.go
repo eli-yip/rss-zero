@@ -1,6 +1,8 @@
 package file
 
-import "io"
+import (
+	"io"
+)
 
 // File interface is for file related services.
 type File interface {
