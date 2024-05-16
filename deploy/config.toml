@@ -1,0 +1,39 @@
+[settings]
+server_url = ''
+internal_server_url = ''
+fresh_rss_url = ''
+debug = false
+
+[minio]
+endpoint = ''
+access_key_id = ''
+secret_access_key = ''
+bucket = ''
+assets_prefix = ''
+
+[openai]
+api_key = ''
+base_url = ''
+
+[database]
+host = ''
+port = ''
+user = ''
+password = ''
+name = ''
+
+[redis]
+address = ''
+password = ''
+
+[bark]
+url = ''
+
+[test_url]
+zsxq = ''
+zhihu = ''
+xiaobot = ''
+
+[utils]
+zhihu_encryption_url = ''
+rsshub_url = ''
