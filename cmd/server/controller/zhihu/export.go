@@ -102,13 +102,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 		}
 
 		uploadErrCh := make(chan error, 1)
-		go func() {
-			if err := minioService.SaveStream(objectKey, pr, -1); err != nil {
-				uploadErrCh <- err
-			} else {
-				uploadErrCh <- nil
-			}
-		}()
+		go func() { uploadErrCh <- minioService.SaveStream(objectKey, pr, -1) }()
 
 		select {
 		case exportErr := <-errCh:

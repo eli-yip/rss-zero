@@ -99,7 +99,7 @@ func (s *ExportService) exportSingleAnswer(writer io.Writer, opt Option) (err er
 				return err
 			}
 
-			filename := buildFilename(answer.CreateAt, question.Title)
+			filename := escapeFilename(buildFilename(answer.CreateAt, question.Title))
 			if err = os.WriteFile(filepath.Join(tempDir, filename), []byte(fullText), 0755); err != nil {
 				return fmt.Errorf("failed to write file %s: %w", filename, err)
 			}
@@ -319,7 +319,29 @@ func (s *ExportService) exportSinglePin(writer io.Writer, opt Option) (err error
 }
 
 func buildFilename(t time.Time, title string) (filename string) {
-	return escapeFilename(fmt.Sprintf("%s-%s.md", t.Format("2006-01-02"), title))
+	return fmt.Sprintf("%s-%s.md", t.Format("2006-01-02"), title)
+}
+
+func escapeFilename(filename string) string {
+	escapeChars := map[rune]string{
+		' ': "_",
+		'~': "-",
+		'/': "或",
+	}
+
+	var escaped strings.Builder
+
+	for i := 0; i < len(filename); {
+		r, size := utf8.DecodeRuneInString(filename[i:])
+		if escapeSeq, ok := escapeChars[r]; ok {
+			escaped.WriteString(escapeSeq)
+		} else {
+			escaped.WriteRune(r)
+		}
+		i += size
+	}
+
+	return escaped.String()
 }
 
 func (s ExportService) FilenameSingle(opt Option) (filename string, err error) {
@@ -348,46 +370,4 @@ func (s ExportService) FilenameSingle(opt Option) (filename string, err error) {
 	fileNameArr = append(fileNameArr, opt.EndTime.Add(-1*time.Hour*24).Format("2006-01-02"))
 
 	return fmt.Sprintf("%s.zip", strings.Join(fileNameArr, "-")), nil
-}
-
-func escapeFilename(filename string) string {
-	escapeChars := map[rune]string{
-		' ':  "\\ ",
-		'!':  "\\!",
-		'$':  "\\$",
-		'&':  "\\&",
-		'\'': "\\'",
-		'(':  "\\(",
-		')':  "\\)",
-		'*':  "\\*",
-		';':  "\\;",
-		'<':  "\\<",
-		'=':  "\\=",
-		'>':  "\\>",
-		'?':  "\\?",
-		'[':  "\\[",
-		'\\': "\\\\",
-		']':  "\\]",
-		'^':  "\\^",
-		'`':  "\\`",
-		'{':  "\\{",
-		'|':  "\\|",
-		'}':  "\\}",
-		'~':  "\\~",
-		'/':  "或",
-	}
-
-	var escaped strings.Builder
-
-	for i := 0; i < len(filename); {
-		r, size := utf8.DecodeRuneInString(filename[i:])
-		if escapeSeq, ok := escapeChars[r]; ok {
-			escaped.WriteString(escapeSeq)
-		} else {
-			escaped.WriteRune(r)
-		}
-		i += size
-	}
-
-	return escaped.String()
 }
