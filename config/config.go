@@ -4,11 +4,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
-
 	"github.com/eli-yip/rss-zero/internal/db"
-	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/file"
+	"github.com/eli-yip/rss-zero/internal/redis"
 )
 
 const DefaultFetchCount = 20
@@ -53,22 +51,10 @@ type Config struct {
 
 var C Config
 
-func InitFromFile() {
-	loadEnv()
-	readEnv()
-}
-
 // InitFromEnv reads environment variables and initializes the config.
 //
 // it will panic if any environment variable is not found
 func InitFromEnv() { readEnv() }
-
-func loadEnv() {
-	err := godotenv.Load()
-	if err != nil {
-		panic("Error loading .env file")
-	}
-}
 
 func readEnv() {
 	C.Minio = file.MinioConfig{

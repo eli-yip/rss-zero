@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -35,8 +37,26 @@ import (
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
+var configPath string
+
+func parseFlags() {
+	flag.StringVar(&configPath, "config", "", "path to the config file")
+	flag.Parse()
+}
+
 func main() {
 	var err error
+
+	parseFlags()
+	if configPath == "" {
+		config.InitFromEnv()
+	} else if strings.HasSuffix(configPath, ".toml") {
+		if err = config.InitFromFile(configPath); err != nil {
+			panic("failed to init config from file: " + err.Error())
+		}
+	} else {
+		panic("invalid config file extension: " + configPath + ", only `.toml` is supported")
+	}
 
 	redisService, db, bark, logger, err := initService()
 	if err != nil {
@@ -89,8 +109,6 @@ func initService() (redisService redis.Redis,
 	notifier notify.Notifier,
 	logger *zap.Logger,
 	err error) {
-	config.InitFromEnv()
-
 	logger = log.NewZapLogger()
 	logger.Info("Init zap logger", zap.Bool("Debug Mode", config.C.Debug))
 	logger.Info("config initialized", zap.Any("config", config.C))

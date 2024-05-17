@@ -11,10 +11,10 @@ require (
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/go-co-op/gocron/v2 v2.5.0
 	github.com/gorilla/feeds v1.1.2
-	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/lib/pq v1.10.9
 	github.com/minio/minio-go/v7 v7.0.70
+	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/sashabaranov/go-openai v1.24.0
 	github.com/stretchr/testify v1.9.0
