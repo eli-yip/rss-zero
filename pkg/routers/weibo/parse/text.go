@@ -8,7 +8,7 @@ import (
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/weibo/parse/api_models"
 )
 
-func (ps *ParseService) parseText(tweet apiModels.Tweet) (text string, err error) {
+func (ps *ParseService) parseTweet(tweet apiModels.Tweet) (text string, err error) {
 	text = tweet.TextRaw
 
 	if len(tweet.PicIDs) == 0 {
@@ -31,6 +31,7 @@ func (ps *ParseService) parseText(tweet apiModels.Tweet) (text string, err error
 		}
 
 		text += md.Image(objectKey, ps.fileService.AssetsDomain()+objectKey) + "\n\n"
+		// text += md.Image(objectKey, `https://image.com/`+objectKey) + "\n\n"
 	}
 
 	return trimRightNewLine(text), nil
