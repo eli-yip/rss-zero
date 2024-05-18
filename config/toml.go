@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/pelletier/go-toml/v2"
 
@@ -99,6 +100,11 @@ func InitFromToml(path string) (err error) {
 		return fmt.Errorf("failed to unmarshal toml: %w", err)
 	}
 
+	BJT, err := getBJT()
+	if err != nil {
+		return fmt.Errorf("failed to get BJT: %w", err)
+	}
+
 	C = Config{
 		Minio: file.MinioConfig{
 			Endpoint:        c.Minio.Endpoint,
@@ -138,8 +144,14 @@ func InitFromToml(path string) (err error) {
 		InternalServerURL: c.Settings.InternalServerURL,
 		RSSHubURL:         c.Utils.RsshubURL,
 		FreshRSSURL:       c.Settings.FreshRssURL,
-		Debug:             c.Settings.Debug,
+
+		BJT:   BJT,
+		Debug: c.Settings.Debug,
 	}
 
 	return nil
+}
+
+func getBJT() (*time.Location, error) {
+	return time.LoadLocation("Asia/Shanghai")
 }
