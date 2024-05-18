@@ -51,7 +51,7 @@ func main() {
 	if configPath == "" {
 		config.InitFromEnv()
 	} else if strings.HasSuffix(configPath, ".toml") {
-		if err = config.InitFromFile(configPath); err != nil {
+		if err = config.InitFromToml(configPath); err != nil {
 			panic("failed to init config from file: " + err.Error())
 		}
 	} else {
