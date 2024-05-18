@@ -4,6 +4,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/file"
+	"github.com/eli-yip/rss-zero/internal/md"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/weibo/parse/api_models"
@@ -20,16 +21,18 @@ type ParseService struct {
 	requestService request.Requester
 	dbService      db.DB
 	htmlToMarkdown renderIface.HTMLToMarkdown
+	mdfmt          *md.MarkdownFormatter
 
 	logger *zap.Logger
 }
 
-func NewParseService(fileService file.File, requestService request.Requester, dbService db.DB, htmlToMarkdown renderIface.HTMLToMarkdown, logger *zap.Logger) Parser {
+func NewParseService(fileService file.File, requestService request.Requester, dbService db.DB, htmlToMarkdown renderIface.HTMLToMarkdown, mdfmt *md.MarkdownFormatter, logger *zap.Logger) Parser {
 	return &ParseService{
 		fileService:    fileService,
 		requestService: requestService,
 		dbService:      dbService,
 		htmlToMarkdown: htmlToMarkdown,
+		mdfmt:          mdfmt,
 
 		logger: logger,
 	}
