@@ -2,6 +2,7 @@
 package parse
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/eli-yip/rss-zero/internal/md"
@@ -12,8 +13,13 @@ func (ps *ParseService) parseTweet(tweet apiModels.Tweet) (text string, err erro
 	text = tweet.TextRaw
 
 	if len(tweet.PicIDs) == 0 {
-		return text, nil
+		text, err = ps.getLongText(tweet.MBlogID)
+		if err != nil {
+			return "", fmt.Errorf("failed to get long text: %w", err)
+		}
 	}
+
+	text += "\n\n"
 
 	for _, picID := range tweet.PicIDs {
 		picInfo := tweet.PicInfos[picID]
@@ -35,4 +41,19 @@ func (ps *ParseService) parseTweet(tweet apiModels.Tweet) (text string, err erro
 	}
 
 	return trimRightNewLine(text), nil
+}
+
+func (ps *ParseService) getLongText(mBlogID string) (text string, err error) {
+	u := fmt.Sprintf("https://weibo.com/ajax/statuses/longtext?id=%s", mBlogID)
+	data, err := ps.requestService.LimitRaw(u)
+	if err != nil {
+		return "", fmt.Errorf("failed to get long text: %w", err)
+	}
+
+	var longTextResp apiModels.LongTextApiResp
+	if err = json.Unmarshal(data, &longTextResp); err != nil {
+		return "", fmt.Errorf("failed to unmarshal long text response: %w", err)
+	}
+
+	return longTextResp.Data.LongTextContent, nil
 }
