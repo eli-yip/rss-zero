@@ -3,12 +3,14 @@ package parse
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
 )
 
-func (ps *ParseService) buildObjectKey(picID string) (key string, err error) {
-	return fmt.Sprintf("weibo-test/%s", picID), nil
+func (ps *ParseService) buildObjectKey(picURL string) (key string, err error) {
+	slices := strings.Split(picURL, "/")
+	return fmt.Sprintf("weibo-test/%s", slices[len(slices)-1]), nil
 }
 
 func (ps *ParseService) savePicInfo(weiboID int, picID, picURL, objectKey string) (err error) {

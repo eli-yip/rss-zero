@@ -1,5 +1,7 @@
 package apiModels
 
+import "encoding/json"
+
 const (
 	_ = iota
 	OK
@@ -7,8 +9,8 @@ const (
 
 type ApiResp struct {
 	Data struct {
-		List  []Tweet `json:"list"`
-		Total int     `json:"total"`
+		List  []json.RawMessage `json:"list"`
+		Total int               `json:"total"`
 	} `json:"data"`
 	OK int `json:"ok"`
 }

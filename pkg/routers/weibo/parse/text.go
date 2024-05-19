@@ -11,7 +11,7 @@ import (
 
 // buildText builds the text part for database field `text`
 func (ps *ParseService) buildText(tweet apiModels.Tweet) (text string, err error) {
-	if text, err = ps.buildTextPart(tweet.Text, tweet.MBlogID, tweet.IsLongText); err != nil {
+	if text, err = ps.buildTextPart(tweet.TextRaw, tweet.MBlogID, tweet.IsLongText); err != nil {
 		return "", fmt.Errorf("failed to build text part: %w", err)
 	}
 	text += "\n\n"
@@ -41,7 +41,7 @@ func (ps *ParseService) buildTextPart(textRaw, mBlogID string, isLongText bool) 
 func (ps *ParseService) buildPicPart(tweetID int, picIDs []string, picInfos map[string]apiModels.PicInfo) (picPart string, err error) {
 	for _, picID := range picIDs {
 		picInfo := picInfos[picID]
-		objectKey, err := ps.buildObjectKey(picID)
+		objectKey, err := ps.buildObjectKey(picInfo.Original.URL)
 		if err != nil {
 			return "", fmt.Errorf("failed to generate object key for %s: %w", picID, err)
 		}

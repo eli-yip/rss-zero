@@ -8,7 +8,7 @@ type Tweet struct {
 
 	TextRaw         string `json:"text_raw"`
 	Text            string `json:"text"`
-	IsLongText      bool   `json:"is_long_text"`
+	IsLongText      bool   `json:"isLongText"`
 	ReTweetedStatus *Tweet `json:"retweeted_status"`
 
 	PicIDs   []string           `json:"pic_ids"`

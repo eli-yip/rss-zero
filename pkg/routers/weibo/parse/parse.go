@@ -1,18 +1,19 @@
 package parse
 
 import (
+	"encoding/json"
+
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/md"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
-	apiModels "github.com/eli-yip/rss-zero/pkg/routers/weibo/parse/api_models"
 	"github.com/eli-yip/rss-zero/pkg/routers/weibo/request"
 )
 
 type Parser interface {
-	ParseTweetList(body []byte) ([]apiModels.Tweet, error)
+	ParseTweetList(body []byte) ([]json.RawMessage, error)
 	ParseTweet(content []byte) (text string, err error)
 }
 
