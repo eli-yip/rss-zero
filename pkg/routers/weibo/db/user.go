@@ -11,6 +11,8 @@ type User struct {
 	Nickname string `gorm:"column:nickname;type:text"`
 }
 
+func (u *User) TableName() string { return "weibo_user" }
+
 type DBUser interface {
 	SaveUser(u *User) (err error)
 	GetUser(id int) (u *User, err error)

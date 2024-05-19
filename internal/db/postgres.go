@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	weiboDB "github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
@@ -61,6 +62,10 @@ func NewPostgresDB(c PostgresConfig) (db *gorm.DB, err error) {
 		&xiaobotDB.Paper{},
 		&xiaobotDB.Post{},
 		&xiaobotDB.Creator{},
+
+		&weiboDB.Tweet{},
+		&weiboDB.Object{},
+		&weiboDB.User{},
 	); err != nil {
 		return nil, err
 	}
