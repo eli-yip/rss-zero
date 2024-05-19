@@ -9,21 +9,39 @@ import (
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/weibo/parse/api_models"
 )
 
-func (ps *ParseService) parseTweet(tweet apiModels.Tweet) (text string, err error) {
-	text = tweet.TextRaw
+// buildText builds the text part for database field `text`
+func (ps *ParseService) buildText(tweet apiModels.Tweet) (text string, err error) {
+	if text, err = ps.buildTextPart(tweet.Text, tweet.MBlogID, tweet.IsLongText); err != nil {
+		return "", fmt.Errorf("failed to build text part: %w", err)
+	}
+	text += "\n\n"
 
-	if len(tweet.PicIDs) == 0 {
-		text, err = ps.getLongText(tweet.MBlogID)
+	if picPart, err := ps.buildPicPart(tweet.ID, tweet.PicIDs, tweet.PicInfos); err != nil {
+		return "", fmt.Errorf("failed to build pic part: %w", err)
+	} else {
+		text += picPart
+	}
+
+	return trimRightNewLine(text), nil
+}
+
+func (ps *ParseService) buildTextPart(textRaw, mBlogID string, isLongText bool) (text string, err error) {
+	text = textRaw
+
+	if isLongText {
+		text, err = ps.getLongText(mBlogID)
 		if err != nil {
 			return "", fmt.Errorf("failed to get long text: %w", err)
 		}
 	}
 
-	text += "\n\n"
+	return text, nil
+}
 
-	for _, picID := range tweet.PicIDs {
-		picInfo := tweet.PicInfos[picID]
-		objectKey, err := ps.generateObjectKey(picID)
+func (ps *ParseService) buildPicPart(tweetID int, picIDs []string, picInfos map[string]apiModels.PicInfo) (picPart string, err error) {
+	for _, picID := range picIDs {
+		picInfo := picInfos[picID]
+		objectKey, err := ps.buildObjectKey(picID)
 		if err != nil {
 			return "", fmt.Errorf("failed to generate object key for %s: %w", picID, err)
 		}
@@ -32,15 +50,15 @@ func (ps *ParseService) parseTweet(tweet apiModels.Tweet) (text string, err erro
 			return "", fmt.Errorf("failed to save pic: %w", err)
 		}
 
-		if err = ps.savePicInfo(tweet.ID, picID, picInfo.Original.URL, objectKey); err != nil {
+		if err = ps.savePicInfo(tweetID, picID, picInfo.Original.URL, objectKey); err != nil {
 			return "", fmt.Errorf("failed to save pic info: %w", err)
 		}
 
-		text += md.Image(objectKey, ps.fileService.AssetsDomain()+objectKey) + "\n\n"
-		// text += md.Image(objectKey, `https://image.com/`+objectKey) + "\n\n"
+		picPart += md.Image(objectKey, ps.fileService.AssetsDomain()+objectKey) + "\n\n"
+		// picPart += md.Image(objectKey, `https://image.com/`+objectKey) + "\n\n"
 	}
 
-	return trimRightNewLine(text), nil
+	return trimRightNewLine(picPart), nil
 }
 
 func (ps *ParseService) getLongText(mBlogID string) (text string, err error) {

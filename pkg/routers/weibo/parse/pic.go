@@ -7,8 +7,8 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
 )
 
-func (ps *ParseService) generateObjectKey(picID string) (key string, err error) {
-	return fmt.Sprintf("weibo/%s", picID), nil
+func (ps *ParseService) buildObjectKey(picID string) (key string, err error) {
+	return fmt.Sprintf("weibo-test/%s", picID), nil
 }
 
 func (ps *ParseService) savePicInfo(weiboID int, picID, picURL, objectKey string) (err error) {

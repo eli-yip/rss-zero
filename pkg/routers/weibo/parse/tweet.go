@@ -22,7 +22,7 @@ func (ps *ParseService) ParseTweet(content []byte) (text string, err error) {
 	logger := ps.logger.With(zap.Int("tweet_id", tweet.ID))
 	logger.Info("start to parse tweet")
 
-	text, err = ps.parseTweet(tweet)
+	text, err = ps.buildText(tweet)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse text: %w", err)
 	}
