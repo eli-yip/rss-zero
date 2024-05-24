@@ -11,7 +11,7 @@ cli:
 
 .PHONY: serve
 serve:
-	godotenv -f ${CURRENT_DIR}/.env $(GORUN) ${CURRENT_DIR}/cmd/server
+	$(GORUN) ${CURRENT_DIR}/cmd/server --config=${CURRENT_DIR}/config.toml
 
 .PHONY: lint
 lint:
