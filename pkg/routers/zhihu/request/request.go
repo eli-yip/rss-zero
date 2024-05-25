@@ -1,6 +1,7 @@
 package request
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,11 +10,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/eli-yip/rss-zero/config"
 	"go.uber.org/zap"
-
-	"github.com/eli-yip/rss-zero/pkg/request"
-	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/encrypt"
 )
+
+type Requester interface {
+	// LimitRaw requests to the given url with limiter and returns raw data,
+	LimitRaw(string) ([]byte, error)
+	// NoLimitRaw requests to the given url without limiter and returns raw data,
+	// Commonly used in file download
+	NoLimitStream(string) (*http.Response, error)
+}
 
 var (
 	ErrBadResponse   = errors.New("bad response")
@@ -33,41 +40,17 @@ const (
 type RequestService struct {
 	client   *http.Client
 	limiter  chan struct{}
-	maxRetry int    // default 5
-	dC0      string // d_c0 cookie, initilized when new RequestService
-	cookies  string // all cookies, initilized when new RequestService
+	maxRetry int // default 5
 	log      *zap.Logger
 }
 
-func NewRequestService(dC0 *string, logger *zap.Logger) (request.Requester, error) {
+func NewRequestService(logger *zap.Logger) (Requester, error) {
 	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:   &http.Client{},
 		limiter:  make(chan struct{}),
 		maxRetry: defaultMaxRetry,
 		log:      logger,
-	}
-
-	if dC0 == nil {
-		cookies, err := encrypt.GetCookies(logger)
-		if err != nil {
-			return nil, err
-		}
-		s.cookies = encrypt.CookiesToString(cookies)
-
-		found := false
-		for _, c := range cookies {
-			if c.Name == "d_c0" {
-				logger.Info("get d_c0 cookie successfully", zap.String("value", c.Value))
-				s.dC0 = c.Value
-				found = true
-			}
-		}
-		if !found {
-			return nil, errors.New("fail to find d_c0 cookie")
-		}
-	} else {
-		s.dC0 = *dC0
 	}
 
 	go func() {
@@ -80,16 +63,14 @@ func NewRequestService(dC0 *string, logger *zap.Logger) (request.Requester, erro
 	return s, nil
 }
 
-// Send request with limiter with error check
-// Now it's only used with api.zhihu.com v4 answer api
-func (r *RequestService) Limit(u string) (respByte []byte, err error) {
-	return nil, nil
-}
-
 type Error403 struct {
 	Error struct {
 		NeedLogin bool `json:"need_login"`
 	} `json:"error"`
+}
+
+type URLRequest struct {
+	URL string `json:"url"`
 }
 
 // Send request with limiter, used for all zhihu api requests
@@ -101,17 +82,14 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 		logger := logger.With(zap.Int("index", i))
 		<-r.limiter
 
-		req, err := r.setAPIReq(u)
+		var reqBody URLRequest
+		reqBody.URL = u
+		reqBodyByte, err := json.Marshal(reqBody)
 		if err != nil {
-			if errors.Is(err, ErrGetXZSE96) {
-				logger.Error("fail to get x-zse-96", zap.Error(err))
-			} else {
-				logger.Error("fail to new a request", zap.Error(err))
-			}
+			logger.Error("fail to marshal request body", zap.Error(err))
 			continue
 		}
-
-		resp, err := r.client.Do(req)
+		resp, err := http.Post(config.C.ZhihuEncryptionURL, "application/json", bytes.NewBuffer(reqBodyByte))
 		if err != nil {
 			logger.Error("fail to request url", zap.Error(err))
 			continue
@@ -151,16 +129,6 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 	return nil, err
 }
 
-// Send request with limiter and get a stream result, not used
-func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) {
-	return nil, nil
-}
-
-// Send request without limiter, not used
-func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
-	return nil, nil
-}
-
 func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error) {
 	logger := r.log.With(zap.String("url", u))
 	logger.Info("request without limit for stream")
@@ -194,23 +162,6 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 
 	logger.Error("fail to get zhihu no limit stream", zap.Error(err))
 	return nil, err
-}
-
-func (r *RequestService) setAPIReq(u string) (req *http.Request, err error) {
-	req, err = http.NewRequest("GET", u, nil)
-	if err != nil {
-		return nil, errors.Join(ErrNewRequest, err)
-	}
-	xzse96, err := encrypt.GetXZSE96(u, r.dC0)
-	if err != nil {
-		return nil, errors.Join(ErrGetXZSE96, err)
-	}
-	req.Header.Set("User-Agent", apiUserAgent)
-	req.Header.Set("x-zse-93", "101_3_3.0")
-	req.Header.Set("x-zse-96", xzse96)
-	req.Header.Set("cookie", r.cookies)
-	req.Header.Set("User-Agent", apiUserAgent)
-	return req, nil
 }
 
 // Set request header and method

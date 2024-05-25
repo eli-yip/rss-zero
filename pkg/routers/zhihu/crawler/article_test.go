@@ -17,7 +17,7 @@ func TestArticleList(t *testing.T) {
 	config.InitFromEnv()
 
 	logger := log.NewZapLogger()
-	requestService, err := zhihuRequest.NewRequestService(nil, logger)
+	requestService, err := zhihuRequest.NewRequestService(logger)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -13,7 +13,6 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
-	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	zhihuCrawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawler"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
@@ -93,7 +92,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 	}
 
 	var (
-		requestService        requestIface.Requester
+		requestService        request.Requester
 		minioService          file.File
 		htmlToMarkdownService renderIface.HTMLToMarkdown
 		imageParser           parse.Imager
@@ -102,9 +101,9 @@ func handleZhihu(opt option, logger *zap.Logger) {
 	)
 
 	if opt.zhihu.dC0 != "" {
-		requestService, err = request.NewRequestService(&opt.zhihu.dC0, logger)
+		requestService, err = request.NewRequestService(logger)
 	} else {
-		requestService, err = request.NewRequestService(nil, logger)
+		requestService, err = request.NewRequestService(logger)
 	}
 	if err != nil {
 		logger.Fatal("fail to init request service", zap.Error(err))

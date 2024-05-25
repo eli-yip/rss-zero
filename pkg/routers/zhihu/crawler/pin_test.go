@@ -19,7 +19,7 @@ func TestPinList(t *testing.T) {
 	config.InitFromEnv()
 
 	assert := assert.New(t)
-	requestService, err := zhihuRequest.NewRequestService(nil, log.NewZapLogger())
+	requestService, err := zhihuRequest.NewRequestService(log.NewZapLogger())
 	assert.Nil(err)
 	bytes, err := requestService.LimitRaw(u)
 	assert.Nil(err)

@@ -8,7 +8,6 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/ai"
-	crawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawler"
 	"github.com/eli-yip/rss-zero/internal/cron"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/log"
@@ -17,7 +16,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
-	requestIface "github.com/eli-yip/rss-zero/pkg/request"
+	crawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawler"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
@@ -191,12 +190,12 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 	}
 }
 
-func initZhihuServices(db *gorm.DB, logger *zap.Logger) (zhihuDB.DB, requestIface.Requester, parse.Parser, error) {
+func initZhihuServices(db *gorm.DB, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
 	var err error
 
 	var (
 		dbService      zhihuDB.DB
-		requestService requestIface.Requester
+		requestService request.Requester
 		fileService    file.File
 		htmlToMarkdown renderIface.HTMLToMarkdown
 		imageParser    parse.Imager
@@ -206,7 +205,7 @@ func initZhihuServices(db *gorm.DB, logger *zap.Logger) (zhihuDB.DB, requestIfac
 
 	dbService = zhihuDB.NewDBService(db)
 
-	requestService, err = request.NewRequestService(nil, logger)
+	requestService, err = request.NewRequestService(logger)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("fail to init request service: %w", err)
 	}
