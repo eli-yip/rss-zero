@@ -242,6 +242,7 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 		logger.Error("Error creating request service", zap.Error(err))
 		return "", errors.Join(err, errors.New("failed to create request service"))
 	}
+	defer requestService.ClearCache()
 
 	bytes, err := requestService.LimitRaw("https://api.zhihu.com/people/" + authorID)
 	if err != nil {

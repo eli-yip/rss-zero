@@ -21,6 +21,7 @@ func TestArticleList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer requestService.ClearCache()
 	bytes, err := requestService.LimitRaw(u)
 	if err != nil {
 		t.Fatal(err)

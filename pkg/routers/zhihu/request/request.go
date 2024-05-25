@@ -20,6 +20,8 @@ type Requester interface {
 	// NoLimitRaw requests to the given url without limiter and returns raw data,
 	// Commonly used in file download
 	NoLimitStream(string) (*http.Response, error)
+	// Clear d_c0 cache
+	ClearCache()
 }
 
 var (
@@ -89,7 +91,7 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			logger.Error("fail to marshal request body", zap.Error(err))
 			continue
 		}
-		resp, err := http.Post(config.C.ZhihuEncryptionURL, "application/json", bytes.NewBuffer(reqBodyByte))
+		resp, err := http.Post(config.C.ZhihuEncryptionURL+"/process-url", "application/json", bytes.NewBuffer(reqBodyByte))
 		if err != nil {
 			logger.Error("fail to request url", zap.Error(err))
 			continue
@@ -162,6 +164,17 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 
 	logger.Error("fail to get zhihu no limit stream", zap.Error(err))
 	return nil, err
+}
+
+func (rs *RequestService) ClearCache() {
+	logger := rs.log
+	logger.Info("start to clear d_c0 cache")
+	_, err := http.Post(config.C.ZhihuEncryptionURL+"/clear-cache", "application/json", nil)
+	if err != nil {
+		logger.Error("fail to clear d_c0 cache", zap.Error(err))
+		return
+	}
+	logger.Info("clear d_c0 cache successfully")
 }
 
 // Set request header and method

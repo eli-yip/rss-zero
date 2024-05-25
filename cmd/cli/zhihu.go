@@ -100,15 +100,12 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		parser                parse.Parser
 	)
 
-	if opt.zhihu.dC0 != "" {
-		requestService, err = request.NewRequestService(logger)
-	} else {
-		requestService, err = request.NewRequestService(logger)
-	}
+	requestService, err = request.NewRequestService(logger)
 	if err != nil {
 		logger.Fatal("fail to init request service", zap.Error(err))
 	}
 	logger.Info("init request service successfully")
+	defer requestService.ClearCache()
 
 	minioService, err = file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {
