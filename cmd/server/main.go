@@ -206,10 +206,6 @@ func setupEcho(redisService redis.Redis,
 	// /api/v1/cookie/xiaobot
 	xiaobotCookieApi := cookieApi.POST("/xiaobot", xiaobotHandler.UpdateToken)
 	xiaobotCookieApi.Name = "Token updating route for xiaobot"
-	// comment this because not needed now
-	// // /api/v1/cookie/zhihu
-	// zhihuCookieApi := cookieApi.POST("/zhihu", zhihuHandler.UpdateZhihuCookie)
-	// zhihuCookieApi.Name = "Cookie updating route for zhihu"
 
 	// /api/v1/refmt
 	refmtApi := apiGroup.Group("/refmt")
@@ -281,7 +277,7 @@ func setupCronCrawlJob(logger *zap.Logger,
 
 	cronCrawlJobs := []crawlJob{
 		{"zsxq crawl", zsxqCron.Cron},
-		// {"zhihu crawl", zhihuCron.CrawlZhihu},
+		{"zhihu crawl", zhihuCron.CrawlZhihu},
 		{"xiaobot crawl", xiaobotCron.CrawlXiaobot},
 	}
 
