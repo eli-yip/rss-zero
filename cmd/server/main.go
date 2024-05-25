@@ -281,7 +281,7 @@ func setupCronCrawlJob(logger *zap.Logger,
 
 	cronCrawlJobs := []crawlJob{
 		{"zsxq crawl", zsxqCron.Cron},
-		{"zhihu crawl", zhihuCron.CrawlZhihu},
+		// {"zhihu crawl", zhihuCron.CrawlZhihu},
 		{"xiaobot crawl", xiaobotCron.CrawlXiaobot},
 	}
 
