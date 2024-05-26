@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -78,6 +79,10 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// enable one time mode because we do not know latest time in db(no answer found in db)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
+						if errors.Is(err, request.ErrEmptyDC0) {
+							logger.Info("there to no d_c0 cookie")
+							return
+						}
 						errCount++
 						logger.Error("fail to crawl answer", zap.Error(err))
 						continue
@@ -89,6 +94,10 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// disable one time mode, as we know when to stop(latest answer's create time)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, answers[0].CreateAt, 0, false, logger); err != nil {
+						if errors.Is(err, request.ErrEmptyDC0) {
+							logger.Info("there to no d_c0 cookie")
+							return
+						}
 						errCount++
 						logger.Error("fail to crawl answer", zap.Error(err))
 						continue
@@ -106,6 +115,10 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 				// get articles from db to check if there is any article for this sub
 				var articles []zhihuDB.Article
 				if articles, err = dbService.GetLatestNArticle(1, sub.AuthorID); err != nil {
+					if errors.Is(err, request.ErrEmptyDC0) {
+						logger.Info("there to no d_c0 cookie")
+						return
+					}
 					errCount++
 					logger.Error("fail to get latest articles from database", zap.Error(err))
 					continue
@@ -117,6 +130,10 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// enable one time mode because we do not know latest time in db(no article found in db)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
+						if errors.Is(err, request.ErrEmptyDC0) {
+							logger.Info("there to no d_c0 cookie")
+							return
+						}
 						errCount++
 						logger.Error("fail to crawl article", zap.Error(err))
 						continue
@@ -128,6 +145,10 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// disable one time mode, as we know when to stop(latest article's create time)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, articles[0].CreateAt, 0, false, logger); err != nil {
+						if errors.Is(err, request.ErrEmptyDC0) {
+							logger.Info("there to no d_c0 cookie")
+							return
+						}
 						errCount++
 						logger.Error("fail to crawl article", zap.Error(err))
 						continue
@@ -156,6 +177,10 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// enable one time mode as we do not know latest time in db(no pin found in db)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
+						if errors.Is(err, request.ErrEmptyDC0) {
+							logger.Info("there to no d_c0 cookie")
+							return
+						}
 						errCount++
 						logger.Error("failed to crawl pin", zap.Error(err))
 						continue
@@ -167,6 +192,10 @@ func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier)
 					// disable one time mode, as we know when to stop(latest pin's create time)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, pins[0].CreateAt, 0, false, logger); err != nil {
+						if errors.Is(err, request.ErrEmptyDC0) {
+							logger.Info("there to no d_c0 cookie")
+							return
+						}
 						errCount++
 						logger.Error("fail to crawl pin", zap.Error(err))
 						continue
