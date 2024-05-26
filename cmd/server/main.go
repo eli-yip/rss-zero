@@ -64,12 +64,13 @@ func main() {
 	}
 	logger.Info("service initialized")
 
-	if err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
+	var jobList []JobList
+	if jobList, err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
 		logger.Fatal("fail to setup cron", zap.Error(err))
 	}
 	logger.Info("cron service initialized")
 
-	e := setupEcho(redisService, db, bark, logger)
+	e := setupEcho(redisService, db, bark, jobList, logger)
 	logger.Info("echo server initialized")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -134,6 +135,7 @@ func initService() (redisService redis.Redis,
 func setupEcho(redisService redis.Redis,
 	db *gorm.DB,
 	notifier notify.Notifier,
+	jobList []JobList,
 	logger *zap.Logger) (e *echo.Echo) {
 	e = echo.New()
 	e.HideBanner = true
@@ -231,6 +233,24 @@ func setupEcho(redisService redis.Redis,
 	exportXiaobotApi := exportApi.POST("/xiaobot", xiaobotHandler.Export)
 	exportXiaobotApi.Name = "Export route for xiaobot"
 
+	// /api/v1/job
+	jobApi := apiGroup.POST("/job/:name", func(c echo.Context) error {
+		name := c.Param("name")
+		for _, job := range jobList {
+			if job.Name == name {
+				go job.Func()
+				return c.JSON(http.StatusOK, struct {
+					Status string `json:"status"`
+				}{Status: "ok"})
+			}
+		}
+
+		return c.JSON(http.StatusNotFound, struct {
+			Status string `json:"status"`
+		}{Status: "not found"})
+	})
+	jobApi.Name = "Job route"
+
 	// /api/v1/rsshub
 	rssHubApi := apiGroup.Group("/rsshub")
 	feedGeneratorApi := rssHubApi.POST("/feed", rsshubController.GenerateRSSHubFeed)
@@ -253,12 +273,18 @@ func setupEcho(redisService redis.Redis,
 	return e
 }
 
+type JobFunc func()
+type JobList struct {
+	Name string
+	Func JobFunc
+}
+
 // setupCronCrawlJob sets up cron jobs
 func setupCronCrawlJob(logger *zap.Logger,
 	redisService redis.Redis,
 	db *gorm.DB,
 	notifier notify.Notifier,
-) (err error) {
+) (jobList []JobList, err error) {
 	type crawlFunc func(redis.Redis, *gorm.DB, notify.Notifier) func()
 	type crawlJob struct {
 		name string
@@ -272,27 +298,29 @@ func setupCronCrawlJob(logger *zap.Logger,
 
 	cronService, err := cron.NewCronService(logger)
 	if err != nil {
-		return fmt.Errorf("cron service init failed: %w", err)
+		return nil, fmt.Errorf("cron service init failed: %w", err)
 	}
 
 	cronCrawlJobs := []crawlJob{
-		{"zsxq crawl", zsxqCron.Cron},
-		{"zhihu crawl", zhihuCron.CrawlZhihu},
-		{"xiaobot crawl", xiaobotCron.CrawlXiaobot},
+		{"zsxq_crawl", zsxqCron.Cron},
+		{"zhihu_crawl", zhihuCron.CrawlZhihu},
+		{"xiaobot_crawl", xiaobotCron.CrawlXiaobot},
 	}
 
 	for _, job := range cronCrawlJobs {
-		if err = cronService.AddCrawlJob(job.name, job.fn(redisService, db, notifier)); err != nil {
-			return fmt.Errorf("fail to add job: %w", err)
+		jobFunc := job.fn(redisService, db, notifier)
+		if err = cronService.AddCrawlJob(job.name, jobFunc); err != nil {
+			return nil, fmt.Errorf("fail to add job: %w", err)
 		}
+		jobList = append(jobList, JobList{Name: job.name, Func: jobFunc})
 	}
 
 	cronExportJobs := []exportJob{{"zhihu export", zhihuCron.ExportZhihu}}
 	for _, job := range cronExportJobs {
 		if err = cronService.AddExportJob(job.name, job.fn()); err != nil {
-			return fmt.Errorf("fail to add job: %w", err)
+			return nil, fmt.Errorf("fail to add job: %w", err)
 		}
 	}
 
-	return nil
+	return jobList, nil
 }
