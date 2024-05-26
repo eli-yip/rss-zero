@@ -25,13 +25,12 @@ type Requester interface {
 }
 
 var (
-	ErrBadResponse   = errors.New("bad response")
-	ErrInvalidCookie = errors.New("invalid cookie")
-	ErrMaxRetry      = errors.New("max retry")
-	ErrUnreachable   = errors.New("unreachable")
-	ErrGetXZSE96     = errors.New("fail to get x-zse-96")
-	ErrNewRequest    = errors.New("fail to new a request")
-	ErrNeedLogin     = errors.New("need login")
+	ErrBadResponse = errors.New("bad response")
+	ErrEmptyDC0    = errors.New("empty d_c0 cookie")
+	ErrMaxRetry    = errors.New("max retry")
+	ErrUnreachable = errors.New("unreachable")
+	ErrNewRequest  = errors.New("fail to new a request")
+	ErrNeedLogin   = errors.New("need login")
 )
 
 const (
@@ -84,16 +83,15 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 		logger := logger.With(zap.Int("index", i))
 		<-r.limiter
 
-		var reqBody URLRequest
-		reqBody.URL = u
-		reqBodyByte, err := json.Marshal(reqBody)
+		reqBodyByte, err := json.Marshal(URLRequest{URL: u})
 		if err != nil {
-			logger.Error("fail to marshal request body", zap.Error(err))
+			logger.Error("failed to marshal request body", zap.Error(err))
 			continue
 		}
+
 		resp, err := http.Post(config.C.ZhihuEncryptionURL+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
 		if err != nil {
-			logger.Error("fail to request url", zap.Error(err))
+			logger.Error("failed to request url", zap.Error(err))
 			continue
 		}
 		defer resp.Body.Close()
@@ -114,6 +112,10 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			if resp.StatusCode == http.StatusNotFound {
 				logger.Error("404 not found")
 				return nil, ErrUnreachable
+			}
+			if resp.StatusCode == http.StatusInternalServerError {
+				logger.Error("failed to get d_c0 cookie")
+				return nil, ErrEmptyDC0
 			}
 			logger.Error("status code error", zap.Int("status_code", resp.StatusCode))
 			continue
