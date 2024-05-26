@@ -121,13 +121,14 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 				logger.Error("failed to get d_c0 cookie")
 				return nil, ErrEmptyDC0
 			}
-			if resp.StatusCode == 5001 {
+			// Use 501 here, not real 501
+			if resp.StatusCode == http.StatusNotImplemented {
 				var encryptErrResp EncryptErrResp
 				if err = json.Unmarshal(bytes, &encryptErrResp); err != nil {
 					logger.Error("failed to unmarshal 5001 error", zap.Error(err))
 					continue
 				}
-				logger.Error("5001 error", zap.String("error", encryptErrResp.Error))
+				logger.Error("501 error", zap.String("error", encryptErrResp.Error))
 				return nil, ErrBadResponse
 			}
 			logger.Error("status code error", zap.Int("status_code", resp.StatusCode))
