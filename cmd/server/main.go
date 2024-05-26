@@ -59,7 +59,10 @@ func main() {
 		panic("invalid config file extension: " + configPath + ", only `.toml` is supported")
 	}
 
-	redisService, db, bark, logger, err := initService()
+	logger := log.NewZapLogger()
+	logger.Info("config initialized", zap.Any("config", config.C))
+
+	redisService, db, bark, err := initService(logger)
 	if err != nil {
 		logger.Fatal("fail to init service", zap.Error(err))
 	}
@@ -104,33 +107,26 @@ func main() {
 // d: postgres db
 //
 // n: notifier
-//
-// logger: logger
-func initService() (redisService redis.Redis,
+func initService(logger *zap.Logger) (redisService redis.Redis,
 	dbService *gorm.DB,
 	notifier notify.Notifier,
-	logger *zap.Logger,
 	err error) {
-	logger = log.NewZapLogger()
-	logger.Info("Init zap logger", zap.Bool("Debug Mode", config.C.Debug))
-	logger.Info("config initialized", zap.Any("config", config.C))
-
 	if redisService, err = redis.NewRedisService(config.C.Redis); err != nil {
 		logger.Error("Fail to init redis service", zap.Error(err))
-		return nil, nil, nil, nil, fmt.Errorf("fail to init redis service: %w", err)
+		return nil, nil, nil, fmt.Errorf("fail to init redis service: %w", err)
 	}
 	logger.Info("redis service initialized")
 
 	if dbService, err = db.NewPostgresDB(config.C.DB); err != nil {
 		logger.Error("Fail to init postgres database service", zap.Error(err))
-		return nil, nil, nil, nil, fmt.Errorf("fail to init db: %w", err)
+		return nil, nil, nil, fmt.Errorf("fail to init db: %w", err)
 	}
 	logger.Info("db initialized")
 
 	notifier = notify.NewBarkNotifier(config.C.BarkURL)
 	logger.Info("bark notifier initialized")
 
-	return redisService, dbService, notifier, logger, nil
+	return redisService, dbService, notifier, nil
 }
 
 func setupEcho(redisService redis.Redis,
