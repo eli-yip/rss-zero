@@ -24,7 +24,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func CrawlZhihu(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
+func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		logger := log.NewZapLogger()
 

@@ -18,7 +18,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 )
 
-func CrawlXiaobot(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
+func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		logger := log.NewZapLogger()
 		var err error

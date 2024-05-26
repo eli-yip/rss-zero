@@ -18,6 +18,7 @@ import (
 
 	"github.com/brpaz/echozap"
 	endoflifeController "github.com/eli-yip/rss-zero/cmd/server/controller/endoflife"
+	jobController "github.com/eli-yip/rss-zero/cmd/server/controller/job"
 	rsshubController "github.com/eli-yip/rss-zero/cmd/server/controller/rsshub"
 	xiaobotController "github.com/eli-yip/rss-zero/cmd/server/controller/xiaobot"
 	zhihuController "github.com/eli-yip/rss-zero/cmd/server/controller/zhihu"
@@ -64,7 +65,7 @@ func main() {
 	}
 	logger.Info("service initialized")
 
-	var jobList []JobList
+	var jobList []jobController.Job
 	if jobList, err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
 		logger.Fatal("fail to setup cron", zap.Error(err))
 	}
@@ -135,7 +136,7 @@ func initService() (redisService redis.Redis,
 func setupEcho(redisService redis.Redis,
 	db *gorm.DB,
 	notifier notify.Notifier,
-	jobList []JobList,
+	jobList []jobController.Job,
 	logger *zap.Logger) (e *echo.Echo) {
 	e = echo.New()
 	e.HideBanner = true
@@ -233,22 +234,9 @@ func setupEcho(redisService redis.Redis,
 	exportXiaobotApi := exportApi.POST("/xiaobot", xiaobotHandler.Export)
 	exportXiaobotApi.Name = "Export route for xiaobot"
 
+	jobHandler := jobController.NewController(jobList, logger)
 	// /api/v1/job
-	jobApi := apiGroup.POST("/job/:name", func(c echo.Context) error {
-		name := c.Param("name")
-		for _, job := range jobList {
-			if job.Name == name {
-				go job.Func()
-				return c.JSON(http.StatusOK, struct {
-					Status string `json:"status"`
-				}{Status: "ok"})
-			}
-		}
-
-		return c.JSON(http.StatusNotFound, struct {
-			Status string `json:"status"`
-		}{Status: "not found"})
-	})
+	jobApi := apiGroup.POST("/job/:name", jobHandler.DoJob)
 	jobApi.Name = "Job route"
 
 	// /api/v1/rsshub
@@ -273,18 +261,12 @@ func setupEcho(redisService redis.Redis,
 	return e
 }
 
-type JobFunc func()
-type JobList struct {
-	Name string
-	Func JobFunc
-}
-
 // setupCronCrawlJob sets up cron jobs
 func setupCronCrawlJob(logger *zap.Logger,
 	redisService redis.Redis,
 	db *gorm.DB,
 	notifier notify.Notifier,
-) (jobList []JobList, err error) {
+) (jobList []jobController.Job, err error) {
 	type crawlFunc func(redis.Redis, *gorm.DB, notify.Notifier) func()
 	type crawlJob struct {
 		name string
@@ -302,9 +284,9 @@ func setupCronCrawlJob(logger *zap.Logger,
 	}
 
 	cronCrawlJobs := []crawlJob{
-		{"zsxq_crawl", zsxqCron.Cron},
-		{"zhihu_crawl", zhihuCron.CrawlZhihu},
-		{"xiaobot_crawl", xiaobotCron.CrawlXiaobot},
+		{"zsxq_crawl", zsxqCron.Crawl},
+		{"zhihu_crawl", zhihuCron.Crawl},
+		{"xiaobot_crawl", xiaobotCron.Crawl},
 	}
 
 	for _, job := range cronCrawlJobs {
@@ -312,10 +294,10 @@ func setupCronCrawlJob(logger *zap.Logger,
 		if err = cronService.AddCrawlJob(job.name, jobFunc); err != nil {
 			return nil, fmt.Errorf("fail to add job: %w", err)
 		}
-		jobList = append(jobList, JobList{Name: job.name, Func: jobFunc})
+		jobList = append(jobList, jobController.Job{Name: job.name, Func: jobFunc})
 	}
 
-	cronExportJobs := []exportJob{{"zhihu export", zhihuCron.ExportZhihu}}
+	cronExportJobs := []exportJob{{"zhihu export", zhihuCron.Export}}
 	for _, job := range cronExportJobs {
 		if err = cronService.AddExportJob(job.name, job.fn()); err != nil {
 			return nil, fmt.Errorf("fail to add job: %w", err)

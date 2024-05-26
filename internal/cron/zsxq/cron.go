@@ -10,12 +10,12 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/eli-yip/rss-zero/config"
-	crawl "github.com/eli-yip/rss-zero/internal/crawl/zsxq"
-	"github.com/eli-yip/rss-zero/internal/notify"
-	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/ai"
+	crawl "github.com/eli-yip/rss-zero/internal/crawl/zsxq"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/log"
+	"github.com/eli-yip/rss-zero/internal/notify"
+	"github.com/eli-yip/rss-zero/internal/redis"
 	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
@@ -23,7 +23,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 )
 
-func Cron(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
+func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		// Init services
 		logger := log.NewZapLogger()

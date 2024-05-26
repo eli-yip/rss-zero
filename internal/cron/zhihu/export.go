@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func ExportZhihu() func() {
+func Export() func() {
 	return func() {
 		logger := log.NewZapLogger()
 		logger.Info("start export zhihu data")
