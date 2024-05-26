@@ -91,7 +91,7 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			logger.Error("fail to marshal request body", zap.Error(err))
 			continue
 		}
-		resp, err := http.Post(config.C.ZhihuEncryptionURL+"/process-url", "application/json", bytes.NewBuffer(reqBodyByte))
+		resp, err := http.Post(config.C.ZhihuEncryptionURL+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
 		if err != nil {
 			logger.Error("fail to request url", zap.Error(err))
 			continue
