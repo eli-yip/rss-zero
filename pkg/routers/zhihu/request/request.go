@@ -43,7 +43,7 @@ type RequestService struct {
 	client   *http.Client
 	limiter  chan struct{}
 	maxRetry int // default 5
-	log      *zap.Logger
+	logger   *zap.Logger
 }
 
 func NewRequestService(logger *zap.Logger) (Requester, error) {
@@ -52,7 +52,7 @@ func NewRequestService(logger *zap.Logger) (Requester, error) {
 		client:   &http.Client{},
 		limiter:  make(chan struct{}),
 		maxRetry: defaultMaxRetry,
-		log:      logger,
+		logger:   logger,
 	}
 
 	go func() {
@@ -77,7 +77,7 @@ type URLRequest struct {
 
 // Send request with limiter, used for all zhihu api requests
 func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
-	logger := r.log.With(zap.String("url", u))
+	logger := r.logger.With(zap.String("url", u))
 	logger.Info("request with limiter for raw data")
 
 	for i := 0; i < r.maxRetry; i++ {
@@ -132,7 +132,7 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 }
 
 func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error) {
-	logger := r.log.With(zap.String("url", u))
+	logger := r.logger.With(zap.String("url", u))
 	logger.Info("request without limit for stream")
 
 	for i := 0; i < r.maxRetry; i++ {
@@ -167,7 +167,7 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 }
 
 func (rs *RequestService) ClearCache() {
-	logger := rs.log
+	logger := rs.logger
 	logger.Info("start to clear d_c0 cache")
 	_, err := http.Post(config.C.ZhihuEncryptionURL+"/clear-cache", "application/json", nil)
 	if err != nil {
