@@ -70,8 +70,12 @@ type Error403 struct {
 	} `json:"error"`
 }
 
-type URLRequest struct {
+type EncryptReq struct {
 	URL string `json:"url"`
+}
+
+type EncryptErrResp struct {
+	Error string `json:"error"`
 }
 
 // Send request with limiter, used for all zhihu api requests
@@ -83,7 +87,7 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 		logger := logger.With(zap.Int("index", i))
 		<-r.limiter
 
-		reqBodyByte, err := json.Marshal(URLRequest{URL: u})
+		reqBodyByte, err := json.Marshal(EncryptReq{URL: u})
 		if err != nil {
 			logger.Error("failed to marshal request body", zap.Error(err))
 			continue
@@ -116,6 +120,15 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			if resp.StatusCode == http.StatusInternalServerError {
 				logger.Error("failed to get d_c0 cookie")
 				return nil, ErrEmptyDC0
+			}
+			if resp.StatusCode == 5001 {
+				var encryptErrResp EncryptErrResp
+				if err = json.Unmarshal(bytes, &encryptErrResp); err != nil {
+					logger.Error("failed to unmarshal 5001 error", zap.Error(err))
+					continue
+				}
+				logger.Error("5001 error", zap.String("error", encryptErrResp.Error))
+				return nil, ErrBadResponse
 			}
 			logger.Error("status code error", zap.Int("status_code", resp.StatusCode))
 			continue
