@@ -3,7 +3,7 @@ module github.com/eli-yip/rss-zero
 go 1.22
 
 require (
-	github.com/JohannesKaufmann/html-to-markdown v1.5.0
+	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/Kunde21/markdownfmt/v3 v3.1.0
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/brpaz/echozap v1.1.3
@@ -16,7 +16,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.70
 	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/redis/go-redis/v9 v9.5.1
-	github.com/sashabaranov/go-openai v1.24.0
+	github.com/sashabaranov/go-openai v1.24.1
 	github.com/stretchr/testify v1.9.0
 	github.com/yuin/goldmark v1.7.1
 	go.uber.org/zap v1.27.0
@@ -37,7 +37,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
-	github.com/jackc/pgx/v5 v5.5.5 // indirect
+	github.com/jackc/pgx/v5 v5.6.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
+	golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
