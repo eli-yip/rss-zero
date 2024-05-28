@@ -6,10 +6,11 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/rs/xid"
+	"go.uber.org/zap"
+
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
-
-	"go.uber.org/zap"
 )
 
 // CrawlAnswer crawl zhihu answers
@@ -20,7 +21,9 @@ import (
 // oneTime: if true, only crawl one time
 func CrawlAnswer(user string, request request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
-	logger.Info("start to crawl zhihu answers", zap.String("user url token", user))
+	crawlID := xid.New().String()
+	logger = logger.With(zap.String("crawl_id", crawlID))
+	logger.Info("Start to crawl zhihu answers", zap.String("user_url_token", user))
 
 	next := ""
 	const (
@@ -32,60 +35,60 @@ func CrawlAnswer(user string, request request.Requester, parser parse.Parser,
 	next = fmt.Sprintf("%s?include=%s&%s", next, escaped, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
 
 	index := 0
-	total1 := 0
+	lastAnswerCount := 0 // count of answers in last page api response
 	for {
-		bytes, err := request.LimitRaw(next)
+		bytes, err := request.LimitRaw(next, logger)
 		if err != nil {
-			logger.Error("fail to request zhihu api", zap.Error(err))
-			return err
+			logger.Error("Failed to request zhihu api", zap.Error(err), zap.String("url", next))
+			return fmt.Errorf("failed to request zhihu api: %w", err)
 		}
-		logger.Info("request zhihu api successfully", zap.String("url", next))
+		logger.Info("Request zhihu api successfully", zap.String("url", next))
 
-		paging, answerList, err := parser.ParseAnswerList(bytes, index)
+		paging, answerList, err := parser.ParseAnswerList(bytes, index, logger)
 		if err != nil {
-			logger.Error("fail to parse answer list", zap.Error(err))
-			return err
+			logger.Error("Failed to parse answer list", zap.Error(err))
+			return fmt.Errorf("failed to parse answer list: %w", err)
 		}
-		logger.Info("parse answer list successfully", zap.Int("index", index), zap.String("next", next))
+		logger.Info("Parse answer list successfully", zap.Int("index", index))
 
-		if index != 0 && paging.Totals != total1 {
-			logger.Error("new answers found, break now", zap.Int("new answers num", paging.Totals-total1))
-			return err
+		if index != 0 && paging.Totals != lastAnswerCount {
+			logger.Error("Found new answers, break now", zap.Int("new_answers_count", paging.Totals-lastAnswerCount))
+			return fmt.Errorf("found new answers")
 		}
-		total1 = paging.Totals
+		lastAnswerCount = paging.Totals
 
 		next = paging.Next
 
 		for _, answer := range answerList {
-			logger := logger.With(zap.Int("answer_id", answer.ID))
+			logger := logger.With(zap.Int("ans_id", answer.ID))
 
 			if !time.Unix(answer.CreateAt, 0).After(targetTime) {
-				logger.Info("target time reached, break")
+				logger.Info("Reach target time, break")
 				return nil
 			}
 
 			answereBytes, err := json.Marshal(answer)
 			if err != nil {
-				logger.Error("fail to marshal answer", zap.Error(err))
-				return err
+				logger.Error("Failed to marshal answer", zap.Error(err))
+				return fmt.Errorf("failed to marshal answer: %w", err)
 			}
 
-			if _, err = parser.ParseAnswer(answereBytes, user); err != nil {
-				logger.Error("fail to parse answer", zap.Error(err))
-				return err
+			if _, err = parser.ParseAnswer(answereBytes, user, logger); err != nil {
+				logger.Error("Failed to parse answer", zap.Error(err))
+				return fmt.Errorf("failed to parse answer: %w", err)
 			}
-
-			logger.Info("parse answer successfully")
+			logger.Info("Parse answer successfully")
 		}
 
 		if paging.IsEnd {
+			logger.Info("Reach the end of answers, break")
 			break
 		}
 
 		index++
 
 		if oneTime {
-			logger.Info("one time mode, break")
+			logger.Info("One time mode, break")
 			break
 		}
 	}

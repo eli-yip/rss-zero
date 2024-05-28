@@ -22,7 +22,8 @@ func TestPinList(t *testing.T) {
 	requestService, err := zhihuRequest.NewRequestService(log.NewZapLogger())
 	assert.Nil(err)
 	defer requestService.ClearCache()
-	bytes, err := requestService.LimitRaw(u)
+	logger := log.NewZapLogger()
+	bytes, err := requestService.LimitRaw(u, logger)
 	assert.Nil(err)
 
 	path := filepath.Join("examples", "pin_list.json")

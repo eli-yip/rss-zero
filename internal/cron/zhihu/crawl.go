@@ -247,7 +247,7 @@ func initZhihuServices(db *gorm.DB, logger *zap.Logger) (zhihuDB.DB, request.Req
 
 	htmlToMarkdown = renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 
-	imageParser = parse.NewOnlineImageParser(requestService, fileService, dbService, logger)
+	imageParser = parse.NewOnlineImageParser(requestService, fileService, dbService)
 
 	aiService = ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
 

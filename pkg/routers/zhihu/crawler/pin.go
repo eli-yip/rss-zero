@@ -8,6 +8,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
+	"github.com/rs/xid"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +20,9 @@ import (
 // oneTime: if true, only crawl one time
 func CrawlPin(user string, request request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
-	logger.Info("start to crawl zhihu pins", zap.String("user url token", user))
+	crawlID := xid.New().String()
+	logger = logger.With(zap.String("crawl_id", crawlID))
+	logger.Info("Start to crawl zhihu pins", zap.String("user_url_token", user))
 
 	next := ""
 	const urlLayout = "https://www.zhihu.com/api/v4/members/%s/pins"
@@ -27,27 +30,27 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 	next = fmt.Sprintf("%s?%s", next, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
 
 	index := 0
-	total1 := 0
+	lastPinCount := 0
 	for {
-		bytes, err := request.LimitRaw(next)
+		bytes, err := request.LimitRaw(next, logger)
 		if err != nil {
-			logger.Error("fail to request zhihu api", zap.Error(err))
-			return err
+			logger.Error("Failed to request zhihu api", zap.Error(err), zap.String("url", next))
+			return fmt.Errorf("failed to request zhihu api: %w", err)
 		}
-		logger.Info("request zhihu api successfully", zap.String("url", next))
+		logger.Info("Request zhihu api successfully", zap.String("url", next))
 
-		paging, pinList, err := parser.ParsePinList(bytes, index)
+		paging, pinList, err := parser.ParsePinList(bytes, index, logger)
 		if err != nil {
-			logger.Error("failed to parse pin list", zap.Error(err))
-			return err
+			logger.Error("Failed to parse pin list", zap.Error(err))
+			return fmt.Errorf("failed to parse pin list: %w", err)
 		}
-		logger.Info("parse pin list successfully", zap.Int("index", index), zap.String("next", next))
+		logger.Info("Parse pin list successfully", zap.Int("index", index))
 
-		if index != 0 && paging.Totals != total1 {
-			logger.Error("new pin found, break now", zap.Int("new pin num", paging.Totals-total1))
-			return err
+		if index != 0 && paging.Totals != lastPinCount {
+			logger.Error("Found new pin, break", zap.Int("new_pin_count", paging.Totals-lastPinCount))
+			return fmt.Errorf("found new pin")
 		}
-		total1 = paging.Totals
+		lastPinCount = paging.Totals
 
 		next = paging.Next
 
@@ -62,33 +65,34 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 			}
 
 			if !time.Unix(pin.CreateAt, 0).After(targetTime) {
-				logger.Info("target time reached, break")
+				logger.Info("Reached target time reached, break")
 				return nil
 			}
 
 			pinBytes, err := json.Marshal(pin)
 			if err != nil {
-				logger.Error("fail to marshal pin", zap.Error(err))
-				return err
+				logger.Error("Failed to marshal pin", zap.Error(err))
+				return fmt.Errorf("failed to marshal pin: %w", err)
 			}
 
-			_, err = parser.ParsePin(pinBytes)
+			_, err = parser.ParsePin(pinBytes, logger)
 			if err != nil {
-				logger.Error("fail to parse pin", zap.Error(err))
-				return err
+				logger.Error("Failed to parse pin", zap.Error(err))
+				return fmt.Errorf("failed to parse pin: %w", err)
 			}
 
-			logger.Info("parse pin successfully")
+			logger.Info("Parse pin successfully")
 		}
 
 		if paging.IsEnd {
+			logger.Info("Reached the end of pins, break")
 			break
 		}
 
 		index++
 
 		if oneTime {
-			logger.Info("one time mode, break")
+			logger.Info("One time mode, break")
 			break
 		}
 	}

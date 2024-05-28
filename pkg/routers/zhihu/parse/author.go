@@ -2,6 +2,7 @@ package parse
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
@@ -15,21 +16,17 @@ type AuthorParser interface {
 }
 
 func (p *ParseService) ParseAuthorName(apiResp []byte) (authorName string, err error) {
-	p.logger.Info("start to parse author name")
-
 	var author apiModels.Author
 	if err = json.Unmarshal(apiResp, &author); err != nil {
 		p.logger.Error("Fail to unmarshal api response", zap.Error(err))
-		return emptyString, err
+		return emptyString, fmt.Errorf("failed to unmarshal api response: %w", err)
 	}
-	p.logger.Info("Parsed api response")
 
 	if err = p.db.SaveAuthor(&db.Author{
 		ID:   author.ID,
 		Name: author.Name,
 	}); err != nil {
-		p.logger.Error("Fail to save parsed author name to db", zap.String("author_id", author.ID), zap.String("author_name", author.Name))
-		return emptyString, err
+		return emptyString, fmt.Errorf("failed to save author info %s %s to db: %w", author.ID, author.Name, err)
 	}
 
 	return author.Name, nil

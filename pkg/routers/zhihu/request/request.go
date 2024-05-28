@@ -18,7 +18,7 @@ import (
 
 type Requester interface {
 	// LimitRaw requests to the given url with limiter and returns raw data,
-	LimitRaw(string) ([]byte, error)
+	LimitRaw(string, *zap.Logger) ([]byte, error)
 	// NoLimitRaw requests to the given url without limiter and returns raw data,
 	// Commonly used in file download
 	NoLimitStream(string) (*http.Response, error)
@@ -80,9 +80,9 @@ type EncryptErrResp struct {
 }
 
 // Send request with limiter, used for all zhihu api requests
-func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
+func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte, err error) {
 	requestTaskID := xid.New().String()
-	r.logger.Info("Start to get zhihu raw data with limit, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
+	logger.Info("Start to get zhihu raw data with limit, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
 	for i := 0; i < r.maxRetry; i++ {
 		logger := r.logger.With(zap.String(fmt.Sprintf("request_task_id_%d", i), requestTaskID))

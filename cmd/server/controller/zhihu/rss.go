@@ -244,7 +244,7 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 	}
 	defer requestService.ClearCache()
 
-	bytes, err := requestService.LimitRaw("https://api.zhihu.com/people/" + authorID)
+	bytes, err := requestService.LimitRaw("https://api.zhihu.com/people/"+authorID, logger)
 	if err != nil {
 		if errors.Is(err, request.ErrUnreachable) {
 			return "", errAuthorNotExistInZhihu

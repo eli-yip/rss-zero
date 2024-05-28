@@ -29,7 +29,7 @@ type ParseService struct {
 	file           file.File
 	db             db.DB
 	ai             ai.AI
-	logger         *zap.Logger
+	logger         *zap.Logger // TODO: Remove logger from ParseService
 	mdfmt          *md.MarkdownFormatter
 	Imager
 }
@@ -58,7 +58,7 @@ func NewParseService(options ...Option) (Parser, error) {
 	}
 
 	if s.Imager == nil {
-		s.Imager = NewOnlineImageParser(s.request, s.file, s.db, s.logger)
+		s.Imager = NewOnlineImageParser(s.request, s.file, s.db)
 	}
 
 	if s.ai == nil {
@@ -137,12 +137,11 @@ func replaceImageLink(text, name, from, to string) (result string) {
 
 // parseHTML convert html content to markdown content
 // it also download images and replace image links in markdown content
-func (p *ParseService) parseHTML(html string, id int, t int, logger *zap.Logger) (string, error) {
+func (p *ParseService) parseHTML(html string, id int, t int) (string, error) {
 	bytes, err := p.htmlToMarkdown.Convert([]byte(html))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to convert html to markdown: %w", err)
 	}
-	logger.Info("convert html to markdown successfully")
 
-	return p.ParseImages(string(bytes), id, t, logger)
+	return p.ParseImages(string(bytes), id, t)
 }

@@ -116,7 +116,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 	htmlToMarkdownService = renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	logger.Info("init html to markdown service successfully")
 
-	imageParser = parse.NewOnlineImageParser(requestService, minioService, zhihuDBService, logger)
+	imageParser = parse.NewOnlineImageParser(requestService, minioService, zhihuDBService)
 
 	aiService = ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
 
@@ -216,7 +216,7 @@ func refmtZhihu(opt option, logger *zap.Logger) {
 	htmlToMarkdownService := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	logger.Info("init html to markdown service successfully")
 
-	imageParser := parse.NewOfflineImageParser(zhihuDBService, logger)
+	imageParser := parse.NewOfflineImageParser(zhihuDBService)
 	logger.Info("init image parser successfully")
 
 	notifyService := notify.NewBarkNotifier(config.C.Bark.URL)

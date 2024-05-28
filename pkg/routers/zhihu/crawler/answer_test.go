@@ -28,7 +28,7 @@ func TestAnswerList(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer requestService.ClearCache()
-	bytes, err := requestService.LimitRaw(u)
+	bytes, err := requestService.LimitRaw(u, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestAnswerListPaging(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	paging, answerList, err := parser.ParseAnswerList(bytes, 0)
+	paging, answerList, err := parser.ParseAnswerList(bytes, 0, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestAnswerListPaging(t *testing.T) {
 		fmt.Println("Answer Title: ", a.Question.Title)
 	}
 
-	bytes, err = requestService.LimitRaw(paging.Next)
+	bytes, err = requestService.LimitRaw(paging.Next, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +96,7 @@ func TestAnswerListPaging(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	paging, answerList, err = parser.ParseAnswerList(bytes, 1)
+	paging, answerList, err = parser.ParseAnswerList(bytes, 1, logger)
 	if err != nil {
 		t.Fatal(err)
 	}

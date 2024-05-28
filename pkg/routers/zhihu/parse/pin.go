@@ -16,24 +16,24 @@ import (
 )
 
 type PinParser interface {
-	ParsePinList(content []byte, index int) (paging apiModels.Paging, pins []apiModels.Pin, err error)
-	ParsePin(content []byte) (text string, err error)
+	ParsePinList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, pins []apiModels.Pin, err error)
+	ParsePin(content []byte, logger *zap.Logger) (text string, err error)
 }
 
-func (p *ParseService) ParsePinList(content []byte, index int) (paging apiModels.Paging, pins []apiModels.Pin, err error) {
-	logger := p.logger.With(zap.Int("pin list page", index))
+func (p *ParseService) ParsePinList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, pins []apiModels.Pin, err error) {
+	logger.Info("Start to parse article list", zap.Int("article_list_page_index", index))
 
 	pinList := apiModels.PinList{}
 	if err = json.Unmarshal(content, &pinList); err != nil {
 		return apiModels.Paging{}, nil, fmt.Errorf("fail to unmarshal content data in to pin list: %w", err)
 	}
-	logger.Info("unmarshal pin list successfully")
+	logger.Info("Unmarshal pin list successfully")
 
 	return pinList.Paging, pinList.Data, nil
 }
 
 // ParsePin parses the zhihu.com/api/v4 resp
-func (p *ParseService) ParsePin(content []byte) (text string, err error) {
+func (p *ParseService) ParsePin(content []byte, logger *zap.Logger) (text string, err error) {
 	pin := apiModels.Pin{}
 	if err = json.Unmarshal(content, &pin); err != nil {
 		return "", fmt.Errorf("fail to unmarshal content data in to pin: %w", err)
@@ -42,14 +42,13 @@ func (p *ParseService) ParsePin(content []byte) (text string, err error) {
 	if err != nil {
 		return "", fmt.Errorf("fail to convert pin id to int: %w", err)
 	}
-	logger := p.logger.With(zap.Int("pin_id", pinID))
-	logger.Info("unmarshal pin successfully")
+	logger.Info("Unmarshal pin successfully")
 
 	text, err = p.parseAndSavePin(&pin, content, pinID, logger)
 	if err != nil {
-		logger.Error("fail to parse and save pin", zap.Error(err))
 		return "", fmt.Errorf("fail to parse and save pin: %w", err)
 	}
+	logger.Info("Parse and save pin successfully")
 
 	return text, nil
 }
@@ -58,35 +57,34 @@ func (p *ParseService) parseAndSavePin(pin *apiModels.Pin, content []byte, pinID
 	var title string
 	title, text, err = p.parsePinContent(pin.Content, pinID, logger)
 	if err != nil {
-		return "", fmt.Errorf("fail to parse pin content: %w", err)
+		return "", fmt.Errorf("failed to parse pin content: %w", err)
 	}
-	logger.Info("parse pin content successfully")
+	logger.Info("Parse pin content successfully")
 
 	if text == "" {
-		logger.Info("no text content found")
+		logger.Info("Found text content, return")
 		return "", nil
 	}
 
 	formattedText, err := p.mdfmt.FormatStr(text)
 	if err != nil {
-		return "", fmt.Errorf("fail to format markdown text: %w", err)
+		return "", fmt.Errorf("failed to format markdown text: %w", err)
 	}
-	logger.Info("format markdown text successfully")
+	logger.Info("Format markdown text successfully")
 
 	if err = p.db.SaveAuthor(&db.Author{
 		ID:   pin.Author.ID,
 		Name: pin.Author.Name,
 	}); err != nil {
-		return "", fmt.Errorf("fail to save author to db: %w", err)
+		return "", fmt.Errorf("failed to save author info to db: %w", err)
 	}
-	logger.Info("save author to db successfully")
+	logger.Info("Save author info to db successfully")
 
 	if title == "" {
 		if title, err = p.ai.Conclude(formattedText); err != nil {
-			logger.Error("fail to conclude pin content", zap.Error(err))
-			return "", fmt.Errorf("fail to conclude pin content: %w", err)
+			return "", fmt.Errorf("failed to conclude pin content: %w", err)
 		}
-		logger.Info("conclude pin content successfully", zap.String("title", title))
+		logger.Info("Conclude pin content successfully", zap.String("title", title))
 	}
 
 	if err = p.db.SavePin(&db.Pin{
@@ -97,9 +95,9 @@ func (p *ParseService) parseAndSavePin(pin *apiModels.Pin, content []byte, pinID
 		Text:     formattedText,
 		Raw:      content,
 	}); err != nil {
-		return "", fmt.Errorf("fail to save pin to db: %w", err)
+		return "", fmt.Errorf("fail to save pin info to db: %w", err)
 	}
-	logger.Info("save pin to db successfully")
+	logger.Info("Save pin to db successfully")
 
 	return formattedText, nil
 }
@@ -110,51 +108,47 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 	for _, c := range content {
 		var contentType apiModels.PinContentType
 		if err = json.Unmarshal(c, &contentType); err != nil {
-			return "", "", fmt.Errorf("fail to unmarshal content type: %w", err)
+			return emptyString, emptyString, fmt.Errorf("failed to unmarshal content type: %w", err)
 		}
 
 		switch contentType.Type {
 		case "text":
-			text := ""
-			logger.Info("find text content")
+			logger.Info("Found text content")
 
 			var textContent apiModels.PinContentText
 			if err = json.Unmarshal(c, &textContent); err != nil {
-				return "", "", fmt.Errorf("fail to unmarshal text content: %w", err)
+				return emptyString, emptyString, fmt.Errorf("failed to unmarshal text content: %w", err)
 			}
 			textBytes, err := p.htmlToMarkdown.Convert([]byte(textContent.Content))
 			if err != nil {
-				return "", "", fmt.Errorf("fail to convert html to markdown: %w", err)
+				return emptyString, emptyString, fmt.Errorf("failed to convert html to markdown: %w", err)
 			}
 			text += string(textBytes)
 			title, text = tryToFindTitle(text)
 
 			textPart = append(textPart, text)
 
-			logger.Info("convert text part to markdown successfully")
+			logger.Info("Convert text part to markdown successfully")
 		case "image":
-			logger.Info("find image content")
-			text := ""
+			logger.Info("Found image content")
 			var imageContent apiModels.PinImage
 			if err = json.Unmarshal(c, &imageContent); err != nil {
-				return "", "", fmt.Errorf("fail to unmarshal image content: %w", err)
+				return emptyString, emptyString, fmt.Errorf("failed to unmarshal image content: %w", err)
 			}
-			logger := logger.With(zap.String("url", imageContent.OriginalURL))
-
 			picID := URLToID(imageContent.OriginalURL)
 
 			resp, err := p.request.NoLimitStream(imageContent.OriginalURL)
 			if err != nil {
-				return "", "", fmt.Errorf("fail to get image stream: %w", err)
+				return emptyString, emptyString, fmt.Errorf("failed to get image %s stream: %w", imageContent.OriginalURL, err)
 			}
-			logger.Info("get image stream succussfully")
+			logger.Info("Get image stream succussfully")
 
 			const zhihuImageObjectKeyLayout = "zhihu/%d.jpg"
 			objectKey := fmt.Sprintf(zhihuImageObjectKeyLayout, picID)
 			if err = p.file.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
-				return "", "", fmt.Errorf("fail to save image stream to file service: %w", err)
+				return emptyString, emptyString, fmt.Errorf("failed to save image stream %s to file service: %w", imageContent.OriginalURL, err)
 			}
-			logger.Info("save image stream to file service successfully", zap.String("object_key", objectKey))
+			logger.Info("Save image stream to file service successfully", zap.String("object_key", objectKey))
 
 			if err = p.db.SaveObjectInfo(&db.Object{
 				ID:              picID,
@@ -165,22 +159,22 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 				URL:             imageContent.OriginalURL,
 				StorageProvider: []string{p.file.AssetsDomain()},
 			}); err != nil {
-				return "", "", fmt.Errorf("fail to save object info to db: %w", err)
+				return emptyString, emptyString, fmt.Errorf("fail to save object info to db: %w", err)
 			}
-			logger.Info("save object info to db successfully")
+			logger.Info("Save object info to db successfully")
 
 			objectURL := fmt.Sprintf("%s/%s", p.file.AssetsDomain(), objectKey)
 			text = fmt.Sprintf("![%s](%s)", objectKey, objectURL)
 
 			textPart = append(textPart, text)
 
-			logger.Info("convert image to markdown successfully")
+			logger.Info("Convert image to markdown successfully")
 		case "link":
-			logger.Info("find link content")
+			logger.Info("Found link content")
 
 			var linkContent apiModels.PinLink
 			if err := json.Unmarshal(c, &linkContent); err != nil {
-				return "", "", fmt.Errorf("fail to unmarshal link content: %w", err)
+				return emptyString, emptyString, fmt.Errorf("failed to unmarshal link content: %w", err)
 			}
 			text = fmt.Sprintf("[%s](%s)", linkContent.Title, linkContent.URL)
 

@@ -33,7 +33,7 @@ func (h *ZhihuController) Reformat(c echo.Context) error {
 	}
 	logger.Info("Retieved zhihu reformat request", zap.String("author_id", req.AuthorID))
 
-	imageParser := parse.NewOfflineImageParser(h.db, logger)
+	imageParser := parse.NewOfflineImageParser(h.db)
 	htmlToMarkdown := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
 	refmtService := refmt.NewRefmtService(logger, h.db, htmlToMarkdown, imageParser, h.notifier, md.NewMarkdownFormatter())
 	go refmtService.ReFmt(req.AuthorID)
