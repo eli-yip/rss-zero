@@ -11,6 +11,8 @@ type Tweet struct {
 	Raw       []byte    `gorm:"column:raw;type:bytea"`
 }
 
+func (t *Tweet) TableName() string { return "weibo_tweet" }
+
 type DBTweet interface {
 	SaveTweet(t *Tweet) (err error)
 	GetTweet(id int) (t *Tweet, err error)

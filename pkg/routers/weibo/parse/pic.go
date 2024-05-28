@@ -3,18 +3,14 @@ package parse
 
 import (
 	"fmt"
-	"net/url"
-	"path"
+	"strings"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
 )
 
-func (ps *ParseService) generateObjectKey(picURL string) (key string, err error) {
-	u, err := url.Parse(picURL)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse pic url: %w", err)
-	}
-	return fmt.Sprintf("weibo/%s", path.Base(u.Path)), nil
+func (ps *ParseService) buildObjectKey(picURL string) (key string, err error) {
+	slices := strings.Split(picURL, "/")
+	return fmt.Sprintf("weibo-test/%s", slices[len(slices)-1]), nil
 }
 
 func (ps *ParseService) savePicInfo(weiboID int, picID, picURL, objectKey string) (err error) {
@@ -31,7 +27,7 @@ func (ps *ParseService) savePicInfo(weiboID int, picID, picURL, objectKey string
 	return nil
 }
 
-func (ps *ParseService) downloadPic(picURL, objectKey string) (err error) {
+func (ps *ParseService) savePic(picURL, objectKey string) (err error) {
 	resp, err := ps.requestService.GetPicStream(picURL)
 	if err != nil {
 		return fmt.Errorf("failed to get pic stream: %w", err)
