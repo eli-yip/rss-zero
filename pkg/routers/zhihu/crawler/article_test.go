@@ -9,12 +9,14 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/log"
 	zhihuRequest "github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestArticleList(t *testing.T) {
 	u := `https://www.zhihu.com/api/v4/members/canglimo/articles`
 	u = fmt.Sprintf("%s?%s", u, "offset=0&limit=20")
-	config.InitFromEnv()
+	assert := assert.New(t)
+	assert.Nil(config.InitForTestToml())
 
 	logger := log.NewZapLogger()
 	requestService, err := zhihuRequest.NewRequestService(logger)

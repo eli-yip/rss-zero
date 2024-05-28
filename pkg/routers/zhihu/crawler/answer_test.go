@@ -11,6 +11,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	zhihuRequest "github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAnswerList(t *testing.T) {
@@ -18,7 +19,8 @@ func TestAnswerList(t *testing.T) {
 	params := `data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,collapsed_by,suggest_edit,comment_count,can_comment,content,voteup_count,reshipment_settings,comment_permission,mark_infos,created_time,updated_time,review_info,question,excerpt,is_labeled,label_info,relationship.is_authorized,voting,is_author,is_thanked,is_nothelp;data[*].author.badge[?(type=best_answerer)].topics`
 	escaped := url.QueryEscape(params)
 	u = fmt.Sprintf("%s?include=%s&%s", u, escaped, "offset=0&limit=20&sort_by=created")
-	config.InitFromEnv()
+	assert := assert.New(t)
+	assert.Nil(config.InitForTestToml())
 
 	logger := log.NewZapLogger()
 	requestService, err := zhihuRequest.NewRequestService(logger)
@@ -48,7 +50,8 @@ func TestAnswerList(t *testing.T) {
 // With this test, we can conclude that not every page is full of answers.
 // In the web, it is same. As 192 pages will have 3845 answers, but actually it has 3825 answers.
 func TestAnswerListPaging(t *testing.T) {
-	config.InitFromEnv()
+	assert := assert.New(t)
+	assert.Nil(config.InitForTestToml())
 	logger := log.NewZapLogger()
 	requestService, err := zhihuRequest.NewRequestService(logger)
 	if err != nil {

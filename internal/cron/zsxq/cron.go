@@ -143,7 +143,7 @@ func prepareZsxqServices(cookie string, redisService redis.Redis, db *gorm.DB, l
 		return nil, nil, nil, nil, fmt.Errorf("fail to init zsxq file service: %w", err)
 	}
 
-	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+	aiService := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
 
 	markdownRender := render.NewMarkdownRenderService(dbService, logger)
 

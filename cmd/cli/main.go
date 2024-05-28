@@ -44,7 +44,9 @@ type xiaobotOption struct{ paperID string }
 func main() {
 	var err error
 
-	config.InitFromEnv()
+	if err = config.InitFromToml("config.toml"); err != nil {
+		panic(err)
+	}
 	logger := log.NewZapLogger()
 
 	defer func() {

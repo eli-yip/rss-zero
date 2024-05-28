@@ -16,9 +16,9 @@ import (
 func TestPinList(t *testing.T) {
 	u := `https://www.zhihu.com/api/v4/members/daleige/pins`
 	u = fmt.Sprintf("%s?%s", u, "offset=0&limit=20")
-	config.InitFromEnv()
-
 	assert := assert.New(t)
+	assert.Nil(config.InitForTestToml())
+
 	requestService, err := zhihuRequest.NewRequestService(log.NewZapLogger())
 	assert.Nil(err)
 	defer requestService.ClearCache()

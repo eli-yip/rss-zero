@@ -17,8 +17,8 @@ import (
 
 func TestExportSingle(t *testing.T) {
 	assert := assert.New(t)
-	config.InitFromEnv()
-	db, err := db.NewPostgresDB(config.C.DB)
+	assert.Nil(config.InitForTestToml())
+	db, err := db.NewPostgresDB(config.C.Database)
 	assert.Nil(err)
 	zhihuDBService := zhihuDB.NewDBService(db)
 	fullTextRender := zhihuRender.NewFullTextRender(md.NewMarkdownFormatter())

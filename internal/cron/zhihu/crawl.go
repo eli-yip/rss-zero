@@ -249,7 +249,7 @@ func initZhihuServices(db *gorm.DB, logger *zap.Logger) (zhihuDB.DB, request.Req
 
 	imageParser = parse.NewOnlineImageParser(requestService, fileService, dbService, logger)
 
-	aiService = ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+	aiService = ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
 
 	parser, err = parse.NewParseService(parse.WithAI(aiService),
 		parse.WithLogger(logger),

@@ -57,21 +57,21 @@ func (h *ZhihuController) Feed(c echo.Context) error {
 	const articleFeedLayout = `%s/rss/zhihu/article/%s`
 	const pinFeedLayout = `%s/rss/zhihu/pin/%s`
 
-	internalAnswerFeed := fmt.Sprintf(answerFeedLayout, config.C.InternalServerURL, authorID)
-	internalArticleFeed := fmt.Sprintf(articleFeedLayout, config.C.InternalServerURL, authorID)
-	internalPinFeed := fmt.Sprintf(pinFeedLayout, config.C.InternalServerURL, authorID)
+	internalAnswerFeed := fmt.Sprintf(answerFeedLayout, config.C.Settings.InternalServerURL, authorID)
+	internalArticleFeed := fmt.Sprintf(articleFeedLayout, config.C.Settings.InternalServerURL, authorID)
+	internalPinFeed := fmt.Sprintf(pinFeedLayout, config.C.Settings.InternalServerURL, authorID)
 
-	freshRSSAnswerFeed, err := generateFreshRSSFeed(config.C.FreshRSSURL, internalAnswerFeed)
+	freshRSSAnswerFeed, err := generateFreshRSSFeed(config.C.Settings.FreshRssURL, internalAnswerFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss answer feed", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
 	}
-	freshRSSArticleFeed, err := generateFreshRSSFeed(config.C.FreshRSSURL, internalArticleFeed)
+	freshRSSArticleFeed, err := generateFreshRSSFeed(config.C.Settings.FreshRssURL, internalArticleFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss article feed", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
 	}
-	freshRSSPinFeed, err := generateFreshRSSFeed(config.C.FreshRSSURL, internalPinFeed)
+	freshRSSPinFeed, err := generateFreshRSSFeed(config.C.Settings.FreshRssURL, internalPinFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss pin feed", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
@@ -81,9 +81,9 @@ func (h *ZhihuController) Feed(c echo.Context) error {
 		Message: "success",
 		Data: FeedResp{
 			External: ExternalFeed{
-				AnswerFeed:  fmt.Sprintf(answerFeedLayout, config.C.ServerURL, authorID),
-				ArticleFeed: fmt.Sprintf(articleFeedLayout, config.C.ServerURL, authorID),
-				PinFeed:     fmt.Sprintf(pinFeedLayout, config.C.ServerURL, authorID),
+				AnswerFeed:  fmt.Sprintf(answerFeedLayout, config.C.Settings.ServerURL, authorID),
+				ArticleFeed: fmt.Sprintf(articleFeedLayout, config.C.Settings.ServerURL, authorID),
+				PinFeed:     fmt.Sprintf(pinFeedLayout, config.C.Settings.ServerURL, authorID),
 			},
 			Internal: InternalFeed{
 				AnswerFeed:  internalAnswerFeed,

@@ -26,7 +26,7 @@ func GenerateRSSHubFeed(c echo.Context) (err error) {
 	}
 	logger.Info("Retrieved RSSHub feed request", zap.Any("req", req))
 
-	feedURL, err := generateRSSHubFeedURL(config.C.RSSHubURL, req.FeedType, req.Username)
+	feedURL, err := generateRSSHubFeedURL(config.C.Utils.RsshubURL, req.FeedType, req.Username)
 	if err != nil {
 		logger.Error("Error generating RSSHub feed URL", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "internal server error"})
