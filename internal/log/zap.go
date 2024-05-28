@@ -1,10 +1,11 @@
 package log
 
 import (
-	"fmt"
+	"os"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/eli-yip/rss-zero/config"
 )
@@ -13,18 +14,38 @@ import (
 // To enable debug mode, add DEBUG=true to .env file.
 // It will use production config otherwise.
 func NewZapLogger() *zap.Logger {
-	var zapConfig zap.Config
-	if config.C.Debug {
-		zapConfig = zap.NewDevelopmentConfig()
-	} else {
-		zapConfig = zap.NewProductionConfig()
+	lumberjacklogger := &lumberjack.Logger{
+		Filename:   "./logs/rss-zero.log",
+		MaxSize:    10,
+		MaxBackups: 3,
+		MaxAge:     30,
+		Compress:   true,
 	}
-	zapConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000")
+	defer lumberjacklogger.Close()
 
-	logger, err := zapConfig.Build()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to init zap logger: %v", err))
+	var core zapcore.Core
+	var logger *zap.Logger
+	if config.C.Debug {
+		encoderConfig := zap.NewDevelopmentEncoderConfig()
+		encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000")
+		core = zapcore.NewCore(
+			zapcore.NewConsoleEncoder(encoderConfig),
+			zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
+			zap.NewAtomicLevelAt(zap.DebugLevel),
+		)
+		logger = zap.New(core, zap.AddCaller(), zap.Development(), zap.AddStacktrace(zap.ErrorLevel))
+	} else {
+		encoderConfig := zap.NewProductionEncoderConfig()
+		encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000")
+		ws := zapcore.AddSync(lumberjacklogger)
+		core = zapcore.NewCore(
+			zapcore.NewJSONEncoder(encoderConfig),
+			zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), ws),
+			zap.NewAtomicLevelAt(zap.InfoLevel),
+		)
+		logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
 	}
+	zap.ReplaceGlobals(logger)
 
 	return logger
 }

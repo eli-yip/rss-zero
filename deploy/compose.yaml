@@ -9,16 +9,18 @@ services:
     depends_on:
       rss-db:
         condition: service_healthy
+    volumes:
+      - /var/log/rss-zero:/app/logs
 
   rss-zhihu-encrypt:
-    image: eliyip/rss-zhihu-encrypt:1.0.2
+    image: eliyip/rss-zhihu-encrypt:1.2.12
     container_name: rss-zhihu-encrypt
     restart: always
     expose:
       - 3000
 
   rss-db:
-    image: postgres:16.2-alpine
+    image: postgres:16.3-alpine
     container_name: rss-db
     restart: always
     environment:
