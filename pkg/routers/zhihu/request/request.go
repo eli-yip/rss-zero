@@ -10,8 +10,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/eli-yip/rss-zero/config"
+	"github.com/rs/xid"
 	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/config"
 )
 
 type Requester interface {
@@ -29,7 +31,6 @@ var (
 	ErrEmptyDC0    = errors.New("empty d_c0 cookie")
 	ErrMaxRetry    = errors.New("max retry")
 	ErrUnreachable = errors.New("unreachable")
-	ErrNewRequest  = errors.New("fail to new a request")
 	ErrNeedLogin   = errors.New("need login")
 )
 
@@ -80,72 +81,68 @@ type EncryptErrResp struct {
 
 // Send request with limiter, used for all zhihu api requests
 func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
-	logger := r.logger.With(zap.String("url", u))
-	logger.Info("Start to get zhihu raw data with limit, waiting for limiter")
+	requestTaskID := xid.New().String()
+	r.logger.Info("Start to get zhihu raw data with limit, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
 	for i := 0; i < r.maxRetry; i++ {
-		logger := logger.With(zap.Int("index", i))
+		logger := r.logger.With(zap.String(fmt.Sprintf("request_task_id_%d", i), requestTaskID))
 		<-r.limiter
-		logger.Info("Get limiter successfully")
+		logger.Info("Get limiter successfully, start to request url")
 
 		reqBodyByte, err := json.Marshal(EncryptReq{URL: u})
 		if err != nil {
-			logger.Error("failed to marshal request body", zap.Error(err))
+			logger.Error("Failed to marshal request body", zap.Error(err))
 			continue
 		}
 
 		resp, err := http.Post(config.C.Utils.ZhihuEncryptionURL+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
 		if err != nil {
-			logger.Error("failed to request url", zap.Error(err))
+			logger.Error("Failed to request", zap.Error(err))
 			continue
 		}
 		defer resp.Body.Close()
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			logger.Error("Failed to read response body", zap.Error(err))
+			logger.Error("Failed to read response", zap.Error(err))
 			continue
 		}
 
-		if resp.StatusCode != http.StatusOK {
-			if resp.StatusCode == http.StatusForbidden {
-				var e403 Error403
-				if err = json.Unmarshal(body, &e403); err != nil {
-					logger.Error("fail to unmarshal 403 error", zap.Error(err))
-					continue
-				}
-				if e403.Error.NeedLogin {
-					logger.Error("need login")
-					return nil, ErrNeedLogin
-				}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			logger.Info("Get zhihu raw data successfully")
+			return body, nil
+		case http.StatusForbidden:
+			var e403 Error403
+			if err = json.Unmarshal(body, &e403); err != nil {
+				logger.Error("Failed to unmarshal 403 error", zap.Error(err))
+				continue
 			}
-			if resp.StatusCode == http.StatusNotFound {
-				logger.Error("404 not found")
-				return nil, ErrUnreachable
+			if e403.Error.NeedLogin {
+				logger.Error("Need login according to 403 error")
+				return nil, ErrNeedLogin
 			}
-			if resp.StatusCode == http.StatusInternalServerError {
-				logger.Error("failed to get d_c0 cookie")
-				return nil, ErrEmptyDC0
+		case http.StatusNotFound:
+			logger.Error("404 error")
+			return nil, ErrUnreachable
+		case http.StatusInternalServerError:
+			logger.Error("Failed to get d_c0 cookie")
+			return nil, ErrEmptyDC0
+		case http.StatusNotImplemented:
+			var encryptErrResp EncryptErrResp
+			if err = json.Unmarshal(body, &encryptErrResp); err != nil {
+				logger.Error("Failed to unmarshal 501 error", zap.Error(err))
+				continue
 			}
-			// Use 501 here, not real 501
-			if resp.StatusCode == http.StatusNotImplemented {
-				var encryptErrResp EncryptErrResp
-				if err = json.Unmarshal(body, &encryptErrResp); err != nil {
-					logger.Error("failed to unmarshal 5001 error", zap.Error(err))
-					continue
-				}
-				logger.Error("501 error", zap.String("error", encryptErrResp.Error))
-				return nil, ErrBadResponse
-			}
-			logger.Error("status code error", zap.Int("status_code", resp.StatusCode))
+			logger.Error("501 error", zap.String("error", encryptErrResp.Error))
+			return nil, ErrBadResponse
+		default:
+			logger.Error("Bad status code", zap.Int("status_code", resp.StatusCode))
 			continue
 		}
-
-		logger.Info("Get zhihu raw data successfully")
-		return body, nil
 	}
 
-	logger.Error("Failed to get zhihu raw data", zap.Error(err))
+	r.logger.Error("Failed to get zhihu raw data", zap.Error(err), zap.String("request_task_id", requestTaskID))
 	return nil, err
 }
 

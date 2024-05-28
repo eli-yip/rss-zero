@@ -16,6 +16,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.70
 	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/redis/go-redis/v9 v9.5.1
+	github.com/rs/xid v1.5.0
 	github.com/sashabaranov/go-openai v1.24.1
 	github.com/stretchr/testify v1.9.0
 	github.com/yuin/goldmark v1.7.1
@@ -53,7 +54,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	github.com/rs/xid v1.5.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
