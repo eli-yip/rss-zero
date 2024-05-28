@@ -49,9 +49,7 @@ func main() {
 	var err error
 
 	parseFlags()
-	if configPath == "" {
-		config.InitFromEnv()
-	} else if strings.HasSuffix(configPath, ".toml") {
+	if strings.HasSuffix(configPath, ".toml") {
 		if err = config.InitFromToml(configPath); err != nil {
 			panic("failed to init config from file: " + err.Error())
 		}
@@ -117,13 +115,13 @@ func initService(logger *zap.Logger) (redisService redis.Redis,
 	}
 	logger.Info("redis service initialized")
 
-	if dbService, err = db.NewPostgresDB(config.C.DB); err != nil {
+	if dbService, err = db.NewPostgresDB(config.C.Database); err != nil {
 		logger.Error("Fail to init postgres database service", zap.Error(err))
 		return nil, nil, nil, fmt.Errorf("fail to init db: %w", err)
 	}
 	logger.Info("db initialized")
 
-	notifier = notify.NewBarkNotifier(config.C.BarkURL)
+	notifier = notify.NewBarkNotifier(config.C.Bark.URL)
 	logger.Info("bark notifier initialized")
 
 	return redisService, dbService, notifier, nil

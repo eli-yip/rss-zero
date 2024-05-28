@@ -24,7 +24,7 @@ import (
 )
 
 func handleZhihu(opt option, logger *zap.Logger) {
-	db, err := db.NewPostgresDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.Database)
 	if err != nil {
 		logger.Fatal("fail to connect database", zap.Error(err))
 	}
@@ -118,7 +118,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 
 	imageParser = parse.NewOnlineImageParser(requestService, minioService, zhihuDBService, logger)
 
-	aiService = ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+	aiService = ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
 
 	parser, err = parse.NewParseService(
 		parse.WithHTMLToMarkdownConverter(htmlToMarkdownService),
@@ -204,7 +204,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 }
 
 func refmtZhihu(opt option, logger *zap.Logger) {
-	db, err := db.NewPostgresDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.Database)
 	if err != nil {
 		logger.Fatal("fail to connect database", zap.Error(err))
 	}
@@ -219,7 +219,7 @@ func refmtZhihu(opt option, logger *zap.Logger) {
 	imageParser := parse.NewOfflineImageParser(zhihuDBService, logger)
 	logger.Info("init image parser successfully")
 
-	notifyService := notify.NewBarkNotifier(config.C.BarkURL)
+	notifyService := notify.NewBarkNotifier(config.C.Bark.URL)
 
 	refmtService := refmt.NewRefmtService(logger, zhihuDBService, htmlToMarkdownService, imageParser, notifyService, md.NewMarkdownFormatter())
 	logger.Info("init re-fmt service successfully")

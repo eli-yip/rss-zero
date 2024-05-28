@@ -28,7 +28,7 @@ func TestParseTweet(t *testing.T) {
 	logger := log.NewZapLogger()
 	fileService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 	assert.Nil(err)
-	dbService, err := db.NewPostgresDB(config.C.DB)
+	dbService, err := db.NewPostgresDB(config.C.Database)
 	assert.Nil(err)
 	weiboDBService := weiboDB.NewDBService(dbService)
 	redisService, err := redis.NewRedisService(config.C.Redis)

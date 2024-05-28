@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/eli-yip/rss-zero/config"
 	redis "github.com/redis/go-redis/v9"
 )
 
@@ -42,17 +43,11 @@ type RedisService struct {
 	ctx    context.Context
 }
 
-type RedisConfig struct {
-	Addr     string
-	Password string
-	DB       int
-}
-
-func NewRedisService(c RedisConfig) (service Redis, err error) {
+func NewRedisService(c config.RedisConfig) (service Redis, err error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     c.Addr,
+		Addr:     c.Address,
 		Password: c.Password,
-		DB:       c.DB,
+		DB:       0,
 	})
 
 	s := &RedisService{

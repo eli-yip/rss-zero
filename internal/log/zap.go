@@ -25,7 +25,7 @@ func NewZapLogger() *zap.Logger {
 
 	var core zapcore.Core
 	var logger *zap.Logger
-	if config.C.Debug {
+	if config.C.Settings.Debug {
 		encoderConfig := zap.NewDevelopmentEncoderConfig()
 		encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000")
 		core = zapcore.NewCore(

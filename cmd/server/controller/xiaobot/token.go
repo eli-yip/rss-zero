@@ -29,7 +29,7 @@ func (h *XiaobotController) UpdateToken(c echo.Context) (err error) {
 	l.Info("Retrieved xiaobot token", zap.String("token", req.Token))
 
 	r := request.NewRequestService(h.redis, req.Token, l)
-	if _, err = r.Limit(config.C.XiaobotTestURL); err != nil {
+	if _, err = r.Limit(config.C.TestURL.Xiaobot); err != nil {
 		err = errors.Join(errors.New("invalid token"), err)
 		l.Error("Error updating xiaobot token",
 			zap.String("token", req.Token), zap.Error(err))

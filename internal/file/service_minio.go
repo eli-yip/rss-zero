@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	gomime "github.com/cubewise-code/go-mime"
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"go.uber.org/zap"
@@ -19,19 +20,10 @@ type FileServiceMinio struct {
 	logger       *zap.Logger
 }
 
-type MinioConfig struct {
-	Endpoint        string // e.g.: play.min.io
-	AccessKeyID     string
-	SecretAccessKey string
-	UseSSL          bool
-	BucketName      string
-	AssetsPrefix    string // e.g.: https://play.min.io/bucketName
-}
-
-func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (File, error) {
+func NewFileServiceMinio(minioConfig config.MinioConfig, logger *zap.Logger) (File, error) {
 	minioClient, err := minio.New(minioConfig.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(minioConfig.AccessKeyID, minioConfig.SecretAccessKey, ""),
-		Secure: minioConfig.UseSSL,
+		Secure: true,
 	})
 	if err != nil {
 		return nil, err
@@ -39,7 +31,7 @@ func NewFileServiceMinio(minioConfig MinioConfig, logger *zap.Logger) (File, err
 
 	return &FileServiceMinio{
 		minioClient:  minioClient,
-		bucketName:   minioConfig.BucketName,
+		bucketName:   minioConfig.Bucket,
 		assetsDomain: minioConfig.AssetsPrefix,
 		logger:       logger,
 	}, nil

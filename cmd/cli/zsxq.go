@@ -9,12 +9,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/ai"
 	crawl "github.com/eli-yip/rss-zero/internal/crawl/zsxq"
 	"github.com/eli-yip/rss-zero/internal/db"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
-	"github.com/eli-yip/rss-zero/internal/redis"
-	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/file"
+	"github.com/eli-yip/rss-zero/internal/redis"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
@@ -30,7 +30,7 @@ func (n *localNotifier) Notify(title, body string) error {
 }
 
 func handleZsxq(opt option, logger *zap.Logger) {
-	db, err := db.NewPostgresDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.Database)
 	if err != nil {
 		logger.Fatal("failed to connect database", zap.Error(err))
 	}
@@ -130,10 +130,10 @@ func handleZsxq(opt option, logger *zap.Logger) {
 	requestService := request.NewRequestService(cookie, redisService, logger)
 	logger.Info("request service initialized")
 
-	aiService := ai.NewAIService(config.C.OpenAIApiKey, config.C.OpenAIBaseURL)
+	aiService := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
 	logger.Info("ai service initialized",
-		zap.String("api key", config.C.OpenAIApiKey),
-		zap.String("api url", config.C.OpenAIBaseURL))
+		zap.String("api key", config.C.Openai.APIKey),
+		zap.String("api url", config.C.Openai.BaseURL))
 
 	renderer := render.NewMarkdownRenderService(dbService, logger)
 	logger.Info("markdown render service initialized")

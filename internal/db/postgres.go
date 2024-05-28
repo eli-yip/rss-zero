@@ -10,21 +10,14 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"github.com/eli-yip/rss-zero/config"
 	weiboDB "github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 )
 
-type PostgresConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	Name     string
-}
-
-func NewPostgresDB(c PostgresConfig) (db *gorm.DB, err error) {
+func NewPostgresDB(c config.DatabaseConfig) (db *gorm.DB, err error) {
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{

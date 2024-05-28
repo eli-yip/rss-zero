@@ -18,7 +18,7 @@ import (
 )
 
 func refmtXiaobot(opt option, l *zap.Logger) {
-	db, err := db.NewPostgresDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.Database)
 	if err != nil {
 		l.Fatal("failed to connect database", zap.Error(err))
 	}
@@ -35,7 +35,7 @@ func refmtXiaobot(opt option, l *zap.Logger) {
 
 	htmlConverter := renderIface.NewHTMLToMarkdownService(l, render.GetHtmlRules()...)
 	mdfmt := md.NewMarkdownFormatter()
-	notifyService := notify.NewBarkNotifier(config.C.BarkURL)
+	notifyService := notify.NewBarkNotifier(config.C.Bark.URL)
 	reformatService := refmt.NewReformatService(l, dbService, htmlConverter, parser, notifyService, mdfmt)
 	l.Info("reformat service initialized")
 
@@ -43,7 +43,7 @@ func refmtXiaobot(opt option, l *zap.Logger) {
 }
 
 func exportXiaobot(opt option, l *zap.Logger) {
-	db, err := db.NewPostgresDB(config.C.DB)
+	db, err := db.NewPostgresDB(config.C.Database)
 	if err != nil {
 		l.Fatal("failed to connect database", zap.Error(err))
 	}

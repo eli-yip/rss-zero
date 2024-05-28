@@ -93,7 +93,7 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			continue
 		}
 
-		resp, err := http.Post(config.C.ZhihuEncryptionURL+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
+		resp, err := http.Post(config.C.Utils.ZhihuEncryptionURL+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
 		if err != nil {
 			logger.Error("failed to request url", zap.Error(err))
 			continue
@@ -185,7 +185,7 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 func (rs *RequestService) ClearCache() {
 	logger := rs.logger
 	logger.Info("start to clear d_c0 cache")
-	_, err := http.Post(config.C.ZhihuEncryptionURL+"/clear-cache", "application/json", nil)
+	_, err := http.Post(config.C.Utils.ZhihuEncryptionURL+"/clear-cache", "application/json", nil)
 	if err != nil {
 		logger.Error("fail to clear d_c0 cache", zap.Error(err))
 		return
