@@ -99,8 +99,7 @@ func InitFromToml(path string) (err error) {
 		return fmt.Errorf("failed to read file: %w", err)
 	}
 
-	var c TomlConfig
-	if err = toml.Unmarshal(data, &c); err != nil {
+	if err = toml.Unmarshal(data, &C); err != nil {
 		return fmt.Errorf("failed to unmarshal toml: %w", err)
 	}
 
