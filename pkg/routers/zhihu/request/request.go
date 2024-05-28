@@ -81,11 +81,12 @@ type EncryptErrResp struct {
 // Send request with limiter, used for all zhihu api requests
 func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 	logger := r.logger.With(zap.String("url", u))
-	logger.Info("request with limiter for raw data")
+	logger.Info("Start to get zhihu raw data with limit, waiting for limiter")
 
 	for i := 0; i < r.maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
 		<-r.limiter
+		logger.Info("Get limiter successfully")
 
 		reqBodyByte, err := json.Marshal(EncryptReq{URL: u})
 		if err != nil {
@@ -100,11 +101,16 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 		}
 		defer resp.Body.Close()
 
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			logger.Error("Failed to read response body", zap.Error(err))
+			continue
+		}
+
 		if resp.StatusCode != http.StatusOK {
-			bytes, _ := io.ReadAll(resp.Body)
 			if resp.StatusCode == http.StatusForbidden {
 				var e403 Error403
-				if err = json.Unmarshal(bytes, &e403); err != nil {
+				if err = json.Unmarshal(body, &e403); err != nil {
 					logger.Error("fail to unmarshal 403 error", zap.Error(err))
 					continue
 				}
@@ -124,7 +130,7 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			// Use 501 here, not real 501
 			if resp.StatusCode == http.StatusNotImplemented {
 				var encryptErrResp EncryptErrResp
-				if err = json.Unmarshal(bytes, &encryptErrResp); err != nil {
+				if err = json.Unmarshal(body, &encryptErrResp); err != nil {
 					logger.Error("failed to unmarshal 5001 error", zap.Error(err))
 					continue
 				}
@@ -135,15 +141,11 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 			continue
 		}
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			logger.Error("fail to read response body", zap.Error(err))
-			continue
-		}
+		logger.Info("Get zhihu raw data successfully")
 		return body, nil
 	}
 
-	logger.Error("fail to get zhihu response with limit", zap.Error(err))
+	logger.Error("Failed to get zhihu raw data", zap.Error(err))
 	return nil, err
 }
 
