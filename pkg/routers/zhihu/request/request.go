@@ -72,7 +72,8 @@ type Error403 struct {
 }
 
 type EncryptReq struct {
-	URL string `json:"url"`
+	RequestID string `json:"request_id"`
+	URL       string `json:"url"`
 }
 
 type EncryptErrResp struct {
@@ -85,11 +86,12 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 	logger.Info("Start to get zhihu raw data with limit, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
 	for i := 0; i < r.maxRetry; i++ {
-		logger := r.logger.With(zap.String(fmt.Sprintf("request_task_id_%d", i), requestTaskID))
+		currentRequestTaskID := fmt.Sprintf("%s_%d", requestTaskID, i)
+		logger := r.logger.With(zap.String("request_task_id", currentRequestTaskID))
 		<-r.limiter
 		logger.Info("Get limiter successfully, start to request url")
 
-		reqBodyByte, err := json.Marshal(EncryptReq{URL: u})
+		reqBodyByte, err := json.Marshal(EncryptReq{RequestID: currentRequestTaskID, URL: u})
 		if err != nil {
 			logger.Error("Failed to marshal request body", zap.Error(err))
 			continue
