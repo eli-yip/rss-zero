@@ -21,31 +21,26 @@ var errUnknownZhihuType = errors.New("unknown zhihu type")
 // return rss path, rss content and error
 //   - contentType: see type list in pkg/common.type.go
 func GenerateZhihu(contentType int, authorID string, zhihuDBService zhihuDB.DB, logger *zap.Logger) (path, result string, err error) {
-	logger.Info("Start to generate zhihu rss", zap.Int("content type", contentType), zap.String("author id", authorID))
+	logger.Info("Start to generate zhihu rss")
 
 	rssRender := render.NewRSSRenderService()
 
 	authorName, err := zhihuDBService.GetAuthorName(authorID)
 	if err != nil {
-		logger.Error("Fail to get zhihu author name from database", zap.String("author id", authorID))
-		return emptyString, emptyString, err
+		return emptyString, emptyString, fmt.Errorf("failed to get zhihu author name from database: %w", err)
 	}
-	logger.Info("Got author name", zap.String("author_name", authorName))
+	logger.Info("Get author name successfully", zap.String("author_name", authorName))
 
 	output, err := generateZhihuRSS(contentType, authorID, authorName, rssRender, zhihuDBService, logger)
 	if err != nil {
-		logger.Error("Fail to generate zhihu rss content", zap.Error(err))
-		return emptyString, emptyString, err
+		return emptyString, emptyString, fmt.Errorf("failed to generate zhihu rss content: %w", err)
 	}
-	logger.Info("Generated zhihu rss content")
+	logger.Info("Generate zhihu rss content successfully")
 
 	if path, err = generateZhihuRSSPath(contentType, authorID); err != nil {
-		logger.Error("Generate zhihu rss path failed", zap.Error(err))
-		return emptyString, emptyString, err
+		return emptyString, emptyString, fmt.Errorf("failed to generate zhihu rss cache path: %w", err)
 	}
-	logger.Info("Generated zhihu rss cache path")
-
-	logger.Info("Generated zhihu rss")
+	logger.Info("Generate zhihu rss cache path successfully")
 
 	return path, output, nil
 }
@@ -71,41 +66,24 @@ func generateZhihuRSS(contentType int, authorID, authorName string, render rende
 	return output, nil
 }
 
-// generateZhihuRSSPath generate zhihu rss redis cache path by content type
-// if content type is unknown, return empty string
-func generateZhihuRSSPath(contentType int, authorID string) (string, error) {
-	switch contentType {
-	case common.TypeZhihuAnswer:
-		return fmt.Sprintf(redis.ZhihuAnswerPath, authorID), nil
-	case common.TypeZhihuArticle:
-		return fmt.Sprintf(redis.ZhihuArticlePath, authorID), nil
-	case common.TypeZhihuPin:
-		return fmt.Sprintf(redis.ZhihuPinPath, authorID), nil
-	default:
-		return "", errUnknownZhihuType
-	}
-}
-
 func generateZhihuAnswer(authorID, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
-	logger.Info("Start to generate zhihu answer rss content", zap.String("author name", authorName))
+	logger.Info("Start to generate zhihu answer rss content")
 
 	answers, err := zhihuDBService.GetLatestNAnswer(config.DefaultFetchCount, authorID)
 	if err != nil {
-		logger.Error("Fail to get latest answers from database")
-		return "", err
+		return emptyString, fmt.Errorf("failed to get latest answers from database: %w", err)
 	}
 	if len(answers) == 0 {
-		logger.Info("No answer found, render empty rss")
+		logger.Info("Found no answer, render empty rss")
 		return rssRender.RenderEmpty(common.TypeZhihuAnswer, authorID, authorName)
 	}
-	logger.Info("Get latest answers from database", zap.Int("answers count", len(answers)))
+	logger.Info("Get latest answers from database", zap.Int("count", len(answers)))
 
 	var rs []render.RSS
 	for _, answer := range answers {
 		question, err := zhihuDBService.GetQuestion(answer.QuestionID)
 		if err != nil {
-			logger.Error("Fail to get question info from database", zap.Int("question id", answer.QuestionID))
-			return "", err
+			return "", fmt.Errorf("failed to get question %d info from database: %w", answer.QuestionID, err)
 		}
 
 		rs = append(rs, render.RSS{
@@ -127,14 +105,13 @@ func generateZhihuArticle(authorID, authorName string, rssRender render.RSSRende
 
 	articles, err := zhihuDBService.GetLatestNArticle(config.DefaultFetchCount, authorID)
 	if err != nil {
-		logger.Error("Fail to get latest articles from database")
-		return "", err
+		return emptyString, fmt.Errorf("failed to get latest articles from database: %w", err)
 	}
 	if len(articles) == 0 {
-		logger.Info("No article found, render empty rss")
+		logger.Info("Found no article, render empty rss")
 		return rssRender.RenderEmpty(common.TypeZhihuArticle, authorID, authorName)
 	}
-	logger.Info("Get latest article from database", zap.Int("article count", len(articles)))
+	logger.Info("Get latest article from database successfully", zap.Int("count", len(articles)))
 
 	var rs []render.RSS
 	for _, article := range articles {
@@ -157,14 +134,13 @@ func generateZhihuPin(authorID, authorName string, rssRender render.RSSRender, z
 
 	pins, err := zhihuDBService.GetLatestNPin(config.DefaultFetchCount, authorID)
 	if err != nil {
-		logger.Error("Fail to get latest pins from database")
-		return "", err
+		return emptyString, fmt.Errorf("failed to get latest pins from database: %w", err)
 	}
 	if len(pins) == 0 {
-		logger.Info("No pin found, render empty rss")
+		logger.Info("Found no pin found, render empty rss")
 		return rssRender.RenderEmpty(common.TypeZhihuPin, authorID, authorName)
 	}
-	logger.Info("Get latest pins from database", zap.Int("pin count", len(pins)))
+	logger.Info("Get latest pins from database successfully", zap.Int("count", len(pins)))
 
 	var rs []render.RSS
 	for _, pin := range pins {
@@ -184,4 +160,19 @@ func generateZhihuPin(authorID, authorName string, rssRender render.RSSRender, z
 	}
 
 	return rssRender.Render(common.TypeZhihuPin, rs)
+}
+
+// generateZhihuRSSPath generate zhihu rss redis cache path by content type
+// if content type is unknown, return empty string
+func generateZhihuRSSPath(contentType int, authorID string) (string, error) {
+	switch contentType {
+	case common.TypeZhihuAnswer:
+		return fmt.Sprintf(redis.ZhihuAnswerPath, authorID), nil
+	case common.TypeZhihuArticle:
+		return fmt.Sprintf(redis.ZhihuArticlePath, authorID), nil
+	case common.TypeZhihuPin:
+		return fmt.Sprintf(redis.ZhihuPinPath, authorID), nil
+	default:
+		return "", errUnknownZhihuType
+	}
 }
