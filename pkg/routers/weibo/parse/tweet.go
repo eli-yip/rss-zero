@@ -14,30 +14,30 @@ import (
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/weibo/parse/api_models"
 )
 
-func (ps *ParseService) ParseTweet(content []byte) (text string, err error) {
+func (ps *ParseService) ParseTweet(content []byte, logger *zap.Logger) (text string, err error) {
 	tweet := apiModels.Tweet{}
 	if err = json.Unmarshal(content, &tweet); err != nil {
 		return "", fmt.Errorf("failed to unmarshal content to tweet: %w", err)
 	}
-	logger := ps.logger.With(zap.Int("tweet_id", tweet.ID))
-	logger.Info("start to parse tweet")
+	logger.Info("Start to parse tweet", zap.Int("tweet_id", tweet.ID))
 
 	text, err = ps.buildText(tweet)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse text: %w", err)
 	}
-	logger.Info("parse text successfully")
+	logger.Info("Parse text successfully")
 
 	formattedText, err := ps.mdfmt.FormatStr(text)
 	if err != nil {
 		return "", fmt.Errorf("failed to format text: %w", err)
 	}
-	logger.Info("format text successfully")
+	logger.Info("Format text successfully")
 
 	tweetTime, err := parseTime(tweet.CreatedAt)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse time: %w", err)
 	}
+	logger.Info("Parse time successfully", zap.Time("time", tweetTime))
 
 	if err = ps.dbService.SaveTweet(&db.Tweet{
 		ID:        tweet.ID,
@@ -49,6 +49,7 @@ func (ps *ParseService) ParseTweet(content []byte) (text string, err error) {
 	}); err != nil {
 		return "", fmt.Errorf("failed to save tweet: %w", err)
 	}
+	logger.Info("Save tweet info to database successfully")
 
 	return formattedText, nil
 }

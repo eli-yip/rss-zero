@@ -38,17 +38,17 @@ func TestParseTweet(t *testing.T) {
 	requestService, err := request.NewRequestService(redisService, cookies, logger)
 	assert.Nil(err)
 	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
-	parseService := NewParseService(fileService, requestService, weiboDBService, htmlToMarkdownService, md.NewMarkdownFormatter(), logger)
+	parseService := NewParseService(fileService, requestService, weiboDBService, htmlToMarkdownService, md.NewMarkdownFormatter())
 
 	data, err := os.ReadFile(usersFile)
 	assert.Nil(err)
-	list, err := parseService.ParseTweetList(data)
+	list, err := parseService.ParseTweetList(data, logger)
 	assert.Nil(err)
 
 	for _, tweet := range list {
 		data, err := json.Marshal(tweet)
 		assert.Nil(err)
-		text, err := parseService.ParseTweet(data)
+		text, err := parseService.ParseTweet(data, logger)
 		assert.Nil(err)
 		t.Log(text)
 	}
