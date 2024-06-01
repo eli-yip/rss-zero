@@ -23,7 +23,7 @@ type Requester interface {
 	// Commonly used in file download
 	NoLimitStream(string) (*http.Response, error)
 	// Clear d_c0 cache
-	ClearCache()
+	ClearCache(*zap.Logger)
 }
 
 var (
@@ -183,15 +183,14 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 	return nil, err
 }
 
-func (rs *RequestService) ClearCache() {
-	logger := rs.logger
-	logger.Info("start to clear d_c0 cache")
+func (rs *RequestService) ClearCache(logger *zap.Logger) {
+	logger.Info("Start to clear d_c0 cache")
 	_, err := http.Post(config.C.Utils.ZhihuEncryptionURL+"/clear-cache", "application/json", nil)
 	if err != nil {
-		logger.Error("fail to clear d_c0 cache", zap.Error(err))
+		logger.Error("failed to clear d_c0 cache", zap.Error(err))
 		return
 	}
-	logger.Info("clear d_c0 cache successfully")
+	logger.Info("Clear d_c0 cache successfully")
 }
 
 // Set request header and method

@@ -51,7 +51,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 			logger.Error("Failed to init services", zap.Error(err))
 			return
 		}
-		defer requestService.ClearCache()
+		defer requestService.ClearCache(logger)
 
 		var subs []zhihuDB.Sub
 		if subs, err = dbService.GetSubs(); err != nil {

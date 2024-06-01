@@ -105,7 +105,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		logger.Fatal("fail to init request service", zap.Error(err))
 	}
 	logger.Info("init request service successfully")
-	defer requestService.ClearCache()
+	defer requestService.ClearCache(logger)
 
 	minioService, err = file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {

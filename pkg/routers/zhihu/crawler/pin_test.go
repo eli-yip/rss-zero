@@ -21,8 +21,8 @@ func TestPinList(t *testing.T) {
 
 	requestService, err := zhihuRequest.NewRequestService(log.NewZapLogger())
 	assert.Nil(err)
-	defer requestService.ClearCache()
 	logger := log.NewZapLogger()
+	defer requestService.ClearCache(logger)
 	bytes, err := requestService.LimitRaw(u, logger)
 	assert.Nil(err)
 

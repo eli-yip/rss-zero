@@ -27,7 +27,7 @@ func TestAnswerList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer requestService.ClearCache()
+	defer requestService.ClearCache(logger)
 	bytes, err := requestService.LimitRaw(u, logger)
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +57,7 @@ func TestAnswerListPaging(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer requestService.ClearCache()
+	defer requestService.ClearCache(logger)
 
 	bytes, err := os.ReadFile(filepath.Join("examples", "answer_list.json"))
 	if err != nil {
