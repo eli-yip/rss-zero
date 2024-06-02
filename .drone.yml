@@ -105,7 +105,7 @@ steps:
         from_secret: ssh_host
       username:
         from_secret: ssh_username
-      password:
+      key:
         from_secret: ssh_password
       port: 2222
       command_timeout: 2m
