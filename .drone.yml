@@ -114,11 +114,11 @@ steps:
         - sed -i "s/VERSION=.*/VERSION=${DRONE_TAG##v}/" .env
         - docker compose pull
         - docker compose up -d
-      depends_on:
-        - publish
-      when:
-        event:
-          - tag
+    depends_on:
+      - publish
+    when:
+      event:
+        - tag
 
 services:
   - name: docker
