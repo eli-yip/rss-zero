@@ -95,6 +95,14 @@ type badAPIResp struct {
 	Code int `json:"code"`
 }
 
+// {"succeeded":false,"code":1050,"info":"数据系统升级中，暂时无法操作","resp_data":{},"error":"数据系统升级中，暂时无法操作"}
+type dataSystemResp struct {
+	Code      int    `json:"code"`
+	Succeeded bool   `json:"succeeded"`
+	Info      string `json:"info"`
+	Error     string `json:"error"`
+}
+
 // Send request with limiter, used for zsxq api.
 func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 	logger := r.logger.With(zap.String("url", u))
@@ -152,8 +160,16 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 			}
 			return nil, ErrInvalidCookie
 		case 1059:
-			logger.Error("too many requests due to no sign, sleep 10s")
-			time.Sleep(time.Second * 10)
+			logger.Error("Too many requests due to no sign, sleep 30s")
+			time.Sleep(time.Second * 30)
+			continue
+		case 1050:
+			var dataSystemResp dataSystemResp
+			if err = json.Unmarshal(bytes, &dataSystemResp); err != nil {
+				logger.Error("Failed to unmarshal data system resp", zap.Error(err))
+				continue
+			}
+			logger.Info("Data system of zsxq is upgrading or other reasons", zap.String("info", dataSystemResp.Info), zap.String("error", dataSystemResp.Error))
 			continue
 		default:
 			logger.Error("unknown bad response", zap.Int("status_code", badResp.Code))
@@ -164,7 +180,7 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 	if err == nil {
 		err = ErrMaxRetry
 	}
-	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
+	logger.Error("Failed to request zsxq API with limit", zap.Error(err))
 	return nil, err
 }
 
