@@ -16,6 +16,15 @@ func (ps *ParseService) buildText(tweet apiModels.Tweet) (text string, err error
 	}
 	text += "\n\n"
 
+	if tweet.ReTweetedStatus != nil {
+		if retweetedPart, err := ps.buildRetweetPart(*tweet.ReTweetedStatus); err != nil {
+			return "", fmt.Errorf("failed to build retweet part: %w", err)
+		} else {
+			text += retweetedPart
+		}
+	}
+	text += "\n\n"
+
 	if picPart, err := ps.buildPicPart(tweet.ID, tweet.PicIDs, tweet.PicInfos); err != nil {
 		return "", fmt.Errorf("failed to build pic part: %w", err)
 	} else {
@@ -28,14 +37,19 @@ func (ps *ParseService) buildText(tweet apiModels.Tweet) (text string, err error
 func (ps *ParseService) buildTextPart(textRaw, mBlogID string, isLongText bool) (text string, err error) {
 	text = textRaw
 
-	if isLongText {
-		text, err = ps.getLongText(mBlogID)
-		if err != nil {
-			return "", fmt.Errorf("failed to get long text: %w", err)
-		}
+	if !isLongText {
+		return
+	}
+
+	if text, err = ps.getLongText(mBlogID); err != nil {
+		return "", fmt.Errorf("failed to get long text: %w", err)
 	}
 
 	return text, nil
+}
+
+func (ps *ParseService) buildRetweetPart(retweet apiModels.Tweet) (text string, err error) {
+	return ps.buildText(retweet)
 }
 
 func (ps *ParseService) buildPicPart(tweetID int, picIDs []string, picInfos map[string]apiModels.PicInfo) (picPart string, err error) {

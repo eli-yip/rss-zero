@@ -33,6 +33,10 @@ switch:
 		git branch -dr origin/$(CURRENT_BRANCH) || true; \
 	fi
 
+.PHONY: add
+add:
+	git add -A
+
 .PHONY: commit
 commit:
 	git add -A
