@@ -116,6 +116,9 @@ steps:
         - docker compose up -d
       depends_on:
         - publish
+      when:
+        event:
+          - tag
 
 services:
   - name: docker
