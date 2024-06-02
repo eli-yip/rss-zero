@@ -111,7 +111,7 @@ steps:
       command_timeout: 2m
       script:
         - cd /home/yip/services/rss-zero
-        - sed -i "s/VERSION=.*/VERSION=${DRONE_TAG##v}/" .env
+        - sed -i "s/TAG=.*/TAG=${DRONE_TAG##v}/" .env
         - docker compose pull
         - docker compose up -d
     depends_on:
