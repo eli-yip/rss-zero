@@ -172,7 +172,7 @@ func (r *RequestService) Limit(u string, logger *zap.Logger) (respByte []byte, e
 		case 401:
 			logger.Error("Invalid zsxq cookie, clear cookie")
 			if err = r.redisService.Del(redis.ZsxqCookiePath); err != nil {
-				logger.Error("fail to delete zsxq cookie", zap.Error(err))
+				logger.Error("Failed to delete zsxq cookie", zap.Error(err))
 			}
 			return nil, ErrInvalidCookie
 		case 1059:
