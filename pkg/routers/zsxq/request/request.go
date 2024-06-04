@@ -176,7 +176,7 @@ func (r *RequestService) Limit(u string, logger *zap.Logger) (respByte []byte, e
 			}
 			return nil, ErrInvalidCookie
 		case 1059:
-			logger.Error("Too many requests due to no sign, sleep 30s")
+			logger.Warn("Too many requests due to no sign, sleep 30s")
 			time.Sleep(time.Second * 30)
 			continue
 		case 1050:
