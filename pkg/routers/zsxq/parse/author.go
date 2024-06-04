@@ -1,28 +1,26 @@
 package parse
 
 import (
+	"fmt"
+
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
-	"go.uber.org/zap"
 )
 
-func (s *ParseService) parseAuthor(logger *zap.Logger, u *models.User) (id int, name string, err error) {
-	go func(u *models.User) {
-		err = s.db.SaveAuthor(&db.Author{
-			ID:    u.UserID,
-			Name:  u.Name,
-			Alias: u.Alias,
-		})
-		if err != nil {
-			logger.Error("save author info failed", zap.Error(err))
-			return
-		}
-	}(u)
+func (s *ParseService) parseAuthor(user *models.User) (id int, name string, err error) {
+	err = s.db.SaveAuthor(&db.Author{
+		ID:    user.UserID,
+		Name:  user.Name,
+		Alias: user.Alias,
+	})
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to save author info: %w", err)
+	}
 
-	switch u.Alias {
+	switch user.Alias {
 	case nil:
-		return u.UserID, u.Name, nil
+		return user.UserID, user.Name, nil
 	default:
-		return u.UserID, *u.Alias, nil
+		return user.UserID, *user.Alias, nil
 	}
 }

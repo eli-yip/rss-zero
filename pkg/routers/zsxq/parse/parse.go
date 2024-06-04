@@ -6,16 +6,16 @@ import (
 	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/log"
-	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 	"go.uber.org/zap"
 )
 
 type Parser interface {
-	SplitTopics(respBytes []byte) (rawTopics []json.RawMessage, err error)
-	ParseTopic(result *models.TopicParseResult) (text string, err error)
+	SplitTopics(respBytes []byte, logger *zap.Logger) (rawTopics []json.RawMessage, err error)
+	ParseTopic(result *models.TopicParseResult, logger *zap.Logger) (text string, err error)
 }
 
 type ParseService struct {

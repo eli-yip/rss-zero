@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/xid"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
 
 	"github.com/eli-yip/rss-zero/internal/redis"
-	"github.com/eli-yip/rss-zero/pkg/request"
 )
 
 var (
@@ -26,6 +26,19 @@ var (
 )
 
 const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+type Requester interface {
+	// Limit requests to the given url with limiter and returns data,
+	// and it will validate the response json data
+	Limit(string, *zap.Logger) ([]byte, error)
+	// LimitRaw requests to the given url with limiter and returns raw data,
+	LimitRaw(string, *zap.Logger) ([]byte, error)
+	// LimitStream requests to the given url with limiter and returns http response,
+	// Commonly used in file download
+	LimitStream(string, *zap.Logger) (*http.Response, error)
+	// NoLimit requests to the given url without limiter
+	NoLimit(string, *zap.Logger) ([]byte, error)
+}
 
 type RequestService struct {
 	client       *http.Client
@@ -37,7 +50,7 @@ type RequestService struct {
 }
 
 func NewRequestService(cookie string, redisService redis.Redis,
-	logger *zap.Logger) request.Requester {
+	logger *zap.Logger) Requester {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 
 	const defaultMaxRetry = 5
@@ -77,7 +90,7 @@ func (r *RequestService) SetCookies(c string) {
 				r.client.Jar.SetCookies(u, []*http.Cookie{cookie})
 			}
 		}
-		r.logger.Info("set cookie successfully",
+		r.logger.Info("Set zsxq cookie successfully",
 			zap.String("cookie", c), zap.String("domain", d))
 	}
 }
@@ -104,42 +117,44 @@ type dataSystemResp struct {
 }
 
 // Send request with limiter, used for zsxq api.
-func (r *RequestService) Limit(u string) (respByte []byte, err error) {
-	logger := r.logger.With(zap.String("url", u))
+func (r *RequestService) Limit(u string, logger *zap.Logger) (respByte []byte, err error) {
+	requestTaskID := xid.New().String()
+	logger.Info("Start to reqeust zsxq api, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
-	logger.Info("start to get zsxq API response with limit")
 	for i := 0; i < r.maxRetry; i++ {
-		logger := logger.With(zap.Int("index", i))
+		currentRequestTaskID := fmt.Sprintf("%s_%d", requestTaskID, i)
+		logger := logger.With(zap.String("request_task_id", currentRequestTaskID))
 		<-r.limiter // block until get a token
+		logger.Info("Get limiter successfully, start to request url")
 
 		var req *http.Request
 		if req, err = r.setReq(u); err != nil {
-			logger.Error("fail to new a request", zap.Error(err))
+			logger.Error("Failed to new a request", zap.Error(err))
 			continue
 		}
 
 		var resp *http.Response
 		if resp, err = r.client.Do(req); err != nil {
-			logger.Error("fail to request url", zap.Error(err))
+			logger.Error("Failed to request url", zap.Error(err))
 			continue
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
-			logger.Error("Bad response status code", zap.Error(err))
+			logger.Error("Bad status code", zap.Error(err))
 			continue
 		}
 
 		var bytes []byte
 		if bytes, err = io.ReadAll(resp.Body); err != nil {
-			logger.Error("fail to read response body", zap.Error(err))
+			logger.Error("Failed to read response body", zap.Error(err))
 			continue
 		}
 
 		var respData apiResp
 		if err = json.Unmarshal(bytes, &respData); err != nil {
-			logger.Error("fail to unmarshal response", zap.Error(err))
+			logger.Error("Failed to unmarshal response into apiResp", zap.Error(err))
 			continue
 		}
 
@@ -149,12 +164,13 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 
 		var badResp badAPIResp
 		if err = json.Unmarshal(bytes, &badResp); err != nil {
-			logger.Error("fail to unmarshal bad resp", zap.Error(err), zap.Any("badResp", badResp))
+			logger.Error("Failed to unmarshal bad resp", zap.Error(err), zap.Any("badResp", badResp))
 			continue
 		}
+
 		switch badResp.Code {
 		case 401:
-			logger.Error("invalid zsxq cookie, clear cookie")
+			logger.Error("Invalid zsxq cookie, clear cookie")
 			if err = r.redisService.Del(redis.ZsxqCookiePath); err != nil {
 				logger.Error("fail to delete zsxq cookie", zap.Error(err))
 			}
@@ -172,7 +188,7 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 			logger.Info("Data system of zsxq is upgrading or other reasons", zap.String("info", dataSystemResp.Info), zap.String("error", dataSystemResp.Error))
 			continue
 		default:
-			logger.Error("unknown bad response", zap.Int("status_code", badResp.Code))
+			logger.Error("Unknown bad response", zap.Int("status_code", badResp.Code))
 			continue
 		}
 	}
@@ -185,36 +201,38 @@ func (r *RequestService) Limit(u string) (respByte []byte, err error) {
 }
 
 // Send request with limiter, used for zsxq article
-func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
-	logger := r.logger.With(zap.String("url", u))
-	logger.Info("request with limiter for raw data", zap.String("url", u))
+func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte, err error) {
+	requestTaskID := xid.New().String()
+	logger.Info("Start to reqeust zsxq api raw, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
 	for i := 0; i < r.maxRetry; i++ {
-		logger := logger.With(zap.Int("index", i))
+		currentRequestTaskID := fmt.Sprintf("%s_%d", requestTaskID, i)
+		logger := logger.With(zap.String("request_task_id", currentRequestTaskID))
 		<-r.limiter
+		logger.Info("Get limiter successfully, start to request url")
 
 		var req *http.Request
 		if req, err = r.setReq(u); err != nil {
-			logger.Error("fail to new a request", zap.Error(err))
+			logger.Error("Failed to new a request", zap.Error(err))
 			continue
 		}
 
 		var resp *http.Response
 		if resp, err = r.client.Do(req); err != nil {
-			logger.Error("fail to request url", zap.Error(err))
+			logger.Error("Failed to request url", zap.Error(err))
 			continue
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
-			logger.Error("Bad response status code", zap.Error(err))
+			err = fmt.Errorf("bad status code: %d", resp.StatusCode)
+			logger.Error("Bad status code", zap.Error(err))
 			continue
 		}
 
 		var body []byte
 		if body, err = io.ReadAll(resp.Body); err != nil {
-			logger.Error("fail to read response body", zap.Error(err))
+			logger.Error("Failed to read response body", zap.Error(err))
 			continue
 		}
 		return body, nil
@@ -223,35 +241,38 @@ func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
 	if err == nil {
 		err = ErrMaxRetry
 	}
-	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
+	logger.Error("Failed to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
 
 // Send request with limiter and get a stream result,
 // used for zsxq voices
-func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) {
-	logger := r.logger.With(zap.String("url", u))
-	logger.Info("request with limiter for stream")
+func (r *RequestService) LimitStream(u string, logger *zap.Logger) (resp *http.Response, err error) {
+	requestTaskID := xid.New().String()
+	logger.Info("Start to reqeust zsxq api stream, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
 	for i := 0; i < r.maxRetry; i++ {
-		logger := logger.With(zap.Int("index", i))
+		currentRequestTaskID := fmt.Sprintf("%s_%d", requestTaskID, i)
+		logger := logger.With(zap.String("request_task_id", currentRequestTaskID))
+		<-r.limiter
+		logger.Info("Get limiter successfully, start to request url")
 
 		var req *http.Request
 		if req, err = r.setReq(u); err != nil {
-			logger.Error("fail to new a request", zap.Error(err))
+			logger.Error("Failed to new a request", zap.Error(err))
 			continue
 		}
 
 		var resp *http.Response
 		if resp, err = r.client.Do(req); err != nil {
-			logger.Error("fail to request url", zap.Error(err))
+			logger.Error("Failed to request url", zap.Error(err))
 			continue
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
-			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
-			logger.Error("Bad response status code", zap.Error(err))
+			defer resp.Body.Close()
+			err = fmt.Errorf("bad status code: %d", resp.StatusCode)
+			logger.Error("bad status code", zap.Error(err))
 			continue
 		}
 
@@ -261,33 +282,35 @@ func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) 
 	if err == nil {
 		err = ErrMaxRetry
 	}
-	logger.Error("fail to get zsxq API response with limit", zap.Error(err))
+	logger.Error("Failed to get zsxq API response with limit", zap.Error(err))
 	return nil, err
 }
 
 // Send request without limiter, used for zsxq cdn
-func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
-	logger := r.logger.With(zap.String("url", u))
-	logger.Info("without limiter", zap.String("url", u))
+func (r *RequestService) NoLimit(u string, logger *zap.Logger) (respByte []byte, err error) {
+	requestTaskID := xid.New().String()
+	logger.Info("Start to request zsxq api without limit", zap.String("url", u), zap.String("request_task_id", requestTaskID))
+
 	for i := 0; i < r.maxRetry; i++ {
-		logger := logger.With(zap.Int("index", i))
+		currentRequestTaskID := fmt.Sprintf("%s_%d", requestTaskID, i)
+		logger := logger.With(zap.String("request_task_id", currentRequestTaskID))
 
 		var req *http.Request
 		if req, err = r.setReq(u); err != nil {
-			logger.Error("fail to new a request", zap.Error(err))
+			logger.Error("Failed to new a request", zap.Error(err))
 			continue
 		}
 
 		var resp *http.Response
 		if resp, err = r.client.Do(req); err != nil {
-			logger.Error("fail to request url", zap.Error(err))
+			logger.Error("Failed to request url", zap.Error(err))
 			continue
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
-			logger.Error("Bad response status code", zap.Error(err))
+			err = fmt.Errorf("bad status code: %d", resp.StatusCode)
+			logger.Error("Bad status code", zap.Error(err))
 			continue
 		}
 
@@ -300,7 +323,7 @@ func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
 	if err == nil {
 		err = ErrMaxRetry
 	}
-	logger.Error("fail to get zsxq API response without limit", zap.Error(err))
+	logger.Error("Failed to get zsxq API response without limit", zap.Error(err))
 	return nil, err
 }
 
@@ -313,9 +336,4 @@ func (r *RequestService) setReq(u string) (req *http.Request, err error) {
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Referer", "https://wx.zsxq.com/")
 	return req, nil
-}
-
-// Zsxq api does not support no limit stream
-func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error) {
-	return nil, errors.New("NoLimitStream() should not be called in zsxq reqeust")
 }

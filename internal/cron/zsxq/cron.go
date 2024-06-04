@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/rs/xid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
-	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
@@ -26,15 +26,15 @@ import (
 func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		// Init services
-		logger := log.NewZapLogger()
+		logger := log.NewZapLogger().With(zap.String("cron_id", xid.New().String()))
 
 		var err error
 		var errCount int = 0
 
 		defer func() {
 			if errCount > 0 {
-				if err = notifier.Notify("Fail to do zsxq cron job", ""); err != nil {
-					logger.Error("fail to send zsxq failure notification", zap.Error(err))
+				if err = notifier.Notify("Failed to crawl zsxq", ""); err != nil {
+					logger.Error("Failed to send zsxq failure notification", zap.Error(err))
 				}
 			}
 			if err := recover(); err != nil {
@@ -45,76 +45,135 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 		// Get cookie from redis, if not exist, log an cookie error.
 		var cookie string
 		if cookie, err = getZsxqCookie(redisService, notifier, logger); err != nil {
-			logger.Error("fail to get zsxq cookie from redis", zap.Error(err))
+			logger.Error("Failed to get zsxq cookie from redis", zap.Error(err))
 			return
 		}
-		logger.Info("got zsxq cookie", zap.String("cookie", cookie))
+		logger.Info("Get zsxq cookie successfully", zap.String("cookie", cookie))
 
 		// init services needed by cron crawl and render job
 		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(cookie, redisService, db, logger)
 		if err != nil {
-			logger.Error("fail to init zsxq services", zap.Error(err))
+			logger.Error("Failed to init zsxq services", zap.Error(err))
 			return
 		}
+		logger.Info("Init zsxq services successfully")
 
 		// Get group IDs from database, which is a list of int.
 		var groupIDs []int
 		if groupIDs, err = dbService.GetZsxqGroupIDs(); err != nil {
-			logger.Error("fail to get group IDs from database", zap.Error(err))
+			logger.Error("Failed to get group IDs from database", zap.Error(err))
 			return
 		}
-		logger.Info("got group IDs from database", zap.Int("Group ID count", len(groupIDs)))
+		logger.Info("Get group IDs from db successfully", zap.Int("count", len(groupIDs)))
 
 		// Iterate group IDs
 		for _, groupID := range groupIDs {
-			logger := logger.With(zap.Int("group_id", groupID))
-			logger.Info("start to crawl zsxq group")
-
 			if err = crawlGroup(groupID, requestService, parseService, redisService, rssRenderer, dbService, logger); err != nil {
 				errCount++
-				logger.Error("fail to do cron job on group", zap.Error(err))
+				logger.Error("Failed to do cron job on group", zap.Error(err))
 				continue
 			}
-			logger.Info("finish to crawl zsxq group")
 		}
 	}
 }
 
-func crawlGroup(groupID int, requestService requestIface.Requester, parseService parse.Parser, redisService redis.Redis, rssRenderService render.RSSRenderer, dbService zsxqDB.DB, logger *zap.Logger) (err error) {
+func prepareZsxqServices(cookie string, redisService redis.Redis, db *gorm.DB, logger *zap.Logger,
+) (dbService zsxqDB.DB, requestService request.Requester, parseService parse.Parser, rssRenderService render.RSSRenderer, err error) {
+	dbService = zsxqDB.NewZsxqDBService(db)
+
+	requestService = request.NewRequestService(cookie, redisService, logger)
+
+	var fileService file.File
+	if fileService, err = file.NewFileServiceMinio(config.C.Minio, logger); err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to init zsxq file service: %w", err)
+	}
+
+	aiService := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
+
+	markdownRender := render.NewMarkdownRenderService(dbService, logger)
+
+	if parseService, err = parse.NewParseService(
+		fileService,
+		requestService,
+		dbService,
+		aiService,
+		markdownRender,
+		parse.WithLogger(logger)); err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to init zsxq parse service: %w", err)
+	}
+
+	rssRenderService = render.NewRSSRenderService()
+
+	return dbService, requestService, parseService, rssRenderService, nil
+}
+
+func getZsxqCookie(redisService redis.Redis, notifier notify.Notifier, logger *zap.Logger) (cookie string, err error) {
+	if cookie, err = redisService.Get(redis.ZsxqCookiePath); err != nil {
+		if errors.Is(err, redis.ErrKeyNotExist) {
+			logger.Error("Found no zsxq cookie in redis, notify user now")
+			if err := notifier.Notify("Found no zsxq cookie in redis", ""); err != nil {
+				logger.Error("Failed to notice user there is no zsxq cookie in redis", zap.Error(err))
+			}
+		}
+		logger.Error("Failed to get zsxq cookie from redis", zap.Error(err))
+		return "", fmt.Errorf("failed to get zsxq cookie from redis: %w", err)
+	}
+
+	if cookie != "" {
+		return cookie, nil
+	}
+
+	logger.Error("Found empty zsxq cookie in redis, notify user now")
+	if err = notifier.Notify("Found empty zsxq cookie in redis", ""); err != nil {
+		logger.Error("Failed to notice user there is empty zsxq cookie in redis", zap.Error(err))
+	}
+
+	if err := redisService.Del(redis.ZsxqCookiePath); err != nil {
+		logger.Error("Failed to delete empty zsxq cookie in redis", zap.Error(err))
+		if err := notifier.Notify("Fail to delete empty zsxq cookie key in redis", ""); err != nil {
+			logger.Error("Failed to notice user that we failed to delete empty zsxq cookie key in redis", zap.Error(err))
+		}
+		return "", fmt.Errorf("failed to delete empty zsxq cookie key in redis: %w", err)
+	}
+
+	return "", fmt.Errorf("found empty zsxq cookie in redis")
+}
+
+func crawlGroup(groupID int, requestService request.Requester, parseService parse.Parser, redisService redis.Redis, rssRenderService render.RSSRenderer, dbService zsxqDB.DB, logger *zap.Logger) (err error) {
 	// Get latest topic time from database
 	var latestTopicTimeInDB time.Time
 	if latestTopicTimeInDB, err = getTargetTime(groupID, dbService); err != nil {
-		return fmt.Errorf("fail to get latest topic time: %w", err)
+		return fmt.Errorf("failed to get latest topic time: %w", err)
 	}
-	logger.Debug("got latest topic time from database", zap.Time("latest_topic_time", latestTopicTimeInDB))
+	logger.Debug("Get latest topic time from db successfully", zap.Time("latest_topic_time", latestTopicTimeInDB))
 
 	// Get latest topics from zsxq
 	if err = crawl.CrawlGroup(groupID, requestService, parseService,
 		latestTopicTimeInDB, false, false, time.Time{}, logger); err != nil {
-		return fmt.Errorf("fail to crawl group: %w", err)
+		return fmt.Errorf("failed to crawl group: %w", err)
 	}
 
 	if err = dbService.UpdateCrawlTime(groupID, time.Now()); err != nil {
-		return fmt.Errorf("fail to update crawl time: %w", err)
+		return fmt.Errorf("failed to update crawl time: %w", err)
 	}
 
 	var topics []zsxqDB.Topic
 	if topics, err = fetchTopics(groupID, latestTopicTimeInDB, dbService); err != nil {
-		return fmt.Errorf("fail to get latest topics from database: %w", err)
+		return fmt.Errorf("failed to get latest topics from database: %w", err)
 	}
 
 	var groupName string
 	if groupName, err = dbService.GetGroupName(groupID); err != nil {
-		return fmt.Errorf("fail to get group %d name from database: %w", groupID, err)
+		return fmt.Errorf("failed to get group %d name from database: %w", groupID, err)
 	}
 
 	var rssTopics []render.RSSTopic
 	if rssTopics, err = buildRSSTopic(topics, dbService, groupName, logger); err != nil {
-		return fmt.Errorf("fail to build rss topics: %w", err)
+		return fmt.Errorf("failed to build rss topics: %w", err)
 	}
 
 	if err = renderAndSaveRSSContent(groupID, rssTopics, rssRenderService, redisService); err != nil {
-		return fmt.Errorf("fail to render and save rss content: %w", err)
+		return fmt.Errorf("failed to render and save rss content: %w", err)
 	}
 
 	return nil
@@ -130,65 +189,6 @@ func getTargetTime(groupID int, dbService zsxqDB.DB) (targetTime time.Time, err 
 		targetTime = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 	}
 	return targetTime, nil
-}
-
-func prepareZsxqServices(cookie string, redisService redis.Redis, db *gorm.DB, logger *zap.Logger,
-) (dbService zsxqDB.DB, requestService requestIface.Requester, parseService parse.Parser, rssRenderService render.RSSRenderer, err error) {
-	dbService = zsxqDB.NewZsxqDBService(db)
-
-	requestService = request.NewRequestService(cookie, redisService, logger)
-
-	var fileService file.File
-	if fileService, err = file.NewFileServiceMinio(config.C.Minio, logger); err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("fail to init zsxq file service: %w", err)
-	}
-
-	aiService := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
-
-	markdownRender := render.NewMarkdownRenderService(dbService, logger)
-
-	if parseService, err = parse.NewParseService(
-		fileService,
-		requestService,
-		dbService,
-		aiService,
-		markdownRender,
-		parse.WithLogger(logger)); err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("fail to init zsxq parse service: %w", err)
-	}
-
-	rssRenderService = render.NewRSSRenderService()
-
-	return dbService, requestService, parseService, rssRenderService, nil
-}
-
-func getZsxqCookie(redisService redis.Redis, notifier notify.Notifier, logger *zap.Logger) (cookie string, err error) {
-	if cookie, err = redisService.Get(redis.ZsxqCookiePath); err != nil {
-		if errors.Is(err, redis.ErrKeyNotExist) {
-			logger.Error("found no zsxq cookie in redis, notify user now")
-			if err = notifier.Notify("Found no zsxq cookie in redis", ""); err != nil {
-				logger.Error("fail to notice user there is no zsxq cookie in redis", zap.Error(err))
-			}
-		}
-		logger.Error("fail to get zsxq cookie from redis", zap.Error(err))
-		return "", err
-	}
-
-	if cookie == "" {
-		logger.Error("found empty zsxq cookie in redis, notify user now")
-		if err = notifier.Notify("Found empty zsxq cookie in redis", ""); err != nil {
-			logger.Error("fail to notice user there is empty zsxq cookie in redis", zap.Error(err))
-		}
-		if err = redisService.Del(redis.ZsxqCookiePath); err != nil {
-			logger.Error("fail to delete empty zsxq cookie in redis", zap.Error(err))
-			if err = notifier.Notify("Fail to delete empty zsxq cookie key in redis", ""); err != nil {
-				logger.Error("fail to notice user that we failed to delete empty zsxq cookie key in redis", zap.Error(err))
-			}
-		}
-		return "", redis.ErrKeyNotExist
-	}
-
-	return cookie, nil
 }
 
 // fetchTopics gets all unrendered(if topics count is less then 20) or 20 topics,
