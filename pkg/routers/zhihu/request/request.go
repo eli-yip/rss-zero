@@ -87,7 +87,7 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 
 	for i := 0; i < r.maxRetry; i++ {
 		currentRequestTaskID := fmt.Sprintf("%s_%d", requestTaskID, i)
-		logger := r.logger.With(zap.String("request_task_id", currentRequestTaskID))
+		logger := logger.With(zap.String("request_task_id", currentRequestTaskID))
 		<-r.limiter
 		logger.Info("Get limiter successfully, start to request url")
 
