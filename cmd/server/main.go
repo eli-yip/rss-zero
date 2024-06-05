@@ -19,6 +19,7 @@ import (
 	"github.com/brpaz/echozap"
 	endoflifeController "github.com/eli-yip/rss-zero/cmd/server/controller/endoflife"
 	jobController "github.com/eli-yip/rss-zero/cmd/server/controller/job"
+	pickController "github.com/eli-yip/rss-zero/cmd/server/controller/pick"
 	rsshubController "github.com/eli-yip/rss-zero/cmd/server/controller/rsshub"
 	xiaobotController "github.com/eli-yip/rss-zero/cmd/server/controller/xiaobot"
 	zhihuController "github.com/eli-yip/rss-zero/cmd/server/controller/zhihu"
@@ -227,6 +228,11 @@ func setupEcho(redisService redis.Redis,
 	// /api/v1/export/xiaobot
 	exportXiaobotApi := exportApi.POST("/xiaobot", xiaobotHandler.Export)
 	exportXiaobotApi.Name = "Export route for xiaobot"
+
+	pickHandler := pickController.NewController(db)
+	// /api/v1/pick
+	pickApi := apiGroup.POST("/pick", pickHandler.Pick)
+	pickApi.Name = "Pick route"
 
 	jobHandler := jobController.NewController(jobList, logger)
 	// /api/v1/job

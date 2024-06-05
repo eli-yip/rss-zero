@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"gorm.io/gorm"
@@ -21,6 +23,7 @@ type DBAnswer interface {
 	GetQuestion(id int) (*Question, error)
 	CountAnswer(userID string) (int, error)
 	FetchNAnswersBeforeTime(n int, t time.Time, userID string) ([]Answer, error)
+	RandomSelect(n int, userID string) ([]Answer, error)
 }
 
 type FetchAnswerOption struct {
@@ -139,6 +142,33 @@ func (d *DBService) GetLatestAnswerTime(userID string) (time.Time, error) {
 
 func (d *DBService) UpdateAnswerStatus(id int, status int) error {
 	return d.Model(&Answer{}).Where("id = ?", id).Update("status", status).Error
+}
+
+func (d *DBService) RandomSelect(n int, userID string) (answers []Answer, err error) {
+	answers = make([]Answer, 0, n)
+
+	answerIDs := make([]int, 0, n)
+	d.Model(&Answer{}).Where("author_id = ?", userID).Pluck("id", &answerIDs)
+
+	if len(answerIDs) <= n {
+		if err = d.Where("id in ?", answerIDs).Find(&answers).Error; err != nil {
+			return nil, fmt.Errorf("failed to get answers: %w", err)
+		}
+		return answers, nil
+	}
+
+	// shuffle answerIDs
+	rand.Shuffle(len(answerIDs), func(i, j int) {
+		answerIDs[i], answerIDs[j] = answerIDs[j], answerIDs[i]
+	})
+
+	answerIDs = answerIDs[:n]
+
+	if err := d.Where("id in ?", answerIDs).Find(&answers).Error; err != nil {
+		return nil, fmt.Errorf("failed to get answers: %w", err)
+	}
+
+	return answers, nil
 }
 
 type DBQuestion interface {
