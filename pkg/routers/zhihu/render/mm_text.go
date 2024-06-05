@@ -10,10 +10,21 @@ type MattermostTextRenderIface interface {
 	Answer(answer *Answer) (string, error)
 }
 
+type MattermostTextRenderOption func(*MattermostTextRender)
+
 type MattermostTextRender struct{ *md.MarkdownFormatter }
 
-func NewMattermostTextRender(mdfmtService *md.MarkdownFormatter) MattermostTextRenderIface {
-	return &MattermostTextRender{MarkdownFormatter: mdfmtService}
+func NewMattermostTextRender(options ...func(*MattermostTextRender)) MattermostTextRenderIface {
+	mdfmtService := md.DefaultMarkdownFormatter
+	mattermostTextRender := &MattermostTextRender{MarkdownFormatter: mdfmtService}
+	for _, option := range options {
+		option(mattermostTextRender)
+	}
+	return mattermostTextRender
+}
+
+func WithMarkdownFormatter(mdfmtService *md.MarkdownFormatter) MattermostTextRenderOption {
+	return func(r *MattermostTextRender) { r.MarkdownFormatter = mdfmtService }
 }
 
 func (r *MattermostTextRender) Answer(answer *Answer) (text string, err error) {
