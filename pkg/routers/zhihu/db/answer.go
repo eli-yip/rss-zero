@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+
+	"github.com/eli-yip/rss-zero/config"
 )
 
 type DBAnswer interface {
@@ -148,7 +150,8 @@ func (d *DBService) RandomSelect(n int, userID string) (answers []Answer, err er
 	answers = make([]Answer, 0, n)
 
 	answerIDs := make([]int, 0, n)
-	d.Model(&Answer{}).Where("author_id = ?", userID).Pluck("id", &answerIDs)
+	date := time.Date(2023, 1, 1, 0, 0, 0, 0, config.C.BJT)
+	d.Model(&Answer{}).Where("author_id = ?", userID).Where("create_at >= ?", date).Pluck("id", &answerIDs)
 
 	if len(answerIDs) <= n {
 		if err = d.Where("id in ?", answerIDs).Find(&answers).Error; err != nil {
