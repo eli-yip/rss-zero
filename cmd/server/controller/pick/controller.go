@@ -8,11 +8,16 @@ type Controller struct{ db *gorm.DB }
 
 func NewController(db *gorm.DB) *Controller { return &Controller{db: db} }
 
-type Request struct {
+type RandomRequest struct {
 	Platform string `json:"platform"`
 	Type     string `json:"type"`
 	Author   string `json:"author"`
 	Count    int    `json:"count"`
+}
+
+type SelectRequest struct {
+	Platform string   `json:"platform"`
+	IDs      []string `json:"ids"`
 }
 
 type Response struct {

@@ -26,6 +26,7 @@ type DBAnswer interface {
 	CountAnswer(userID string) (int, error)
 	FetchNAnswersBeforeTime(n int, t time.Time, userID string) ([]Answer, error)
 	RandomSelect(n int, userID string) ([]Answer, error)
+	SelectByID(ids []int) ([]Answer, error)
 }
 
 type FetchAnswerOption struct {
@@ -173,6 +174,14 @@ func (d *DBService) RandomSelect(n int, userID string) (answers []Answer, err er
 		return nil, fmt.Errorf("failed to get answers: %w", err)
 	}
 
+	return answers, nil
+}
+
+func (d *DBService) SelectByID(ids []int) (answers []Answer, err error) {
+	answers = make([]Answer, 0, len(ids))
+	if err := d.Where("id in ?", ids).Find(&answers).Error; err != nil {
+		return nil, fmt.Errorf("failed to get answers: %w", err)
+	}
 	return answers, nil
 }
 
