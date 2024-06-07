@@ -53,6 +53,8 @@ type Answer struct {
 	// then raw is the raw from zhihu api.
 	Raw    []byte `gorm:"column:raw;type:bytea"`
 	Status int    `gorm:"column:status;type:int"`
+
+	WordCount int `gorm:"column:word_count;type:int"`
 }
 
 const (
@@ -151,7 +153,7 @@ func (d *DBService) RandomSelect(n int, userID string) (answers []Answer, err er
 
 	answerIDs := make([]int, 0, n)
 	date := time.Date(2023, 1, 1, 0, 0, 0, 0, config.C.BJT)
-	d.Model(&Answer{}).Where("author_id = ?", userID).Where("create_at >= ?", date).Pluck("id", &answerIDs)
+	d.Model(&Answer{}).Where("author_id = ?", userID).Where("create_at >= ?", date).Where("word_count between ? and ?", 300, 1200).Pluck("id", &answerIDs)
 
 	if len(answerIDs) <= n {
 		if err = d.Where("id in ?", answerIDs).Find(&answers).Error; err != nil {

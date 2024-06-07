@@ -7,11 +7,13 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
+	"go.uber.org/zap"
+
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
-	"go.uber.org/zap"
 )
 
 // refmtAnswer formats all answers in db for the authorID
@@ -98,6 +100,7 @@ func (s *RefmtService) refmtAnswer(authorID string) (err error) {
 					CreateAt:   a.CreateAt,
 					Text:       formattedText,
 					Raw:        a.Raw,
+					WordCount:  md.Count(text),
 				}); err != nil {
 					logger.Error("fail to save answer to db", zap.Error(err))
 					return

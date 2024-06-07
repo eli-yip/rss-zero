@@ -7,6 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
@@ -66,6 +67,7 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 		Text:       formattedText,
 		Raw:        content, // NOTE: see db.Answer.Raw comment
 		Status:     db.AnswerStatusCompleted,
+		WordCount:  md.Count(text),
 	}); err != nil {
 		return emptyString, fmt.Errorf("failed to save answer to db: %w", err)
 	}
