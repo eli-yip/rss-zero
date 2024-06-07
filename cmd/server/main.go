@@ -231,7 +231,7 @@ func setupEcho(redisService redis.Redis,
 
 	pickHandler := pickController.NewController(db)
 	// /api/v1/pick
-	pickApi := apiGroup.POST("/pick", pickHandler.Pick)
+	pickApi := apiGroup.POST("/pick", pickHandler.Random)
 	pickApi.Name = "Pick route"
 
 	jobHandler := jobController.NewController(jobList, logger)
