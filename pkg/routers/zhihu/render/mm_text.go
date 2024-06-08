@@ -29,7 +29,7 @@ func WithMarkdownFormatter(mdfmtService *md.MarkdownFormatter) MattermostTextRen
 
 func (r *MattermostTextRender) Answer(answer *Answer) (text string, err error) {
 	titlePart := answer.Question.Text
-	titlePart = trimRightSpace(md.H3(titlePart))
+	titlePart = trimRightSpace(md.H5(titlePart))
 
 	link := GenerateAnswerLink(answer.Question.ID, answer.Answer.ID)
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))

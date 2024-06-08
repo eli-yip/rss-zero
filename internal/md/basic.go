@@ -37,6 +37,28 @@ func H3(text string) (markdown string) {
 	return strings.TrimRight(buffer.String(), "\n")
 }
 
+func H4(text string) (markdown string) {
+	if text == "" {
+		return ""
+	}
+
+	var buffer strings.Builder
+	buffer.WriteString("#### ")
+	buffer.WriteString(text)
+	return strings.TrimRight(buffer.String(), "\n")
+}
+
+func H5(text string) (markdown string) {
+	if text == "" {
+		return ""
+	}
+
+	var buffer strings.Builder
+	buffer.WriteString("##### ")
+	buffer.WriteString(text)
+	return strings.TrimRight(buffer.String(), "\n")
+}
+
 func Quote(text string) string {
 	if text == "" {
 		return ""
