@@ -144,8 +144,7 @@ func handleZsxq(opt option, logger *zap.Logger) {
 		requestService,
 		dbService,
 		aiService,
-		renderer,
-		parse.WithLogger(logger))
+		renderer)
 	if err != nil {
 		logger.Fatal("failed to initialize parse service", zap.Error(err))
 	}

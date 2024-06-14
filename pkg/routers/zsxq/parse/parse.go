@@ -5,7 +5,6 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/file"
-	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
@@ -15,7 +14,7 @@ import (
 
 type Parser interface {
 	SplitTopics(respBytes []byte, logger *zap.Logger) (rawTopics []json.RawMessage, err error)
-	ParseTopic(result *models.TopicParseResult, logger *zap.Logger) (text string, err error)
+	ParseTopic(topic *models.TopicParseResult, logger *zap.Logger) (text string, err error)
 }
 
 type ParseService struct {
@@ -24,7 +23,6 @@ type ParseService struct {
 	db      db.DB
 	ai      ai.AI
 	render  render.MarkdownRenderer
-	l       *zap.Logger
 }
 
 func NewParseService(f file.File, r request.Requester, d db.DB,
@@ -42,15 +40,7 @@ func NewParseService(f file.File, r request.Requester, d db.DB,
 		opt(s)
 	}
 
-	if s.l == nil {
-		s.l = log.NewZapLogger()
-	}
-
 	return s, nil
 }
 
 type Option func(*ParseService)
-
-func WithLogger(logger *zap.Logger) Option {
-	return func(s *ParseService) { s.l = logger }
-}

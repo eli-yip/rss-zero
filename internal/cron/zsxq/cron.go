@@ -97,8 +97,7 @@ func prepareZsxqServices(cookie string, redisService redis.Redis, db *gorm.DB, l
 		requestService,
 		dbService,
 		aiService,
-		markdownRender,
-		parse.WithLogger(logger)); err != nil {
+		markdownRender); err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to init zsxq parse service: %w", err)
 	}
 
@@ -145,17 +144,19 @@ func crawlGroup(groupID int, requestService request.Requester, parseService pars
 	if latestTopicTimeInDB, err = getTargetTime(groupID, dbService); err != nil {
 		return fmt.Errorf("failed to get latest topic time: %w", err)
 	}
-	logger.Debug("Get latest topic time from db successfully", zap.Time("latest_topic_time", latestTopicTimeInDB))
+	logger.Info("Get latest topic time from db successfully", zap.Time("latest_topic_time", latestTopicTimeInDB))
 
 	// Get latest topics from zsxq
 	if err = crawl.CrawlGroup(groupID, requestService, parseService,
 		latestTopicTimeInDB, false, false, time.Time{}, logger); err != nil {
 		return fmt.Errorf("failed to crawl group: %w", err)
 	}
+	logger.Info("Crawl zsxq group successfully")
 
 	if err = dbService.UpdateCrawlTime(groupID, time.Now()); err != nil {
 		return fmt.Errorf("failed to update crawl time: %w", err)
 	}
+	logger.Info("Update crawl time successfully")
 
 	var topics []zsxqDB.Topic
 	if topics, err = fetchTopics(groupID, latestTopicTimeInDB, dbService); err != nil {
