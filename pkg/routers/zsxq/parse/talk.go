@@ -100,7 +100,7 @@ func (s *ParseService) saveArticles(article *models.Article, logger *zap.Logger)
 		ID:    article.ArticleID,
 		URL:   article.ArticleURL,
 		Title: article.Title,
-		Text:  string(text),
+		Text:  text,
 		Raw:   html,
 	}); err != nil {
 		return fmt.Errorf("failed to save article info to database: %w", err)
