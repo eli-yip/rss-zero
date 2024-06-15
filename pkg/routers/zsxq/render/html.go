@@ -35,6 +35,20 @@ func getArticleRules() []convertRule {
 		},
 	}
 
+	// remove class='milkdown-preview'
+	milkdownPreview := convertRule{
+		Name: "milkdown-preview",
+		Rule: md.Rule{
+			Filter: []string{"div"},
+			Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
+				if !selec.HasClass("milkdown-preview") {
+					return nil
+				}
+				return md.String("")
+			},
+		},
+	}
+
 	authorInfo := convertRule{
 		Name: "author-info",
 		Rule: md.Rule{
@@ -76,6 +90,7 @@ func getArticleRules() []convertRule {
 
 	return []convertRule{
 		h1,
+		milkdownPreview,
 		groupInfo,
 		authorInfo,
 		qrcodeContainer,
