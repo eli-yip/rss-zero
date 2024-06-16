@@ -58,7 +58,7 @@ func NewRequestService(logger *zap.Logger) (Requester, error) {
 	go func() {
 		for {
 			s.limiter <- struct{}{}
-			time.Sleep(time.Duration(30+rand.IntN(6)) * time.Second)
+			time.Sleep(time.Duration(30+rand.IntN(30)) * time.Second)
 		}
 	}()
 
