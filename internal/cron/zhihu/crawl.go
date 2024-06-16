@@ -82,8 +82,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
+						switch {
+						case errors.Is(err, request.ErrEmptyDC0):
 							logger.Error("There is no d_c0 cookie, break")
+							return
+						case errors.Is(err, request.ErrNeedLogin):
+							logger.Error("Need login, break")
 							return
 						}
 						logger.Error("Failed to crawl answer", zap.Error(err))
@@ -97,8 +101,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, answers[0].CreateAt, 0, false, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
+						switch {
+						case errors.Is(err, request.ErrEmptyDC0):
 							logger.Error("There is no d_c0 cookie, break")
+							return
+						case errors.Is(err, request.ErrNeedLogin):
+							logger.Error("Need login, break")
 							return
 						}
 						logger.Error("Failed to crawl answer", zap.Error(err))
@@ -129,8 +137,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
+						switch {
+						case errors.Is(err, request.ErrEmptyDC0):
 							logger.Error("There is no d_c0 cookie, break")
+							return
+						case errors.Is(err, request.ErrNeedLogin):
+							logger.Error("Need login, break")
 							return
 						}
 						logger.Error("Failed to crawl article", zap.Error(err))
@@ -144,8 +156,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, articles[0].CreateAt, 0, false, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
+						switch {
+						case errors.Is(err, request.ErrEmptyDC0):
 							logger.Error("There is no d_c0 cookie, break")
+							return
+						case errors.Is(err, request.ErrNeedLogin):
+							logger.Error("Need login, break")
 							return
 						}
 						logger.Error("Failed to crawl article", zap.Error(err))
@@ -176,8 +192,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
+						switch {
+						case errors.Is(err, request.ErrEmptyDC0):
 							logger.Error("There is no d_c0 cookie, break")
+							return
+						case errors.Is(err, request.ErrNeedLogin):
+							logger.Error("Need login, break")
 							return
 						}
 						logger.Error("Failed to crawl pin", zap.Error(err))
@@ -191,8 +211,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, pins[0].CreateAt, 0, false, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
+						switch {
+						case errors.Is(err, request.ErrEmptyDC0):
 							logger.Error("There is no d_c0 cookie, break")
+							return
+						case errors.Is(err, request.ErrNeedLogin):
+							logger.Error("Need login, break")
 							return
 						}
 						logger.Error("Failed to crawl pin", zap.Error(err))
