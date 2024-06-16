@@ -204,6 +204,9 @@ func setupEcho(redisService redis.Redis,
 	// /api/v1/cookie/xiaobot
 	xiaobotCookieApi := cookieApi.POST("/xiaobot", xiaobotHandler.UpdateToken)
 	xiaobotCookieApi.Name = "Token updating route for xiaobot"
+	// /api/v1/cookie/zhihu
+	zhihuCookieApi := cookieApi.POST("/zhihu", zhihuHandler.UpdateCookie)
+	zhihuCookieApi.Name = "Cookie updating route for zhihu"
 
 	// /api/v1/refmt
 	refmtApi := apiGroup.Group("/refmt")
