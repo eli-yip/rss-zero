@@ -44,15 +44,24 @@ type RequestService struct {
 	limiter  chan struct{}
 	maxRetry int // default 5
 	logger   *zap.Logger
+	d_c0     string
 }
 
-func NewRequestService(logger *zap.Logger) (Requester, error) {
+type OptionFunc func(*RequestService)
+
+func WithDC0(d_c0 string) OptionFunc { return func(r *RequestService) { r.d_c0 = d_c0 } }
+
+func NewRequestService(logger *zap.Logger, opts ...OptionFunc) (Requester, error) {
 	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:   &http.Client{},
 		limiter:  make(chan struct{}),
 		maxRetry: defaultMaxRetry,
 		logger:   logger,
+	}
+
+	for _, opt := range opts {
+		opt(s)
 	}
 
 	go func() {
@@ -73,6 +82,7 @@ type Error403 struct {
 
 type EncryptReq struct {
 	RequestID string `json:"request_id"`
+	DC0       string `json:"d_c0,omitempty"`
 	URL       string `json:"url"`
 }
 
@@ -91,7 +101,7 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 		<-r.limiter
 		logger.Info("Get limiter successfully, start to request url")
 
-		reqBodyByte, err := json.Marshal(EncryptReq{RequestID: currentRequestTaskID, URL: u})
+		reqBodyByte, err := json.Marshal(EncryptReq{RequestID: currentRequestTaskID, DC0: r.d_c0, URL: u})
 		if err != nil {
 			logger.Error("Failed to marshal request body", zap.Error(err))
 			continue
