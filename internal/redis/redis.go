@@ -17,6 +17,7 @@ const (
 )
 const ZsxqCookiePath = "zsxq_cookie"
 const XiaobotTokenPath = "xiaobot_token"
+const ZhihuCookiePath = "zhihu_cookie"
 
 const (
 	ZsxqRSSPath = "zsxq_rss_%s"
