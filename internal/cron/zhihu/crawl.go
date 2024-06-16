@@ -82,7 +82,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) {
+						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						}
@@ -97,7 +97,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, answers[0].CreateAt, 0, false, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) {
+						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						}
@@ -129,7 +129,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) {
+						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						}
@@ -144,7 +144,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, articles[0].CreateAt, 0, false, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) {
+						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						}
@@ -176,7 +176,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) {
+						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						}
@@ -191,7 +191,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, pins[0].CreateAt, 0, false, logger); err != nil {
 						errCount++
-						if errors.Is(err, request.ErrEmptyDC0) {
+						if errors.Is(err, request.ErrEmptyDC0) || errors.Is(err, request.ErrNeedLogin) {
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						}
