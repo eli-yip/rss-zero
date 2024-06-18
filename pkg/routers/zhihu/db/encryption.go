@@ -23,7 +23,7 @@ type EncryptionServiceIface interface {
 
 type EncryptionService struct {
 	ID          string `gorm:"column:id;type:string;primary_key"`
-	Slug        string `gorm:"column:slug;type:string"`
+	Slug        string `gorm:"column:slug;type:string;unique"`
 	URL         string `gorm:"column:url;type:string"`
 	IsAvailable bool   `gorm:"column:is_available;type:bool"`
 	UsedCount   int    `gorm:"column:used_count;type:int"`
@@ -33,7 +33,9 @@ type EncryptionService struct {
 	DeleteAt    gorm.DeletedAt
 }
 
-func (d *DBService) TableName() string { return "zhihu_encryption_service" }
+var ErrSlugExists = errors.New("slug should be unique")
+
+func (d *EncryptionService) TableName() string { return "zhihu_encryption_service" }
 
 func (d *DBService) GetServices() ([]EncryptionService, error) {
 	var services []EncryptionService
@@ -45,10 +47,20 @@ func (d *DBService) GetServices() ([]EncryptionService, error) {
 
 func (d *DBService) SaveService(service *EncryptionService) error {
 	service.UsedCount = 1
-	return d.Create(service).Error
+	err := d.Create(service).Error
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
+		return ErrSlugExists
+	}
+	return err
 }
 
-func (d *DBService) UpdateService(service *EncryptionService) error { return d.Save(service).Error }
+func (d *DBService) UpdateService(service *EncryptionService) error {
+	err := d.Save(service).Error
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
+		return ErrSlugExists
+	}
+	return err
+}
 
 func (d *DBService) DeleteService(id string) error {
 	return d.Where("id = ?", id).Delete(&EncryptionService{}).Error

@@ -30,8 +30,9 @@ func NewPostgresDB(c config.DatabaseConfig) (db *gorm.DB, err error) {
 	mdsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
 		c.Host, c.Port, c.User, c.Password, c.Name)
 	if db, err = gorm.Open(postgres.Open(mdsn), &gorm.Config{
-		PrepareStmt: true,
-		Logger:      newLogger,
+		PrepareStmt:    true,
+		Logger:         newLogger,
+		TranslateError: true,
 	}); err != nil {
 		panic(err)
 	}

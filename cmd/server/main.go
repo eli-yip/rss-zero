@@ -208,6 +208,19 @@ func setupEcho(redisService redis.Redis,
 	zhihuCookieApi := cookieApi.POST("/zhihu", zhihuHandler.UpdateCookie)
 	zhihuCookieApi.Name = "Cookie updating route for zhihu"
 
+	// /api/v1/db/zhihu
+	zhihuDBApi := apiGroup.Group("/db/zhihu")
+	zhihuDBAdd := zhihuDBApi.POST("/add", zhihuHandler.Add)
+	zhihuDBAdd.Name = "Add route for zhihu db api"
+	zhihuDBUpdate := zhihuDBApi.POST("/update", zhihuHandler.Update)
+	zhihuDBUpdate.Name = "Update route for zhihu db api"
+	zhihuDBDelete := zhihuDBApi.POST("/:id", zhihuHandler.Delete)
+	zhihuDBDelete.Name = "Delete route for zhihu db api"
+	zhihuDBList := zhihuDBApi.GET("", zhihuHandler.List)
+	zhihuDBList.Name = "List route for zhihu db api"
+	zhihuDBActivate := zhihuDBApi.POST("/activate/:id", zhihuHandler.Activate)
+	zhihuDBActivate.Name = "Activate route for zhihu db api"
+
 	// /api/v1/refmt
 	refmtApi := apiGroup.Group("/refmt")
 	// /api/v1/refmt/zsxq
