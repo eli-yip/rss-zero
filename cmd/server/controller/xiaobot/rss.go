@@ -101,7 +101,7 @@ func (h *XiaobotController) generateRSS(key string) (output string, err error) {
 		return "", err
 	}
 
-	if err = h.redis.Set(key, content, redis.RSSTTL); err != nil {
+	if err = h.redis.Set(key, content, redis.RSSDefaultTTL); err != nil {
 		return "", err
 	}
 

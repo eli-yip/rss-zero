@@ -91,7 +91,7 @@ func (h *ZsxqController) generateRSS(key string) (output string, err error) {
 		return "", err
 	}
 
-	if err = h.redis.Set(path, content, redis.RSSTTL); err != nil {
+	if err = h.redis.Set(path, content, redis.RSSDefaultTTL); err != nil {
 		return "", err
 	}
 

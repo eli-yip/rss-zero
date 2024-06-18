@@ -258,7 +258,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 				logger.Info("Generate rss content and save to redis successfully")
 			}
 
-			if err = redisService.Set(path, content, redis.DefaultTTL); err != nil {
+			if err = redisService.Set(path, content, redis.RSSDayTTL); err != nil {
 				errCount++
 				logger.Error("Failed to save rss content to redis", zap.Error(err))
 			}

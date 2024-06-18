@@ -11,10 +11,6 @@ import (
 
 var ErrKeyNotExist = errors.New("key does not exist")
 
-const (
-	Forever    = 0
-	DefaultTTL = time.Hour * 2
-)
 const ZsxqCookiePath = "zsxq_cookie"
 const XiaobotTokenPath = "xiaobot_token"
 const ZhihuCookiePath = "zhihu_cookie"
@@ -31,7 +27,11 @@ const (
 	EndOfLifePath = "endoflife_rss_%s"
 )
 
-var RSSTTL = time.Hour * 2
+const (
+	Forever       = 0
+	RSSDefaultTTL = time.Hour * 2
+	RSSDayTTL     = time.Hour * 24
+)
 
 type Redis interface {
 	Set(key string, value interface{}, duration time.Duration) (err error)

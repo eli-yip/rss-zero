@@ -92,7 +92,7 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 			}
 			logger.Info("Generate rss for xiaobot paper successfully")
 
-			if err = r.Set(path, content, redis.RSSTTL); err != nil {
+			if err = r.Set(path, content, redis.RSSDefaultTTL); err != nil {
 				errCount++
 				logger.Error("Failed setting rss to redis", zap.Error(err))
 				return

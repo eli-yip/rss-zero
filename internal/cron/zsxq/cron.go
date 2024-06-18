@@ -246,7 +246,7 @@ func renderAndSaveRSSContent(groupID int, rssTopics []render.RSSTopic, rssRender
 		return fmt.Errorf("fail to render rss content: %w", err)
 	}
 
-	if err = redisService.Set(fmt.Sprintf(redis.ZsxqRSSPath, strconv.Itoa(groupID)), rssContent, redis.DefaultTTL); err != nil {
+	if err = redisService.Set(fmt.Sprintf(redis.ZsxqRSSPath, strconv.Itoa(groupID)), rssContent, redis.RSSDefaultTTL); err != nil {
 		return fmt.Errorf("fail to save rss content to cache: %w", err)
 	}
 

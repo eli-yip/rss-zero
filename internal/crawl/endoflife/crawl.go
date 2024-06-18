@@ -26,7 +26,7 @@ func CrawlEndOfLife(product string, redisService redis.Redis) (err error) {
 
 	path := fmt.Sprintf(redis.EndOfLifePath, product)
 
-	if err = redisService.Set(path, rssContent, redis.DefaultTTL); err != nil {
+	if err = redisService.Set(path, rssContent, redis.RSSDefaultTTL); err != nil {
 		return fmt.Errorf("fail to set rss content to redis: %w", err)
 	}
 
