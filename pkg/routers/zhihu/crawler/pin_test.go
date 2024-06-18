@@ -9,7 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/log"
+	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zhihuRequest "github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
@@ -19,7 +21,10 @@ func TestPinList(t *testing.T) {
 	assert := assert.New(t)
 	assert.Nil(config.InitForTestToml())
 
-	requestService, err := zhihuRequest.NewRequestService(log.NewZapLogger())
+	db, err := db.NewPostgresDB(config.C.Database)
+	assert.Nil(err)
+	zhihuDBService := zhihuDB.NewDBService(db)
+	requestService, err := zhihuRequest.NewRequestService(log.NewZapLogger(), zhihuDBService)
 	assert.Nil(err)
 	logger := log.NewZapLogger()
 	defer requestService.ClearCache(logger)

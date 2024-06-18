@@ -238,7 +238,7 @@ var errAuthorNotExistInZhihu = errors.New("author does not exist in zhihu")
 // It will save the author name to db if it's not found in db.
 func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (authorName string, err error) {
 	// skip d_c0 cookie injection, as it's not needed for this request
-	requestService, err := request.NewRequestService(logger)
+	requestService, err := request.NewRequestService(logger, h.db)
 	if err != nil {
 		logger.Error("Error creating request service", zap.Error(err))
 		return "", errors.Join(err, errors.New("failed to create request service"))

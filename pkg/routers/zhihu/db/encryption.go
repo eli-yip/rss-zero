@@ -9,6 +9,7 @@ import (
 )
 
 type EncryptionServiceIface interface {
+	GetServices() ([]EncryptionService, error)
 	SaveService(*EncryptionService) error
 	UpdateService(*EncryptionService) error
 	DeleteService(string) error
@@ -33,6 +34,14 @@ type EncryptionService struct {
 }
 
 func (d *DBService) TableName() string { return "zhihu_encryption_service" }
+
+func (d *DBService) GetServices() ([]EncryptionService, error) {
+	var services []EncryptionService
+	if err := d.Find(&services).Error; err != nil {
+		return nil, err
+	}
+	return services, nil
+}
 
 func (d *DBService) SaveService(service *EncryptionService) error {
 	service.UsedCount = 1

@@ -33,7 +33,7 @@ func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
 	}
 	logger.Info("Retrieve zhihu d_c0 cookie successfully", zap.String("cookie", d_c0))
 
-	requestService, err := request.NewRequestService(logger, request.WithDC0(d_c0))
+	requestService, err := request.NewRequestService(logger, h.db, request.WithDC0(d_c0))
 	if err != nil {
 		logger.Error("Failed to create request service", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})

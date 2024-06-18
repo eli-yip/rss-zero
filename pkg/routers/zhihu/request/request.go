@@ -13,7 +13,7 @@ import (
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/config"
+	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
 type Requester interface {
@@ -40,18 +40,19 @@ const (
 )
 
 type RequestService struct {
-	client   *http.Client
-	limiter  chan struct{}
-	maxRetry int // default 5
-	logger   *zap.Logger
-	d_c0     string
+	client    *http.Client
+	limiter   chan struct{}
+	maxRetry  int // default 5
+	logger    *zap.Logger
+	d_c0      string
+	dbService zhihuDB.EncryptionServiceIface
 }
 
 type OptionFunc func(*RequestService)
 
 func WithDC0(d_c0 string) OptionFunc { return func(r *RequestService) { r.d_c0 = d_c0 } }
 
-func NewRequestService(logger *zap.Logger, opts ...OptionFunc) (Requester, error) {
+func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, opts ...OptionFunc) (Requester, error) {
 	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:   &http.Client{},
@@ -107,9 +108,19 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			continue
 		}
 
-		zhihuEncryptionURL := chooseZhihuEncryptionURL()
-		logger.Info("Get Zhihu Encryption URL successfully", zap.String("url", zhihuEncryptionURL))
-		resp, err := http.Post(zhihuEncryptionURL+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
+		es, err := r.dbService.SelectService()
+		if err != nil {
+			logger.Error("Failed to get encryption service", zap.Error(err))
+			continue
+		}
+		logger.Info("Get zhihu encryption service successfully", zap.Any("service", es))
+
+		if err = r.dbService.IncreaseUsedCount(es.ID); err != nil {
+			logger.Error("Failed to increase used count", zap.Error(err))
+			return nil, fmt.Errorf("failed to increase used count for service %s, %w", es.ID, err)
+		}
+
+		resp, err := http.Post(es.URL+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
 		if err != nil {
 			logger.Error("Failed to request", zap.Error(err))
 			continue
@@ -127,6 +138,9 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			logger.Info("Get zhihu raw data successfully")
 			return body, nil
 		case http.StatusForbidden:
+			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
+				logger.Error("Failed to increase failed count", zap.Error(err))
+			}
 			var e403 Error403
 			if err = json.Unmarshal(body, &e403); err != nil {
 				logger.Error("Failed to unmarshal 403 error", zap.Error(err))
@@ -137,12 +151,21 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 				return nil, ErrNeedLogin
 			}
 		case http.StatusNotFound:
+			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
+				logger.Error("Failed to increase failed count", zap.Error(err))
+			}
 			logger.Error("404 error")
 			return nil, ErrUnreachable
 		case http.StatusInternalServerError:
+			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
+				logger.Error("Failed to increase failed count", zap.Error(err))
+			}
 			logger.Error("Failed to get d_c0 cookie")
 			return nil, ErrEmptyDC0
 		case http.StatusNotImplemented:
+			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
+				logger.Error("Failed to increase failed count", zap.Error(err))
+			}
 			var encryptErrResp EncryptErrResp
 			if err = json.Unmarshal(body, &encryptErrResp); err != nil {
 				logger.Error("Failed to unmarshal 501 error", zap.Error(err))
@@ -198,9 +221,14 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 func (rs *RequestService) ClearCache(logger *zap.Logger) {
 	logger.Info("Start to clear d_c0 cache")
 	errCount := 0
-	for _, url := range config.C.Utils.ZhihuEncryptionURL {
-		if _, err := http.Post(url+"/clear-cache", "application/json", nil); err != nil {
-			logger.Error("Failed to clear d_c0 cache", zap.Error(err), zap.String("zhihu_encryption_url", url))
+	es, err := rs.dbService.GetServices()
+	if err != nil {
+		logger.Error("Failed to get encryption services", zap.Error(err))
+		return
+	}
+	for _, e := range es {
+		if _, err := http.Post(e.URL+"/clear-cache", "application/json", nil); err != nil {
+			logger.Error("Failed to clear d_c0 cache", zap.Error(err), zap.String("zhihu_encryption_url", e.URL))
 			errCount++
 			continue
 		}
@@ -219,9 +247,4 @@ func (r *RequestService) setReq(u string) (req *http.Request, err error) {
 	}
 	req.Header.Set("User-Agent", userAgent)
 	return req, nil
-}
-
-func chooseZhihuEncryptionURL() string {
-	urls := config.C.Utils.ZhihuEncryptionURL
-	return urls[rand.IntN(len(urls))]
 }

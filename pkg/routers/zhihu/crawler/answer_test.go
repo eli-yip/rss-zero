@@ -7,11 +7,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/log"
+	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	zhihuRequest "github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAnswerList(t *testing.T) {
@@ -23,7 +26,10 @@ func TestAnswerList(t *testing.T) {
 	assert.Nil(config.InitForTestToml())
 
 	logger := log.NewZapLogger()
-	requestService, err := zhihuRequest.NewRequestService(logger)
+	db, err := db.NewPostgresDB(config.C.Database)
+	assert.Nil(err)
+	zhihuDBService := zhihuDB.NewDBService(db)
+	requestService, err := zhihuRequest.NewRequestService(logger, zhihuDBService)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +59,10 @@ func TestAnswerListPaging(t *testing.T) {
 	assert := assert.New(t)
 	assert.Nil(config.InitForTestToml())
 	logger := log.NewZapLogger()
-	requestService, err := zhihuRequest.NewRequestService(logger)
+	db, err := db.NewPostgresDB(config.C.Database)
+	assert.Nil(err)
+	zhihuDBService := zhihuDB.NewDBService(db)
+	requestService, err := zhihuRequest.NewRequestService(logger, zhihuDBService)
 	if err != nil {
 		t.Fatal(err)
 	}

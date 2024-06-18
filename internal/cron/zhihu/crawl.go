@@ -294,7 +294,7 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 		return nil, nil, nil, errNoDC0
 	}
 
-	requestService, err = request.NewRequestService(logger, request.WithDC0(d_c0))
+	requestService, err = request.NewRequestService(logger, dbService, request.WithDC0(d_c0))
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("fail to init request service: %w", err)
 	}
