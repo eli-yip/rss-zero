@@ -54,13 +54,15 @@ type OptionFunc func(*RequestService)
 
 func WithDC0(d_c0 string) OptionFunc { return func(r *RequestService) { r.d_c0 = d_c0 } }
 
-func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, opts ...OptionFunc) (Requester, error) {
+func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, notifier notify.Notifier, opts ...OptionFunc) (Requester, error) {
 	const defaultMaxRetry = 5
 	s := &RequestService{
-		client:   &http.Client{},
-		limiter:  make(chan struct{}),
-		maxRetry: defaultMaxRetry,
-		logger:   logger,
+		client:    &http.Client{},
+		limiter:   make(chan struct{}),
+		maxRetry:  defaultMaxRetry,
+		dbService: dbService,
+		notify:    notifier,
+		logger:    logger,
 	}
 
 	for _, opt := range opts {

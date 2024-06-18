@@ -12,6 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/log"
+	notify "github.com/eli-yip/rss-zero/internal/notify"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	zhihuRequest "github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
@@ -29,7 +30,7 @@ func TestAnswerList(t *testing.T) {
 	db, err := db.NewPostgresDB(config.C.Database)
 	assert.Nil(err)
 	zhihuDBService := zhihuDB.NewDBService(db)
-	requestService, err := zhihuRequest.NewRequestService(logger, zhihuDBService)
+	requestService, err := zhihuRequest.NewRequestService(logger, zhihuDBService, notify.NewBarkNotifier(config.C.Bark.URL))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +63,7 @@ func TestAnswerListPaging(t *testing.T) {
 	db, err := db.NewPostgresDB(config.C.Database)
 	assert.Nil(err)
 	zhihuDBService := zhihuDB.NewDBService(db)
-	requestService, err := zhihuRequest.NewRequestService(logger, zhihuDBService)
+	requestService, err := zhihuRequest.NewRequestService(logger, zhihuDBService, notify.NewBarkNotifier(config.C.Bark.URL))
 	if err != nil {
 		t.Fatal(err)
 	}
