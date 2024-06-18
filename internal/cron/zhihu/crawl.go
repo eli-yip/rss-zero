@@ -3,6 +3,7 @@ package cron
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/rs/xid"
 	"go.uber.org/zap"
@@ -72,6 +73,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 			ts := common.ZhihuTypeToString(sub.Type) // type in string
 			logger.Info("Start to crawl zhihu sub", zap.String("author_id", sub.AuthorID), zap.String("type", ts))
 
+			latestTimeInDB := time.Time{}
 			switch ts {
 			case "answer":
 				// get answers from db to check if there is any answer for this sub
@@ -104,12 +106,13 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 						continue
 					}
 				} else {
+					latestTimeInDB = answers[0].CreateAt
 					logger.Info("Found answers in db, start to crawl article in normal mode",
-						zap.Time("latest_answer's_create_time", answers[0].CreateAt))
+						zap.Time("latest_answer's_create_time", latestTimeInDB))
 					// set target time to the latest answer's create time in db
 					// disable one time mode, as we know when to stop(latest answer's create time)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, answers[0].CreateAt, 0, false, logger); err != nil {
+					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
 						errCount++
 						switch {
 						case errors.Is(err, request.ErrEmptyDC0):
@@ -128,7 +131,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 				}
 				logger.Info("Crawl answer successfully")
 
-				if path, content, err = rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, dbService, logger); err != nil {
+				if path, content, err = rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, latestTimeInDB, dbService, logger); err != nil {
 					errCount++
 					logger.Error("Failed to generate zhihu rss content", zap.Error(err))
 					continue
@@ -165,12 +168,13 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 						continue
 					}
 				} else {
+					latestTimeInDB = articles[0].CreateAt
 					logger.Info("Found article in db, start to crawl article in normal mode",
-						zap.Time("latest_article's_create_time", articles[0].CreateAt))
+						zap.Time("latest_article's_create_time", latestTimeInDB))
 					// set target time to the latest article's create time in db
 					// disable one time mode, as we know when to stop(latest article's create time)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, articles[0].CreateAt, 0, false, logger); err != nil {
+					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
 						errCount++
 						switch {
 						case errors.Is(err, request.ErrEmptyDC0):
@@ -189,7 +193,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 				}
 				logger.Info("Crawl article successfully")
 
-				if path, content, err = rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, dbService, logger); err != nil {
+				if path, content, err = rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, latestTimeInDB, dbService, logger); err != nil {
 					errCount++
 					logger.Error("Failed to generate rss content", zap.Error(err))
 					continue
@@ -226,12 +230,13 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 						continue
 					}
 				} else {
+					latestTimeInDB = pins[0].CreateAt
 					logger.Info("Found pin in db, start to crawl pin in normal mode",
-						zap.Time("latest_pin's_create_time", pins[0].CreateAt))
+						zap.Time("latest_pin's_create_time", latestTimeInDB))
 					// set target time to the latest pin's create time in db
 					// disable one time mode, as we know when to stop(latest pin's create time)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, pins[0].CreateAt, 0, false, logger); err != nil {
+					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
 						errCount++
 						switch {
 						case errors.Is(err, request.ErrEmptyDC0):
@@ -250,7 +255,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 				}
 				logger.Info("Crawl pin successfully")
 
-				if path, content, err = rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, dbService, logger); err != nil {
+				if path, content, err = rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, latestTimeInDB, dbService, logger); err != nil {
 					errCount++
 					logger.Error("Failed to generate rss content", zap.Error(err))
 					continue

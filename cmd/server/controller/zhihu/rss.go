@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	serverCommon "github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -169,7 +170,7 @@ func (h *ZhihuController) generateRSS(key string) (content string, err error) {
 		return "", err
 	}
 
-	_, content, err = rss.GenerateZhihu(contentType, authorID, h.db, h.logger)
+	_, content, err = rss.GenerateZhihu(contentType, authorID, time.Time{}, h.db, h.logger)
 	if err != nil {
 		return "", err
 	}

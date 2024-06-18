@@ -21,6 +21,8 @@ type DBAnswer interface {
 	UpdateAnswerStatus(id int, status int) error
 	// GetLatestAnswerTime get the latest answer time from zhihu_answer table
 	GetLatestAnswerTime(userID string) (time.Time, error)
+	// GetAnswerAfter get answer after t from zhihu_answer table
+	GetAnswerAfter(userID string, t time.Time) ([]Answer, error)
 	// GetQuestion get question info from zhihu_question table
 	GetQuestion(id int) (*Question, error)
 	CountAnswer(userID string) (int, error)
@@ -143,6 +145,14 @@ func (d *DBService) GetLatestAnswerTime(userID string) (time.Time, error) {
 		return time.Time{}, err
 	}
 	return t, nil
+}
+
+func (d *DBService) GetAnswerAfter(userID string, t time.Time) ([]Answer, error) {
+	as := make([]Answer, 0)
+	if err := d.Where("author_id = ? and create_at > ?", userID, t).Order("create_at desc").Find(&as).Error; err != nil {
+		return nil, err
+	}
+	return as, nil
 }
 
 func (d *DBService) UpdateAnswerStatus(id int, status int) error {

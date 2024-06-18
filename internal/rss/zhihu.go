@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -20,7 +21,8 @@ var errUnknownZhihuType = errors.New("unknown zhihu type")
 // GenerateZhihu generate zhihu rss by content type,
 // return rss path, rss content and error
 //   - contentType: see type list in pkg/common.type.go
-func GenerateZhihu(contentType int, authorID string, zhihuDBService zhihuDB.DB, logger *zap.Logger) (path, result string, err error) {
+//   - latestTimeInDB: latest time before crawl, if unknown, set it to time.Time{}
+func GenerateZhihu(contentType int, authorID string, latestTimeInDB time.Time, zhihuDBService zhihuDB.DB, logger *zap.Logger) (path, result string, err error) {
 	logger.Info("Start to generate zhihu rss")
 
 	rssRender := render.NewRSSRenderService()
@@ -31,7 +33,7 @@ func GenerateZhihu(contentType int, authorID string, zhihuDBService zhihuDB.DB, 
 	}
 	logger.Info("Get author name successfully", zap.String("author_name", authorName))
 
-	output, err := generateZhihuRSS(contentType, authorID, authorName, rssRender, zhihuDBService, logger)
+	output, err := generateZhihuRSS(contentType, authorID, authorName, latestTimeInDB, rssRender, zhihuDBService, logger)
 	if err != nil {
 		return emptyString, emptyString, fmt.Errorf("failed to generate zhihu rss content: %w", err)
 	}
@@ -46,18 +48,18 @@ func GenerateZhihu(contentType int, authorID string, zhihuDBService zhihuDB.DB, 
 }
 
 // generateZhihuRSS generate zhihu rss content by content type
-func generateZhihuRSS(contentType int, authorID, authorName string, render render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (output string, err error) {
+func generateZhihuRSS(contentType int, authorID, authorName string, latestTimeInDB time.Time, render render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (output string, err error) {
 	switch contentType {
 	case common.TypeZhihuAnswer:
-		if output, err = generateZhihuAnswer(authorID, authorName, render, zhihuDBService, logger); err != nil {
+		if output, err = generateZhihuAnswer(authorID, authorName, latestTimeInDB, render, zhihuDBService, logger); err != nil {
 			return emptyString, fmt.Errorf("fail to generate zhihu answer rss content: %w", err)
 		}
 	case common.TypeZhihuArticle:
-		if output, err = generateZhihuArticle(authorID, authorName, render, zhihuDBService, logger); err != nil {
+		if output, err = generateZhihuArticle(authorID, authorName, latestTimeInDB, render, zhihuDBService, logger); err != nil {
 			return emptyString, fmt.Errorf("fail to generate zhihu article rss content: %w", err)
 		}
 	case common.TypeZhihuPin:
-		if output, err = generateZhihuPin(authorID, authorName, render, zhihuDBService, logger); err != nil {
+		if output, err = generateZhihuPin(authorID, authorName, latestTimeInDB, render, zhihuDBService, logger); err != nil {
 			return emptyString, fmt.Errorf("fail to generate zhihu pin rss content: %w", err)
 		}
 	default:
@@ -66,18 +68,25 @@ func generateZhihuRSS(contentType int, authorID, authorName string, render rende
 	return output, nil
 }
 
-func generateZhihuAnswer(authorID, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
+func generateZhihuAnswer(authorID, authorName string, latestTimeInDB time.Time, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
 	logger.Info("Start to generate zhihu answer rss content")
 
-	answers, err := zhihuDBService.GetLatestNAnswer(config.DefaultFetchCount, authorID)
-	if err != nil {
-		return emptyString, fmt.Errorf("failed to get latest answers from database: %w", err)
+	var answers []zhihuDB.Answer
+	if latestTimeInDB.IsZero() {
+		if answers, err = zhihuDBService.GetLatestNAnswer(config.DefaultFetchCount, authorID); err != nil {
+			return emptyString, fmt.Errorf("failed to get latest answers from database: %w", err)
+		}
+	} else {
+		if answers, err = zhihuDBService.GetAnswerAfter(authorID, latestTimeInDB); err != nil {
+			return emptyString, fmt.Errorf("failed to get answers after %s from database: %w", latestTimeInDB, err)
+		}
 	}
+	logger.Info("Get latest answers from database", zap.Int("count", len(answers)))
+
 	if len(answers) == 0 {
 		logger.Info("Found no answer, render empty rss")
 		return rssRender.RenderEmpty(common.TypeZhihuAnswer, authorID, authorName)
 	}
-	logger.Info("Get latest answers from database", zap.Int("count", len(answers)))
 
 	var rs []render.RSS
 	for _, answer := range answers {
@@ -100,18 +109,25 @@ func generateZhihuAnswer(authorID, authorName string, rssRender render.RSSRender
 	return rssRender.Render(common.TypeZhihuAnswer, rs)
 }
 
-func generateZhihuArticle(authorID, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
+func generateZhihuArticle(authorID, authorName string, latestTimeInDB time.Time, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
 	logger.Info("Start to generate zhihu article rss content")
 
-	articles, err := zhihuDBService.GetLatestNArticle(config.DefaultFetchCount, authorID)
-	if err != nil {
-		return emptyString, fmt.Errorf("failed to get latest articles from database: %w", err)
+	var articles []zhihuDB.Article
+	if latestTimeInDB.IsZero() {
+		if articles, err = zhihuDBService.GetLatestNArticle(config.DefaultFetchCount, authorID); err != nil {
+			return emptyString, fmt.Errorf("failed to get latest articles from database: %w", err)
+		}
+	} else {
+		if articles, err = zhihuDBService.GetArticleAfter(authorID, latestTimeInDB); err != nil {
+			return emptyString, fmt.Errorf("failed to get articles after %s from database: %w", latestTimeInDB, err)
+		}
 	}
+	logger.Info("Get latest article from database successfully", zap.Int("count", len(articles)))
+
 	if len(articles) == 0 {
 		logger.Info("Found no article, render empty rss")
 		return rssRender.RenderEmpty(common.TypeZhihuArticle, authorID, authorName)
 	}
-	logger.Info("Get latest article from database successfully", zap.Int("count", len(articles)))
 
 	var rs []render.RSS
 	for _, article := range articles {
@@ -129,18 +145,25 @@ func generateZhihuArticle(authorID, authorName string, rssRender render.RSSRende
 	return rssRender.Render(common.TypeZhihuArticle, rs)
 }
 
-func generateZhihuPin(authorID, authorName string, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
+func generateZhihuPin(authorID, authorName string, latestTimeInDB time.Time, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
 	logger.Info("Start to generate zhihu pin rss content")
 
-	pins, err := zhihuDBService.GetLatestNPin(config.DefaultFetchCount, authorID)
-	if err != nil {
-		return emptyString, fmt.Errorf("failed to get latest pins from database: %w", err)
+	var pins []zhihuDB.Pin
+	if latestTimeInDB.IsZero() {
+		if pins, err = zhihuDBService.GetLatestNPin(config.DefaultFetchCount, authorID); err != nil {
+			return emptyString, fmt.Errorf("failed to get latest pins from database: %w", err)
+		}
+	} else {
+		if pins, err = zhihuDBService.GetPinAfter(authorID, latestTimeInDB); err != nil {
+			return emptyString, fmt.Errorf("failed to get pins after %s from database: %w", latestTimeInDB, err)
+		}
 	}
+	logger.Info("Get latest pins from database successfully", zap.Int("count", len(pins)))
+
 	if len(pins) == 0 {
 		logger.Info("Found no pin found, render empty rss")
 		return rssRender.RenderEmpty(common.TypeZhihuPin, authorID, authorName)
 	}
-	logger.Info("Get latest pins from database successfully", zap.Int("count", len(pins)))
 
 	var rs []render.RSS
 	for _, pin := range pins {

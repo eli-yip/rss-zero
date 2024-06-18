@@ -22,6 +22,7 @@ type DBArticle interface {
 	GetLatestNArticle(n int, authorID string) ([]Article, error)
 	GetLatestArticleTime(authorID string) (time.Time, error)
 	FetchNArticle(n int, opt FetchArticleOption) (as []Article, err error)
+	GetArticleAfter(authorID string, t time.Time) ([]Article, error)
 	CountArticle(authorID string) (int, error)
 	FetchNArticlesBeforeTime(n int, t time.Time, authorID string) (as []Article, err error)
 }
@@ -83,5 +84,13 @@ func (d *DBService) FetchNArticle(n int, opt FetchArticleOption) (as []Article, 
 		return nil, err
 	}
 
+	return as, nil
+}
+
+func (d *DBService) GetArticleAfter(authorID string, t time.Time) ([]Article, error) {
+	var as []Article
+	if err := d.Where("author_id = ? and create_at > ?", authorID, t).Order("create_at asc").Find(&as).Error; err != nil {
+		return nil, err
+	}
 	return as, nil
 }
