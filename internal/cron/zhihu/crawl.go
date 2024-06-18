@@ -101,6 +101,11 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							}
 							logger.Error("Need login, break")
 							return
+						case errors.Is(err, zhihuDB.ErrNoAvailableService):
+							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
+								logger.Error("Failed to send no available service notification", zap.Error(err))
+							}
+							return
 						}
 						logger.Error("Failed to crawl answer", zap.Error(err))
 						continue
@@ -123,6 +128,11 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
 							logger.Error("Need login, break")
+							return
+						case errors.Is(err, zhihuDB.ErrNoAvailableService):
+							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
+								logger.Error("Failed to send no available service notification", zap.Error(err))
+							}
 							return
 						}
 						logger.Error("Failed to crawl answer", zap.Error(err))
@@ -163,6 +173,11 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							}
 							logger.Error("Need login, break")
 							return
+						case errors.Is(err, zhihuDB.ErrNoAvailableService):
+							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
+								logger.Error("Failed to send no available service notification", zap.Error(err))
+							}
+							return
 						}
 						logger.Error("Failed to crawl article", zap.Error(err))
 						continue
@@ -185,6 +200,11 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
 							logger.Error("Need login, break")
+							return
+						case errors.Is(err, zhihuDB.ErrNoAvailableService):
+							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
+								logger.Error("Failed to send no available service notification", zap.Error(err))
+							}
 							return
 						}
 						logger.Error("Failed to crawl article", zap.Error(err))
@@ -225,6 +245,11 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							}
 							logger.Error("Need login, break")
 							return
+						case errors.Is(err, zhihuDB.ErrNoAvailableService):
+							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
+								logger.Error("Failed to send no available service notification", zap.Error(err))
+							}
+							return
 						}
 						logger.Error("Failed to crawl pin", zap.Error(err))
 						continue
@@ -247,6 +272,11 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
 							logger.Error("Need login, break")
+							return
+						case errors.Is(err, zhihuDB.ErrNoAvailableService):
+							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
+								logger.Error("Failed to send no available service notification", zap.Error(err))
+							}
 							return
 						}
 						logger.Error("Failed to crawl pin", zap.Error(err))
