@@ -90,6 +90,8 @@ func (d *DBService) IncreaseFailedCount(id string) error {
 	return d.Model(&EncryptionService{}).Where("id = ?", id).UpdateColumn("failed_count", gorm.Expr("failed_count + ?", 1)).Error
 }
 
+var ErrNoAvailableService = errors.New("no available services")
+
 func (d *DBService) SelectService() (*EncryptionService, error) {
 	var services []EncryptionService
 	if err := d.Where("is_available = ?", true).Find(&services).Error; err != nil {
@@ -97,7 +99,7 @@ func (d *DBService) SelectService() (*EncryptionService, error) {
 	}
 
 	if len(services) == 0 {
-		return nil, errors.New("no available services")
+		return nil, ErrNoAvailableService
 	}
 
 	weights := make([]float64, len(services))
