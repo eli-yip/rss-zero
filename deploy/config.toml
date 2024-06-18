@@ -35,5 +35,5 @@ zhihu = ''
 xiaobot = ''
 
 [utils]
-zhihu_encryption_url = ''
+zhihu_encryption_url = ['']
 rsshub_url = ''

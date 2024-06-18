@@ -53,8 +53,8 @@ type TomlConfig struct {
 		Xiaobot string `toml:"xiaobot"`
 	} `toml:"test_url"`
 	Utils struct {
-		ZhihuEncryptionURL string `toml:"zhihu_encryption_url"`
-		RsshubURL          string `toml:"rsshub_url"`
+		ZhihuEncryptionURL []string `toml:"zhihu_encryption_url"`
+		RsshubURL          string   `toml:"rsshub_url"`
 	} `toml:"utils"`
 
 	BJT *time.Location

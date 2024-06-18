@@ -67,7 +67,7 @@ func NewRequestService(logger *zap.Logger, opts ...OptionFunc) (Requester, error
 	go func() {
 		for {
 			s.limiter <- struct{}{}
-			time.Sleep(time.Duration(30+rand.IntN(30)) * time.Second)
+			time.Sleep(time.Duration(300+rand.IntN(300)) * time.Second)
 		}
 	}()
 
@@ -107,7 +107,7 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			continue
 		}
 
-		resp, err := http.Post(config.C.Utils.ZhihuEncryptionURL+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
+		resp, err := http.Post(chooseZhihuEncryptionURL()+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
 		if err != nil {
 			logger.Error("Failed to request", zap.Error(err))
 			continue
@@ -195,7 +195,7 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 
 func (rs *RequestService) ClearCache(logger *zap.Logger) {
 	logger.Info("Start to clear d_c0 cache")
-	_, err := http.Post(config.C.Utils.ZhihuEncryptionURL+"/clear-cache", "application/json", nil)
+	_, err := http.Post(chooseZhihuEncryptionURL()+"/clear-cache", "application/json", nil)
 	if err != nil {
 		logger.Error("failed to clear d_c0 cache", zap.Error(err))
 		return
@@ -211,4 +211,9 @@ func (r *RequestService) setReq(u string) (req *http.Request, err error) {
 	}
 	req.Header.Set("User-Agent", userAgent)
 	return req, nil
+}
+
+func chooseZhihuEncryptionURL() string {
+	urls := config.C.Utils.ZhihuEncryptionURL
+	return urls[rand.IntN(len(urls))]
 }
