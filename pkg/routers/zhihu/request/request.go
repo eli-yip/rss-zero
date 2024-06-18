@@ -13,6 +13,7 @@ import (
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 
+	"github.com/eli-yip/rss-zero/internal/notify"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
@@ -46,6 +47,7 @@ type RequestService struct {
 	logger    *zap.Logger
 	d_c0      string
 	dbService zhihuDB.EncryptionServiceIface
+	notify    notify.Notifier
 }
 
 type OptionFunc func(*RequestService)
@@ -151,6 +153,12 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			}
 			if e403.Error.NeedLogin {
 				logger.Error("Need login according to 403 error")
+				if err = r.dbService.MarkUnavailable(es.ID); err != nil {
+					logger.Error("Failed to mark unavailable", zap.Error(err))
+				}
+				if err = r.notify.Notify("Zhihu need login", fmt.Sprintf("Service %s need login, ID: %s", es.Slug, es.ID)); err != nil {
+					logger.Error("Failed to notify", zap.Error(err))
+				}
 				return nil, ErrNeedLogin
 			}
 		case http.StatusNotFound:
