@@ -1,6 +1,7 @@
 package job
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -30,10 +31,10 @@ func (h *Controller) DoJob(c echo.Context) (err error) {
 			go job.Func()
 			return c.JSON(http.StatusOK, struct {
 				Status string `json:"status"`
-			}{Status: "ok"})
+			}{Status: fmt.Sprintf("job %s started", name)})
 		}
 	}
 	return c.JSON(http.StatusNotFound, struct {
 		Status string `json:"status"`
-	}{Status: "not found"})
+	}{Status: "job not found"})
 }
