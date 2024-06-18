@@ -51,6 +51,7 @@ func NewPostgresDB(c config.DatabaseConfig) (db *gorm.DB, err error) {
 		&zhihuDB.Article{},
 		&zhihuDB.Pin{},
 		&zhihuDB.Sub{},
+		&zhihuDB.EncryptionService{},
 
 		&xiaobotDB.Paper{},
 		&xiaobotDB.Post{},
