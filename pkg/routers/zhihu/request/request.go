@@ -107,7 +107,9 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			continue
 		}
 
-		resp, err := http.Post(chooseZhihuEncryptionURL()+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
+		zhihuEncryptionURL := chooseZhihuEncryptionURL()
+		logger.Info("Get Zhihu Encryption URL successfully", zap.String("url", zhihuEncryptionURL))
+		resp, err := http.Post(zhihuEncryptionURL+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
 		if err != nil {
 			logger.Error("Failed to request", zap.Error(err))
 			continue
@@ -195,12 +197,18 @@ func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error
 
 func (rs *RequestService) ClearCache(logger *zap.Logger) {
 	logger.Info("Start to clear d_c0 cache")
-	_, err := http.Post(chooseZhihuEncryptionURL()+"/clear-cache", "application/json", nil)
-	if err != nil {
-		logger.Error("failed to clear d_c0 cache", zap.Error(err))
-		return
+	errCount := 0
+	for _, url := range config.C.Utils.ZhihuEncryptionURL {
+		if _, err := http.Post(url+"/clear-cache", "application/json", nil); err != nil {
+			logger.Error("Failed to clear d_c0 cache", zap.Error(err), zap.String("zhihu_encryption_url", url))
+			errCount++
+			continue
+		}
 	}
-	logger.Info("Clear d_c0 cache successfully")
+	if errCount == 0 {
+		logger.Info("Clear d_c0 cache successfully")
+	}
+	logger.Warn("Failed to clear d_c0 cache", zap.Int("error_count", errCount))
 }
 
 // Set request header and method
