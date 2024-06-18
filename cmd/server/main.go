@@ -214,7 +214,7 @@ func setupEcho(redisService redis.Redis,
 	zhihuDBAdd.Name = "Add route for zhihu db api"
 	zhihuDBUpdate := zhihuDBApi.POST("/update", zhihuHandler.Update)
 	zhihuDBUpdate.Name = "Update route for zhihu db api"
-	zhihuDBDelete := zhihuDBApi.POST("/:id", zhihuHandler.Delete)
+	zhihuDBDelete := zhihuDBApi.DELETE("/:id", zhihuHandler.Delete)
 	zhihuDBDelete.Name = "Delete route for zhihu db api"
 	zhihuDBList := zhihuDBApi.GET("", zhihuHandler.List)
 	zhihuDBList.Name = "List route for zhihu db api"
