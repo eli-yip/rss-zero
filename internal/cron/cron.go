@@ -34,7 +34,21 @@ func (c *CronService) AddCrawlJob(name string, taskFunc func()) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to add job %s: %w", name, err)
 	}
+	c.logger.Info("add job", zap.Any("job", j.ID()), zap.String("name", name))
 
+	return nil
+}
+
+func (c *CronService) AddDailyCrawlJob(name string, taskFunc func()) (err error) {
+	j, err := c.s.NewJob(
+		gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(10, 0, 0))),
+		gocron.NewTask(taskFunc),
+		gocron.WithSingletonMode(gocron.LimitModeReschedule),
+		gocron.WithName(name),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to add job %s: %w", name, err)
+	}
 	c.logger.Info("add job", zap.Any("job", j.ID()), zap.String("name", name))
 
 	return nil

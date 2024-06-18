@@ -293,13 +293,22 @@ func setupCronCrawlJob(logger *zap.Logger,
 
 	cronCrawlJobs := []crawlJob{
 		{"zsxq_crawl", zsxqCron.Crawl},
-		// {"zhihu_crawl", zhihuCron.Crawl},
 		{"xiaobot_crawl", xiaobotCron.Crawl},
 	}
+
+	dailyJobs := []crawlJob{{"zhihu_crawl", zhihuCron.Crawl}}
 
 	for _, job := range cronCrawlJobs {
 		jobFunc := job.fn(redisService, db, notifier)
 		if err = cronService.AddCrawlJob(job.name, jobFunc); err != nil {
+			return nil, fmt.Errorf("fail to add job: %w", err)
+		}
+		jobList = append(jobList, jobController.Job{Name: job.name, Func: jobFunc})
+	}
+
+	for _, job := range dailyJobs {
+		jobFunc := job.fn(redisService, db, notifier)
+		if err = cronService.AddDailyCrawlJob(job.name, jobFunc); err != nil {
 			return nil, fmt.Errorf("fail to add job: %w", err)
 		}
 		jobList = append(jobList, jobController.Job{Name: job.name, Func: jobFunc})
