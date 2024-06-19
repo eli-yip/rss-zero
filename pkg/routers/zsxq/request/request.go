@@ -15,8 +15,6 @@ import (
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 	"golang.org/x/net/publicsuffix"
-
-	"github.com/eli-yip/rss-zero/internal/redis"
 )
 
 var (
@@ -41,26 +39,23 @@ type Requester interface {
 }
 
 type RequestService struct {
-	client       *http.Client
-	emptyClient  *http.Client
-	limiter      chan struct{}
-	maxRetry     int
-	redisService redis.Redis
-	logger       *zap.Logger
+	client      *http.Client
+	emptyClient *http.Client
+	limiter     chan struct{}
+	maxRetry    int
+	logger      *zap.Logger
 }
 
-func NewRequestService(cookie string, redisService redis.Redis,
-	logger *zap.Logger) Requester {
+func NewRequestService(cookie string, logger *zap.Logger) Requester {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 
 	const defaultMaxRetry = 5
 	s := &RequestService{
-		client:       &http.Client{Jar: jar},
-		emptyClient:  &http.Client{},
-		limiter:      make(chan struct{}),
-		maxRetry:     defaultMaxRetry,
-		redisService: redisService,
-		logger:       logger,
+		client:      &http.Client{Jar: jar},
+		emptyClient: &http.Client{},
+		limiter:     make(chan struct{}),
+		maxRetry:    defaultMaxRetry,
+		logger:      logger,
 	}
 
 	s.SetCookies(cookie)
@@ -170,14 +165,11 @@ func (r *RequestService) Limit(u string, logger *zap.Logger) (respByte []byte, e
 
 		switch badResp.Code {
 		case 401:
-			logger.Error("Invalid zsxq cookie, clear cookie")
-			if err = r.redisService.Del(redis.ZsxqCookiePath); err != nil {
-				logger.Error("Failed to delete zsxq cookie", zap.Error(err))
-			}
+			logger.Error("Invalid zsxq cookie")
 			return nil, ErrInvalidCookie
 		case 1059:
-			logger.Warn("Too many requests due to no sign, sleep 30s")
-			time.Sleep(time.Second * 30)
+			logger.Warn("Too many requests due to no sign, sleep 60s")
+			time.Sleep(60 * time.Second)
 			continue
 		case 1050:
 			var dataSystemResp dataSystemResp

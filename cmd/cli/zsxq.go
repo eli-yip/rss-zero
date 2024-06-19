@@ -127,7 +127,7 @@ func handleZsxq(opt option, logger *zap.Logger) {
 	}
 	logger.Info("cookie fetched", zap.String("cookie", cookie))
 
-	requestService := request.NewRequestService(cookie, redisService, logger)
+	requestService := request.NewRequestService(cookie, logger)
 	logger.Info("request service initialized")
 
 	aiService := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)

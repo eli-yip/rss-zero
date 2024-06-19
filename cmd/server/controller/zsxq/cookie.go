@@ -28,7 +28,7 @@ func (h *ZsxqController) UpdateZsxqCookie(c echo.Context) (err error) {
 	}
 	logger.Info("Retrieved zsxq cookie", zap.String("cookie", req.Cookie))
 
-	requestService := zsxqRequest.NewRequestService(req.Cookie, h.redis, logger)
+	requestService := zsxqRequest.NewRequestService(req.Cookie, logger)
 	if _, err = requestService.Limit(config.C.TestURL.Zsxq, logger); err != nil {
 		err = errors.Join(errors.New("invalid cookie"), err)
 		logger.Error("Error updating zsxq cookie",

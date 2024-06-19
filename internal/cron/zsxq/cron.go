@@ -51,7 +51,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 		logger.Info("Get zsxq cookie successfully", zap.String("cookie", cookie))
 
 		// init services needed by cron crawl and render job
-		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(cookie, redisService, db, logger)
+		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(cookie, db, logger)
 		if err != nil {
 			logger.Error("Failed to init zsxq services", zap.Error(err))
 			return
@@ -71,17 +71,29 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 			if err = crawlGroup(groupID, requestService, parseService, redisService, rssRenderer, dbService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to do cron job on group", zap.Error(err))
+				if errors.Is(err, request.ErrInvalidCookie) {
+					logger.Error("Cookie is invalid, delete it and notice user now")
+					var message string
+					if err = redisService.Del(redis.ZsxqCookiePath); err != nil {
+						logger.Error("Failed to delete zsxq cookie in redis", zap.Error(err))
+						message = "Failed to delete zsxq cookie in redis"
+					}
+					if err = notifier.Notify("Invalid zsxq cookie", message); err != nil {
+						logger.Error("Failed to notice user that cookie is invalid", zap.Error(err))
+					}
+					return
+				}
 				continue
 			}
 		}
 	}
 }
 
-func prepareZsxqServices(cookie string, redisService redis.Redis, db *gorm.DB, logger *zap.Logger,
+func prepareZsxqServices(cookie string, db *gorm.DB, logger *zap.Logger,
 ) (dbService zsxqDB.DB, requestService request.Requester, parseService parse.Parser, rssRenderService render.RSSRenderer, err error) {
 	dbService = zsxqDB.NewZsxqDBService(db)
 
-	requestService = request.NewRequestService(cookie, redisService, logger)
+	requestService = request.NewRequestService(cookie, logger)
 
 	var fileService file.File
 	if fileService, err = file.NewFileServiceMinio(config.C.Minio, logger); err != nil {
