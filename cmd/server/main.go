@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/brpaz/echozap"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
-	"github.com/brpaz/echozap"
 	endoflifeController "github.com/eli-yip/rss-zero/cmd/server/controller/endoflife"
 	jobController "github.com/eli-yip/rss-zero/cmd/server/controller/job"
 	pickController "github.com/eli-yip/rss-zero/cmd/server/controller/pick"
@@ -327,7 +327,10 @@ func setupCronCrawlJob(logger *zap.Logger,
 		jobList = append(jobList, jobController.Job{Name: job.name, Func: jobFunc})
 	}
 
-	cronExportJobs := []exportJob{{"zhihu export", zhihuCron.Export}}
+	cronExportJobs := []exportJob{
+		// {"zhihu export", zhihuCron.Export,},
+	}
+
 	for _, job := range cronExportJobs {
 		if err = cronService.AddExportJob(job.name, job.fn()); err != nil {
 			return nil, fmt.Errorf("fail to add job: %w", err)
