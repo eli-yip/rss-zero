@@ -14,6 +14,7 @@ type EncryptionServiceIface interface {
 	UpdateService(*EncryptionService) error
 	DeleteService(string) error
 	GetService(id string) (*EncryptionService, error)
+	GetServiceBySlug(slug string) (*EncryptionService, error)
 	MarkAvailable(id string) error
 	MarkUnavailable(id string) error
 	IncreaseUsedCount(id string) error
@@ -22,15 +23,15 @@ type EncryptionServiceIface interface {
 }
 
 type EncryptionService struct {
-	ID          string `gorm:"column:id;type:string;primary_key"`
-	Slug        string `gorm:"column:slug;type:string;unique"`
-	URL         string `gorm:"column:url;type:string"`
-	IsAvailable bool   `gorm:"column:is_available;type:bool"`
-	UsedCount   int    `gorm:"column:used_count;type:int"`
-	FailedCount int    `gorm:"column:failed_count;type:int"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeleteAt    gorm.DeletedAt
+	ID          string         `gorm:"column:id;type:string;primary_key" json:"id"`
+	Slug        string         `gorm:"column:slug;type:string;unique" json:"slug"`
+	URL         string         `gorm:"column:url;type:string" json:"url"`
+	IsAvailable bool           `gorm:"column:is_available;type:bool" json:"is_available"`
+	UsedCount   int            `gorm:"column:used_count;type:int" json:"used_count"`
+	FailedCount int            `gorm:"column:failed_count;type:int" json:"failed_count"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeleteAt    gorm.DeletedAt `json:"delete_at"`
 }
 
 var ErrSlugExists = errors.New("slug should be unique")
@@ -69,6 +70,17 @@ func (d *DBService) DeleteService(id string) error {
 func (d *DBService) GetService(id string) (*EncryptionService, error) {
 	var service EncryptionService
 	if err := d.Where("id = ?", id).First(&service).Error; err != nil {
+		return nil, err
+	}
+	return &service, nil
+}
+
+func (d *DBService) GetServiceBySlug(slug string) (*EncryptionService, error) {
+	var service EncryptionService
+	if err := d.Where("slug = ?", slug).First(&service).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &service, nil

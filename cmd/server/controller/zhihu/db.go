@@ -31,22 +31,26 @@ func (h *ZhihuController) Add(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "should provide slug and url"})
 	}
 
-	es := &zhihuDB.EncryptionService{
+	es := zhihuDB.EncryptionService{
 		ID:          xid.New().String(),
 		Slug:        req.Slug,
 		URL:         req.URL,
 		IsAvailable: true,
 	}
 
-	if err = h.db.SaveService(es); err != nil {
+	if err = h.db.SaveService(&es); err != nil {
 		logger.Error("Failed to save zhihu encryption service", zap.Error(err))
 		if errors.Is(err, zhihuDB.ErrSlugExists) {
-			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "slug exists"})
+			existService, err := h.db.GetServiceBySlug(req.Slug)
+			if err != nil || existService == nil {
+				return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to get service"})
+			}
+			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "slug exists", Data: struct{ Service zhihuDB.EncryptionService }{*existService}})
 		}
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to save service"})
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: struct{ Service *zhihuDB.EncryptionService }{es}})
+	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: struct{ Service zhihuDB.EncryptionService }{es}})
 }
 
 type UpdateRequest struct {
@@ -85,7 +89,11 @@ func (h *ZhihuController) Update(c echo.Context) (err error) {
 	if err = h.db.UpdateService(service); err != nil {
 		logger.Error("Failed to update zhihu encryption service", zap.Error(err))
 		if errors.Is(err, zhihuDB.ErrSlugExists) {
-			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "slug exists"})
+			existService, err := h.db.GetServiceBySlug(*req.Slug)
+			if err != nil || existService == nil {
+				return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to get service"})
+			}
+			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "slug exists", Data: struct{ Service zhihuDB.EncryptionService }{*existService}})
 		}
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to update service"})
 	}
