@@ -248,6 +248,7 @@ func (rs *RequestService) ClearCache(logger *zap.Logger) {
 	}
 	if errCount == 0 {
 		logger.Info("Clear d_c0 cache successfully")
+		return
 	}
 	logger.Warn("Failed to clear d_c0 cache", zap.Int("error_count", errCount))
 }
