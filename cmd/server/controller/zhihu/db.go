@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -32,21 +31,22 @@ func (h *ZhihuController) Add(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "should provide slug and url"})
 	}
 
-	if err = h.db.SaveService(&zhihuDB.EncryptionService{
+	es := &zhihuDB.EncryptionService{
 		ID:          xid.New().String(),
 		Slug:        req.Slug,
 		URL:         req.URL,
 		IsAvailable: true,
-	}); err != nil {
+	}
+
+	if err = h.db.SaveService(es); err != nil {
 		logger.Error("Failed to save zhihu encryption service", zap.Error(err))
-		fmt.Println(err)
 		if errors.Is(err, zhihuDB.ErrSlugExists) {
 			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "slug exists"})
 		}
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to save service"})
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})
+	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: struct{ Service *zhihuDB.EncryptionService }{es}})
 }
 
 type UpdateRequest struct {
