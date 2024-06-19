@@ -7,6 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/labstack/echo/v4"
+	"github.com/rs/xid"
+	"go.uber.org/zap"
+
 	serverCommon "github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/notify"
@@ -15,8 +19,6 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 // AnswerRSS handles the HTTP request for retrieving the RSS feed of a Zhihu author's answers.
@@ -27,26 +29,23 @@ func (h *ZhihuController) AnswerRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	authorID := c.Get("feed_id").(string)
-	logger.Info("Retrieved rss request", zap.String("author id", authorID))
+	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
 
 	if err = h.checkSub(common.TypeZhihuAnswer, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
-			err = errors.Join(err, errors.New("author does not exist in zhihu"))
-			logger.Error("Error return rss", zap.String("author id", authorID), zap.Error(err))
-			return c.String(http.StatusBadRequest, "author does not exist in zhihu")
+			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
+			return c.JSON(http.StatusBadRequest, serverCommon.ApiResp{Message: "Author does not exist in zhihu website"})
 		}
-		logger.Error("Failed checking sub", zap.Error(err))
-		return c.String(http.StatusInternalServerError, "failed to check sub")
+		logger.Error("Failed to check sub", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to check sub"})
 	}
 
-	const rssPath = "zhihu_rss_answer_%s"
-
-	rss, err := h.getRSS(fmt.Sprintf(rssPath, authorID), logger)
+	rss, err := h.getRSS(fmt.Sprintf(redis.ZhihuAnswerPath, authorID), logger)
 	if err != nil {
-		logger.Error("Failed getting rss from redis", zap.Error(err))
-		return c.String(http.StatusInternalServerError, "Failed getting rss from redis")
+		logger.Error("Failed to get zhihu rss", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to get zhihu rss"})
 	}
-	logger.Info("Retrieved rss from redis")
+	logger.Info("Get rss from successfully")
 
 	return c.String(http.StatusOK, rss)
 }
@@ -59,26 +58,23 @@ func (h *ZhihuController) ArticleRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	authorID := c.Get("feed_id").(string)
-	logger.Info("Retrieved rss request", zap.String("author id", authorID))
+	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
 
-	if err := h.checkSub(common.TypeZhihuArticle, authorID, logger); err != nil {
+	if err = h.checkSub(common.TypeZhihuArticle, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
-			err = errors.Join(err, errors.New("author does not exist in zhihu"))
-			logger.Error("Error return rss", zap.String("author id", authorID), zap.Error(err))
-			return c.String(http.StatusBadRequest, "author does not exist in zhihu")
+			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
+			return c.JSON(http.StatusBadRequest, serverCommon.ApiResp{Message: "Author does not exist in zhihu website"})
 		}
-		logger.Error("Failed checking sub", zap.Error(err))
-		return c.String(http.StatusInternalServerError, "failed to check sub")
+		logger.Error("Failed to check sub", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to check sub"})
 	}
 
-	const rssPath = "zhihu_rss_article_%s"
-
-	rss, err := h.getRSS(fmt.Sprintf(rssPath, authorID), logger)
+	rss, err := h.getRSS(fmt.Sprintf(redis.ZhihuArticlePath, authorID), logger)
 	if err != nil {
-		logger.Error("Failed getting rss from redis", zap.Error(err))
-		return c.String(http.StatusInternalServerError, "Failed getting rss from redis")
+		logger.Error("Failed to get zhihu rss", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to get zhihu rss"})
 	}
-	logger.Info("Retrieved rss from redis")
+	logger.Info("Get rss from successfully")
 
 	return c.String(http.StatusOK, rss)
 }
@@ -91,26 +87,23 @@ func (h *ZhihuController) PinRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	authorID := c.Get("feed_id").(string)
-	logger.Info("Retrieved rss request", zap.String("author id", authorID))
+	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
 
-	if err := h.checkSub(common.TypeZhihuPin, authorID, logger); err != nil {
+	if err = h.checkSub(common.TypeZhihuPin, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
-			err = errors.Join(err, errors.New("author does not exist in zhihu"))
-			logger.Error("Error return rss", zap.String("author id", authorID), zap.Error(err))
-			return c.String(http.StatusBadRequest, "author does not exist in zhihu")
+			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
+			return c.JSON(http.StatusBadRequest, serverCommon.ApiResp{Message: "Author does not exist in zhihu website"})
 		}
-		logger.Error("Failed checking sub", zap.Error(err))
-		return c.String(http.StatusInternalServerError, "failed to check sub")
+		logger.Error("Failed to check sub", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to check sub"})
 	}
 
-	const rssPath = "zhihu_rss_pin_%s"
-
-	rss, err := h.getRSS(fmt.Sprintf(rssPath, authorID), logger)
+	rss, err := h.getRSS(fmt.Sprintf(redis.ZhihuPinPath, authorID), logger)
 	if err != nil {
-		logger.Error("Failed getting rss from redis", zap.Error(err))
-		return c.String(http.StatusInternalServerError, "Failed getting rss from redis")
+		logger.Error("Failed to get zhihu rss", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to get zhihu rss"})
 	}
-	logger.Info("Retrieved rss from redis")
+	logger.Info("Get rss from successfully")
 
 	return c.String(http.StatusOK, rss)
 }
@@ -118,16 +111,17 @@ func (h *ZhihuController) PinRSS(c echo.Context) (err error) {
 // getRSS gets the RSS content from Redis.
 // It will send a task to the task channel and wait for the result.
 func (h *ZhihuController) getRSS(key string, logger *zap.Logger) (content string, err error) {
-	logger = logger.With(zap.String("key", key))
-	defer logger.Info("task channel closed")
+	logger = logger.With(zap.String("task_id", xid.New().String()))
+	logger.Info("Start to get rss from redis", zap.String("key", key))
+	defer logger.Info("Close task channel")
 
-	task := serverCommon.Task{TextCh: make(chan string), ErrCh: make(chan error)}
+	task := serverCommon.Task{TextCh: make(chan string), ErrCh: make(chan error), Logger: logger}
 	defer close(task.TextCh)
 	defer close(task.ErrCh)
 
 	h.taskCh <- task
 	task.TextCh <- key
-	logger.Info("task sent to task channel")
+	logger.Info("Send task to task channel successfully")
 
 	select {
 	case content := <-task.TextCh:
@@ -151,7 +145,7 @@ func (h *ZhihuController) processTask() {
 		}
 
 		if errors.Is(err, redis.ErrKeyNotExist) {
-			content, err = h.generateRSS(key)
+			content, err = h.generateRSS(key, task.Logger)
 			if err != nil {
 				task.ErrCh <- err
 				continue
@@ -161,24 +155,23 @@ func (h *ZhihuController) processTask() {
 		}
 
 		task.ErrCh <- err
-		continue
 	}
 }
 
 // generateRSS generates rss content and set it to redis.
-func (h *ZhihuController) generateRSS(key string) (content string, err error) {
+func (h *ZhihuController) generateRSS(key string, logger *zap.Logger) (content string, err error) {
 	contentType, authorID, err := h.extractTypeAuthorFromKey(key)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to extract type and authorID from key: %w", err)
 	}
 
-	_, content, err = rss.GenerateZhihu(contentType, authorID, time.Time{}, h.db, h.logger)
+	_, content, err = rss.GenerateZhihu(contentType, authorID, time.Time{}, h.db, logger)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to generate zhihu rss: %w", err)
 	}
 
 	if err := h.redis.Set(key, content, redis.RSSDayTTL); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to set rss to redis: %w", err)
 	}
 
 	return content, nil
@@ -214,20 +207,20 @@ func (h *ZhihuController) checkSub(t int, authorID string, logger *zap.Logger) (
 	// check if sub exists
 	exist, err := h.db.CheckSub(authorID, t)
 	if err != nil {
-		return errors.Join(err, errors.New("failed to check sub"))
+		return fmt.Errorf("failed to check sub: %w", err)
+	}
+
+	if exist {
+		return nil
 	}
 
 	// if not exist, add sub and author to db
-	if !exist {
-		_, err = h.parseAuthorName(authorID, logger)
-		if err != nil {
-			return errors.Join(err, errors.New("failed to parse author name"))
-		}
+	if _, err = h.parseAuthorName(authorID, logger); err != nil {
+		return fmt.Errorf("failed to parse author name: %w", err)
+	}
 
-		err = h.db.AddSub(authorID, t)
-		if err != nil {
-			return errors.Join(err, errors.New("failed to add sub"))
-		}
+	if err = h.db.AddSub(authorID, t); err != nil {
+		return fmt.Errorf("failed to add sub: %w", err)
 	}
 
 	return nil
@@ -242,8 +235,7 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 	// skip d_c0 cookie injection, as it's not needed for this request
 	requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL))
 	if err != nil {
-		logger.Error("Error creating request service", zap.Error(err))
-		return "", errors.Join(err, errors.New("failed to create request service"))
+		return "", fmt.Errorf("failed to create request service: %w", err)
 	}
 	defer requestService.ClearCache(logger)
 
@@ -252,21 +244,18 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 		if errors.Is(err, request.ErrUnreachable) {
 			return "", errAuthorNotExistInZhihu
 		}
-		logger.Error("Failed getting author name", zap.Error(err))
-		return "", errors.Join(err, errors.New("failed to get author name"))
+		return "", fmt.Errorf("failed to get author name: %w", err)
 	}
 
 	var parser parse.AuthorParser
 	parser, err = parse.NewParseService(parse.WithDB(h.db), parse.WithLogger(logger))
 	if err != nil {
-		logger.Error("Error creating parse service", zap.Error(err))
-		return "", errors.Join(err, errors.New("failed to create parse service"))
+		return "", fmt.Errorf("failed to create parse service: %w", err)
 	}
 
 	authorName, err = parser.ParseAuthorName(bytes)
 	if err != nil {
-		logger.Error("Failed parsing author name", zap.Error(err))
-		return "", errors.Join(err, errors.New("failed to parse author name"))
+		return "", fmt.Errorf("failed to parse author name: %w", err)
 	}
 
 	return authorName, nil
