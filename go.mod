@@ -10,16 +10,16 @@ require (
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/go-co-op/gocron/v2 v2.5.0
-	github.com/gorilla/feeds v1.1.2
+	github.com/gorilla/feeds v1.2.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/lib/pq v1.10.9
 	github.com/minio/minio-go/v7 v7.0.71
 	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/rs/xid v1.5.0
-	github.com/sashabaranov/go-openai v1.25.0
+	github.com/sashabaranov/go-openai v1.26.0
 	github.com/stretchr/testify v1.9.0
-	github.com/yuin/goldmark v1.7.1
+	github.com/yuin/goldmark v1.7.2
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.26.0
 	golang.org/x/text v0.16.0
