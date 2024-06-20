@@ -28,7 +28,6 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/cron"
 	xiaobotCron "github.com/eli-yip/rss-zero/internal/cron/xiaobot"
-	zhihuCron "github.com/eli-yip/rss-zero/internal/cron/zhihu"
 	zsxqCron "github.com/eli-yip/rss-zero/internal/cron/zsxq"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/log"
@@ -309,7 +308,9 @@ func setupCronCrawlJob(logger *zap.Logger,
 		{"xiaobot_crawl", xiaobotCron.Crawl},
 	}
 
-	dailyJobs := []crawlJob{{"zhihu_crawl", zhihuCron.Crawl}}
+	dailyJobs := []crawlJob{
+		// {"zhihu_crawl", zhihuCron.Crawl},
+	}
 
 	for _, job := range cronCrawlJobs {
 		jobFunc := job.fn(redisService, db, notifier)
