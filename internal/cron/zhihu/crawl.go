@@ -321,7 +321,14 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 
 	d_c0, err := rs.Get(redis.ZhihuCookiePath)
 	if err != nil {
-		return nil, nil, nil, errNoDC0
+		if errors.Is(err, redis.ErrKeyNotExist) {
+			logger.Warn("There is no d_c0 cookie, use server side cookie instead")
+		} else {
+			return nil, nil, nil, err
+		}
+	}
+	if d_c0 == "" {
+		logger.Warn("There is no d_c0 cookie, use server side cookie instead")
 	}
 
 	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
