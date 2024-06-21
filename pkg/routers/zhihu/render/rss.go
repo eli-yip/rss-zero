@@ -100,7 +100,11 @@ func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err er
 
 // why: as zhihu returns error text in 2024.06.15-2024.06.20, rss item in fresh rss are error.
 // To fix it, we should update rss item update time toacknowledge fresh rss.
+// to avoid update rss endless, after 2024.06.22, we should not update rss item time to now.
 func calculateTime(t time.Time) time.Time {
+	if time.Now().After(time.Date(2024, 6, 22, 8, 0, 0, 0, config.C.BJT)) {
+		return t
+	}
 	if t.After(time.Date(2024, 6, 15, 0, 0, 0, 0, config.C.BJT)) && t.Before(time.Date(2024, 6, 22, 23, 59, 59, 0, config.C.BJT)) {
 		return time.Now()
 	}
