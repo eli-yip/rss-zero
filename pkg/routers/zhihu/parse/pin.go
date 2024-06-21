@@ -21,7 +21,7 @@ type PinParser interface {
 }
 
 func (p *ParseService) ParsePinList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, pins []apiModels.Pin, err error) {
-	logger.Info("Start to parse article list", zap.Int("article_list_page_index", index))
+	logger.Info("Start to parse pin list", zap.Int("pin_list_page_index", index))
 
 	pinList := apiModels.PinList{}
 	if err = json.Unmarshal(content, &pinList); err != nil {
