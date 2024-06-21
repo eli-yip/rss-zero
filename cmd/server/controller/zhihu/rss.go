@@ -137,19 +137,23 @@ func (h *ZhihuController) getRSS(key string, logger *zap.Logger) (content string
 func (h *ZhihuController) processTask() {
 	for task := range h.taskCh {
 		key := <-task.TextCh
+		logger := task.Logger
 
 		content, err := h.redis.Get(key)
 		if err == nil {
 			task.TextCh <- content
+			logger.Info("Get rss from redis successfully")
 			continue
 		}
 
 		if errors.Is(err, redis.ErrKeyNotExist) {
+			logger.Info("Key does not exist in redis, start to generate rss")
 			content, err = h.generateRSS(key, task.Logger)
 			if err != nil {
 				task.ErrCh <- err
 				continue
 			}
+			logger.Info("Generate rss successfully")
 			task.TextCh <- content
 			continue
 		}
