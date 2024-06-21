@@ -80,6 +80,13 @@ func generateZhihuAnswer(authorID, authorName string, latestTimeInDB time.Time, 
 		if answers, err = zhihuDBService.GetAnswerAfter(authorID, latestTimeInDB); err != nil {
 			return emptyString, fmt.Errorf("failed to get answers after %s from database: %w", latestTimeInDB, err)
 		}
+		// TODO: Use zsxq logic
+		if len(answers) == 0 {
+			logger.Info("No new answer found, try to get latest default n answers")
+			if answers, err = zhihuDBService.GetLatestNAnswer(config.DefaultFetchCount, authorID); err != nil {
+				return emptyString, fmt.Errorf("failed to get latest answers from database: %w", err)
+			}
+		}
 	}
 	logger.Info("Get latest answers from database", zap.Int("count", len(answers)))
 
@@ -121,6 +128,12 @@ func generateZhihuArticle(authorID, authorName string, latestTimeInDB time.Time,
 		if articles, err = zhihuDBService.GetArticleAfter(authorID, latestTimeInDB); err != nil {
 			return emptyString, fmt.Errorf("failed to get articles after %s from database: %w", latestTimeInDB, err)
 		}
+		if len(articles) == 0 {
+			logger.Info("No new article found, try to get latest default n articles")
+			if articles, err = zhihuDBService.GetLatestNArticle(config.DefaultFetchCount, authorID); err != nil {
+				return emptyString, fmt.Errorf("failed to get latest articles from database: %w", err)
+			}
+		}
 	}
 	logger.Info("Get latest article from database successfully", zap.Int("count", len(articles)))
 
@@ -156,6 +169,12 @@ func generateZhihuPin(authorID, authorName string, latestTimeInDB time.Time, rss
 	} else {
 		if pins, err = zhihuDBService.GetPinAfter(authorID, latestTimeInDB); err != nil {
 			return emptyString, fmt.Errorf("failed to get pins after %s from database: %w", latestTimeInDB, err)
+		}
+		if len(pins) == 0 {
+			logger.Info("No new pin found, try to get latest default n pins")
+			if pins, err = zhihuDBService.GetLatestNPin(config.DefaultFetchCount, authorID); err != nil {
+				return emptyString, fmt.Errorf("failed to get latest pins from database: %w", err)
+			}
 		}
 	}
 	logger.Info("Get latest pins from database successfully", zap.Int("count", len(pins)))
