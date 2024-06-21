@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/eli-yip/rss-zero/pkg/common"
-	"github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/gorilla/feeds"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
+
+	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/pkg/common"
+	"github.com/eli-yip/rss-zero/pkg/render"
 )
 
 var defaultTime = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -71,8 +73,8 @@ func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err er
 	rssFeed := &feeds.Feed{
 		Title:   "[知乎-" + titleType + "]" + rs[0].AuthorName,
 		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", rs[0].AuthorID, linkType)},
-		Created: rs[0].CreateTime,
-		Updated: rs[0].CreateTime,
+		Created: calculateTime(rs[0].CreateTime),
+		Updated: calculateTime(rs[0].CreateTime),
 	}
 
 	for _, item := range rs {
@@ -88,12 +90,21 @@ func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err er
 			Id:          fmt.Sprintf("%d", item.ID),
 			Description: render.ExtractExcerpt(item.Text),
 			Created:     item.CreateTime,
-			Updated:     item.CreateTime,
+			Updated:     calculateTime(item.CreateTime),
 			Content:     buffer.String(),
 		})
 	}
 
 	return rssFeed.ToAtom()
+}
+
+// why: as zhihu returns error text in 2024.06.15-2024.06.20, rss item in fresh rss are error.
+// To fix it, we should update rss item update time toacknowledge fresh rss.
+func calculateTime(t time.Time) time.Time {
+	if t.After(time.Date(2024, 6, 15, 0, 0, 0, 0, config.C.BJT)) && t.Before(time.Date(2024, 6, 22, 23, 59, 59, 0, config.C.BJT)) {
+		return time.Now()
+	}
+	return t
 }
 
 // generateTitleAndLinkType returns title type and link type of zhihu item according to its type,
