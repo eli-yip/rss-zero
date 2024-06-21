@@ -30,7 +30,6 @@ const (
 const (
 	Forever       = 0
 	RSSDefaultTTL = time.Hour * 2
-	RSSDayTTL     = time.Hour * 24
 )
 
 type Redis interface {

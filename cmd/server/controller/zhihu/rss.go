@@ -174,7 +174,7 @@ func (h *ZhihuController) generateRSS(key string, logger *zap.Logger) (content s
 		return "", fmt.Errorf("failed to generate zhihu rss: %w", err)
 	}
 
-	if err := h.redis.Set(key, content, redis.RSSDayTTL); err != nil {
+	if err := h.redis.Set(key, content, redis.RSSDefaultTTL); err != nil {
 		return "", fmt.Errorf("failed to set rss to redis: %w", err)
 	}
 
