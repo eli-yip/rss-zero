@@ -57,7 +57,7 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 	}); err != nil {
 		return emptyString, fmt.Errorf("failed to save question info to db: %w", err)
 	}
-	logger.Info("Save question info to db successfully")
+	logger.Info("Save question info to db successfully", zap.String("question_title", answer.Question.Title))
 
 	if err = p.db.SaveAnswer(&db.Answer{
 		ID:         answer.ID,
