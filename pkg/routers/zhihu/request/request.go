@@ -72,7 +72,7 @@ func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIf
 	go func() {
 		for {
 			s.limiter <- struct{}{}
-			time.Sleep(time.Duration(300+rand.IntN(300)) * time.Second)
+			time.Sleep(time.Duration(150+rand.IntN(150)) * time.Second)
 		}
 	}()
 
