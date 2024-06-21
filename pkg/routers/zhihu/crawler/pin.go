@@ -25,7 +25,7 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 	logger.Info("Start to crawl zhihu pins", zap.String("user_url_token", user))
 
 	next := ""
-	const urlLayout = "https://www.zhihu.com/api/v4/members/%s/pins"
+	const urlLayout = "https://www.zhihu.com/api/v4/v2/pins/%s/moments"
 	next = fmt.Sprintf(urlLayout, user)
 	next = fmt.Sprintf("%s?%s", next, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
 
