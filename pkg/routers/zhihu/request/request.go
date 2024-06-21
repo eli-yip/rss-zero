@@ -182,7 +182,6 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			var encryptErrResp EncryptErrResp
 			if err = json.Unmarshal(body, &encryptErrResp); err != nil {
 				logger.Error("Failed to unmarshal 501 error", zap.Error(err))
-				continue
 			}
 			logger.Error("501 error", zap.String("error", encryptErrResp.Error))
 			return nil, ErrBadResponse
