@@ -97,6 +97,7 @@ type Error403 struct {
 type EncryptReq struct {
 	RequestID string `json:"request_id"`
 	DC0       string `json:"d_c0,omitempty"`
+	ZC0       string `json:"z_c0,omitempty"`
 	ZSE_CK    string `json:"zse_ck,omitempty"`
 	URL       string `json:"url"`
 }
@@ -116,7 +117,7 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 		<-r.limiter
 		logger.Info("Get limiter successfully, start to request url")
 
-		reqBodyByte, err := json.Marshal(EncryptReq{RequestID: currentRequestTaskID, DC0: r.d_c0, ZSE_CK: r.zse_ck, URL: u})
+		reqBodyByte, err := json.Marshal(EncryptReq{RequestID: currentRequestTaskID, DC0: r.d_c0, ZC0: r.z_c0, ZSE_CK: r.zse_ck, URL: u})
 		if err != nil {
 			logger.Error("Failed to marshal request body", zap.Error(err))
 			continue

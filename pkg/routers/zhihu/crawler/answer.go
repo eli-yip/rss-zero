@@ -19,7 +19,7 @@ import (
 // offset: number of answers have been crawled
 // set it to 0 if you want to crawl answers from the beginning
 // oneTime: if true, only crawl one time
-func CrawlAnswer(user string, request request.Requester, parser parse.Parser,
+func CrawlAnswer(user string, rs request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	crawlID := xid.New().String()
 	logger = logger.With(zap.String("crawl_id", crawlID))
@@ -37,7 +37,7 @@ func CrawlAnswer(user string, request request.Requester, parser parse.Parser,
 	index := 0
 	lastAnswerCount := 0 // count of answers in last page api response
 	for {
-		bytes, err := request.LimitRaw(next, logger)
+		bytes, err := rs.LimitRaw(next, logger)
 		if err != nil {
 			logger.Error("Failed to request zhihu api", zap.Error(err), zap.String("url", next))
 			return fmt.Errorf("failed to request zhihu api: %w", err)
