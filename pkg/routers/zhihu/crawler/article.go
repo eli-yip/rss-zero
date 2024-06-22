@@ -1,7 +1,9 @@
 package crawler
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
@@ -23,9 +25,13 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 	logger.Info("Start to crawl zhihu answers", zap.String("user_url_token", user))
 
 	next := ""
-	const urlLayout = "https://www.zhihu.com/api/v4/members/%s/articles"
+	const (
+		urlLayout = "https://www.zhihu.com/api/v4/members/%s/articles"
+		params    = `data[*].comment_count,suggest_edit,is_normal,thumbnail_extra_info,thumbnail,can_comment,comment_permission,admin_closed_comment,content,voteup_count,created,updated,upvoted_followees,voting,review_info,reaction_instruction,is_labeled,label_info;data[*].vessay_info;data[*].author.badge[?(type=best_answerer)].topics;data[*].author.vip_info`
+	)
+	escaped := url.QueryEscape(params)
 	next = fmt.Sprintf(urlLayout, user)
-	next = fmt.Sprintf("%s?%s", next, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
+	next = fmt.Sprintf("%s?include=%s&%s", next, escaped, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
 
 	index := 0
 	lastArticleCount := 0
@@ -60,14 +66,11 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 				return nil
 			}
 
-			const articleURLLayout = "https://www.zhihu.com/api/v4/articles/%d"
-			u := fmt.Sprintf(articleURLLayout, article.ID)
-			bytes, err = request.LimitRaw(u, logger)
+			bytes, err := json.Marshal(article)
 			if err != nil {
-				logger.Error("Failed to request zhihu article api", zap.Error(err), zap.String("url", u))
-				return fmt.Errorf("failed to request zhihu article api: %w", err)
+				logger.Error("Failed to marshal article", zap.Error(err))
+				return fmt.Errorf("failed to marshal article: %w", err)
 			}
-			logger.Info("Request zhihu article api successfully", zap.String("url", u))
 
 			if _, err = parser.ParseArticle(bytes, logger); err != nil {
 				logger.Error("Failed to parse article", zap.Error(err))
