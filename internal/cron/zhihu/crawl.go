@@ -37,11 +37,8 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 
 		defer func() {
 			if errCount > 0 || err != nil {
-				if err = notifier.Notify("Fail to crawl zhihu", ""); err != nil {
-					logger.Error("Failed to send zhihu failure notification", zap.Error(err))
-				}
+				notify.NoticeWithLogger(notifier, "Failed to crawl zhihu", "", logger)
 			}
-
 			if err := recover(); err != nil {
 				logger.Error("CrawlZhihu() panic", zap.Any("err", err))
 			}
@@ -52,15 +49,11 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 			switch {
 			case errors.Is(err, errNoDC0):
 				logger.Error("There is no d_c0 cookie, break")
-				if err = notifier.Notify("Need to provide zhihu d_c0 cookie", ""); err != nil {
-					logger.Error("Failed to send zhihu d_c0 cookie notification", zap.Error(err))
-				}
+				notify.NoticeWithLogger(notifier, "Need to provide zhihu d_c0 cookie", "", logger)
 				return
 			case errors.Is(err, errNoZSECK):
 				logger.Error("There is no zse_ck cookie, break")
-				if err = notifier.Notify("Need to provide zhihu zse_ck cookie", ""); err != nil {
-					logger.Error("Failed to send zhihu zse_ck cookie notification", zap.Error(err))
-				}
+				notify.NoticeWithLogger(notifier, "Need to provide zhihu zse_ck cookie", "", logger)
 				return
 			}
 			logger.Error("Failed to init services", zap.Error(err))
@@ -109,15 +102,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							if err = removeZC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
-							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
-								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
 							logger.Error("Need login, break")
 							return
 						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
-								logger.Error("Failed to send no available service notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
+							logger.Error("No available service for zhihu encryption", zap.Error(err))
 							return
 						}
 						logger.Error("Failed to crawl answer", zap.Error(err))
@@ -143,15 +133,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							if err = removeZC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
-							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
-								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
 							logger.Error("Need login, break")
 							return
 						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
-								logger.Error("Failed to send no available service notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
+							logger.Error("No available service for zhihu encryption", zap.Error(err))
 							return
 						}
 						logger.Error("Failed to crawl answer", zap.Error(err))
@@ -193,15 +180,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							if err = removeZC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
-							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
-								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
 							logger.Error("Need login, break")
 							return
 						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
-								logger.Error("Failed to send no available service notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
+							logger.Error("No available service for zhihu encryption", zap.Error(err))
 							return
 						}
 						logger.Error("Failed to crawl article", zap.Error(err))
@@ -227,15 +211,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							if err = removeZC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
-							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
-								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
 							logger.Error("Need login, break")
 							return
 						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
-								logger.Error("Failed to send no available service notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
+							logger.Error("No available service for zhihu encryption", zap.Error(err))
 							return
 						}
 						logger.Error("Failed to crawl article", zap.Error(err))
@@ -277,15 +258,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							if err = removeZC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
-							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
-								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
 							logger.Error("Need login, break")
 							return
 						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
-								logger.Error("Failed to send no available service notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
+							logger.Error("No available service for zhihu encryption", zap.Error(err))
 							return
 						}
 						logger.Error("Failed to crawl pin", zap.Error(err))
@@ -311,15 +289,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							if err = removeZC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
-							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
-								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
 							logger.Error("Need login, break")
 							return
 						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							if err = notifier.Notify("No available service for zhihu encryption", ""); err != nil {
-								logger.Error("Failed to send no available service notification", zap.Error(err))
-							}
+							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
+							logger.Error("No available service for zhihu encryption", zap.Error(err))
 							return
 						}
 						logger.Error("Failed to crawl pin", zap.Error(err))

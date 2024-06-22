@@ -13,6 +13,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/file"
+	"github.com/eli-yip/rss-zero/internal/notify"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	zsxqExport "github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
@@ -69,7 +70,7 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 			if err := exportService.Export(pw, options); err != nil {
 				err = errors.Join(err, errors.New("export service error"))
 				logger.Error("Failed export zsxq", zap.Error(err))
-				_ = h.notifier.Notify("Failed export zsxq", err.Error())
+				notify.NoticeWithLogger(h.notifier, "Failed export zsxq", err.Error(), logger)
 				return
 			}
 		}()
@@ -78,7 +79,7 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 		if err != nil {
 			err = errors.Join(err, errors.New("init minio service error"))
 			logger.Error("Failed init minio service", zap.Error(err))
-			_ = h.notifier.Notify("Failed init minio service", err.Error())
+			notify.NoticeWithLogger(h.notifier, "Failed init minio service", err.Error(), logger)
 			return
 		}
 		logger.Info("Init minio service success")
@@ -86,13 +87,13 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 		logger.Info("Start to save export file")
 		if err := minioService.SaveStream(objectKey, pr, -1); err != nil {
 			logger.Error("Failed saving export file stream", zap.Error(err))
-			_ = h.notifier.Notify("Failed saving export file", err.Error())
+			notify.NoticeWithLogger(h.notifier, "Failed saving export file", err.Error(), logger)
 			return
 		}
 
 		logger.Info("Export zsxq success")
 
-		_ = h.notifier.Notify("export successfully", objectKey)
+		notify.NoticeWithLogger(h.notifier, "Export zsxq success", objectKey, logger)
 	}()
 
 	return c.JSON(http.StatusOK, &common.ApiResp{

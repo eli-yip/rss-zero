@@ -77,7 +77,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 		minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 		if err != nil {
 			logger.Error("failed to init minio service", zap.Error(err))
-			notify.Notify(h.notifier, "Failed to create minio service", err.Error(), logger)
+			notify.NoticeWithLogger(h.notifier, "Failed to create minio service", err.Error(), logger)
 			return
 		}
 
@@ -142,14 +142,14 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 			case exportErr = <-exportErrCh:
 				if exportErr != nil {
 					logger.Error("failed to export, aborting upload", zap.Error(exportErr))
-					notify.Notify(h.notifier, "Failed to export zhihu content", exportErr.Error(), logger)
+					notify.NoticeWithLogger(h.notifier, "Failed to export zhihu content", exportErr.Error(), logger)
 				} else {
 					logger.Info("export zhihu content successfully")
 				}
 			case uploadErr = <-uploadErrCh:
 				if uploadErr != nil {
 					logger.Error("failed to save file stream", zap.Error(uploadErr))
-					notify.Notify(h.notifier, "Failed saving file", uploadErr.Error(), logger)
+					notify.NoticeWithLogger(h.notifier, "Failed saving file", uploadErr.Error(), logger)
 				} else {
 					logger.Info("save file stream successfully")
 				}
@@ -158,13 +158,13 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 
 		if exportErr == nil && uploadErr == nil {
 			logger.Info("export and save zhihu content stream successfully")
-			notify.Notify(h.notifier, "Export zhihu content successfully", config.C.Minio.AssetsPrefix+"/"+objectKey, logger)
+			notify.NoticeWithLogger(h.notifier, "Export zhihu content successfully", config.C.Minio.AssetsPrefix+"/"+objectKey, logger)
 			return
 		}
 
 		if err = minioService.Delete(objectKey); err != nil {
 			logger.Error("failed to delete object", zap.Error(err))
-			notify.Notify(h.notifier, "Failed to delete object", err.Error(), logger)
+			notify.NoticeWithLogger(h.notifier, "Failed to delete object", err.Error(), logger)
 		} else {
 			logger.Info("delete object due to export error successfully")
 		}

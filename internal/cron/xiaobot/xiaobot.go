@@ -26,9 +26,7 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 
 		defer func() {
 			if errCount > 0 {
-				if err = notifier.Notify("CrawlXiaobot failed", err.Error()); err != nil {
-					logger.Error("fail to send xiaobot crawl failure notification", zap.Error(err))
-				}
+				notify.NoticeWithLogger(notifier, "Failed to crawl xiaobot", "", logger)
 			}
 			if err := recover(); err != nil {
 				logger.Error("xiaobot crawl function panic", zap.Any("err", err))
@@ -39,8 +37,8 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 		if token, err = r.Get(redis.XiaobotTokenPath); err != nil {
 			errCount++
 			if errors.Is(err, redis.ErrKeyNotExist) {
+				notify.NoticeWithLogger(notifier, "No token for xiaobot", "", logger)
 				logger.Error("xiaobot token not found in redis")
-				_ = notifier.Notify("No token for xiaobot", "")
 			} else {
 				logger.Error("failed to get xiaobot token from redis", zap.Error(err))
 			}

@@ -14,6 +14,7 @@ import (
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 )
@@ -64,7 +65,7 @@ func (h *XiaobotController) Export(c echo.Context) (err error) {
 			if err := exportService.Export(pw, options); err != nil {
 				err = errors.Join(err, errors.New("export service error"))
 				l.Error("Error exporting", zap.Error(err))
-				_ = h.notifier.Notify("fail to export", err.Error())
+				notify.NoticeWithLogger(h.notifier, "Fail to export", err.Error(), l)
 				return
 			}
 		}()
@@ -72,19 +73,19 @@ func (h *XiaobotController) Export(c echo.Context) (err error) {
 		minioService, err := file.NewFileServiceMinio(config.C.Minio, l)
 		if err != nil {
 			l.Error("Failed init minio service", zap.Error(err))
-			_ = h.notifier.Notify("Failed init minio service", err.Error())
+			notify.NoticeWithLogger(h.notifier, "Failed init minio service", err.Error(), l)
 			return
 		}
 		l.Info("Start uploading file to minio")
 
 		if err := minioService.SaveStream(objectKey, pr, -1); err != nil {
 			l.Error("Failed saving file", zap.Error(err))
-			_ = h.notifier.Notify("Failed saving file", err.Error())
+			notify.NoticeWithLogger(h.notifier, "Failed saving file", err.Error(), l)
 			return
 		}
 		l.Info("Export success")
 
-		_ = h.notifier.Notify("Export xiaobot success", objectKey)
+		notify.NoticeWithLogger(h.notifier, "Export xiaobot success", objectKey, l)
 	}()
 
 	return c.JSON(http.StatusOK, &common.ApiResp{

@@ -35,7 +35,7 @@ func (b *BarkNotifier) Notify(title, content string) error {
 	return err
 }
 
-func Notify(notifer Notifier, title, content string, logger *zap.Logger) {
+func NoticeWithLogger(notifer Notifier, title, content string, logger *zap.Logger) {
 	if err := notifer.Notify(title, content); err != nil {
 		logger.Error("Failed to send notification", zap.Error(err), zap.String("title", title), zap.String("content", content))
 	}

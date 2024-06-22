@@ -45,14 +45,10 @@ func (s *RefmtService) ReFmt(authorID string) {
 
 	defer func() {
 		if err != nil {
-			if err := s.notifier.Notify("Zhihu Refmt", "re-fmt failed"); err != nil {
-				s.logger.Error("failed to notify", zap.Error(err))
-			}
+			notify.NoticeWithLogger(s.notifier, "Zhihu Reformat", "reformat failed", s.logger)
 			return
 		}
-		if err := s.notifier.Notify("Zhihu Refmt", "re-fmt success"); err != nil {
-			s.logger.Error("failed to notify", zap.Error(err))
-		}
+		notify.NoticeWithLogger(s.notifier, "Zhihu Reformat", "reformat success", s.logger)
 	}()
 
 	var refmtFuncs = []struct {

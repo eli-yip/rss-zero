@@ -33,9 +33,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 
 		defer func() {
 			if errCount > 0 {
-				if err = notifier.Notify("Failed to crawl zsxq", ""); err != nil {
-					logger.Error("Failed to send zsxq failure notification", zap.Error(err))
-				}
+				notify.NoticeWithLogger(notifier, "Failed to crawl zsxq", "", logger)
 			}
 			if err := recover(); err != nil {
 				logger.Error("CrawlZsxq() panic", zap.Any("err", err))
@@ -78,9 +76,7 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 						logger.Error("Failed to delete zsxq cookie in redis", zap.Error(err))
 						message = "Failed to delete zsxq cookie in redis"
 					}
-					if err = notifier.Notify("Invalid zsxq cookie", message); err != nil {
-						logger.Error("Failed to notice user that cookie is invalid", zap.Error(err))
-					}
+					notify.NoticeWithLogger(notifier, "Invalid zsxq cookie", message, logger)
 					return
 				}
 				continue
@@ -122,9 +118,7 @@ func getZsxqCookie(redisService redis.Redis, notifier notify.Notifier, logger *z
 	if cookie, err = redisService.Get(redis.ZsxqCookiePath); err != nil {
 		if errors.Is(err, redis.ErrKeyNotExist) {
 			logger.Error("Found no zsxq cookie in redis, notify user now")
-			if err := notifier.Notify("Found no zsxq cookie in redis", ""); err != nil {
-				logger.Error("Failed to notice user there is no zsxq cookie in redis", zap.Error(err))
-			}
+			notify.NoticeWithLogger(notifier, "Found no zsxq cookie in redis", "", logger)
 		}
 		logger.Error("Failed to get zsxq cookie from redis", zap.Error(err))
 		return "", fmt.Errorf("failed to get zsxq cookie from redis: %w", err)
@@ -135,15 +129,11 @@ func getZsxqCookie(redisService redis.Redis, notifier notify.Notifier, logger *z
 	}
 
 	logger.Error("Found empty zsxq cookie in redis, notify user now")
-	if err = notifier.Notify("Found empty zsxq cookie in redis", ""); err != nil {
-		logger.Error("Failed to notice user there is empty zsxq cookie in redis", zap.Error(err))
-	}
+	notify.NoticeWithLogger(notifier, "Found empty zsxq cookie in redis", "", logger)
 
 	if err := redisService.Del(redis.ZsxqCookiePath); err != nil {
 		logger.Error("Failed to delete empty zsxq cookie in redis", zap.Error(err))
-		if err := notifier.Notify("Fail to delete empty zsxq cookie key in redis", ""); err != nil {
-			logger.Error("Failed to notice user that we failed to delete empty zsxq cookie key in redis", zap.Error(err))
-		}
+		notify.NoticeWithLogger(notifier, "Failed to delete empty zsxq cookie in redis", "", logger)
 		return "", fmt.Errorf("failed to delete empty zsxq cookie key in redis: %w", err)
 	}
 

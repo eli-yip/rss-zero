@@ -54,17 +54,10 @@ func (s *RefmtService) Reformat(gid int) {
 
 	defer func() {
 		if err != nil {
-			if err := s.notifier.Notify("Zsxq Reformat", "failed"); err != nil {
-				s.logger.Error("failed to notify", zap.Error(err))
-			}
+			notify.NoticeWithLogger(s.notifier, "Zsxq Reformat", "failed", s.logger)
 			return
 		}
-
-		// notify
-		if err := s.notifier.Notify("Zsxq Reformat", "success"); err != nil {
-			s.logger.Error("failed to notify", zap.Error(err))
-			return
-		}
+		notify.NoticeWithLogger(s.notifier, "Zsxq Reformat", "success", s.logger)
 	}()
 
 	s.logger.Info("start to format topics", zap.Int("group_id", gid))

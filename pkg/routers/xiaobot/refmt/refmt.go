@@ -47,14 +47,10 @@ func (s *ReformatService) Reformat(paperID string) {
 
 	defer func() {
 		if err != nil {
-			if err := s.notifier.Notify("Xiaobot Reformat", "reformat failed"); err != nil {
-				s.l.Error("failed to notify", zap.Error(err))
-			}
+			notify.NoticeWithLogger(s.notifier, "Xiaobot Reformat", "reformat failed", s.l)
 			return
 		}
-		if err := s.notifier.Notify("Xiaobot Reformat", "reformat success"); err != nil {
-			s.l.Error("failed to notify", zap.Error(err))
-		}
+		notify.NoticeWithLogger(s.notifier, "Xiaobot Reformat", "reformat success", s.l)
 	}()
 
 	var latestTime time.Time
