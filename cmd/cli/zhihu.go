@@ -100,7 +100,7 @@ func handleZhihu(opt option, logger *zap.Logger) {
 		parser                parse.Parser
 	)
 
-	requestService, err = request.NewRequestService(logger, zhihuDBService, notify.NewBarkNotifier(config.C.Bark.URL))
+	requestService, err = request.NewRequestService(logger, zhihuDBService, notify.NewBarkNotifier(config.C.Bark.URL), "")
 	if err != nil {
 		logger.Fatal("fail to init request service", zap.Error(err))
 	}

@@ -25,7 +25,7 @@ func TestArticleList(t *testing.T) {
 	db, err := db.NewPostgresDB(config.C.Database)
 	assert.Nil(err)
 	zhihuDBService := zhihuDB.NewDBService(db)
-	requestService, err := zhihuRequest.NewRequestService(logger, zhihuDBService, notify.NewBarkNotifier(config.C.Bark.URL))
+	requestService, err := zhihuRequest.NewRequestService(logger, zhihuDBService, notify.NewBarkNotifier(config.C.Bark.URL), "")
 	if err != nil {
 		t.Fatal(err)
 	}

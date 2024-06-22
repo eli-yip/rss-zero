@@ -8,7 +8,6 @@ import (
 	"io"
 	"math/rand/v2"
 	"net/http"
-	"regexp"
 	"time"
 
 	"github.com/rs/xid"
@@ -57,11 +56,10 @@ func WithDC0(d_c0 string) OptionFunc { return func(r *RequestService) { r.d_c0 =
 
 func WithZC0(z_c0 string) OptionFunc { return func(r *RequestService) { r.z_c0 = z_c0 } }
 
-func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, notifier notify.Notifier, opts ...OptionFunc) (Requester, error) {
+func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, notifier notify.Notifier, zse_ck string, opts ...OptionFunc) (Requester, error) {
 	const defaultMaxRetry = 5
-	zse_ck, err := getZSE_CK()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get zse_ck, %w", err)
+	if zse_ck == "" {
+		return nil, errors.New("zse_ck is empty")
 	}
 
 	s := &RequestService{
@@ -268,32 +266,4 @@ func (r *RequestService) setReq(u string) (req *http.Request, err error) {
 	}
 	req.Header.Set("User-Agent", userAgent)
 	return req, nil
-}
-
-func getZSE_CK() (string, error) {
-	resp, err := http.Get("https://www.zhihu.com/people/canglimo")
-	if err != nil {
-		return "", fmt.Errorf("failed to request zhihu, %w", err)
-	}
-	defer resp.Body.Close()
-
-	html, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body, %w", err)
-	}
-
-	regex := `"(001_[^"]+)"`
-
-	re := regexp.MustCompile(regex)
-
-	match := re.FindStringSubmatch(string(html))
-
-	switch len(match) {
-	case 0, 1:
-		return "", fmt.Errorf("failed to find zse_ck, %w", ErrBadResponse)
-	case 2:
-		return match[1], nil
-	default:
-		return "", fmt.Errorf("unexpected match length, %d", len(match))
-	}
 }

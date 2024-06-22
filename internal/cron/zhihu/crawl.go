@@ -49,10 +49,17 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 
 		dbService, requestService, parser, err := initZhihuServices(db, redisService, logger)
 		if err != nil {
-			if errors.Is(err, errNoDC0) {
+			switch {
+			case errors.Is(err, errNoDC0):
 				logger.Error("There is no d_c0 cookie, break")
 				if err = notifier.Notify("Need to provide zhihu d_c0 cookie", ""); err != nil {
 					logger.Error("Failed to send zhihu d_c0 cookie notification", zap.Error(err))
+				}
+				return
+			case errors.Is(err, errNoZSECK):
+				logger.Error("There is no zse_ck cookie, break")
+				if err = notifier.Notify("Need to provide zhihu zse_ck cookie", ""); err != nil {
+					logger.Error("Failed to send zhihu zse_ck cookie notification", zap.Error(err))
 				}
 				return
 			}
@@ -338,7 +345,10 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 	}
 }
 
-var errNoDC0 = errors.New("no d_c0 cookie")
+var (
+	errNoDC0   = errors.New("no d_c0 cookie")
+	errNoZSECK = errors.New("no zse_ck cookie")
+)
 
 func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
 	var err error
@@ -368,7 +378,16 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 	}
 
 	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
-	requestService, err = request.NewRequestService(logger, dbService, notifier, request.WithDC0(d_c0))
+	zse_ck, err := rs.Get(redis.ZhihuCookiePathZSECK)
+	if err != nil {
+		if errors.Is(err, redis.ErrKeyNotExist) {
+			logger.Error("There is no zse_ck cookie")
+			return nil, nil, nil, errNoZSECK
+		} else {
+			return nil, nil, nil, err
+		}
+	}
+	requestService, err = request.NewRequestService(logger, dbService, notifier, zse_ck, request.WithDC0(d_c0))
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("fail to init request service: %w", err)
 	}

@@ -25,7 +25,7 @@ func TestPinList(t *testing.T) {
 	db, err := db.NewPostgresDB(config.C.Database)
 	assert.Nil(err)
 	zhihuDBService := zhihuDB.NewDBService(db)
-	requestService, err := zhihuRequest.NewRequestService(log.NewZapLogger(), zhihuDBService, notify.NewBarkNotifier(config.C.Bark.URL))
+	requestService, err := zhihuRequest.NewRequestService(log.NewZapLogger(), zhihuDBService, notify.NewBarkNotifier(config.C.Bark.URL), "")
 	assert.Nil(err)
 	logger := log.NewZapLogger()
 	defer requestService.ClearCache(logger)

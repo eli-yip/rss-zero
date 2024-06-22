@@ -11,10 +11,13 @@ import (
 
 var ErrKeyNotExist = errors.New("key does not exist")
 
-const ZsxqCookiePath = "zsxq_cookie"
-const XiaobotTokenPath = "xiaobot_token"
-const ZhihuCookiePath = "zhihu_cookie"
-const ZhihuCookiePathZC0 = "zhihu_cookie_zc0"
+const (
+	ZsxqCookiePath       = "zsxq_cookie"
+	XiaobotTokenPath     = "xiaobot_token"
+	ZhihuCookiePath      = "zhihu_cookie"
+	ZhihuCookiePathZC0   = "zhihu_cookie_zc0"
+	ZhihuCookiePathZSECK = "zhihu_cookie_zse_ck"
+)
 
 const (
 	ZsxqRSSPath = "zsxq_rss_%s"

@@ -236,8 +236,12 @@ var errAuthorNotExistInZhihu = errors.New("author does not exist in zhihu")
 //
 // It will save the author name to db if it's not found in db.
 func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (authorName string, err error) {
+	zse_ck, err := h.redis.Get(redis.ZhihuCookiePathZSECK)
+	if err != nil {
+		return "", fmt.Errorf("failed to get zhihu zse_ck cookie from redis: %w", err)
+	}
 	// skip d_c0 cookie injection, as it's not needed for this request
-	requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL))
+	requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), zse_ck)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request service: %w", err)
 	}

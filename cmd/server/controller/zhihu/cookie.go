@@ -37,7 +37,12 @@ func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
 		}
 		logger.Info("Retrieve zhihu d_c0 cookie successfully", zap.String("cookie", d_c0))
 
-		requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), request.WithDC0(dC0Cookie))
+		zse_ck, err := h.redis.Get(redis.ZhihuCookiePathZSECK)
+		if err != nil {
+			logger.Error("Failed to get zhihu zse_ck cookie from redis", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+		}
+		requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), zse_ck, request.WithDC0(dC0Cookie))
 		if err != nil {
 			logger.Error("Failed to create request service", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})
@@ -54,6 +59,33 @@ func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
 		logger.Info("Update zhihu d_c0 cookie in redis successfully", zap.String("cookie", d_c0))
+	}
+
+	if req.ZC0Cookie != nil {
+		zC0Cookie := *req.ZC0Cookie
+		z_c0 := extractCookieValue(zC0Cookie)
+		if z_c0 == "" {
+			logger.Error("Failed to extract z_c0 from cookie", zap.String("cookie", zC0Cookie))
+			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid cookie"})
+		}
+
+		requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), z_c0)
+		if err != nil {
+			logger.Error("Failed to create request service", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})
+		}
+
+		if _, err = requestService.LimitRaw(config.C.TestURL.Zhihu, logger); err != nil {
+			logger.Error("Failed to validate zhihu z_c0 cookie", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})
+		}
+		logger.Info("Validate zhihu z_c0 cookie successfully", zap.String("cookie", z_c0))
+
+		if err = h.redis.Set(redis.ZhihuCookiePathZC0, z_c0, redis.Forever); err != nil {
+			logger.Error("Failed to update zhihu z_c0 cookie in redis", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+		}
+		logger.Info("Update zhihu z_c0 cookie in redis successfully", zap.String("cookie", z_c0))
 	}
 
 	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})
