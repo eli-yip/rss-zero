@@ -169,9 +169,6 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 				if err = r.dbService.MarkUnavailable(es.ID); err != nil {
 					logger.Error("Failed to mark unavailable", zap.Error(err))
 				}
-				if err = r.notify.Notify("Zhihu need login", fmt.Sprintf("Service %s need login, ID: %s", es.Slug, es.ID)); err != nil {
-					logger.Error("Failed to notify", zap.Error(err))
-				}
 				return nil, ErrNeedLogin
 			}
 		case http.StatusNotFound:

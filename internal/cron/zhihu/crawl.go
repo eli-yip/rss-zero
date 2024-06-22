@@ -99,6 +99,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							if err = removeDC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
+							if err = removeZC0Cookie(redisService); err != nil {
+								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
+							}
+							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
+								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
+							}
 							logger.Error("Need login, break")
 							return
 						case errors.Is(err, zhihuDB.ErrNoAvailableService):
@@ -126,6 +132,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 						case errors.Is(err, request.ErrNeedLogin):
 							if err = removeDC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
+							}
+							if err = removeZC0Cookie(redisService); err != nil {
+								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
+							}
+							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
+								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
 							}
 							logger.Error("Need login, break")
 							return
@@ -171,6 +183,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							if err = removeDC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
+							if err = removeZC0Cookie(redisService); err != nil {
+								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
+							}
+							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
+								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
+							}
 							logger.Error("Need login, break")
 							return
 						case errors.Is(err, zhihuDB.ErrNoAvailableService):
@@ -198,6 +216,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 						case errors.Is(err, request.ErrNeedLogin):
 							if err = removeDC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
+							}
+							if err = removeZC0Cookie(redisService); err != nil {
+								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
+							}
+							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
+								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
 							}
 							logger.Error("Need login, break")
 							return
@@ -243,6 +267,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							if err = removeDC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
+							if err = removeZC0Cookie(redisService); err != nil {
+								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
+							}
+							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
+								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
+							}
 							logger.Error("Need login, break")
 							return
 						case errors.Is(err, zhihuDB.ErrNoAvailableService):
@@ -270,6 +300,12 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 						case errors.Is(err, request.ErrNeedLogin):
 							if err = removeDC0Cookie(redisService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
+							}
+							if err = removeZC0Cookie(redisService); err != nil {
+								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
+							}
+							if notifier.Notify("Zhihu need login", "please provide z_c0 cookie") != nil {
+								logger.Error("Failed to send zhihu need login notification", zap.Error(err))
 							}
 							logger.Error("Need login, break")
 							return
@@ -363,3 +399,5 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 }
 
 func removeDC0Cookie(rs redis.Redis) (err error) { return rs.Del(redis.ZhihuCookiePath) }
+
+func removeZC0Cookie(rs redis.Redis) (err error) { return rs.Del(redis.ZhihuCookiePathZC0) }
