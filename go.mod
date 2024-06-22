@@ -6,7 +6,6 @@ require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/Kunde21/markdownfmt/v3 v3.1.0
 	github.com/PuerkitoBio/goquery v1.9.2
-	github.com/brpaz/echozap v1.1.3
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/go-co-op/gocron/v2 v2.5.0

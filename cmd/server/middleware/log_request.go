@@ -36,6 +36,7 @@ func LogRequest(logger *zap.Logger) echo.MiddlewareFunc {
 			endTime := time.Now()
 			latency := endTime.Sub(startTime)
 			statusCode := c.Response().Status
+			size := c.Response().Size
 			var level zapcore.Level
 			if statusCode >= http.StatusInternalServerError {
 				level = zapcore.ErrorLevel
@@ -49,6 +50,7 @@ func LogRequest(logger *zap.Logger) echo.MiddlewareFunc {
 				zap.String("request_id", requestID),
 				zap.Duration("latency", latency),
 				zap.Int("status_code", statusCode),
+				zap.Int64("size", size),
 			)
 
 			return nil

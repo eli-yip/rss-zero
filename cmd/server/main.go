@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/brpaz/echozap"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
@@ -83,7 +82,7 @@ func main() {
 	go func() {
 		logger.Info("start server", zap.String("address", ":8080"), zap.String("version", version.Version))
 		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
-			e.Logger.Fatal("shutting down the server")
+			logger.Fatal("shutting down the server")
 		}
 	}()
 
@@ -143,7 +142,6 @@ func setupEcho(redisService redis.Redis,
 		}("172.0.0.0/8")), // trust docker network
 	)
 	e.Use(
-		echozap.ZapLogger(logger),         // use zap for echo logger
 		middleware.RequestID(),            // add request id
 		middleware.Recover(),              // recover from panic
 		myMiddleware.LogRequest(logger),   // log request
