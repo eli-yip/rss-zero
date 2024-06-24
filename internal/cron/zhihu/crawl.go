@@ -48,11 +48,11 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 		if err != nil {
 			switch {
 			case errors.Is(err, errNoDC0):
-				logger.Error("There is no d_c0 cookie, break")
+				logger.Error("There is no d_c0 cookie, stop")
 				notify.NoticeWithLogger(notifier, "Need to provide zhihu d_c0 cookie", "", logger)
 				return
 			case errors.Is(err, errNoZSECK):
-				logger.Error("There is no zse_ck cookie, break")
+				logger.Error("There is no zse_ck cookie, stop")
 				notify.NoticeWithLogger(notifier, "Need to provide zhihu zse_ck cookie", "", logger)
 				return
 			}
@@ -104,6 +104,13 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 							}
 							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
 							logger.Error("Need login, break")
+							return
+						case errors.Is(err, request.ErrInvalidZSECK):
+							if err = removeZC0Cookie(redisService); err != nil {
+								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
+							}
+							notify.NoticeWithLogger(notifier, "Zhihu need new zse_ck", "please provide __zse_ck cookie", logger)
+							logger.Error("Need new zse_ck, break")
 							return
 						case errors.Is(err, zhihuDB.ErrNoAvailableService):
 							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
@@ -356,12 +363,16 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 	zse_ck, err := rs.Get(redis.ZhihuCookiePathZSECK)
 	if err != nil {
 		if errors.Is(err, redis.ErrKeyNotExist) {
-			logger.Error("There is no zse_ck cookie")
 			return nil, nil, nil, errNoZSECK
 		} else {
 			return nil, nil, nil, err
 		}
 	}
+	if zse_ck == "" {
+		return nil, nil, nil, errNoZSECK
+	}
+	logger.Info("Get zse_ck cookie successfully", zap.String("__zse_ck", zse_ck))
+
 	requestService, err = request.NewRequestService(logger, dbService, notifier, zse_ck, request.WithDC0(d_c0))
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("fail to init request service: %w", err)
