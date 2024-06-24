@@ -169,6 +169,8 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 				}
 				return nil, ErrNeedLogin
 			}
+		case http.StatusUnauthorized:
+			// TODO: handle this error 2024-06-24 12:29:52.667
 		case http.StatusNotFound:
 			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
 				logger.Error("Failed to increase failed count", zap.Error(err))
