@@ -66,6 +66,16 @@ func main() {
 	}
 	logger.Info("service initialized")
 
+	n, err := zhihuDB.SetEmptySubID(db)
+	if err != nil {
+		logger.Fatal("Failed to set empty sub id", zap.Error(err))
+	}
+	if n != 0 {
+		logger.Info("Set empty sub id successfully", zap.Int("count", n))
+	} else {
+		logger.Info("No empty sub id found")
+	}
+
 	var jobList []jobController.Job
 	if jobList, err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
 		logger.Fatal("fail to setup cron", zap.Error(err))

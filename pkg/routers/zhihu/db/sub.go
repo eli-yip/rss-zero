@@ -2,6 +2,8 @@ package db
 
 import (
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/rs/xid"
 	"gorm.io/gorm"
@@ -51,7 +53,7 @@ func (d *DBService) GetSubs() ([]Sub, error) {
 
 func (d *DBService) GetSubsWithNoID() ([]Sub, error) {
 	var subs []Sub
-	if err := d.Where("id = ?", "").Find(&subs).Error; err != nil {
+	if err := d.Where("id = ? or id IS NULL", "").Find(&subs).Error; err != nil {
 		return nil, err
 	}
 	return subs, nil
@@ -63,4 +65,22 @@ func (d *DBService) SetSubID(authorID string, subType int, id string) error {
 
 func (d *DBService) SetStatus(authorID string, subType int, finished bool) error {
 	return d.Model(&Sub{}).Where("author_id = ? and type = ?", authorID, subType).Update("finished", finished).Error
+}
+
+func SetEmptySubID(db *gorm.DB) (n int, err error) {
+	zhihuDBService := NewDBService(db)
+	subs, err := zhihuDBService.GetSubsWithNoID()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get subs with no id: %w", err)
+	}
+
+	for _, sub := range subs {
+		if err := zhihuDBService.SetSubID(sub.AuthorID, sub.Type, xid.New().String()); err != nil {
+			return 0, fmt.Errorf("failed to set sub id: %w", err)
+		}
+		n++
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return n, nil
 }
