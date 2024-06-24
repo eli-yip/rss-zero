@@ -15,8 +15,9 @@ import (
 )
 
 type SetCookieReq struct {
-	DC0Cookie *string `json:"d_c0_cookie"`
-	ZC0Cookie *string `json:"z_c0_cookie"`
+	DC0Cookie   *string `json:"d_c0_cookie"`
+	ZC0Cookie   *string `json:"z_c0_cookie"`
+	ZSECKCookie *string `json:"zse_ck_cookie"`
 }
 
 func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
@@ -86,6 +87,21 @@ func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
 		logger.Info("Update zhihu z_c0 cookie in redis successfully", zap.String("cookie", z_c0))
+	}
+
+	if req.ZSECKCookie != nil {
+		zse_ckCookie := *req.ZSECKCookie
+		zse_ck := extractCookieValue(zse_ckCookie)
+		if zse_ck == "" {
+			logger.Error("Failed to extract zse_ck from cookie", zap.String("cookie", zse_ckCookie))
+			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid cookie"})
+		}
+
+		if err = h.redis.Set(redis.ZhihuCookiePathZSECK, zse_ck, redis.ZSECKTTL); err != nil {
+			logger.Error("Failed to update zhihu zse_ck cookie in redis", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+		}
+		logger.Info("Update zhihu zse_ck cookie in redis successfully", zap.String("cookie", zse_ck))
 	}
 
 	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})

@@ -33,6 +33,7 @@ const (
 
 const (
 	Forever       = 0
+	ZSECKTTL      = 24 * 2 * time.Hour
 	RSSDefaultTTL = time.Hour * 2
 )
 
