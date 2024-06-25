@@ -92,7 +92,7 @@ func main() {
 	go func() {
 		logger.Info("start server", zap.String("address", ":8080"), zap.String("version", version.Version))
 		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
-			logger.Fatal("shutting down the server")
+			logger.Fatal("Shutdown server", zap.Error(err))
 		}
 	}()
 
@@ -102,10 +102,10 @@ func main() {
 	defer cancel()
 
 	if err = e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
+		logger.Fatal("Failed to shutdown server", zap.Error(err))
 	}
 
-	logger.Info("server shutdown")
+	logger.Info("Shutdown server successfully")
 }
 
 // initService initializes services
