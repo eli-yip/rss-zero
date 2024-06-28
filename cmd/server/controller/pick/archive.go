@@ -1,6 +1,7 @@
 package pick
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -21,6 +22,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 			Type     string `json:"type"`
 			ID       string `json:"id"`
 			Time     int    `json:"time"`
+			Link     string `json:"link"`
 		}
 
 		Response struct {
@@ -73,6 +75,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 				Platform: "zhihu",
 				Type:     "answer",
 				ID:       strconv.Itoa(answer.ID),
+				Link:     fmt.Sprintf("https://www.zhihu.com/question/%d/answer/%d", answer.QuestionID, answer.ID),
 				Time:     int(utils.TimeToUnix(answer.CreateAt)),
 			})
 		}
