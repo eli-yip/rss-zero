@@ -24,6 +24,9 @@ fpush:
 conclude:
   git diff --stat @{0.day.ago.midnight} | sort -k3nr
 
+tag tag_name:
+  git tag {{tag_name}}
+
 list-tag:
   git tag --sort=-v:refname
 
