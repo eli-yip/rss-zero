@@ -21,15 +21,11 @@ type SelectRequest struct {
 }
 
 type Response struct {
-	Data Data `json:"data"`
+	Topics []Topic `json:"topics"`
 }
 
 type ErrResponse struct {
 	Message string `json:"message"`
-}
-
-type Data struct {
-	Topic []Topic `json:"topic"`
 }
 
 type Topic struct {

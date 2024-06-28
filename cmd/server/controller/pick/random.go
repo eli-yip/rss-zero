@@ -68,5 +68,5 @@ func (h *Controller) Random(c echo.Context) (err error) {
 		})
 	}
 
-	return c.JSON(http.StatusOK, &Response{Data: Data{Topic: topics}})
+	return c.JSON(http.StatusOK, &Response{Topics: topics})
 }
