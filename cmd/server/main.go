@@ -269,7 +269,7 @@ func setupEcho(redisService redis.Redis,
 	randomPickApi.Name = "Random pick route"
 	selectPickApi := pickApiGroup.POST("/select", pickHandler.Select)
 	selectPickApi.Name = "Select pick route"
-	archivePickApi := pickApiGroup.POST("/archive", pickHandler.Archive)
+	archivePickApi := pickApiGroup.GET("/archive", pickHandler.Archive)
 	archivePickApi.Name = "Archive pick route"
 
 	jobHandler := jobController.NewController(jobList, logger)
