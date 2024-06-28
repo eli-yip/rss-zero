@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -18,6 +19,52 @@ type SetCookieReq struct {
 	DC0Cookie   *string `json:"d_c0_cookie"`
 	ZC0Cookie   *string `json:"z_c0_cookie"`
 	ZSECKCookie *string `json:"zse_ck_cookie"`
+}
+
+type CheckCookieResp struct {
+	DC0Cookie   *string `json:"d_c0_cookie"`
+	ZC0Cookie   *string `json:"z_c0_cookie"`
+	ZSECKCookie *string `json:"zse_ck_cookie"`
+}
+
+func (h *ZhihuController) CheckCookie(c echo.Context) (err error) {
+	logger := c.Get("logger").(*zap.Logger)
+
+	d_c0, err := h.redis.Get(redis.ZhihuCookiePath)
+	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
+		logger.Error("Failed to get zhihu d_c0 cookie from redis", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+	}
+	d_c0Ptr := getPointer(d_c0, err)
+
+	z_c0, err := h.redis.Get(redis.ZhihuCookiePathZC0)
+	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
+		logger.Error("Failed to get zhihu z_c0 cookie from redis", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+	}
+	z_c0Ptr := getPointer(z_c0, err)
+
+	zse_ck, err := h.redis.Get(redis.ZhihuCookiePathZSECK)
+	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
+		logger.Error("Failed to get zhihu zse_ck cookie from redis", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+	}
+	zse_ckPtr := getPointer(zse_ck, err)
+
+	resp := CheckCookieResp{
+		DC0Cookie:   d_c0Ptr,
+		ZC0Cookie:   z_c0Ptr,
+		ZSECKCookie: zse_ckPtr,
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func getPointer(s string, err error) *string {
+	if errors.Is(err, redis.ErrKeyNotExist) {
+		return nil
+	}
+	return &s
 }
 
 func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
