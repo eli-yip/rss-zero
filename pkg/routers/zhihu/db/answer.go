@@ -17,6 +17,7 @@ type DBAnswer interface {
 	// FetchNAnswers get n answers from zhihu_answer table,
 	// then return the answers for text generating.
 	FetchNAnswer(int, FetchAnswerOption) ([]Answer, error)
+	FetchAnswer(author string, limit, offset int) ([]Answer, error)
 	// UpdateAnswerStatus update answer status in zhihu_answer table
 	UpdateAnswerStatus(id int, status int) error
 	// GetLatestAnswerTime get the latest answer time from zhihu_answer table
@@ -133,6 +134,14 @@ func (d *DBService) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, er
 		return nil, err
 	}
 
+	return as, nil
+}
+
+func (d *DBService) FetchAnswer(author string, limit, offset int) ([]Answer, error) {
+	as := make([]Answer, 0, limit)
+	if err := d.Where("author_id = ?", author).Order("create_at desc").Limit(limit).Offset(offset).Find(&as).Error; err != nil {
+		return nil, err
+	}
 	return as, nil
 }
 
