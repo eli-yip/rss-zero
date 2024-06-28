@@ -219,6 +219,10 @@ func setupEcho(redisService redis.Redis,
 	zhihuCheckCookieApi := cookieApi.GET("/zhihu/check", zhihuHandler.CheckCookie)
 	zhihuCheckCookieApi.Name = "Cookie checking route for zhihu"
 
+	// /api/v1/author/zhihu
+	zhihuAuthorApi := apiGroup.GET("/author/zhihu/:id", zhihuHandler.AuthorName)
+	zhihuAuthorApi.Name = "Author name route for zhihu"
+
 	// /api/v1/db/zhihu
 	zhihuDBApi := apiGroup.Group("/db/zhihu")
 	zhihuDBAdd := zhihuDBApi.POST("/add", zhihuHandler.Add)
