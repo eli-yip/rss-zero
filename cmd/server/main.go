@@ -216,7 +216,7 @@ func setupEcho(redisService redis.Redis,
 	zhihuCookieApi := cookieApi.POST("/zhihu", zhihuHandler.UpdateCookie)
 	zhihuCookieApi.Name = "Cookie updating route for zhihu"
 	// /api/v1/cookie/zhihu/check
-	zhihuCheckCookieApi := cookieApi.GET("/zhihu/check", zhihuHandler.CheckCookie)
+	zhihuCheckCookieApi := cookieApi.GET("/zhihu", zhihuHandler.CheckCookie)
 	zhihuCheckCookieApi.Name = "Cookie checking route for zhihu"
 
 	// /api/v1/author/zhihu
