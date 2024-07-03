@@ -11,7 +11,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/ai"
-	"github.com/eli-yip/rss-zero/internal/cron"
+	"github.com/eli-yip/rss-zero/pkg/cron"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
