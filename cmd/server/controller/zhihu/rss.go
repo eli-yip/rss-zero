@@ -252,7 +252,7 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 	}
 	defer requestService.ClearCache(logger)
 
-	bytes, err := requestService.LimitRaw(zhihuCrawl.GenerateAnswerAPIURL(authorID, 0), logger)
+	bytes, err := requestService.LimitRaw(zhihuCrawl.GenerateAnswerApiURL(authorID, 0), logger)
 	if err != nil {
 		if errors.Is(err, request.ErrUnreachable) {
 			logger.Info("Author does not exist in zhihu website", zap.String("author_id", authorID))

@@ -12,6 +12,16 @@ import (
 	"go.uber.org/zap"
 )
 
+func GenerateArticleApiURL(user string, offset int) string {
+	const (
+		urlLayout = "https://www.zhihu.com/api/v4/members/%s/articles"
+		params    = `data[*].comment_count,suggest_edit,is_normal,thumbnail_extra_info,thumbnail,can_comment,comment_permission,admin_closed_comment,content,voteup_count,created,updated,upvoted_followees,voting,review_info,reaction_instruction,is_labeled,label_info;data[*].vessay_info;data[*].author.badge[?(type=best_answerer)].topics;data[*].author.vip_info`
+	)
+	escaped := url.QueryEscape(params)
+	next := fmt.Sprintf(urlLayout, user)
+	return fmt.Sprintf("%s?include=%s&%s", next, escaped, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
+}
+
 // CrawlArticle crawl zhihu articles
 // user: user url token
 // targetTime: the time to stop crawling
@@ -24,14 +34,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 	logger = logger.With(zap.String("crawl_id", crawlID))
 	logger.Info("Start to crawl zhihu answers", zap.String("user_url_token", user))
 
-	next := ""
-	const (
-		urlLayout = "https://www.zhihu.com/api/v4/members/%s/articles"
-		params    = `data[*].comment_count,suggest_edit,is_normal,thumbnail_extra_info,thumbnail,can_comment,comment_permission,admin_closed_comment,content,voteup_count,created,updated,upvoted_followees,voting,review_info,reaction_instruction,is_labeled,label_info;data[*].vessay_info;data[*].author.badge[?(type=best_answerer)].topics;data[*].author.vip_info`
-	)
-	escaped := url.QueryEscape(params)
-	next = fmt.Sprintf(urlLayout, user)
-	next = fmt.Sprintf("%s?include=%s&%s", next, escaped, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
+	next := GenerateArticleApiURL(user, offset)
 
 	index := 0
 	lastArticleCount := 0

@@ -13,7 +13,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func GenerateAnswerAPIURL(user string, offset int) string {
+func GenerateAnswerApiURL(user string, offset int) string {
 	const (
 		urlLayout = "https://www.zhihu.com/api/v4/members/%s/answers"
 		params    = `data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,collapsed_by,suggest_edit,comment_count,can_comment,content,voteup_count,reshipment_settings,comment_permission,mark_infos,created_time,updated_time,review_info,question,excerpt,is_labeled,label_info,relationship.is_authorized,voting,is_author,is_thanked,is_nothelp;data[*].author.badge[?(type=best_answerer)].topics`
@@ -35,14 +35,7 @@ func CrawlAnswer(user string, rs request.Requester, parser parse.Parser,
 	logger = logger.With(zap.String("crawl_id", crawlID))
 	logger.Info("Start to crawl zhihu answers", zap.String("user_url_token", user))
 
-	next := ""
-	const (
-		urlLayout = "https://www.zhihu.com/api/v4/members/%s/answers"
-		params    = `data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,collapsed_by,suggest_edit,comment_count,can_comment,content,voteup_count,reshipment_settings,comment_permission,mark_infos,created_time,updated_time,review_info,question,excerpt,is_labeled,label_info,relationship.is_authorized,voting,is_author,is_thanked,is_nothelp;data[*].author.badge[?(type=best_answerer)].topics`
-	)
-	escaped := url.QueryEscape(params)
-	next = fmt.Sprintf(urlLayout, user)
-	next = fmt.Sprintf("%s?include=%s&%s", next, escaped, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
+	next := GenerateAnswerApiURL(user, offset)
 
 	index := 0
 	lastAnswerCount := 0 // count of answers in last page api response

@@ -12,6 +12,11 @@ import (
 	"go.uber.org/zap"
 )
 
+func GeneratePinApiURL(user string, offset int) string {
+	const urlLayout = "https://www.zhihu.com/api/v4/v2/pins/%s/moments"
+	return fmt.Sprintf("%s?%s", fmt.Sprintf(urlLayout, user), fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
+}
+
 // CrawlPin crawl zhihu pins
 // user: user url token
 // targetTime: the time to stop crawling
@@ -24,10 +29,7 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 	logger = logger.With(zap.String("crawl_id", crawlID))
 	logger.Info("Start to crawl zhihu pins", zap.String("user_url_token", user))
 
-	next := ""
-	const urlLayout = "https://www.zhihu.com/api/v4/v2/pins/%s/moments"
-	next = fmt.Sprintf(urlLayout, user)
-	next = fmt.Sprintf("%s?%s", next, fmt.Sprintf("offset=%d&limit=20&sort_by=created", offset))
+	next := GeneratePinApiURL(user, offset)
 
 	index := 0
 	lastPinCount := 0
