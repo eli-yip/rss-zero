@@ -30,7 +30,6 @@ func (p *ParseService) ParseAnswerList(content []byte, index int, logger *zap.Lo
 	return answerList.Paging, answerList.Data, nil
 }
 
-// ParseAnswer receives api.zhihu.com resp and parse it
 func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.Logger) (text string, err error) {
 	answer := apiModels.Answer{}
 	if err = json.Unmarshal(content, &answer); err != nil {

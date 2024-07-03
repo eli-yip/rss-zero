@@ -17,6 +17,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/common"
+	zhihuCrawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawler"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
@@ -251,7 +252,7 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 	}
 	defer requestService.ClearCache(logger)
 
-	bytes, err := requestService.LimitRaw("https://api.zhihu.com/people/"+authorID, logger)
+	bytes, err := requestService.LimitRaw(zhihuCrawl.GenerateAnswerAPIURL(authorID, 0), logger)
 	if err != nil {
 		if errors.Is(err, request.ErrUnreachable) {
 			logger.Info("Author does not exist in zhihu website", zap.String("author_id", authorID))

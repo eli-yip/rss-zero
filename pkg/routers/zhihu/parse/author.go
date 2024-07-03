@@ -1,13 +1,9 @@
 package parse
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
-
-	"go.uber.org/zap"
 )
 
 type AuthorParser interface {
@@ -16,12 +12,15 @@ type AuthorParser interface {
 }
 
 func (p *ParseService) ParseAuthorName(apiResp []byte) (authorName string, err error) {
-	var author apiModels.Author
-	if err = json.Unmarshal(apiResp, &author); err != nil {
-		p.logger.Error("Fail to unmarshal api response", zap.Error(err))
-		return emptyString, fmt.Errorf("failed to unmarshal api response: %w", err)
+	_, answers, err := p.ParseAnswerList(apiResp, 0, p.logger)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse answer list: %w", err)
+	}
+	if len(answers) == 0 {
+		return "", fmt.Errorf("empty answer list")
 	}
 
+	author := answers[0].Author
 	if err = p.db.SaveAuthor(&db.Author{
 		ID:   author.ID,
 		Name: author.Name,
