@@ -113,14 +113,6 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 	for i := 0; i < r.maxRetry; i++ {
 		currentRequestTaskID := fmt.Sprintf("%s_%d", requestTaskID, i)
 		logger := logger.With(zap.String("request_task_id", currentRequestTaskID))
-		<-r.limiter
-		logger.Info("Get limiter successfully, start to request url")
-
-		reqBodyByte, err := json.Marshal(EncryptReq{RequestID: currentRequestTaskID, DC0: r.d_c0, ZC0: r.z_c0, ZSE_CK: r.zse_ck, URL: u})
-		if err != nil {
-			logger.Error("Failed to marshal request body", zap.Error(err))
-			continue
-		}
 
 		es, err := r.dbService.SelectService()
 		if err != nil {
@@ -131,6 +123,15 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			continue
 		}
 		logger.Info("Get zhihu encryption service successfully", zap.Any("service", es))
+
+		<-r.limiter
+		logger.Info("Get limiter successfully, start to request url")
+
+		reqBodyByte, err := json.Marshal(EncryptReq{RequestID: currentRequestTaskID, DC0: r.d_c0, ZC0: r.z_c0, ZSE_CK: r.zse_ck, URL: u})
+		if err != nil {
+			logger.Error("Failed to marshal request body", zap.Error(err))
+			continue
+		}
 
 		if err = r.dbService.IncreaseUsedCount(es.ID); err != nil {
 			logger.Error("Failed to increase used count", zap.Error(err))

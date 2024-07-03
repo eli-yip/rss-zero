@@ -213,12 +213,14 @@ func (h *ZhihuController) checkSub(t int, authorID string, logger *zap.Logger) (
 	if err != nil {
 		return fmt.Errorf("failed to check sub: %w", err)
 	}
+	logger.Info("Check zhihu subscription successfully", zap.Bool("exist", exist))
 
 	if exist {
 		return nil
 	}
 
 	// if not exist, add sub and author to db
+	logger.Info("Start to add zhihu subscription")
 	if _, err = h.parseAuthorName(authorID, logger); err != nil {
 		return fmt.Errorf("failed to parse author name: %w", err)
 	}
@@ -238,8 +240,10 @@ var errAuthorNotExistInZhihu = errors.New("author does not exist in zhihu")
 func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (authorName string, err error) {
 	zse_ck, err := h.redis.Get(redis.ZhihuCookiePathZSECK)
 	if err != nil {
-		return "", fmt.Errorf("failed to get zhihu zse_ck cookie from redis: %w", err)
+		return "", fmt.Errorf("failed to get zhihu __zse_ck cookie from redis: %w", err)
 	}
+	logger.Info("Get zhihu _zse_ck cookie from redis successfully", zap.String("__zse_ck", zse_ck))
+
 	// skip d_c0 cookie injection, as it's not needed for this request
 	requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), zse_ck)
 	if err != nil {
@@ -250,6 +254,7 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 	bytes, err := requestService.LimitRaw("https://api.zhihu.com/people/"+authorID, logger)
 	if err != nil {
 		if errors.Is(err, request.ErrUnreachable) {
+			logger.Info("Author does not exist in zhihu website", zap.String("author_id", authorID))
 			return "", errAuthorNotExistInZhihu
 		}
 		return "", fmt.Errorf("failed to get author name: %w", err)
@@ -260,11 +265,13 @@ func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (
 	if err != nil {
 		return "", fmt.Errorf("failed to create parse service: %w", err)
 	}
+	logger.Info("Create parse service successfully")
 
 	authorName, err = parser.ParseAuthorName(bytes)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse author name: %w", err)
 	}
+	logger.Info("Get author name from zhihu successfully", zap.String("author_name", authorName))
 
 	return authorName, nil
 }
