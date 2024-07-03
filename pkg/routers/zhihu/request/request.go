@@ -34,6 +34,7 @@ var (
 	ErrUnreachable  = errors.New("unreachable")
 	ErrNeedLogin    = errors.New("need login")
 	ErrInvalidZSECK = errors.New("invalid zse_ck")
+	ErrForbidden    = errors.New("forbidden")
 )
 
 const (
@@ -170,6 +171,9 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 					logger.Error("Failed to mark unavailable", zap.Error(err))
 				}
 				return nil, ErrNeedLogin
+			} else {
+				logger.Error("403 error", zap.String("resp_body", string(body)))
+				return nil, ErrForbidden
 			}
 		case http.StatusUnauthorized:
 			logger.Error("Invalid zse_ck", zap.String("resp_body", string(body)))
