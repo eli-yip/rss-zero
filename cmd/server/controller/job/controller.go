@@ -3,6 +3,7 @@ package job
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -21,14 +22,14 @@ func NewController(cronDBService cronDB.DB, definitionToFunc DefinitionToFunc, l
 }
 
 type (
-	CrawlFunc        func()
+	CrawlFunc        func(chan cronDB.CronJob)
 	DefinitionToFunc map[string]CrawlFunc
 )
 
 type (
 	Resp struct {
 		Message string         `json:"message"`
-		TaskDef cronDB.CronJob `json:"task_def"`
+		JobInfo cronDB.CronJob `json:"job_info"`
 	}
 	ErrResp struct {
 		Message string `json:"message"`
@@ -51,6 +52,12 @@ func (h *Controller) StartJob(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, &ErrResp{Message: "task definition not found"})
 	}
 
-	go crawlFunc()
-	return c.NoContent(http.StatusOK)
+	jobInfoChan := make(chan cronDB.CronJob)
+	go crawlFunc(jobInfoChan)
+	select {
+	case jobInfo := <-jobInfoChan:
+		return c.JSON(http.StatusOK, &Resp{Message: "job started", JobInfo: jobInfo})
+	case <-time.After(30 * time.Second):
+		return c.JSON(http.StatusRequestTimeout, &ErrResp{Message: "timeout waiting for job info"})
+	}
 }

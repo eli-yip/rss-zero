@@ -16,6 +16,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/crawl"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse"
@@ -23,8 +24,8 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 )
 
-func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
-	return func() {
+func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cronDB.CronJob) {
+	return func(jobInfoChan chan cronDB.CronJob) {
 		// Init services
 		logger := log.NewZapLogger().With(zap.String("cron_id", xid.New().String()))
 

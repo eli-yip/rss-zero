@@ -28,8 +28,8 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
-	return func() {
+func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cronDB.CronJob) {
+	return func(jobInfoChan chan cronDB.CronJob) {
 		rawCronID := cronID // use raw cron id to record whether this cron job is to finish older job
 		if cronID == "" {
 			cronID = xid.New().String()
