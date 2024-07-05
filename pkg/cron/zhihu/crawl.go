@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -18,15 +19,16 @@ import (
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/cron"
+	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
-	crawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawl"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawl"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
+func Crawl(taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
 		logger := log.NewZapLogger()
 		cronID := xid.New().String()
@@ -35,12 +37,41 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 		var err error
 		var errCount int = 0
 
+		cronDBService := cronDB.NewDBService(db)
+		jobID, err := cronDBService.CheckJob(taskID)
+		if err != nil {
+			logger.Error("Failed to check job", zap.Error(err), zap.String("task_type", taskID))
+			return
+		}
+		if jobID != "" {
+			logger.Info("There is another job running, skip this", zap.String("job_id", jobID))
+			return
+		}
+
+		if _, err = cronDBService.AddJob(cronID, taskID); err != nil {
+			logger.Error("Failed to add job", zap.Error(err))
+			return
+		}
+
 		defer func() {
 			if errCount > 0 || err != nil {
 				notify.NoticeWithLogger(notifier, "Failed to crawl zhihu", "", logger)
+				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
+					logger.Error("Failed to update cron job status", zap.Error(err))
+				}
+				return
 			}
+
 			if err := recover(); err != nil {
 				logger.Error("CrawlZhihu() panic", zap.Any("err", err))
+				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
+					logger.Error("Failed to update cron job status", zap.Any("err", err))
+				}
+				return
+			}
+
+			if err = cronDBService.UpdateStatus(cronID, cronDB.StatusFinished); err != nil {
+				logger.Error("Failed to update cron job status", zap.Error(err))
 			}
 		}()
 
@@ -68,8 +99,20 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 		}
 		logger.Info("Get zhihu subs successfully", zap.Int("count", len(subs)))
 
+		subsNeedToCrawl := FilterSubs(include, exclude, SubsToSlice(subs))
+		subs = SliceToSubs(subsNeedToCrawl, subs)
+
 		var path, content string
 		for _, sub := range subs {
+			// check if lastCrawl is set, if set, only crawl this author and subs after this author
+			if lastCrawl != "" {
+				for _, sub := range subs {
+					if sub.AuthorID != lastCrawl {
+						continue
+					}
+				}
+			}
+
 			ts := common.ZhihuTypeToString(sub.Type) // type in string
 			logger.Info("Start to crawl zhihu sub", zap.String("author_id", sub.AuthorID), zap.String("type", ts))
 
@@ -323,6 +366,13 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 				logger.Error("Failed to save rss content to redis", zap.Error(err))
 			}
 			logger.Info("Save to redis successfully")
+
+			if err = cronDBService.RecordDetail(cronID, sub.AuthorID); err != nil {
+				logger.Error("Failed to record author detail", zap.String("author_id", sub.AuthorID), zap.Error(err))
+				errCount++
+				return
+			}
+			logger.Info("Record author detail successfully", zap.String("author_id", sub.AuthorID))
 		}
 	}
 }
@@ -406,3 +456,51 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 func removeDC0Cookie(rs redis.Redis) (err error) { return rs.Del(redis.ZhihuCookiePath) }
 
 func removeZC0Cookie(rs redis.Redis) (err error) { return rs.Del(redis.ZhihuCookiePathZC0) }
+
+func SubsToSlice(subs []zhihuDB.Sub) (result []string) {
+	for _, sub := range subs {
+		result = append(result, sub.AuthorID)
+	}
+	return result
+}
+
+func SliceToSubs(ids []string, subs []zhihuDB.Sub) (result []zhihuDB.Sub) {
+	idSet := mapset.NewSet[string]()
+	for _, i := range ids {
+		idSet.Add(i)
+	}
+
+	for _, sub := range subs {
+		if idSet.Contains(sub.AuthorID) {
+			result = append(result, sub)
+		}
+	}
+
+	return result
+}
+
+func FilterSubs(include, exlucde, all []string) (results []string) {
+	includeSet := mapset.NewSet[string]()
+	excludeSet := mapset.NewSet[string]()
+	allSet := mapset.NewSet[string]()
+
+	for _, i := range include {
+		includeSet.Add(i)
+	}
+	for _, e := range exlucde {
+		excludeSet.Add(e)
+	}
+	for _, a := range all {
+		allSet.Add(a)
+	}
+
+	var resultSet mapset.Set[string]
+	if includeSet.IsEmpty() || includeSet.Contains("*") {
+		resultSet = allSet.Difference(excludeSet)
+	} else {
+		resultSet = allSet.Intersect(includeSet)
+		resultSet = resultSet.Difference(excludeSet)
+	}
+
+	return resultSet.ToSlice()
+}

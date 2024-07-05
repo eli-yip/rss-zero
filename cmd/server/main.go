@@ -316,7 +316,8 @@ func setupCronCrawlJob(logger *zap.Logger,
 				return fmt.Errorf("failed to add zsxq cron job: %w", err)
 			}
 		case cronDB.TypeZhihu:
-			if err = cronService.AddCrawlJob("zhihu_crawl", definition.CronExpr, zhihuCron.Crawl(redisService, db, notifier)); err != nil {
+			if err = cronService.AddCrawlJob("zhihu_crawl", definition.CronExpr,
+				zhihuCron.Crawl(definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)); err != nil {
 				return fmt.Errorf("failed to add zsxq cron job: %w", err)
 			}
 		case cronDB.TypeXiaobot:

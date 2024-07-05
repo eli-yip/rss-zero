@@ -1,9 +1,11 @@
 package db
 
 import (
+	"errors"
 	"time"
 
 	"github.com/rs/xid"
+	"gorm.io/gorm"
 )
 
 type CronJob struct {
@@ -26,29 +28,44 @@ const (
 )
 
 type CronJobIface interface {
-	AddJob(taskType string) (taskID string, err error)
-	StopJob(taskID string) (err error)
-	UpdateStatus(taskID string, status int) (err error)
-	RecordDetail(taskID, detail string) (err error)
+	AddJob(jobID, taskType string) (string, error)
+	StopJob(jobID string) (err error)
+	CheckJob(taskType string) (jobID string, err error)
+	UpdateStatus(jobID string, status int) (err error)
+	RecordDetail(jobID, detail string) (err error)
 }
 
-func (ds *DBService) AddJob(taskType string) (taskID string, err error) {
-	taskID = xid.New().String()
-	return taskID, ds.Save(&CronJob{
-		ID:       taskID,
+func (ds *DBService) AddJob(jobID, taskType string) (string, error) {
+	if jobID == "" {
+		jobID = xid.New().String()
+	}
+	return jobID, ds.Save(&CronJob{
+		ID:       jobID,
 		TaskType: taskType,
 		Status:   StatusRunning,
 	}).Error
 }
 
-func (ds *DBService) StopJob(taskID string) (err error) {
-	return ds.Model(&CronJob{}).Where("id = ?", taskID).Update("status", StatusStopped).Error
+func (ds *DBService) CheckJob(taskType string) (jobID string, err error) {
+	var job CronJob
+	err = ds.Where("task_type = ? AND status = ?", taskType, StatusRunning).First(&job).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", nil
+		}
+		return "", err
+	}
+	return job.ID, nil
 }
 
-func (ds *DBService) UpdateStatus(taskID string, status int) (err error) {
-	return ds.Model(&CronJob{}).Where("id = ?", taskID).Update("status", status).Error
+func (ds *DBService) StopJob(jobID string) (err error) {
+	return ds.Model(&CronJob{}).Where("id = ?", jobID).Update("status", StatusStopped).Error
 }
 
-func (ds *DBService) RecordDetail(taskID, detail string) (err error) {
-	return ds.Model(&CronJob{}).Where("id = ?", taskID).Update("detail", detail).Error
+func (ds *DBService) UpdateStatus(jobID string, status int) (err error) {
+	return ds.Model(&CronJob{}).Where("id = ?", jobID).Update("status", status).Error
+}
+
+func (ds *DBService) RecordDetail(jobID, detail string) (err error) {
+	return ds.Model(&CronJob{}).Where("id = ?", jobID).Update("detail", detail).Error
 }

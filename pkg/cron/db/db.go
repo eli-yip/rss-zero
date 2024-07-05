@@ -9,6 +9,4 @@ type DB interface {
 	CronJobIface
 }
 
-func NewDBService(db *gorm.DB) DB {
-	return &DBService{db}
-}
+func NewDBService(db *gorm.DB) DB { return &DBService{db} }
