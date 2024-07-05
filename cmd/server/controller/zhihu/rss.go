@@ -17,7 +17,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/common"
-	zhihuCrawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawler"
+	zhihuCrawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawl"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
