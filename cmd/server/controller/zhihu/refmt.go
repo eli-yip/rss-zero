@@ -22,7 +22,7 @@ type ZhihuReformatReq struct {
 // Reformat reformats the Zhihu content based on the author_id.
 // It will start a goroutine to reformat the content
 // and return a JSON response with a message indicating the start of the reformatting process.
-func (h *ZhihuController) Reformat(c echo.Context) error {
+func (h *Controller) Reformat(c echo.Context) error {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req ZhihuReformatReq

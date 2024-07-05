@@ -17,7 +17,7 @@ type AddRequest struct {
 	URL  string `json:"url"`
 }
 
-func (h *ZhihuController) Add(c echo.Context) (err error) {
+func (h *Controller) Add(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req AddRequest
@@ -59,7 +59,7 @@ type UpdateRequest struct {
 	URL  *string `json:"url"`
 }
 
-func (h *ZhihuController) Update(c echo.Context) (err error) {
+func (h *Controller) Update(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req UpdateRequest
@@ -101,7 +101,7 @@ func (h *ZhihuController) Update(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})
 }
 
-func (h *ZhihuController) Delete(c echo.Context) (err error) {
+func (h *Controller) Delete(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	id := c.Param("id")
@@ -113,7 +113,7 @@ func (h *ZhihuController) Delete(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})
 }
 
-func (h *ZhihuController) List(c echo.Context) (err error) {
+func (h *Controller) List(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	services, err := h.db.GetServices()
@@ -125,7 +125,7 @@ func (h *ZhihuController) List(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: services})
 }
 
-func (h *ZhihuController) Activate(c echo.Context) (err error) {
+func (h *Controller) Activate(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	ID := c.Param("id")

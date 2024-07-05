@@ -48,7 +48,7 @@ type FreshRSSFeed struct {
 // with the author ID and the server URL from the configuration.
 // The internal feeds are constructed using the same layouts, but with the internal server URL from the configuration.
 // The function returns an error if there is an issue with the JSON serialization or if the author ID is not provided.
-func (h *ZhihuController) Feed(c echo.Context) error {
+func (h *Controller) Feed(c echo.Context) error {
 	logger := c.Get("logger").(*zap.Logger)
 
 	authorID := c.Param("id")

@@ -27,7 +27,7 @@ type CheckCookieResp struct {
 	ZSECKCookie *string `json:"zse_ck_cookie"`
 }
 
-func (h *ZhihuController) CheckCookie(c echo.Context) (err error) {
+func (h *Controller) CheckCookie(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	d_c0, err := h.redis.Get(redis.ZhihuCookiePath)
@@ -67,7 +67,7 @@ func getPointer(s string, err error) *string {
 	return &s
 }
 
-func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
+func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req SetCookieReq
@@ -75,6 +75,8 @@ func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
 		logger.Error("Failed to update zhihu d_c0 cookie", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
+
+	respData := make(map[string]string)
 
 	if req.DC0Cookie != nil {
 		dC0Cookie := *req.DC0Cookie
@@ -107,6 +109,8 @@ func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
 		logger.Info("Update zhihu d_c0 cookie in redis successfully", zap.String("cookie", d_c0))
+
+		respData["d_c0"] = d_c0
 	}
 
 	if req.ZC0Cookie != nil {
@@ -134,6 +138,8 @@ func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
 		logger.Info("Update zhihu z_c0 cookie in redis successfully", zap.String("cookie", z_c0))
+
+		respData["z_c0"] = z_c0
 	}
 
 	if req.ZSECKCookie != nil {
@@ -149,9 +155,11 @@ func (h *ZhihuController) UpdateCookie(c echo.Context) (err error) {
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
 		logger.Info("Update zhihu zse_ck cookie in redis successfully", zap.String("cookie", zse_ck))
+
+		respData["zse_ck"] = zse_ck
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})
+	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: respData})
 }
 
 func extractCookieValue(cookie string) (result string) {

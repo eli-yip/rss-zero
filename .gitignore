@@ -1,7 +1,7 @@
 .env
 /config.toml
 test
-test/
+/test
 *.prof
 *.wav
 /crawler

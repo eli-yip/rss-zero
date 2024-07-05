@@ -26,7 +26,7 @@ import (
 // It will check if the author exists in the database and add it if it doesn't.
 // If the author does not exist in Zhihu, it will return a bad request response.
 // If the author exists, it will retrieve the RSS feed from Redis and return it in the response.
-func (h *ZhihuController) AnswerRSS(c echo.Context) (err error) {
+func (h *Controller) AnswerRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	authorID := c.Get("feed_id").(string)
@@ -55,7 +55,7 @@ func (h *ZhihuController) AnswerRSS(c echo.Context) (err error) {
 // It will check if the author exists in the database and add it if it doesn't.
 // If the author does not exist in Zhihu, it will return a bad request response.
 // If the author exists, it will retrieve the RSS feed from Redis and return it in the response.
-func (h *ZhihuController) ArticleRSS(c echo.Context) (err error) {
+func (h *Controller) ArticleRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	authorID := c.Get("feed_id").(string)
@@ -84,7 +84,7 @@ func (h *ZhihuController) ArticleRSS(c echo.Context) (err error) {
 // It will check if the author exists in the database and add it if it doesn't.
 // If the author does not exist in Zhihu, it will return a bad request response.
 // If the author exists, it will retrieve the RSS feed from Redis and return it in the response.
-func (h *ZhihuController) PinRSS(c echo.Context) (err error) {
+func (h *Controller) PinRSS(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	authorID := c.Get("feed_id").(string)
@@ -111,7 +111,7 @@ func (h *ZhihuController) PinRSS(c echo.Context) (err error) {
 
 // getRSS gets the RSS content from Redis.
 // It will send a task to the task channel and wait for the result.
-func (h *ZhihuController) getRSS(key string, logger *zap.Logger) (content string, err error) {
+func (h *Controller) getRSS(key string, logger *zap.Logger) (content string, err error) {
 	logger = logger.With(zap.String("task_id", xid.New().String()))
 	logger.Info("Start to get rss from redis", zap.String("key", key))
 	defer logger.Info("Close task channel")
@@ -135,7 +135,7 @@ func (h *ZhihuController) getRSS(key string, logger *zap.Logger) (content string
 // processTask processes the task from the task channel.
 // It will get the RSS content from Redis and send it to the task channel.
 // If the content does not exist in Redis, it will generate the RSS content and set it to Redis.
-func (h *ZhihuController) processTask() {
+func (h *Controller) processTask() {
 	for task := range h.taskCh {
 		key := <-task.TextCh
 		logger := task.Logger
@@ -164,7 +164,7 @@ func (h *ZhihuController) processTask() {
 }
 
 // generateRSS generates rss content and set it to redis.
-func (h *ZhihuController) generateRSS(key string, logger *zap.Logger) (content string, err error) {
+func (h *Controller) generateRSS(key string, logger *zap.Logger) (content string, err error) {
 	contentType, authorID, err := h.extractTypeAuthorFromKey(key)
 	if err != nil {
 		return "", fmt.Errorf("failed to extract type and authorID from key: %w", err)
@@ -185,7 +185,7 @@ func (h *ZhihuController) generateRSS(key string, logger *zap.Logger) (content s
 // extractTypeAuthorFromKey extracts type and authorID from rss content key.
 //
 // key format: zhihu_rss_{type}_{authorID}
-func (h *ZhihuController) extractTypeAuthorFromKey(key string) (t int, authorID string, err error) {
+func (h *Controller) extractTypeAuthorFromKey(key string) (t int, authorID string, err error) {
 	strs := strings.Split(key, "_")
 	if len(strs) != 4 {
 		return 0, "", fmt.Errorf("invalid key: %s", key)
@@ -208,7 +208,7 @@ func (h *ZhihuController) extractTypeAuthorFromKey(key string) (t int, authorID 
 }
 
 // checkSub checks if the sub exists in db, if not, add it to db
-func (h *ZhihuController) checkSub(t int, authorID string, logger *zap.Logger) (err error) {
+func (h *Controller) checkSub(t int, authorID string, logger *zap.Logger) (err error) {
 	// check if sub exists
 	exist, err := h.db.CheckSub(authorID, t)
 	if err != nil {
@@ -238,7 +238,7 @@ var errAuthorNotExistInZhihu = errors.New("author does not exist in zhihu")
 // parseAuthorName parses author name from authorID, and returns the author name.
 //
 // It will save the author name to db if it's not found in db.
-func (h *ZhihuController) parseAuthorName(authorID string, logger *zap.Logger) (authorName string, err error) {
+func (h *Controller) parseAuthorName(authorID string, logger *zap.Logger) (authorName string, err error) {
 	zse_ck, err := h.redis.Get(redis.ZhihuCookiePathZSECK)
 	if err != nil {
 		return "", fmt.Errorf("failed to get zhihu __zse_ck cookie from redis: %w", err)

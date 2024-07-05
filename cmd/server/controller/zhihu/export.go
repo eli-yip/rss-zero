@@ -41,7 +41,7 @@ type ZhihuExportResp struct {
 // and starts the export process in a separate goroutine.
 // The exported file is saved to Minio and a notification is sent upon completion.
 // The function returns a JSON response with the export status and file information.
-func (h *ZhihuController) Export(c echo.Context) (err error) {
+func (h *Controller) Export(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
 	var req ZhihuExportReq
@@ -181,7 +181,7 @@ func (h *ZhihuController) Export(c echo.Context) (err error) {
 
 // parseOption parses the ZhihuExportReq and returns the corresponding zhihuExport.Option.
 // It validates the input parameters and returns an error if any of the required fields are missing or invalid.
-func (h *ZhihuController) parseOption(req ZhihuExportReq) (opts zhihuExport.Option, err error) {
+func (h *Controller) parseOption(req ZhihuExportReq) (opts zhihuExport.Option, err error) {
 	if req.Author == nil {
 		return opts, errors.New("author is required")
 	}

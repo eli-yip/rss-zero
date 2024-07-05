@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (h *ZhihuController) AuthorName(c echo.Context) (err error) {
+func (h *Controller) AuthorName(c echo.Context) (err error) {
 	type (
 		Response struct {
 			ID       string `json:"id"`
