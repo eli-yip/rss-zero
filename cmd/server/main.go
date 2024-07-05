@@ -331,19 +331,32 @@ func setupCronCrawlJob(logger *zap.Logger,
 	}
 
 	for _, definition := range definitions {
+		var jobID string
 		switch definition.Type {
 		case cronDB.TypeZsxq:
-			if err = cronService.AddCrawlJob("zsxq_crawl", definition.CronExpr, zsxqCron.Crawl(redisService, db, notifier)); err != nil {
+			if jobID, err = cronService.AddCrawlJob("zsxq_crawl", definition.CronExpr, zsxqCron.Crawl(redisService, db, notifier)); err != nil {
 				return fmt.Errorf("failed to add zsxq cron job: %w", err)
 			}
+			logger.Info("Add zsxq cron crawl job successfully", zap.String("job_id", jobID))
+			if err = cronDBService.PatchDefinition(definition.ID, nil, nil, nil, &jobID); err != nil {
+				return fmt.Errorf("failed to patch cron task definition: %w", err)
+			}
 		case cronDB.TypeZhihu:
-			if err = cronService.AddCrawlJob("zhihu_crawl", definition.CronExpr,
+			if jobID, err = cronService.AddCrawlJob("zhihu_crawl", definition.CronExpr,
 				zhihuCron.Crawl("", definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)); err != nil {
 				return fmt.Errorf("failed to add zsxq cron job: %w", err)
 			}
+			logger.Info("Add zhihu cron crawl job successfully", zap.String("job_id", jobID))
+			if err = cronDBService.PatchDefinition(definition.ID, nil, nil, nil, &jobID); err != nil {
+				return fmt.Errorf("failed to patch cron task definition: %w", err)
+			}
 		case cronDB.TypeXiaobot:
-			if err = cronService.AddCrawlJob("xiaobot_crawl", definition.CronExpr, xiaobotCron.Crawl(redisService, db, notifier)); err != nil {
+			if jobID, err = cronService.AddCrawlJob("xiaobot_crawl", definition.CronExpr, xiaobotCron.Crawl(redisService, db, notifier)); err != nil {
 				return fmt.Errorf("failed to add xiaobot cron job: %w", err)
+			}
+			logger.Info("Add xiaobot cron crawl job successfully", zap.String("job_id", jobID))
+			if err = cronDBService.PatchDefinition(definition.ID, nil, nil, nil, &jobID); err != nil {
+				return fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		default:
 			return fmt.Errorf("unknown cron job type %d", definition.Type)

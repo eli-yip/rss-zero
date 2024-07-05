@@ -24,7 +24,7 @@ func NewCronService(logger *zap.Logger) (*CronService, error) {
 	return &CronService{s: s, logger: logger}, nil
 }
 
-func (c *CronService) AddCrawlJob(name, cronExpr string, taskFunc func()) (err error) {
+func (c *CronService) AddCrawlJob(name, cronExpr string, taskFunc func()) (jobID string, err error) {
 	j, err := c.s.NewJob(
 		gocron.CronJob(cronExpr, false),
 		gocron.NewTask(taskFunc),
@@ -32,9 +32,8 @@ func (c *CronService) AddCrawlJob(name, cronExpr string, taskFunc func()) (err e
 		gocron.WithName(name),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to add job %s: %w", name, err)
+		return "", fmt.Errorf("failed to add job %s: %w", name, err)
 	}
-	c.logger.Info("add job", zap.Any("job", j.ID()), zap.String("name", name))
 
-	return nil
+	return j.ID().String(), nil
 }
