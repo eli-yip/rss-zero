@@ -17,7 +17,6 @@ import (
 	"gorm.io/gorm"
 
 	endoflifeController "github.com/eli-yip/rss-zero/cmd/server/controller/endoflife"
-	jobController "github.com/eli-yip/rss-zero/cmd/server/controller/job"
 	pickController "github.com/eli-yip/rss-zero/cmd/server/controller/pick"
 	rsshubController "github.com/eli-yip/rss-zero/cmd/server/controller/rsshub"
 	xiaobotController "github.com/eli-yip/rss-zero/cmd/server/controller/xiaobot"
@@ -25,15 +24,16 @@ import (
 	zsxqController "github.com/eli-yip/rss-zero/cmd/server/controller/zsxq"
 	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/pkg/cron"
-	xiaobotCron "github.com/eli-yip/rss-zero/pkg/cron/xiaobot"
-	zhihuCron "github.com/eli-yip/rss-zero/pkg/cron/zhihu"
-	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/version"
+	"github.com/eli-yip/rss-zero/pkg/cron"
+	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
+	xiaobotCron "github.com/eli-yip/rss-zero/pkg/cron/xiaobot"
+	zhihuCron "github.com/eli-yip/rss-zero/pkg/cron/zhihu"
+	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
@@ -76,13 +76,12 @@ func main() {
 		logger.Info("No empty sub id found")
 	}
 
-	var jobList []jobController.Job
-	if jobList, err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
+	if err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
 		logger.Fatal("fail to setup cron", zap.Error(err))
 	}
 	logger.Info("cron service initialized")
 
-	e := setupEcho(redisService, db, bark, jobList, logger)
+	e := setupEcho(redisService, db, bark, logger)
 	logger.Info("echo server initialized")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -140,7 +139,6 @@ func initService(logger *zap.Logger) (redisService redis.Redis,
 func setupEcho(redisService redis.Redis,
 	db *gorm.DB,
 	notifier notify.Notifier,
-	jobList []jobController.Job,
 	logger *zap.Logger) (e *echo.Echo) {
 	e = echo.New()
 	e.HideBanner = true
@@ -272,11 +270,6 @@ func setupEcho(redisService redis.Redis,
 	archivePickApi := pickApiGroup.GET("/archive", pickHandler.Archive)
 	archivePickApi.Name = "Archive pick route"
 
-	jobHandler := jobController.NewController(jobList, logger)
-	// /api/v1/job
-	jobApi := apiGroup.POST("/job/:name", jobHandler.DoJob)
-	jobApi.Name = "Job route"
-
 	// /api/v1/rsshub
 	rssHubApi := apiGroup.Group("/rsshub")
 	feedGeneratorApi := rssHubApi.POST("/feed", rsshubController.GenerateRSSHubFeed)
@@ -304,57 +297,36 @@ func setupCronCrawlJob(logger *zap.Logger,
 	redisService redis.Redis,
 	db *gorm.DB,
 	notifier notify.Notifier,
-) (jobList []jobController.Job, err error) {
-	type crawlFunc func(redis.Redis, *gorm.DB, notify.Notifier) func()
-	type crawlJob struct {
-		name string
-		fn   crawlFunc
-	}
-	type exportFunc func() func()
-	type exportJob struct {
-		name string
-		fn   exportFunc
-	}
-
+) (err error) {
 	cronService, err := cron.NewCronService(logger)
 	if err != nil {
-		return nil, fmt.Errorf("cron service init failed: %w", err)
+		return fmt.Errorf("cron service init failed: %w", err)
 	}
 
-	cronCrawlJobs := []crawlJob{
-		{"zsxq_crawl", zsxqCron.Crawl},
-		{"xiaobot_crawl", xiaobotCron.Crawl},
+	cronDBService := cronDB.NewDBService(db)
+	definitions, err := cronDBService.GetDefinitions()
+	if err != nil {
+		return fmt.Errorf("failed to get cron task definitions: %w", err)
 	}
 
-	dailyJobs := []crawlJob{
-		{"zhihu_crawl", zhihuCron.Crawl},
-	}
-
-	for _, job := range cronCrawlJobs {
-		jobFunc := job.fn(redisService, db, notifier)
-		if err = cronService.AddCrawlJob(job.name, jobFunc); err != nil {
-			return nil, fmt.Errorf("fail to add job: %w", err)
-		}
-		jobList = append(jobList, jobController.Job{Name: job.name, Func: jobFunc})
-	}
-
-	for _, job := range dailyJobs {
-		jobFunc := job.fn(redisService, db, notifier)
-		// if err = cronService.AddDailyCrawlJob(job.name, jobFunc); err != nil {
-		// 	return nil, fmt.Errorf("fail to add job: %w", err)
-		// }
-		jobList = append(jobList, jobController.Job{Name: job.name, Func: jobFunc})
-	}
-
-	cronExportJobs := []exportJob{
-		// {"zhihu export", zhihuCron.Export,},
-	}
-
-	for _, job := range cronExportJobs {
-		if err = cronService.AddExportJob(job.name, job.fn()); err != nil {
-			return nil, fmt.Errorf("fail to add job: %w", err)
+	for _, definition := range definitions {
+		switch definition.Type {
+		case cronDB.TypeZsxq:
+			if err = cronService.AddCrawlJob("zsxq_crawl", definition.CronExpr, zsxqCron.Crawl(redisService, db, notifier)); err != nil {
+				return fmt.Errorf("failed to add zsxq cron job: %w", err)
+			}
+		case cronDB.TypeZhihu:
+			if err = cronService.AddCrawlJob("zhihu_crawl", definition.CronExpr, zhihuCron.Crawl(redisService, db, notifier)); err != nil {
+				return fmt.Errorf("failed to add zsxq cron job: %w", err)
+			}
+		case cronDB.TypeXiaobot:
+			if err = cronService.AddCrawlJob("xiaobot_crawl", definition.CronExpr, xiaobotCron.Crawl(redisService, db, notifier)); err != nil {
+				return fmt.Errorf("failed to add xiaobot cron job: %w", err)
+			}
+		default:
+			return fmt.Errorf("unknown cron job type %d", definition.Type)
 		}
 	}
 
-	return jobList, nil
+	return nil
 }

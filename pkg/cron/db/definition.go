@@ -29,6 +29,12 @@ type CronTaskIface interface {
 	GetDefinitions() (tasks []*CronTask, err error)
 }
 
+const (
+	TypeZsxq = iota
+	TypeZhihu
+	TypeXiaobot
+)
+
 func (ds *DBService) AddDefinition(taskType int, cronExpr string, include, exclude []string) (id string, err error) {
 	id = xid.New().String()
 	return id, ds.Save(&CronTask{
