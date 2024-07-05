@@ -21,6 +21,7 @@ func (s *Sub) TableName() string { return "zhihu_sub" }
 type DBSub interface {
 	AddSub(authorID string, subType int) error
 	CheckSub(authorID string, subType int) (bool, error)
+	CheckSubByID(id string) (bool, error)
 	GetSubs() ([]Sub, error)
 	GetSubsWithNoID() ([]Sub, error)
 	SetSubID(authorID string, subType int, id string) error
@@ -34,6 +35,17 @@ func (d *DBService) AddSub(authorID string, subType int) error {
 func (d *DBService) CheckSub(authorID string, subType int) (bool, error) {
 	var sub Sub
 	if err := d.Where("author_id = ? and type = ?", authorID, subType).First(&sub).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (d *DBService) CheckSubByID(id string) (bool, error) {
+	var sub Sub
+	if err := d.Where("id = ?", id).First(&sub).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}

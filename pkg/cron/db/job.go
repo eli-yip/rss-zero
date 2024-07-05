@@ -31,6 +31,7 @@ type CronJobIface interface {
 	AddJob(jobID, taskType string) (string, error)
 	StopJob(jobID string) (err error)
 	CheckJob(taskType string) (jobID string, err error)
+	FindRunningJob() ([]*CronJob, error)
 	UpdateStatus(jobID string, status int) (err error)
 	RecordDetail(jobID, detail string) (err error)
 }
@@ -56,6 +57,11 @@ func (ds *DBService) CheckJob(taskType string) (jobID string, err error) {
 		return "", err
 	}
 	return job.ID, nil
+}
+
+func (ds *DBService) FindRunningJob() (jobs []*CronJob, err error) {
+	err = ds.Where("status = ?", StatusRunning).Find(&jobs).Error
+	return jobs, err
 }
 
 func (ds *DBService) StopJob(jobID string) (err error) {

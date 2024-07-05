@@ -304,6 +304,27 @@ func setupCronCrawlJob(logger *zap.Logger,
 	}
 
 	cronDBService := cronDB.NewDBService(db)
+	runningJobs, err := cronDBService.FindRunningJob()
+	if err != nil {
+		return fmt.Errorf("failed to find running cron jobs: %w", err)
+	}
+
+	for _, job := range runningJobs {
+		definition, err := cronDBService.GetDefinition(job.TaskType)
+		if err != nil {
+			return fmt.Errorf("failed to get cron task definition: %w", err)
+		}
+
+		switch definition.Type {
+		case cronDB.TypeZsxq:
+		case cronDB.TypeZhihu:
+			go zhihuCron.Crawl("", definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)
+		case cronDB.TypeXiaobot:
+		default:
+			return fmt.Errorf("unknown cron job type %d", definition.Type)
+		}
+	}
+
 	definitions, err := cronDBService.GetDefinitions()
 	if err != nil {
 		return fmt.Errorf("failed to get cron task definitions: %w", err)
@@ -317,7 +338,7 @@ func setupCronCrawlJob(logger *zap.Logger,
 			}
 		case cronDB.TypeZhihu:
 			if err = cronService.AddCrawlJob("zhihu_crawl", definition.CronExpr,
-				zhihuCron.Crawl(definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)); err != nil {
+				zhihuCron.Crawl("", definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)); err != nil {
 				return fmt.Errorf("failed to add zsxq cron job: %w", err)
 			}
 		case cronDB.TypeXiaobot:

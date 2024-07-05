@@ -28,11 +28,14 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func Crawl(taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
+func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func() {
 	return func() {
-		logger := log.NewZapLogger()
-		cronID := xid.New().String()
-		logger = logger.With(zap.String("cron_id", cronID))
+		rawCronID := cronID // use raw cron id to record whether this cron job is to finish older job
+		if cronID == "" {
+			cronID = xid.New().String()
+		}
+
+		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
 
 		var err error
 		var errCount int = 0
@@ -43,14 +46,17 @@ func Crawl(taskID string, include, exclude []string, lastCrawl string, redisServ
 			logger.Error("Failed to check job", zap.Error(err), zap.String("task_type", taskID))
 			return
 		}
-		if jobID != "" {
+		if jobID != "" && rawCronID == "" {
 			logger.Info("There is another job running, skip this", zap.String("job_id", jobID))
 			return
 		}
 
-		if _, err = cronDBService.AddJob(cronID, taskID); err != nil {
-			logger.Error("Failed to add job", zap.Error(err))
-			return
+		// if raw cron id is empty, this is a new job, add it to db
+		if rawCronID == "" {
+			if _, err = cronDBService.AddJob(cronID, taskID); err != nil {
+				logger.Error("Failed to add job", zap.Error(err))
+				return
+			}
 		}
 
 		defer func() {
@@ -92,6 +98,18 @@ func Crawl(taskID string, include, exclude []string, lastCrawl string, redisServ
 		}
 		defer requestService.ClearCache(logger)
 
+		if lastCrawl != "" {
+			exist, err := dbService.CheckSubByID(lastCrawl)
+			if err != nil {
+				logger.Error("Failed to check sub by id", zap.String("id", lastCrawl), zap.Error(err))
+				return
+			}
+			if !exist {
+				logger.Error("Last crawl author not found", zap.String("id", lastCrawl))
+				lastCrawl = ""
+			}
+		}
+
 		var subs []zhihuDB.Sub
 		if subs, err = dbService.GetSubs(); err != nil {
 			logger.Error("Failed to get zhihu subs", zap.Error(err))
@@ -107,7 +125,7 @@ func Crawl(taskID string, include, exclude []string, lastCrawl string, redisServ
 			// check if lastCrawl is set, if set, only crawl this author and subs after this author
 			if lastCrawl != "" {
 				for _, sub := range subs {
-					if sub.AuthorID != lastCrawl {
+					if sub.ID != lastCrawl {
 						continue
 					}
 				}
@@ -367,12 +385,12 @@ func Crawl(taskID string, include, exclude []string, lastCrawl string, redisServ
 			}
 			logger.Info("Save to redis successfully")
 
-			if err = cronDBService.RecordDetail(cronID, sub.AuthorID); err != nil {
-				logger.Error("Failed to record author detail", zap.String("author_id", sub.AuthorID), zap.Error(err))
+			if err = cronDBService.RecordDetail(cronID, sub.ID); err != nil {
+				logger.Error("Failed to record job detail", zap.String("sub_id", sub.ID), zap.Error(err))
 				errCount++
 				return
 			}
-			logger.Info("Record author detail successfully", zap.String("author_id", sub.AuthorID))
+			logger.Info("Record job detail successfully", zap.String("sub_id", sub.ID))
 		}
 	}
 }
