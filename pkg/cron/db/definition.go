@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+	"github.com/rs/xid"
 	"gorm.io/gorm"
 )
 
@@ -14,8 +15,61 @@ type CronTask struct {
 	DeleteAt  gorm.DeletedAt
 	Type      int            `gorm:"column:type;type:int"`
 	CronExpr  string         `gorm:"column:cron_expr;type:string"`
-	Include   pq.StringArray `gorm:"column:include;type:string[]"`
-	Exclude   pq.StringArray `gorm:"column:exclude;type:string[]"`
+	Include   pq.StringArray `gorm:"column:include;type:text[]"`
+	Exclude   pq.StringArray `gorm:"column:exclude;type:text[]"`
 }
 
 func (*CronTask) TableName() string { return "cron_tasks" }
+
+type CronTaskIface interface {
+	AddDefinition(taskType int, cronExpr string, include, exclude []string) (id string, err error)
+	PatchDefinition(id string, cronExpr *string, include, exlucde []string) (err error)
+	DeleteDefinition(id string) (err error)
+	GetDefinition(id string) (task *CronTask, err error)
+	GetDefinitions() (tasks []*CronTask, err error)
+}
+
+func (ds *DBService) AddDefinition(taskType int, cronExpr string, include, exclude []string) (id string, err error) {
+	id = xid.New().String()
+	return id, ds.Save(&CronTask{
+		ID:       id,
+		Type:     taskType,
+		CronExpr: cronExpr,
+		Include:  include,
+		Exclude:  exclude,
+	}).Error
+}
+
+func (ds *DBService) PatchDefinition(id string, cronExpr *string, include, exclude []string) (err error) {
+	task := &CronTask{}
+	if err = ds.First(task, "id = ?", id).Error; err != nil {
+		return err
+	}
+
+	if cronExpr != nil {
+		task.CronExpr = *cronExpr
+	}
+	if len(include) > 0 {
+		task.Include = include
+	}
+	if len(exclude) > 0 {
+		task.Exclude = exclude
+	}
+
+	return ds.Save(task).Error
+}
+
+func (ds *DBService) DeleteDefinition(id string) (err error) {
+	return ds.Delete(&CronTask{}, "id = ?", id).Error
+}
+
+func (ds *DBService) GetDefinition(id string) (task *CronTask, err error) {
+	task = &CronTask{}
+	err = ds.First(task, "id = ?", id).Error
+	return task, err
+}
+
+func (ds *DBService) GetDefinitions() (tasks []*CronTask, err error) {
+	err = ds.Find(&tasks).Error
+	return tasks, err
+}

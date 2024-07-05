@@ -1,6 +1,10 @@
 package db
 
-import "time"
+import (
+	"time"
+
+	"github.com/rs/xid"
+)
 
 type CronJob struct {
 	ID        string    `gorm:"primaryKey;column:id;type:string"`
@@ -26,4 +30,25 @@ type CronJobIface interface {
 	StopJob(taskID string) (err error)
 	UpdateStatus(taskID string, status int) (err error)
 	RecordDetail(taskID, detail string) (err error)
+}
+
+func (ds *DBService) AddJob(taskType string) (taskID string, err error) {
+	taskID = xid.New().String()
+	return taskID, ds.Save(&CronJob{
+		ID:       taskID,
+		TaskType: taskType,
+		Status:   StatusRunning,
+	}).Error
+}
+
+func (ds *DBService) StopJob(taskID string) (err error) {
+	return ds.Model(&CronJob{}).Where("id = ?", taskID).Update("status", StatusStopped).Error
+}
+
+func (ds *DBService) UpdateStatus(taskID string, status int) (err error) {
+	return ds.Model(&CronJob{}).Where("id = ?", taskID).Update("status", status).Error
+}
+
+func (ds *DBService) RecordDetail(taskID, detail string) (err error) {
+	return ds.Model(&CronJob{}).Where("id = ?", taskID).Update("detail", detail).Error
 }
