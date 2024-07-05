@@ -1,40 +1,56 @@
 package job
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+
+	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 )
 
 type Controller struct {
-	JobList []Job
-	logger  *zap.Logger
+	cronDBService    cronDB.DB
+	definitionToFunc DefinitionToFunc
+	logger           *zap.Logger
 }
 
-type JobFunc func()
-
-type Job struct {
-	Name string
-	Func JobFunc
+func NewController(cronDBService cronDB.DB, definitionToFunc DefinitionToFunc, logger *zap.Logger) *Controller {
+	return &Controller{cronDBService: cronDBService, definitionToFunc: definitionToFunc, logger: logger}
 }
 
-func NewController(jobList []Job, logger *zap.Logger) *Controller {
-	return &Controller{JobList: jobList, logger: logger}
-}
+type (
+	CrawlFunc        func()
+	DefinitionToFunc map[string]CrawlFunc
+)
 
-func (h *Controller) DoJob(c echo.Context) (err error) {
-	name := c.Param("name")
-	for _, job := range h.JobList {
-		if job.Name == name {
-			go job.Func()
-			return c.JSON(http.StatusOK, struct {
-				Status string `json:"status"`
-			}{Status: fmt.Sprintf("job %s started", name)})
-		}
+type (
+	Resp struct {
+		Message string         `json:"message"`
+		TaskDef cronDB.CronJob `json:"task_def"`
 	}
-	return c.JSON(http.StatusNotFound, struct {
-		Status string `json:"status"`
-	}{Status: "job not found"})
+	ErrResp struct {
+		Message string `json:"message"`
+	}
+)
+
+func (h *Controller) StartJob(c echo.Context) (err error) {
+	taskID := c.Param("task")
+
+	definition, err := h.cronDBService.GetDefinition(taskID)
+	if err != nil {
+		if errors.Is(err, cronDB.ErrDefinitionNotFound) {
+			return c.JSON(http.StatusBadRequest, &ErrResp{Message: "task definition not found"})
+		}
+		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
+	}
+
+	crawlFunc, ok := h.definitionToFunc[definition.ID]
+	if !ok {
+		return c.JSON(http.StatusBadRequest, &ErrResp{Message: "task definition not found"})
+	}
+
+	go crawlFunc()
+	return c.NoContent(http.StatusOK)
 }

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"time"
 
 	"github.com/lib/pq"
@@ -74,9 +75,16 @@ func (ds *DBService) DeleteDefinition(id string) (err error) {
 	return ds.Delete(&CronTask{}, "id = ?", id).Error
 }
 
+var (
+	ErrDefinitionNotFound = errors.New("definition not found")
+)
+
 func (ds *DBService) GetDefinition(id string) (task *CronTask, err error) {
 	task = &CronTask{}
 	err = ds.First(task, "id = ?", id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrDefinitionNotFound
+	}
 	return task, err
 }
 
