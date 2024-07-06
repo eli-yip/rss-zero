@@ -57,10 +57,10 @@ func (ds *DBService) PatchDefinition(id string, cronExpr *string, include, exclu
 	if cronExpr != nil {
 		task.CronExpr = *cronExpr
 	}
-	if len(include) > 0 {
+	if include != nil {
 		task.Include = include
 	}
-	if len(exclude) > 0 {
+	if exclude != nil {
 		task.Exclude = exclude
 	}
 
