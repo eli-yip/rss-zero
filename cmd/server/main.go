@@ -77,13 +77,13 @@ func main() {
 		logger.Info("No empty sub id found")
 	}
 
-	// var definitionToFunc jobController.DefinitionToFunc
-	if _, err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
+	var definitionToFunc jobController.DefinitionToFunc
+	if definitionToFunc, err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
 		logger.Fatal("fail to setup cron", zap.Error(err))
 	}
 	logger.Info("cron service initialized")
 
-	e := setupEcho(redisService, db, bark, logger)
+	e := setupEcho(redisService, db, bark, definitionToFunc, logger)
 	logger.Info("echo server initialized")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -141,6 +141,7 @@ func initService(logger *zap.Logger) (redisService redis.Redis,
 func setupEcho(redisService redis.Redis,
 	db *gorm.DB,
 	notifier notify.Notifier,
+	definitionToFunc jobController.DefinitionToFunc,
 	logger *zap.Logger) (e *echo.Echo) {
 	e = echo.New()
 	e.HideBanner = true
@@ -165,6 +166,8 @@ func setupEcho(redisService redis.Redis,
 	xiaobotDBService := xiaobotDB.NewDBService(db)
 	xiaobotHandler := xiaobotController.NewXiaobotController(redisService, xiaobotDBService, notifier, logger)
 	endOfLifeHandler := endoflifeController.NewController(redisService, logger)
+	cronDBService := cronDB.NewDBService(db)
+	jobHandler := jobController.NewController(cronDBService, definitionToFunc, logger)
 
 	// /rss
 	rssGroup := e.Group("/rss")
@@ -271,6 +274,21 @@ func setupEcho(redisService redis.Redis,
 	selectPickApi.Name = "Select pick route"
 	archivePickApi := pickApiGroup.GET("/archive", pickHandler.Archive)
 	archivePickApi.Name = "Archive pick route"
+
+	// /api/v1/job
+	jobApi := apiGroup.Group("/job")
+	startJobApi := jobApi.POST("/start/:task", jobHandler.StartJob)
+	startJobApi.Name = "Start job route"
+	getJobsApi := jobApi.GET("/list", jobHandler.GetJobs)
+	getJobsApi.Name = "Get jobs route"
+	getErrorJobsApi := jobApi.GET("/list/error", jobHandler.GetErrorJobs)
+	getErrorJobsApi.Name = "Get error jobs route"
+	addTaskApi := jobApi.POST("/task", jobHandler.AddTask)
+	addTaskApi.Name = "Add task route"
+	patchTaskApi := jobApi.POST("/task/patch", jobHandler.PatchTask)
+	patchTaskApi.Name = "Patch task route"
+	deleteTaskApi := jobApi.DELETE("/task/:id", jobHandler.DeleteTask)
+	deleteTaskApi.Name = "Delete task route"
 
 	// /api/v1/rsshub
 	rssHubApi := apiGroup.Group("/rsshub")
