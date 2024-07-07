@@ -3,9 +3,11 @@ package cron
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -24,20 +26,54 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 )
 
-func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cronDB.CronJob) {
+func Crawl(cronID, taskID string, include []string, exclude []string, lastCrawl string, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cronDB.CronJob) {
 	return func(jobInfoChan chan cronDB.CronJob) {
+		rawCronID := cronID
+		if cronID == "" {
+			cronID = xid.New().String()
+		}
 		// Init services
 		logger := log.NewZapLogger().With(zap.String("cron_id", xid.New().String()))
 
 		var err error
 		var errCount int = 0
 
+		cronDBService := cronDB.NewDBService(db)
+		jobID, err := cronDBService.CheckJob(taskID)
+		if err != nil {
+			logger.Error("Failed to check job", zap.Error(err), zap.String("task_id", taskID))
+			return
+		}
+		if jobID != "" && rawCronID == "" {
+			logger.Info("There is another job running, skip this", zap.String("task_type", taskID))
+			return
+		}
+
+		if rawCronID == "" {
+			if _, err = cronDBService.AddJob(cronID, taskID); err != nil {
+				logger.Error("Failed to add job", zap.Error(err), zap.String("task_id", taskID))
+				return
+			}
+		}
+
 		defer func() {
 			if errCount > 0 {
 				notify.NoticeWithLogger(notifier, "Failed to crawl zsxq", "", logger)
+				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
+					logger.Error("Failed to update cron job status", zap.Error(err))
+				}
+				return
 			}
 			if err := recover(); err != nil {
 				logger.Error("CrawlZsxq() panic", zap.Any("err", err))
+				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
+					logger.Error("Failed to update cron job status", zap.Any("err", err))
+				}
+				return
+			}
+
+			if err = cronDBService.UpdateStatus(cronID, cronDB.StatusFinished); err != nil {
+				logger.Error("Failed to update cron job status", zap.Error(err))
 			}
 		}()
 
@@ -65,8 +101,34 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 		}
 		logger.Info("Get group IDs from db successfully", zap.Int("count", len(groupIDs)))
 
+		if lastCrawl != "" {
+			groupIDint, err := strconv.Atoi(lastCrawl)
+			if err != nil {
+				logger.Error("Failed to convert lastCrawl to group id", zap.Error(err), zap.String("last_crawl", lastCrawl))
+				return
+			}
+			if !slices.Contains(groupIDs, groupIDint) {
+				logger.Error("Last crawl group id not in group ids", zap.String("last_crawl", lastCrawl))
+				lastCrawl = ""
+			}
+		}
+
+		groupIDNeedToCrawl, err := FilterGroupIDs(include, exclude, groupIDs)
+		if err != nil {
+			logger.Error("Failed to filter group ids", zap.Error(err))
+			return
+		}
+
 		// Iterate group IDs
-		for _, groupID := range groupIDs {
+		for _, groupID := range groupIDNeedToCrawl {
+			if lastCrawl != "" {
+				for _, idgroupID := range groupIDNeedToCrawl {
+					if idgroupID != groupID {
+						continue
+					}
+				}
+			}
+
 			if err = crawlGroup(groupID, requestService, parseService, redisService, rssRenderer, dbService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to do cron job on group", zap.Error(err))
@@ -82,6 +144,13 @@ func Crawl(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func
 				}
 				continue
 			}
+
+			if err = cronDBService.RecordDetail(cronID, strconv.Itoa(groupID)); err != nil {
+				logger.Error("Failed to record job detail", zap.Error(err), zap.Int("group_id", groupID))
+				errCount++
+				return
+			}
+			logger.Info("Record job detail successfully", zap.Int("group_id", groupID))
 		}
 	}
 }
@@ -254,4 +323,41 @@ func renderAndSaveRSSContent(groupID int, rssTopics []render.RSSTopic, rssRender
 	}
 
 	return nil
+}
+
+func FilterGroupIDs(include, exlucde []string, all []int) (results []int, err error) {
+	includeSet := mapset.NewSet[string]()
+	excludeSet := mapset.NewSet[string]()
+	allSet := mapset.NewSet[string]()
+
+	for _, id := range include {
+		includeSet.Add(id)
+	}
+	for _, id := range exlucde {
+		excludeSet.Add(id)
+	}
+	for _, id := range all {
+		idStr := strconv.Itoa(id)
+		allSet.Add(idStr)
+	}
+
+	var resultSet mapset.Set[string]
+	if includeSet.IsEmpty() || includeSet.Contains("*") {
+		resultSet = allSet.Difference(excludeSet)
+	} else {
+		resultSet = allSet.Intersect(includeSet)
+		resultSet = resultSet.Difference(excludeSet)
+	}
+
+	results = make([]int, 0, resultSet.Cardinality())
+	for id := range resultSet.Iter() {
+		idInt, err := strconv.Atoi(id)
+		if err != nil {
+			return nil, fmt.Errorf("fail to convert id %s to int: %w", id, err)
+		}
+		results = append(results, idInt)
+	}
+
+	slices.Sort(results)
+	return results, nil
 }

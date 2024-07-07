@@ -34,6 +34,7 @@ func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, r
 		if cronID == "" {
 			cronID = xid.New().String()
 		}
+		// TODO: send job info to channel
 
 		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
 

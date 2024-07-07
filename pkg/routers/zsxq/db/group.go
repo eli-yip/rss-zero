@@ -29,7 +29,7 @@ type DBGroup interface {
 
 func (s *ZsxqDBService) GetZsxqGroupIDs() ([]int, error) {
 	var groups []Group
-	if err := s.db.Find(&groups).Error; err != nil {
+	if err := s.db.Find(&groups).Order("id ASC").Error; err != nil {
 		return nil, err
 	}
 

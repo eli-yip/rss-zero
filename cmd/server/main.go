@@ -338,6 +338,7 @@ func setupCronCrawlJob(logger *zap.Logger,
 		switch definition.Type {
 		case cronDB.TypeZsxq:
 		case cronDB.TypeZhihu:
+			// TODO get last crawl detail from db and pass it to zhihuCron.Crawl
 			go zhihuCron.Crawl("", definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)
 		case cronDB.TypeXiaobot:
 		default:
@@ -358,7 +359,7 @@ func setupCronCrawlJob(logger *zap.Logger,
 
 		switch definition.Type {
 		case cronDB.TypeZsxq:
-			crawlFunc = zsxqCron.Crawl(redisService, db, notifier)
+			crawlFunc = zsxqCron.Crawl("", definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("zsxq_crawl", definition.CronExpr, crawlFunc); err != nil {
 				return nil, fmt.Errorf("failed to add zsxq cron job: %w", err)
 			}
