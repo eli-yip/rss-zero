@@ -337,10 +337,13 @@ func setupCronCrawlJob(logger *zap.Logger,
 
 		switch definition.Type {
 		case cronDB.TypeZsxq:
+			go zsxqCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier)
 		case cronDB.TypeZhihu:
-			// TODO get last crawl detail from db and pass it to zhihuCron.Crawl
-			go zhihuCron.Crawl("", definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)
+			go zhihuCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier)
 		case cronDB.TypeXiaobot:
+			if err = cronDBService.UpdateStatus(job.ID, cronDB.StatusStopped); err != nil {
+				return nil, fmt.Errorf("failed to stop xiaobot running job: %w", err)
+			}
 		default:
 			return nil, fmt.Errorf("unknown cron job type %d", definition.Type)
 		}
