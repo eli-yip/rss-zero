@@ -341,6 +341,7 @@ func setupCronCrawlJob(logger *zap.Logger,
 		case cronDB.TypeZhihu:
 			go zhihuCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier)
 		case cronDB.TypeXiaobot:
+			// Xiaobot crawl is quick and simple, so do not need to resume running job
 			if err = cronDBService.UpdateStatus(job.ID, cronDB.StatusStopped); err != nil {
 				return nil, fmt.Errorf("failed to stop xiaobot running job: %w", err)
 			}
