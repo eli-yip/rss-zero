@@ -3,8 +3,6 @@ package controller
 import (
 	"fmt"
 	"net/http"
-	"net/url"
-	"path"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -61,17 +59,17 @@ func (h *Controller) Feed(c echo.Context) error {
 	internalArticleFeed := fmt.Sprintf(articleFeedLayout, config.C.Settings.InternalServerURL, authorID)
 	internalPinFeed := fmt.Sprintf(pinFeedLayout, config.C.Settings.InternalServerURL, authorID)
 
-	freshRSSAnswerFeed, err := generateFreshRSSFeed(config.C.Settings.FreshRssURL, internalAnswerFeed)
+	freshRSSAnswerFeed, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, internalAnswerFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss answer feed", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
 	}
-	freshRSSArticleFeed, err := generateFreshRSSFeed(config.C.Settings.FreshRssURL, internalArticleFeed)
+	freshRSSArticleFeed, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, internalArticleFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss article feed", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
 	}
-	freshRSSPinFeed, err := generateFreshRSSFeed(config.C.Settings.FreshRssURL, internalPinFeed)
+	freshRSSPinFeed, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, internalPinFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss pin feed", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
@@ -97,23 +95,4 @@ func (h *Controller) Feed(c echo.Context) error {
 			},
 		},
 	})
-}
-
-// https://rss.momoai.me/i/?c=feed&a=add&url_rss=http%3A%2F%2Frsshub%3A1200%2Fzhihu%2Fpeople%2Factivities%2Fshuo-shuo-98-12
-func generateFreshRSSFeed(freshRSSURL, feedLink string) (feedURL string, err error) {
-	parsedURL, err := url.Parse(freshRSSURL)
-	if err != nil {
-		return "", fmt.Errorf("fail to parse url: %s", freshRSSURL)
-	}
-	parsedURL.Path = path.Join(parsedURL.Path, "i") + "/"
-
-	params := url.Values{}
-
-	params.Add("a", "add")
-	params.Add("c", "feed")
-	params.Add("url_rss", feedLink)
-
-	parsedURL.RawQuery = params.Encode()
-
-	return parsedURL.String(), nil
 }

@@ -11,15 +11,21 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 )
 
-type RSSFeedReq struct {
-	FeedType string `json:"feed_type"`
-	Username string `json:"username"`
-}
-
 func GenerateRSSHubFeed(c echo.Context) (err error) {
+	type (
+		Req struct {
+			FeedType string `json:"feed_type"`
+			Username string `json:"username"`
+		}
+
+		Resp struct {
+			FeedURL  string `json:"feed_url"`
+			FreshRSS string `json:"fresh_rss"`
+		}
+	)
 	logger := c.Get("logger").(*zap.Logger)
 
-	var req RSSFeedReq
+	var req Req
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Error generating RSSHub feed", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
@@ -32,7 +38,13 @@ func GenerateRSSHubFeed(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "internal server error"})
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: map[string]string{"feed_url": feedURL}})
+	freshRSSURL, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, feedURL)
+	if err != nil {
+		logger.Error("Error generating FreshRSS feed URL", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "internal server error"})
+	}
+
+	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: Resp{FeedURL: feedURL, FreshRSS: freshRSSURL}})
 }
 
 // generateRSSHubFeedURL generates the RSSHub feed URL for the given feed type and username.
