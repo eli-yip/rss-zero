@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 )
 
 func TestGenerateFreshRSSFeed(t *testing.T) {
@@ -20,7 +22,7 @@ func TestGenerateFreshRSSFeed(t *testing.T) {
 	assert := assert.New(t)
 
 	for _, c := range cases {
-		result, err := generateFreshRSSFeed("https://rss.example.com", c.url)
+		result, err := common.GenerateFreshRSSFeed("https://rss.example.com", c.url)
 		assert.Nil(err)
 		assert.Equal(c.want, result)
 	}
