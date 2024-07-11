@@ -3,6 +3,8 @@ package archive
 import (
 	"fmt"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -92,4 +94,81 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 		logger.Info("Invalid content type", zap.String("content_type", contentType))
 		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid content type"})
 	}
+}
+
+func (h *Controller) History(c echo.Context) (err error) {
+	logger := common.ExtractLogger(c)
+
+	u := c.Param("url")
+	u, err = url.PathUnescape(u)
+	if err != nil {
+		logger.Error("Failed to unescape url", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Failed to unescape url: " + err.Error()})
+	}
+	logger.Info("Get history url", zap.String("url", u))
+
+	return nil
+}
+
+func HandleZhihuLink(link string) (html string, err error) {
+	switch {
+	case regexp.MustCompile(`^/question/\d+/answer/\d+`).MatchString(link):
+		return HandleZhihuAnswer(link)
+	case regexp.MustCompile(`/p/\d+`).MatchString(link):
+		return HandleZhihuArticle(link)
+	case regexp.MustCompile(`^/pin/\d+`).MatchString(link):
+		return HandleZhihuPin(link)
+	}
+	return "", nil
+}
+
+func HandleZhihuAnswer(link string) (html string, err error) {
+	return "", nil
+}
+
+func HandleZhihuArticle(link string) (html string, err error) {
+	return "", nil
+}
+
+func HandleZhihuPin(link string) (html string, err error) {
+	return "", nil
+}
+
+func ExtractAnswerID(link string) (string, error) {
+	parsedURL, err := url.Parse(link)
+	if err != nil {
+		return "", err
+	}
+	re := regexp.MustCompile(`^/question/\d+/answer/(\d+)`)
+	matches := re.FindStringSubmatch(parsedURL.Path)
+	if len(matches) == 1 {
+		return matches[1], nil
+	}
+	return "", fmt.Errorf("no match found")
+}
+
+func ExtractArticleID(link string) (string, error) {
+	parsedURL, err := url.Parse(link)
+	if err != nil {
+		return "", err
+	}
+	re := regexp.MustCompile(`^/p/(\d+)`)
+	matches := re.FindStringSubmatch(parsedURL.Path)
+	if len(matches) == 1 {
+		return matches[1], nil
+	}
+	return "", fmt.Errorf("no match found")
+}
+
+func ExtractPinID(link string) (string, error) {
+	parsedURL, err := url.Parse(link)
+	if err != nil {
+		return "", err
+	}
+	re := regexp.MustCompile(`^/pin/(\d+)`)
+	matches := re.FindStringSubmatch(parsedURL.Path)
+	if len(matches) == 1 {
+		return matches[1], nil
+	}
+	return matches[1], fmt.Errorf("no match found")
 }

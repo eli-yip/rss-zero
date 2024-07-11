@@ -2,11 +2,21 @@ package archive
 
 import (
 	"gorm.io/gorm"
+
+	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
-type Controller struct{ db *gorm.DB }
+type Controller struct {
+	db             *gorm.DB
+	zhihuDBService zhihuDB.DB
+}
 
-func NewController(db *gorm.DB) *Controller { return &Controller{db: db} }
+func NewController(db *gorm.DB) *Controller {
+	return &Controller{
+		db:             db,
+		zhihuDBService: zhihuDB.NewDBService(db),
+	}
+}
 
 type RandomRequest struct {
 	Platform string `json:"platform"`
