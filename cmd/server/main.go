@@ -16,24 +16,24 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
+	archiveController "github.com/eli-yip/rss-zero/cmd/server/controller/archive"
 	endoflifeController "github.com/eli-yip/rss-zero/cmd/server/controller/endoflife"
 	jobController "github.com/eli-yip/rss-zero/cmd/server/controller/job"
-	pickController "github.com/eli-yip/rss-zero/cmd/server/controller/pick"
 	rsshubController "github.com/eli-yip/rss-zero/cmd/server/controller/rsshub"
 	xiaobotController "github.com/eli-yip/rss-zero/cmd/server/controller/xiaobot"
 	zhihuController "github.com/eli-yip/rss-zero/cmd/server/controller/zhihu"
 	zsxqController "github.com/eli-yip/rss-zero/cmd/server/controller/zsxq"
 	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/pkg/cron"
-	xiaobotCron "github.com/eli-yip/rss-zero/pkg/cron/xiaobot"
-	zhihuCron "github.com/eli-yip/rss-zero/pkg/cron/zhihu"
-	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/version"
+	"github.com/eli-yip/rss-zero/pkg/cron"
+	xiaobotCron "github.com/eli-yip/rss-zero/pkg/cron/xiaobot"
+	zhihuCron "github.com/eli-yip/rss-zero/pkg/cron/zhihu"
+	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
@@ -260,17 +260,15 @@ func setupEcho(redisService redis.Redis,
 	exportXiaobotApi := exportApi.POST("/xiaobot", xiaobotHandler.Export)
 	exportXiaobotApi.Name = "Export route for xiaobot"
 
-	pickHandler := pickController.NewController(db)
-	// /api/v1/pick
-	pickApi := apiGroup.POST("/pick", pickHandler.Random)
-	pickApi.Name = "Pick route"
-	pickApiGroup := apiGroup.Group("/pick")
-	randomPickApi := pickApiGroup.POST("/random", pickHandler.Random)
-	randomPickApi.Name = "Random pick route"
-	selectPickApi := pickApiGroup.POST("/select", pickHandler.Select)
-	selectPickApi.Name = "Select pick route"
-	archivePickApi := pickApiGroup.GET("/archive", pickHandler.Archive)
+	archiveHandler := archiveController.NewController(db)
+	// /api/v1/archive
+	archiveApi := apiGroup.Group("/archive")
+	archivePickApi := archiveApi.GET("", archiveHandler.Archive)
 	archivePickApi.Name = "Archive pick route"
+	randomPickApi := archiveApi.POST("/random", archiveHandler.Random)
+	randomPickApi.Name = "Random pick route"
+	selectPickApi := archiveApi.POST("/select", archiveHandler.Select)
+	selectPickApi.Name = "Select pick route"
 
 	jobHandler := jobController.NewController(jobList, logger)
 	// /api/v1/job

@@ -1,4 +1,4 @@
-package pick
+package archive
 
 import (
 	"net/http"
@@ -11,33 +11,25 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
 
-func (h *Controller) Select(c echo.Context) (err error) {
+func (h *Controller) Random(c echo.Context) (err error) {
 	logger := c.Get("logger").(*zap.Logger)
 
-	var req SelectRequest
+	var req RandomRequest
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Failed to bind request", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
 	}
 	logger.Info("Retrieved pick request successfully")
 
-	if req.Platform != "zhihu" {
+	if req.Platform != "zhihu" ||
+		req.Author != "canglimo" ||
+		req.Type != "answer" {
 		logger.Error("Invalid request parameters", zap.Any("request", req))
 		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
 	}
 
 	dbService := zhihuDB.NewDBService(h.db)
-	ids := make([]int, 0, len(req.IDs))
-	for _, id := range req.IDs {
-		i, err := strconv.Atoi(id)
-		if err != nil {
-			logger.Error("Failed to convert id to int", zap.Error(err))
-			return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
-		}
-		ids = append(ids, i)
-	}
-
-	answers, err := dbService.SelectByID(ids)
+	answers, err := dbService.RandomSelect(req.Count, req.Author)
 	if err != nil {
 		logger.Error("Failed to select random answers", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to select random answers"})
