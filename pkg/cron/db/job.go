@@ -12,7 +12,7 @@ type CronJob struct {
 	ID        string    `gorm:"primaryKey;column:id;type:string"`
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
-	TaskType  string    `gorm:"column:task_type;type:string"`
+	TaskType  string    `gorm:"column:task_type;type:string"` // definition id
 	Status    int       `gorm:"column:status;type:int"`
 	Detail    string    `gorm:"column:detail;type:string"`
 }

@@ -337,9 +337,11 @@ func setupCronCrawlJob(logger *zap.Logger,
 
 		switch definition.Type {
 		case cronDB.TypeZsxq:
-			go zsxqCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier)
+			logger.Info("Start zsxq running job", zap.String("job_id", job.ID))
+			go cron.GenerateRealCrawlFunc(zsxqCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier))
 		case cronDB.TypeZhihu:
-			go zhihuCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier)
+			logger.Info("Start zhihu running job", zap.String("job_id", job.ID))
+			go cron.GenerateRealCrawlFunc(zhihuCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier))
 		case cronDB.TypeXiaobot:
 			// Xiaobot crawl is quick and simple, so do not need to resume running job
 			if err = cronDBService.UpdateStatus(job.ID, cronDB.StatusStopped); err != nil {
@@ -374,7 +376,7 @@ func setupCronCrawlJob(logger *zap.Logger,
 		case cronDB.TypeZhihu:
 			crawlFunc = zhihuCron.Crawl("", definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("zhihu_crawl", definition.CronExpr, crawlFunc); err != nil {
-				return nil, fmt.Errorf("failed to add zsxq cron job: %w", err)
+				return nil, fmt.Errorf("failed to add zhihu cron job: %w", err)
 			}
 			logger.Info("Add zhihu cron crawl job successfully", zap.String("job_id", jobID))
 			if err = cronDBService.PatchDefinition(definition.ID, nil, nil, nil, &jobID); err != nil {

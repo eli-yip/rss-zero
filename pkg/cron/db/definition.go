@@ -14,7 +14,7 @@ type CronTask struct {
 	CreatedAt        time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt        time.Time `gorm:"column:updated_at;autoUpdateTime"`
 	DeleteAt         gorm.DeletedAt
-	Type             int            `gorm:"column:type;type:int"`
+	Type             int            `gorm:"column:type;type:int"` // zhihu, xiaobot, zsxq
 	CronExpr         string         `gorm:"column:cron_expr;type:string"`
 	Include          pq.StringArray `gorm:"column:include;type:text[]"`
 	Exclude          pq.StringArray `gorm:"column:exclude;type:text[]"`

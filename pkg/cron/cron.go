@@ -28,7 +28,7 @@ func NewCronService(logger *zap.Logger) (*CronService, error) {
 func (c *CronService) AddCrawlJob(name, cronExpr string, taskFunc func(chan cronDB.CronJob)) (jobID string, err error) {
 	j, err := c.s.NewJob(
 		gocron.CronJob(cronExpr, false),
-		gocron.NewTask(taskFunc),
+		gocron.NewTask(GenerateRealCrawlFunc(taskFunc)),
 		gocron.WithSingletonMode(gocron.LimitModeReschedule),
 		gocron.WithName(name),
 	)
@@ -37,4 +37,13 @@ func (c *CronService) AddCrawlJob(name, cronExpr string, taskFunc func(chan cron
 	}
 
 	return j.ID().String(), nil
+}
+
+func GenerateRealCrawlFunc(crawlFunc func(chan cronDB.CronJob)) func() {
+	return func() {
+		emptyChan := make(chan cronDB.CronJob, 1)
+		crawlFunc(emptyChan)
+		<-emptyChan
+		close(emptyChan)
+	}
 }
