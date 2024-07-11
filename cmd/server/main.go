@@ -16,9 +16,9 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
+	archiveController "github.com/eli-yip/rss-zero/cmd/server/controller/archive"
 	endoflifeController "github.com/eli-yip/rss-zero/cmd/server/controller/endoflife"
 	jobController "github.com/eli-yip/rss-zero/cmd/server/controller/job"
-	pickController "github.com/eli-yip/rss-zero/cmd/server/controller/pick"
 	rsshubController "github.com/eli-yip/rss-zero/cmd/server/controller/rsshub"
 	xiaobotController "github.com/eli-yip/rss-zero/cmd/server/controller/xiaobot"
 	zhihuController "github.com/eli-yip/rss-zero/cmd/server/controller/zhihu"
@@ -263,17 +263,15 @@ func setupEcho(redisService redis.Redis,
 	exportXiaobotApi := exportApi.POST("/xiaobot", xiaobotHandler.Export)
 	exportXiaobotApi.Name = "Export route for xiaobot"
 
-	pickHandler := pickController.NewController(db)
-	// /api/v1/pick
-	pickApi := apiGroup.POST("/pick", pickHandler.Random)
-	pickApi.Name = "Pick route"
-	pickApiGroup := apiGroup.Group("/pick")
-	randomPickApi := pickApiGroup.POST("/random", pickHandler.Random)
-	randomPickApi.Name = "Random pick route"
-	selectPickApi := pickApiGroup.POST("/select", pickHandler.Select)
-	selectPickApi.Name = "Select pick route"
-	archivePickApi := pickApiGroup.GET("/archive", pickHandler.Archive)
+	archiveHandler := archiveController.NewController(db)
+	// /api/v1/archive
+	archiveApi := apiGroup.Group("/archive")
+	archivePickApi := archiveApi.GET("", archiveHandler.Archive)
 	archivePickApi.Name = "Archive pick route"
+	randomPickApi := archiveApi.POST("/random", archiveHandler.Random)
+	randomPickApi.Name = "Random pick route"
+	selectPickApi := archiveApi.POST("/select", archiveHandler.Select)
+	selectPickApi.Name = "Select pick route"
 
 	// /api/v1/job
 	jobApi := apiGroup.Group("/job")

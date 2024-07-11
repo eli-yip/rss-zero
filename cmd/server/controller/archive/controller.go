@@ -1,4 +1,4 @@
-package pick
+package archive
 
 import (
 	"gorm.io/gorm"
