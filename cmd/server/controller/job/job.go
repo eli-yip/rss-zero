@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -37,7 +38,7 @@ func (h *Controller) StartJob(c echo.Context) (err error) {
 }
 
 func (h *Controller) GetJobs(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	jobs, err := h.cronDBService.FindRunningJob()
 	if err != nil {
@@ -49,7 +50,7 @@ func (h *Controller) GetJobs(c echo.Context) (err error) {
 }
 
 func (h *Controller) GetErrorJobs(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	jobs, err := h.cronDBService.FindErrorJob()
 	if err != nil {

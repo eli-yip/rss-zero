@@ -5,6 +5,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 )
 
 func (h *Controller) AuthorName(c echo.Context) (err error) {
@@ -19,7 +21,7 @@ func (h *Controller) AuthorName(c echo.Context) (err error) {
 		}
 	)
 
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	id := c.Param("id")
 

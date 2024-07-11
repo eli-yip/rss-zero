@@ -7,12 +7,13 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
 
 func (h *Controller) Random(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req RandomRequest
 	if err = c.Bind(&req); err != nil {

@@ -18,7 +18,7 @@ type RefmtReq struct {
 }
 
 func (h *ZsxqController) Reformat(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req RefmtReq
 	if err = c.Bind(&req); err != nil {

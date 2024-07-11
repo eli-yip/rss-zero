@@ -17,7 +17,7 @@ import (
 )
 
 func (h *ZsxqController) RSS(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	groupIDStr := c.Get("feed_id").(string)
 	logger.Info("Retrieved zsxq rss group id", zap.String("group_id", groupIDStr))

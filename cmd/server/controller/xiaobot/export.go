@@ -31,7 +31,7 @@ type XiaobotExportResp struct {
 }
 
 func (h *XiaobotController) Export(c echo.Context) (err error) {
-	l := c.Get("logger").(*zap.Logger)
+	l := common.ExtractLogger(c)
 
 	var req XiaobotExportReq
 	if err = c.Bind(&req); err != nil {

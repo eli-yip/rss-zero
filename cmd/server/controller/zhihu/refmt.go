@@ -23,7 +23,7 @@ type ZhihuReformatReq struct {
 // It will start a goroutine to reformat the content
 // and return a JSON response with a message indicating the start of the reformatting process.
 func (h *Controller) Reformat(c echo.Context) error {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req ZhihuReformatReq
 	if err := c.Bind(&req); err != nil {

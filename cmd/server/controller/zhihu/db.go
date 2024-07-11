@@ -18,7 +18,7 @@ type AddRequest struct {
 }
 
 func (h *Controller) Add(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req AddRequest
 	if err = c.Bind(&req); err != nil {
@@ -60,7 +60,7 @@ type UpdateRequest struct {
 }
 
 func (h *Controller) Update(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req UpdateRequest
 	if err = c.Bind(&req); err != nil {
@@ -102,7 +102,7 @@ func (h *Controller) Update(c echo.Context) (err error) {
 }
 
 func (h *Controller) Delete(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	id := c.Param("id")
 	if err = h.db.DeleteService(id); err != nil {
@@ -114,7 +114,7 @@ func (h *Controller) Delete(c echo.Context) (err error) {
 }
 
 func (h *Controller) List(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	services, err := h.db.GetServices()
 	if err != nil {
@@ -126,7 +126,7 @@ func (h *Controller) List(c echo.Context) (err error) {
 }
 
 func (h *Controller) Activate(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	ID := c.Param("id")
 	if err = h.db.MarkAvailable(ID); err != nil {

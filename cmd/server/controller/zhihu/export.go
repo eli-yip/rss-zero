@@ -42,7 +42,7 @@ type ZhihuExportResp struct {
 // The exported file is saved to Minio and a notification is sent upon completion.
 // The function returns a JSON response with the export status and file information.
 func (h *Controller) Export(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req ZhihuExportReq
 	if err = c.Bind(&req); err != nil {

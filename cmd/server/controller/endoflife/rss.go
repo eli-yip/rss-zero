@@ -15,7 +15,7 @@ import (
 )
 
 func (h *Controller) RSS(c echo.Context) (err error) {
-	l := c.Get("logger").(*zap.Logger)
+	l := common.ExtractLogger(c)
 
 	productName := c.Get("feed_id").(string)
 	l.Info("retrieved endoflife rss request", zap.String("product", productName))

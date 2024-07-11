@@ -27,7 +27,7 @@ import (
 // If the author does not exist in Zhihu, it will return a bad request response.
 // If the author exists, it will retrieve the RSS feed from Redis and return it in the response.
 func (h *Controller) AnswerRSS(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := serverCommon.ExtractLogger(c)
 
 	authorID := c.Get("feed_id").(string)
 	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
@@ -56,7 +56,7 @@ func (h *Controller) AnswerRSS(c echo.Context) (err error) {
 // If the author does not exist in Zhihu, it will return a bad request response.
 // If the author exists, it will retrieve the RSS feed from Redis and return it in the response.
 func (h *Controller) ArticleRSS(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := serverCommon.ExtractLogger(c)
 
 	authorID := c.Get("feed_id").(string)
 	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
@@ -85,7 +85,7 @@ func (h *Controller) ArticleRSS(c echo.Context) (err error) {
 // If the author does not exist in Zhihu, it will return a bad request response.
 // If the author exists, it will retrieve the RSS feed from Redis and return it in the response.
 func (h *Controller) PinRSS(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := serverCommon.ExtractLogger(c)
 
 	authorID := c.Get("feed_id").(string)
 	logger.Info("Retrieve rss request", zap.String("author_id", authorID))

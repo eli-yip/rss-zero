@@ -23,7 +23,7 @@ func GenerateRSSHubFeed(c echo.Context) (err error) {
 			FreshRSS string `json:"fresh_rss"`
 		}
 	)
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req Req
 	if err = c.Bind(&req); err != nil {

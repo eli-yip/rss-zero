@@ -28,7 +28,7 @@ type CheckCookieResp struct {
 }
 
 func (h *Controller) CheckCookie(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	d_c0, err := h.redis.Get(redis.ZhihuCookiePath)
 	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
@@ -68,7 +68,7 @@ func getPointer(s string, err error) *string {
 }
 
 func (h *Controller) UpdateCookie(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req SetCookieReq
 	if err = c.Bind(&req); err != nil {

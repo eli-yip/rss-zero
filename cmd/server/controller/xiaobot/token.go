@@ -18,7 +18,7 @@ type SetXiaobotTokenReq struct {
 }
 
 func (h *XiaobotController) UpdateToken(c echo.Context) (err error) {
-	l := c.Get("logger").(*zap.Logger)
+	l := common.ExtractLogger(c)
 
 	var req SetXiaobotTokenReq
 	if err = c.Bind(&req); err != nil {

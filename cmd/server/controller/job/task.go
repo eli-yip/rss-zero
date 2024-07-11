@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 )
 
@@ -27,7 +28,7 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 		}
 	)
 
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req Req
 	if err = c.Bind(&req); err != nil {
@@ -80,7 +81,7 @@ func (h *Controller) PatchTask(c echo.Context) (err error) {
 		}
 	)
 
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req Req
 	if err = c.Bind(&req); err != nil {
@@ -129,7 +130,7 @@ func (h *Controller) DeleteTask(c echo.Context) (err error) {
 		}
 	)
 
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	taskID := c.Param("task")
 	if taskID == "" {

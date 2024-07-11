@@ -18,7 +18,7 @@ type ZsxqSetCookieReq struct {
 }
 
 func (h *ZsxqController) UpdateZsxqCookie(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req ZsxqSetCookieReq
 	if err = c.Bind(&req); err != nil {

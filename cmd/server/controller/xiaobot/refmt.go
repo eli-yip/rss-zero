@@ -19,7 +19,7 @@ type XiaobotReformatReq struct {
 }
 
 func (h *XiaobotController) Reformat(c echo.Context) error {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req XiaobotReformatReq
 	if err := c.Bind(&req); err != nil {

@@ -17,7 +17,7 @@ import (
 )
 
 func (h *XiaobotController) RSS(c echo.Context) (err error) {
-	l := c.Get("logger").(*zap.Logger)
+	l := common.ExtractLogger(c)
 
 	paperID := c.Get("feed_id").(string)
 	l.Info("Retrieved rss request", zap.String("paper id", paperID))

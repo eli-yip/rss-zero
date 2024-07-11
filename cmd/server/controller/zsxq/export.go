@@ -34,7 +34,7 @@ type ZsxqExportResp struct {
 }
 
 func (h *ZsxqController) Export(c echo.Context) (err error) {
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	var req ZxsqExportReq
 	if err = c.Bind(&req); err != nil {

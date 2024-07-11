@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
+	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/internal/utils"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
@@ -34,7 +35,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 		}
 	)
 
-	logger := c.Get("logger").(*zap.Logger)
+	logger := common.ExtractLogger(c)
 
 	contentType := c.QueryParam("content_type")
 	author := c.QueryParam("author")
