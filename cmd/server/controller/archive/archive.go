@@ -209,7 +209,36 @@ func (h *Controller) HandleZhihuArticle(link string) (html string, err error) {
 }
 
 func (h *Controller) HandleZhihuPin(link string) (html string, err error) {
-	return "", nil
+	pinID, err := ExtractPinID(link)
+	if err != nil {
+		return "", fmt.Errorf("failed to extract pin id: %w", err)
+	}
+
+	pinIDint, err := strconv.Atoi(pinID)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert pin id to int: %w", err)
+	}
+
+	pin, err := h.zhihuDBService.GetPin(pinIDint)
+	if err != nil {
+		return "", fmt.Errorf("failed to get pin from db: %w", err)
+	}
+
+	fullText, err := h.fullTextRenderService.Pin(&zhihuRender.Pin{
+		BaseContent: zhihuRender.BaseContent{
+			ID:       pin.ID,
+			CreateAt: pin.CreateAt,
+			Text:     pin.Text,
+		}})
+	if err != nil {
+		return "", fmt.Errorf("failed to render full text: %w", err)
+	}
+
+	html, err = h.htmlRender.Render(pin.Title, fullText)
+	if err != nil {
+		return "", fmt.Errorf("failed to render html: %w", err)
+	}
+	return html, nil
 }
 
 func ExtractAnswerID(link string) (string, error) {

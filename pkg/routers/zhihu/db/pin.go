@@ -18,6 +18,7 @@ type Pin struct {
 func (p *Pin) TableName() string { return "zhihu_pin" }
 
 type DBPin interface {
+	GetPin(id int) (*Pin, error)
 	SavePin(p *Pin) error
 	GetLatestNPin(n int, authorID string) ([]Pin, error)
 	GetLatestPinTime(userID string) (time.Time, error)
@@ -25,6 +26,14 @@ type DBPin interface {
 	GetPinAfter(authorID string, t time.Time) ([]Pin, error)
 	CountPin(authorID string) (int, error)
 	FetchNPinsBeforeTime(n int, t time.Time, authorID string) (ps []Pin, err error)
+}
+
+func (d *DBService) GetPin(id int) (*Pin, error) {
+	var p Pin
+	if err := d.First(&p, id).Error; err != nil {
+		return nil, err
+	}
+	return &p, nil
 }
 
 func (d *DBService) SavePin(p *Pin) error { return d.Save(p).Error }
