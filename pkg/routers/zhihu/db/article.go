@@ -18,6 +18,7 @@ type Article struct {
 func (p *Article) TableName() string { return "zhihu_article" }
 
 type DBArticle interface {
+	GetArticle(id int) (*Article, error)
 	SaveArticle(p *Article) error
 	GetLatestNArticle(n int, authorID string) ([]Article, error)
 	GetLatestArticleTime(authorID string) (time.Time, error)
@@ -25,6 +26,14 @@ type DBArticle interface {
 	GetArticleAfter(authorID string, t time.Time) ([]Article, error)
 	CountArticle(authorID string) (int, error)
 	FetchNArticlesBeforeTime(n int, t time.Time, authorID string) (as []Article, err error)
+}
+
+func (d *DBService) GetArticle(id int) (*Article, error) {
+	var a Article
+	if err := d.First(&a, id).Error; err != nil {
+		return nil, err
+	}
+	return &a, nil
 }
 
 func (d *DBService) SaveArticle(p *Article) error { return d.Save(p).Error }

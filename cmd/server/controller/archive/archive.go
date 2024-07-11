@@ -174,7 +174,38 @@ func (h *Controller) HandleZhihuAnswer(link string) (html string, err error) {
 }
 
 func (h *Controller) HandleZhihuArticle(link string) (html string, err error) {
-	return "", nil
+	articleID, err := ExtractArticleID(link)
+	if err != nil {
+		return "", fmt.Errorf("failed to extract article id: %w", err)
+	}
+
+	articleIDint, err := strconv.Atoi(articleID)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert article id to int: %w", err)
+	}
+
+	article, err := h.zhihuDBService.GetArticle(articleIDint)
+	if err != nil {
+		return "", fmt.Errorf("failed to get article from db: %w", err)
+	}
+
+	fullText, err := h.fullTextRenderService.Article(&zhihuRender.Article{
+		Title: article.Title,
+		BaseContent: zhihuRender.BaseContent{
+			ID:       articleIDint,
+			CreateAt: article.CreateAt,
+			Text:     article.Text,
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to render full text: %w", err)
+	}
+
+	html, err = h.htmlRender.Render(article.Title, fullText)
+	if err != nil {
+		return "", fmt.Errorf("failed to render html: %w", err)
+	}
+	return html, nil
 }
 
 func (h *Controller) HandleZhihuPin(link string) (html string, err error) {
