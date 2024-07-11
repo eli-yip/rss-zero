@@ -1,30 +1,48 @@
 package render
 
 import (
-	md "github.com/JohannesKaufmann/html-to-markdown"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/eli-yip/rss-zero/pkg/render"
+	"bytes"
+	"fmt"
+
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
 )
 
-type convertRule = render.ConvertRule
+type HtmlRenderIface interface {
+	// Render converts markdown to html
+	Render(title, content string) (html string, err error)
+}
 
-func GetHtmlRules() []convertRule {
-	pics := convertRule{
-		Name: "pics",
-		Rule: md.Rule{
-			Filter: []string{"figure"},
-			Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
-				imgTag := selec.Find("img")
-				dataOriginal, exists := imgTag.Attr("data-original")
-				if exists {
-					return md.String("![](" + dataOriginal + ")")
-				}
-				return nil
-			},
-		},
+type HtmlRenderService struct {
+	md goldmark.Markdown
+}
+
+func NewHtmlRenderService() HtmlRenderIface {
+	md := goldmark.New(goldmark.WithExtensions(extension.GFM, extension.CJK))
+	return &HtmlRenderService{md: md}
+}
+
+func (s *HtmlRenderService) Render(title, content string) (html string, err error) {
+	var buf bytes.Buffer
+	if err := s.md.Convert([]byte(content), &buf); err != nil {
+		return "", fmt.Errorf("failed to convert markdown to html: %w", err)
 	}
 
-	return []convertRule{
-		pics,
-	}
+	return GenerateHTML(title, buf.String())
+}
+
+func GenerateHTML(title, bodyContent string) (string, error) {
+	htmlContent := fmt.Sprintf(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>%s</title>
+</head>
+<body>
+    %s
+</body>
+</html>`, title, bodyContent)
+
+	return htmlContent, nil
 }

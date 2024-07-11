@@ -4,17 +4,20 @@ import (
 	"gorm.io/gorm"
 
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
 
 type Controller struct {
 	db             *gorm.DB
 	zhihuDBService zhihuDB.DB
+	htmlRender     zhihuRender.HtmlRenderIface
 }
 
 func NewController(db *gorm.DB) *Controller {
 	return &Controller{
 		db:             db,
 		zhihuDBService: zhihuDB.NewDBService(db),
+		htmlRender:     zhihuRender.NewHtmlRenderService(),
 	}
 }
 
