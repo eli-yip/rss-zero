@@ -13,6 +13,7 @@ import (
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/internal/utils"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
 
 func (h *Controller) Archive(c echo.Context) (err error) {
@@ -107,30 +108,76 @@ func (h *Controller) History(c echo.Context) (err error) {
 	}
 	logger.Info("Get history url", zap.String("url", u))
 
-	return nil
+	html, err := h.HandleZhihuLink(u)
+	if err != nil {
+		logger.Error("Failed to handle zhihu link", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to handle zhihu link: " + err.Error()})
+	}
+	return c.HTML(http.StatusOK, html)
 }
 
-func HandleZhihuLink(link string) (html string, err error) {
+func (h *Controller) HandleZhihuLink(link string) (html string, err error) {
 	switch {
-	case regexp.MustCompile(`^/question/\d+/answer/\d+`).MatchString(link):
-		return HandleZhihuAnswer(link)
+	case regexp.MustCompile(`/question/\d+/answer/\d+`).MatchString(link):
+		return h.HandleZhihuAnswer(link)
 	case regexp.MustCompile(`/p/\d+`).MatchString(link):
-		return HandleZhihuArticle(link)
-	case regexp.MustCompile(`^/pin/\d+`).MatchString(link):
-		return HandleZhihuPin(link)
+		return h.HandleZhihuArticle(link)
+	case regexp.MustCompile(`/pin/\d+`).MatchString(link):
+		return h.HandleZhihuPin(link)
 	}
 	return "", nil
 }
 
-func HandleZhihuAnswer(link string) (html string, err error) {
+func (h *Controller) HandleZhihuAnswer(link string) (html string, err error) {
+	answerID, err := ExtractAnswerID(link)
+	if err != nil {
+		return "", fmt.Errorf("failed to extract answer id: %w", err)
+	}
+
+	answerIDint, err := strconv.Atoi(answerID)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert answer id to int: %w", err)
+	}
+
+	answer, err := h.zhihuDBService.GetAnswer(answerIDint)
+	if err != nil {
+		return "", fmt.Errorf("failed to get answer from db: %w", err)
+	}
+
+	question, err := h.zhihuDBService.GetQuestion(answer.QuestionID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get question from db: %w", err)
+	}
+
+	fullText, err := h.fullTextRenderService.Answer(&zhihuRender.Answer{
+		Question: zhihuRender.BaseContent{
+			ID:       answer.QuestionID,
+			CreateAt: question.CreateAt,
+			Text:     question.Title,
+		},
+		Answer: zhihuRender.BaseContent{
+			ID:       answerIDint,
+			CreateAt: answer.CreateAt,
+			Text:     answer.Text,
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to render full text: %w", err)
+	}
+
+	html, err = h.htmlRender.Render(question.Title, fullText)
+	if err != nil {
+		return "", fmt.Errorf("failed to render html: %w", err)
+	}
+
+	return html, nil
+}
+
+func (h *Controller) HandleZhihuArticle(link string) (html string, err error) {
 	return "", nil
 }
 
-func HandleZhihuArticle(link string) (html string, err error) {
-	return "", nil
-}
-
-func HandleZhihuPin(link string) (html string, err error) {
+func (h *Controller) HandleZhihuPin(link string) (html string, err error) {
 	return "", nil
 }
 
@@ -141,7 +188,7 @@ func ExtractAnswerID(link string) (string, error) {
 	}
 	re := regexp.MustCompile(`^/question/\d+/answer/(\d+)`)
 	matches := re.FindStringSubmatch(parsedURL.Path)
-	if len(matches) == 1 {
+	if len(matches) == 2 {
 		return matches[1], nil
 	}
 	return "", fmt.Errorf("no match found")
@@ -154,7 +201,7 @@ func ExtractArticleID(link string) (string, error) {
 	}
 	re := regexp.MustCompile(`^/p/(\d+)`)
 	matches := re.FindStringSubmatch(parsedURL.Path)
-	if len(matches) == 1 {
+	if len(matches) == 2 {
 		return matches[1], nil
 	}
 	return "", fmt.Errorf("no match found")
@@ -167,7 +214,7 @@ func ExtractPinID(link string) (string, error) {
 	}
 	re := regexp.MustCompile(`^/pin/(\d+)`)
 	matches := re.FindStringSubmatch(parsedURL.Path)
-	if len(matches) == 1 {
+	if len(matches) == 2 {
 		return matches[1], nil
 	}
 	return matches[1], fmt.Errorf("no match found")

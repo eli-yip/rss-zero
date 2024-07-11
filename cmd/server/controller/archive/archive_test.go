@@ -19,6 +19,7 @@ func TestExtractAnswerID(t *testing.T) {
 		{`https://www.zhihu.com/question/660814197/answer/3558336762?info+20&share_id=100`, `3558336762`},
 		{`http://www.zhihu.com/question/660814197/answer/3558336762`, `3558336762`},
 		{`http://www.zhihu.com/question/660814197/answer/3558336762?info+20&share_id=100`, `3558336762`},
+		{`https://www.zhihu.com/question/466050093/answer/1955958198`, `1955958198`},
 	}
 
 	for _, c := range cases {

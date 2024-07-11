@@ -24,8 +24,8 @@ type DBAnswer interface {
 	GetLatestAnswerTime(userID string) (time.Time, error)
 	// GetAnswerAfter get answer after t from zhihu_answer table
 	GetAnswerAfter(userID string, t time.Time) ([]Answer, error)
-	// GetQuestion get question info from zhihu_question table
-	GetQuestion(id int) (*Question, error)
+	// GetAnswer get answer info from zhihu_answer table
+	GetAnswer(id int) (*Answer, error)
 	CountAnswer(userID string) (int, error)
 	FetchNAnswersBeforeTime(n int, t time.Time, userID string) ([]Answer, error)
 	RandomSelect(n int, userID string) ([]Answer, error)
@@ -164,6 +164,14 @@ func (d *DBService) GetAnswerAfter(userID string, t time.Time) ([]Answer, error)
 	return as, nil
 }
 
+func (d *DBService) GetAnswer(id int) (*Answer, error) {
+	var a Answer
+	if err := d.Where("id = ?", id).First(&a).Error; err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
 func (d *DBService) UpdateAnswerStatus(id int, status int) error {
 	return d.Model(&Answer{}).Where("id = ?", id).Update("status", status).Error
 }
@@ -205,13 +213,13 @@ func (d *DBService) SelectByID(ids []int) (answers []Answer, err error) {
 }
 
 type DBQuestion interface {
+	// GetQuestion get question info from zhihu_question table
+	GetQuestion(id int) (*Question, error)
 	// Save question info to zhihu_question table
 	SaveQuestion(q *Question) error
 }
 
-func (d *DBService) SaveQuestion(q *Question) error {
-	return d.Save(q).Error
-}
+func (d *DBService) SaveQuestion(q *Question) error { return d.Save(q).Error }
 
 func (d *DBService) GetQuestion(id int) (*Question, error) {
 	var q Question

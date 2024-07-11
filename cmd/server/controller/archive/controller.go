@@ -3,21 +3,24 @@ package archive
 import (
 	"gorm.io/gorm"
 
+	"github.com/eli-yip/rss-zero/internal/md"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
 
 type Controller struct {
-	db             *gorm.DB
-	zhihuDBService zhihuDB.DB
-	htmlRender     zhihuRender.HtmlRenderIface
+	db                    *gorm.DB
+	zhihuDBService        zhihuDB.DB
+	htmlRender            zhihuRender.HtmlRenderIface
+	fullTextRenderService zhihuRender.FullTextRenderIface
 }
 
 func NewController(db *gorm.DB) *Controller {
 	return &Controller{
-		db:             db,
-		zhihuDBService: zhihuDB.NewDBService(db),
-		htmlRender:     zhihuRender.NewHtmlRenderService(),
+		db:                    db,
+		zhihuDBService:        zhihuDB.NewDBService(db),
+		htmlRender:            zhihuRender.NewHtmlRenderService(),
+		fullTextRenderService: zhihuRender.NewFullTextRender(md.NewMarkdownFormatter()),
 	}
 }
 
