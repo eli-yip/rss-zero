@@ -180,7 +180,7 @@ func (r *RequestService) Limit(u string, logger *zap.Logger) (respByte []byte, e
 			logger.Info("Data system of zsxq is upgrading or other reasons", zap.String("info", dataSystemResp.Info), zap.String("error", dataSystemResp.Error))
 			continue
 		default:
-			logger.Error("Unknown bad response", zap.Int("status_code", badResp.Code))
+			logger.Error("Unknown bad response", zap.Int("status_code", badResp.Code), zap.String("response", string(bytes)))
 			continue
 		}
 	}

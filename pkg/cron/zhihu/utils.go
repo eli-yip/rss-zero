@@ -7,6 +7,36 @@ import (
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
+func FilterSubs(include, exclude, all []string) (results []string) {
+	includeSet := mapset.NewSet[string]()
+	excludeSet := mapset.NewSet[string]()
+	allSet := mapset.NewSet[string]()
+
+	for _, i := range include {
+		includeSet.Add(i)
+	}
+	for _, e := range exclude {
+		excludeSet.Add(e)
+	}
+	for _, a := range all {
+		allSet.Add(a)
+	}
+
+	includeSet.Remove("")
+	excludeSet.Remove("")
+	allSet.Remove("")
+
+	var resultSet mapset.Set[string]
+	if includeSet.IsEmpty() || includeSet.Contains("*") {
+		resultSet = allSet.Difference(excludeSet)
+	} else {
+		resultSet = allSet.Intersect(includeSet)
+		resultSet = resultSet.Difference(excludeSet)
+	}
+
+	return resultSet.ToSlice()
+}
+
 func CutSubs(subs []zhihuDB.Sub, lastCrawl string) []zhihuDB.Sub {
 	index := slices.IndexFunc(subs, func(sub zhihuDB.Sub) bool {
 		return sub.ID == lastCrawl
@@ -34,30 +64,4 @@ func SliceToSubs(ids []string, subs []zhihuDB.Sub) (result []zhihuDB.Sub) {
 	}
 
 	return result
-}
-
-func FilterSubs(include, exlucde, all []string) (results []string) {
-	includeSet := mapset.NewSet[string]()
-	excludeSet := mapset.NewSet[string]()
-	allSet := mapset.NewSet[string]()
-
-	for _, i := range include {
-		includeSet.Add(i)
-	}
-	for _, e := range exlucde {
-		excludeSet.Add(e)
-	}
-	for _, a := range all {
-		allSet.Add(a)
-	}
-
-	var resultSet mapset.Set[string]
-	if includeSet.IsEmpty() || includeSet.Contains("*") {
-		resultSet = allSet.Difference(excludeSet)
-	} else {
-		resultSet = allSet.Intersect(includeSet)
-		resultSet = resultSet.Difference(excludeSet)
-	}
-
-	return resultSet.ToSlice()
 }

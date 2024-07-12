@@ -76,7 +76,7 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 		}
 
 		defer func() {
-			if errCount > 0 {
+			if errCount > 0 || err != nil {
 				notify.NoticeWithLogger(notifier, "Failed to crawl zsxq", "", logger)
 				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
 					logger.Error("Failed to update cron job status", zap.Error(err))
@@ -91,6 +91,7 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 				return
 			}
 
+			logger.Info("There is no error during zsxq crawl, set status to finished")
 			if err = cronDBService.UpdateStatus(cronID, cronDB.StatusFinished); err != nil {
 				logger.Error("Failed to update cron job status", zap.Error(err))
 			}
@@ -120,30 +121,35 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 		}
 		logger.Info("Get group IDs from db successfully", zap.Int("count", len(groupIDs)))
 
-		if lastCrawl != "" {
-			groupIDint, err := strconv.Atoi(lastCrawl)
+		var lastCrawlInt int
+		if lastCrawl == "" {
+			lastCrawlInt = 0
+		} else {
+			lastCrawlInt, err = strconv.Atoi(lastCrawl)
 			if err != nil {
 				logger.Error("Failed to convert lastCrawl to group id", zap.Error(err), zap.String("last_crawl", lastCrawl))
 				return
 			}
-			if !slices.Contains(groupIDs, groupIDint) {
+		}
+
+		if lastCrawl != "" {
+			if !slices.Contains(groupIDs, lastCrawlInt) {
 				logger.Error("Last crawl group id not in group ids", zap.String("last_crawl", lastCrawl))
-				lastCrawl = ""
+				lastCrawlInt = 0
 			}
 		}
 
+		fmt.Printf("include: %+v\n", include)
+		fmt.Printf("exclude: %+v\n", exclude)
+		fmt.Printf("groupIDs: %+v\n", groupIDs)
 		filteredGroupIDs, err := FilterGroupIDs(include, exclude, groupIDs)
 		if err != nil {
 			logger.Error("Failed to filter group ids", zap.Error(err))
 			return
 		}
 		logger.Info("Filter group ids successfully", zap.Int("count", len(filteredGroupIDs)))
+		fmt.Printf("filteredGroupIDs: %+v\n", filteredGroupIDs)
 
-		lastCrawlInt, err := strconv.Atoi(lastCrawl)
-		if err != nil {
-			logger.Error("Failed to convert lastCrawl to group id", zap.Error(err), zap.String("last_crawl", lastCrawl))
-			return
-		}
 		groupIDs = CutGroups(filteredGroupIDs, lastCrawlInt)
 		logger.Info("Group need to crawl", zap.Int("count", len(groupIDs)))
 
@@ -172,6 +178,8 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 			}
 			logger.Info("Record job detail successfully", zap.Int("group_id", groupID))
 		}
+
+		logger.Info("Crawl zsxq successfully")
 	}
 }
 

@@ -8,12 +8,7 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 )
 
-func CutGroups(groups []int, lastCrawl int) []int {
-	index := slices.Index(groups, lastCrawl)
-	return groups[index+1:]
-}
-
-func FilterGroupIDs(include, exlucde []string, all []int) (results []int, err error) {
+func FilterGroupIDs(include, exclude []string, all []int) (result []int, err error) {
 	includeSet := mapset.NewSet[string]()
 	excludeSet := mapset.NewSet[string]()
 	allSet := mapset.NewSet[string]()
@@ -21,13 +16,17 @@ func FilterGroupIDs(include, exlucde []string, all []int) (results []int, err er
 	for _, id := range include {
 		includeSet.Add(id)
 	}
-	for _, id := range exlucde {
+	for _, id := range exclude {
 		excludeSet.Add(id)
 	}
 	for _, id := range all {
 		idStr := strconv.Itoa(id)
 		allSet.Add(idStr)
 	}
+
+	includeSet.Remove("")
+	excludeSet.Remove("")
+	allSet.Remove("")
 
 	var resultSet mapset.Set[string]
 	if includeSet.IsEmpty() || includeSet.Contains("*") {
@@ -37,15 +36,20 @@ func FilterGroupIDs(include, exlucde []string, all []int) (results []int, err er
 		resultSet = resultSet.Difference(excludeSet)
 	}
 
-	results = make([]int, 0, resultSet.Cardinality())
+	result = make([]int, 0, resultSet.Cardinality())
 	for id := range resultSet.Iter() {
 		idInt, err := strconv.Atoi(id)
 		if err != nil {
 			return nil, fmt.Errorf("fail to convert id %s to int: %w", id, err)
 		}
-		results = append(results, idInt)
+		result = append(result, idInt)
 	}
 
-	slices.Sort(results)
-	return results, nil
+	slices.Sort(result)
+	return result, nil
+}
+
+func CutGroups(groups []int, lastCrawl int) []int {
+	index := slices.Index(groups, lastCrawl)
+	return groups[index+1:]
 }
