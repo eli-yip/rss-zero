@@ -195,7 +195,7 @@ func (h *Controller) DeleteTask(c echo.Context) (err error) {
 
 	logger := common.ExtractLogger(c)
 
-	taskID := c.Param("task")
+	taskID := c.Param("id")
 	if taskID == "" {
 		logger.Error("Empty task ID")
 		return c.JSON(http.StatusBadRequest, &ErrResp{Message: "empty task ID"})
