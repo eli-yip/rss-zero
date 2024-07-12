@@ -42,7 +42,7 @@ func (c *CronService) AddCrawlJob(name, cronExpr string, taskFunc func(chan cron
 func GenerateRealCrawlFunc(crawlFunc func(chan cronDB.CronJob)) func() {
 	return func() {
 		emptyChan := make(chan cronDB.CronJob, 1)
-		crawlFunc(emptyChan)
+		go crawlFunc(emptyChan)
 		<-emptyChan
 		close(emptyChan)
 	}

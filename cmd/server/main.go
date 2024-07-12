@@ -337,11 +337,13 @@ func setupCronCrawlJob(logger *zap.Logger,
 
 		switch definition.Type {
 		case cronDB.TypeZsxq:
+			crawlFunc := cron.GenerateRealCrawlFunc(zsxqCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier))
+			go crawlFunc()
 			logger.Info("Start zsxq running job", zap.String("job_id", job.ID))
-			go cron.GenerateRealCrawlFunc(zsxqCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier))
 		case cronDB.TypeZhihu:
+			crawlFunc := cron.GenerateRealCrawlFunc(zhihuCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier))
+			go crawlFunc()
 			logger.Info("Start zhihu running job", zap.String("job_id", job.ID))
-			go cron.GenerateRealCrawlFunc(zhihuCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier))
 		case cronDB.TypeXiaobot:
 			// Xiaobot crawl is quick and simple, so do not need to resume running job
 			if err = cronDBService.UpdateStatus(job.ID, cronDB.StatusStopped); err != nil {
