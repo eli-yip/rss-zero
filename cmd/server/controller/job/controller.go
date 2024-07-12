@@ -27,7 +27,7 @@ func NewController(cronService *cron.CronService, redisService redis.Redis, db *
 }
 
 type (
-	CrawlFunc        func(chan cronDB.CronJob)
+	CrawlFunc        func(chan cron.CronJobInfo)
 	DefinitionToFunc map[string]CrawlFunc
 )
 

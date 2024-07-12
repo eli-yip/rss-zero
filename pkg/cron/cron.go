@@ -8,7 +8,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
-	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 )
 
 type CronService struct {
@@ -26,7 +25,7 @@ func NewCronService(logger *zap.Logger) (*CronService, error) {
 	return &CronService{s: s, logger: logger}, nil
 }
 
-func (c *CronService) AddCrawlJob(name, cronExpr string, taskFunc func(chan cronDB.CronJob)) (jobID string, err error) {
+func (c *CronService) AddCrawlJob(name, cronExpr string, taskFunc func(chan CronJobInfo)) (jobID string, err error) {
 	j, err := c.s.NewJob(
 		gocron.CronJob(cronExpr, false),
 		gocron.NewTask(GenerateRealCrawlFunc(taskFunc)),
@@ -51,9 +50,9 @@ func (c *CronService) RemoveCrawlJob(jobID string) (err error) {
 	return nil
 }
 
-func GenerateRealCrawlFunc(crawlFunc func(chan cronDB.CronJob)) func() {
+func GenerateRealCrawlFunc(crawlFunc func(chan CronJobInfo)) func() {
 	return func() {
-		emptyChan := make(chan cronDB.CronJob, 1)
+		emptyChan := make(chan CronJobInfo, 1)
 		go crawlFunc(emptyChan)
 		<-emptyChan
 		close(emptyChan)

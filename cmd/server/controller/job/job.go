@@ -6,12 +6,15 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
+	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
 func (h *Controller) StartJob(c echo.Context) (err error) {
+	logger := common.ExtractLogger(c)
+
 	taskID := c.Param("task")
 
 	definition, err := h.cronDBService.GetDefinition(taskID)
@@ -21,17 +24,24 @@ func (h *Controller) StartJob(c echo.Context) (err error) {
 		}
 		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
 	}
+	logger.Info("Get task def successfully", zap.Any("definition", definition))
 
 	crawlFunc, ok := h.definitionToFunc[definition.ID]
 	if !ok {
 		return c.JSON(http.StatusBadRequest, &ErrResp{Message: "task definition not found"})
 	}
+	logger.Info("Get crawl function successfully")
 
-	jobInfoChan := make(chan cronDB.CronJob)
-	go crawlFunc(jobInfoChan)
+	cronJobChanInfo := make(chan cron.CronJobInfo)
+	go crawlFunc(cronJobChanInfo)
+	logger.Info("Start waiting for job info")
 	select {
-	case jobInfo := <-jobInfoChan:
-		return c.JSON(http.StatusOK, &Resp{Message: "job started", JobInfo: jobInfo})
+	case cronJobInfo := <-cronJobChanInfo:
+		if cronJobInfo.Err != nil {
+			logger.Error("Failed to start job", zap.Error(cronJobInfo.Err))
+			return c.JSON(http.StatusBadRequest, &ErrResp{Message: cronJobInfo.Err.Error()})
+		}
+		return c.JSON(http.StatusOK, &Resp{Message: "job started", JobInfo: *cronJobInfo.Job})
 	case <-time.After(30 * time.Second):
 		return c.JSON(http.StatusRequestTimeout, &ErrResp{Message: "timeout waiting for job info"})
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
+	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
@@ -19,8 +20,10 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 )
 
-func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cronDB.CronJob) {
-	return func(jobInfoChan chan cronDB.CronJob) {
+func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+	return func(cronJobInfoChan chan cron.CronJobInfo) {
+		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{}}
+
 		logger := log.NewZapLogger()
 		var err error
 		var errCount int = 0

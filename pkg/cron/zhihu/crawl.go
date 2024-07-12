@@ -27,11 +27,15 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cronDB.CronJob) {
-	return func(jobInfoChan chan cronDB.CronJob) {
-		rawCronID := cronID // use raw cron id to record whether this cron job is to finish older job
-		if cronID == "" {
+func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+	return func(cronJobInfoChan chan cron.CronJobInfo) {
+		cronJobInfo := cron.CronJobInfo{}
+
+		var cronID string
+		if cronIDInDB == "" {
 			cronID = xid.New().String()
+		} else {
+			cronID = cronIDInDB
 		}
 
 		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
@@ -40,27 +44,36 @@ func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, r
 		var errCount int = 0
 
 		cronDBService := cronDB.NewDBService(db)
-		jobID, err := cronDBService.CheckJob(taskID)
+		jobIDInDB, err := cronDBService.CheckRunningJob(taskID)
 		if err != nil {
 			logger.Error("Failed to check job", zap.Error(err), zap.String("task_type", taskID))
+			cronJobInfo.Err = fmt.Errorf("failed to check job: %w", err)
+			cronJobInfoChan <- cronJobInfo
 			return
 		}
+		logger.Info("Check job according to task type successfully", zap.String("task_type", taskID))
 
 		// If there is another job running and this job is a new job(rawCronID is empty), skip this job
-		if jobID != "" && rawCronID == "" {
-			logger.Info("There is another job running, skip this", zap.String("job_id", jobID))
+		if jobIDInDB != "" && cronIDInDB == "" {
+			logger.Info("There is another job running, skip this", zap.String("job_id", jobIDInDB))
+			cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", jobIDInDB)
+			cronJobInfoChan <- cronJobInfo
 			return
 		}
 
 		// if raw cron id is empty, this is a new job, add it to db
-		if rawCronID == "" {
+		if jobIDInDB == "" && cronIDInDB == "" {
+			logger.Info("New job, start to add it to db")
 			var job *cronDB.CronJob
 			if job, err = cronDBService.AddJob(cronID, taskID); err != nil {
 				logger.Error("Failed to add job", zap.Error(err))
+				cronJobInfo.Err = fmt.Errorf("failed to add job: %w", err)
+				cronJobInfoChan <- cronJobInfo
 				return
 			}
 			logger.Info("Add job to db successfully", zap.Any("job", job))
-			jobInfoChan <- *job
+			cronJobInfo.Job = job
+			cronJobInfoChan <- cronJobInfo
 		}
 
 		defer func() {
