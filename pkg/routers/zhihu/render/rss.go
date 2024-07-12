@@ -79,13 +79,13 @@ func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err er
 
 	for _, item := range rs {
 		var buffer bytes.Buffer
-		if err = r.Convert([]byte(item.Text), &buffer); err != nil {
+		if err = r.Convert([]byte(appendOriginLink(item.Text, item.Link)), &buffer); err != nil {
 			return "", err
 		}
 
 		rssFeed.Items = append(rssFeed.Items, &feeds.Item{
 			Title:       item.Title,
-			Link:        &feeds.Link{Href: item.Link},
+			Link:        &feeds.Link{Href: buildArchiveLink(config.C.Settings.ServerURL, item.Link)},
 			Author:      &feeds.Author{Name: item.AuthorName},
 			Id:          fmt.Sprintf("%d", item.ID),
 			Description: render.ExtractExcerpt(item.Text),
@@ -96,6 +96,16 @@ func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err er
 	}
 
 	return rssFeed.ToAtom()
+}
+
+func appendOriginLink(text, link string) string {
+	text = fmt.Sprintf("%s\n[原文链接](%s)", text, link)
+	fmt.Println(text)
+	return text
+}
+
+func buildArchiveLink(serverURL, link string) string {
+	return fmt.Sprintf("%s/api/v1/archive/%s", serverURL, link)
 }
 
 // why: as zhihu returns error text in 2024.06.15-2024.06.20, rss item in fresh rss are error.
