@@ -16,7 +16,7 @@ func CutSubs(subs []zhihuDB.Sub, lastCrawl string) []zhihuDB.Sub {
 
 func SubsToSlice(subs []zhihuDB.Sub) (result []string) {
 	for _, sub := range subs {
-		result = append(result, sub.AuthorID)
+		result = append(result, sub.ID)
 	}
 	return result
 }
@@ -28,7 +28,7 @@ func SliceToSubs(ids []string, subs []zhihuDB.Sub) (result []zhihuDB.Sub) {
 	}
 
 	for _, sub := range subs {
-		if idSet.Contains(sub.AuthorID) {
+		if idSet.Contains(sub.ID) {
 			result = append(result, sub)
 		}
 	}

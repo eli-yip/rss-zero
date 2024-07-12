@@ -53,7 +53,7 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 		logger.Error("Failed to add task definition", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
 	}
-	logger.Info("Task definition added", zap.String("task_id", taskID))
+	logger.Info("Add task definition successfully", zap.String("task_id", taskID))
 
 	return c.JSON(http.StatusOK, &Resp{
 		ID:       taskID,

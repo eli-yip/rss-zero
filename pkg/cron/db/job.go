@@ -44,7 +44,7 @@ func (ds *DBService) AddJob(jobID, taskType string) (job *CronJob, err error) {
 	job = &CronJob{
 		ID:       jobID,
 		TaskType: taskType,
-		Status:   StatusPending}
+		Status:   StatusRunning}
 	err = ds.Save(job).Error
 	return job, err
 }
