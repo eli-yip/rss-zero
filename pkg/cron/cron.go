@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-co-op/gocron/v2"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -37,6 +38,17 @@ func (c *CronService) AddCrawlJob(name, cronExpr string, taskFunc func(chan cron
 	}
 
 	return j.ID().String(), nil
+}
+
+func (c *CronService) RemoveCrawlJob(jobID string) (err error) {
+	id, err := uuid.Parse(jobID)
+	if err != nil {
+		return fmt.Errorf("failed to parse job ID %s: %w", jobID, err)
+	}
+	if err := c.s.RemoveJob(id); err != nil {
+		return fmt.Errorf("failed to remove job %s: %w", jobID, err)
+	}
+	return nil
 }
 
 func GenerateRealCrawlFunc(crawlFunc func(chan cronDB.CronJob)) func() {

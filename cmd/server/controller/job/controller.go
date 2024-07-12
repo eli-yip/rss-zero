@@ -2,18 +2,28 @@ package job
 
 import (
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 
+	notify "github.com/eli-yip/rss-zero/internal/notify"
+	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 )
 
 type Controller struct {
+	cronService      *cron.CronService
+	redisService     redis.Redis
+	db               *gorm.DB
+	notifier         notify.Notifier
 	cronDBService    cronDB.DB
 	definitionToFunc DefinitionToFunc
 	logger           *zap.Logger
 }
 
-func NewController(cronDBService cronDB.DB, definitionToFunc DefinitionToFunc, logger *zap.Logger) *Controller {
-	return &Controller{cronDBService: cronDBService, definitionToFunc: definitionToFunc, logger: logger}
+func NewController(cronService *cron.CronService, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier, cronDBService cronDB.DB, definitionToFunc DefinitionToFunc, logger *zap.Logger) *Controller {
+	return &Controller{cronService: cronService,
+		redisService: redisService, db: db, notifier: notifier,
+		cronDBService: cronDBService, definitionToFunc: definitionToFunc, logger: logger}
 }
 
 type (

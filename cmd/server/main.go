@@ -78,12 +78,13 @@ func main() {
 	}
 
 	var definitionToFunc jobController.DefinitionToFunc
-	if definitionToFunc, err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
+	var cronService *cron.CronService
+	if cronService, definitionToFunc, err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
 		logger.Fatal("fail to setup cron", zap.Error(err))
 	}
 	logger.Info("cron service initialized")
 
-	e := setupEcho(redisService, db, bark, definitionToFunc, logger)
+	e := setupEcho(redisService, db, bark, definitionToFunc, cronService, logger)
 	logger.Info("echo server initialized")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -142,6 +143,7 @@ func setupEcho(redisService redis.Redis,
 	db *gorm.DB,
 	notifier notify.Notifier,
 	definitionToFunc jobController.DefinitionToFunc,
+	cronService *cron.CronService,
 	logger *zap.Logger) (e *echo.Echo) {
 	e = echo.New()
 	e.HideBanner = true
@@ -167,7 +169,9 @@ func setupEcho(redisService redis.Redis,
 	xiaobotHandler := xiaobotController.NewXiaobotController(redisService, xiaobotDBService, notifier, logger)
 	endOfLifeHandler := endoflifeController.NewController(redisService, logger)
 	cronDBService := cronDB.NewDBService(db)
-	jobHandler := jobController.NewController(cronDBService, definitionToFunc, logger)
+	jobHandler := jobController.NewController(cronService,
+		redisService, db, notifier,
+		cronDBService, definitionToFunc, logger)
 
 	// /rss
 	rssGroup := e.Group("/rss")
@@ -317,22 +321,22 @@ func setupCronCrawlJob(logger *zap.Logger,
 	redisService redis.Redis,
 	db *gorm.DB,
 	notifier notify.Notifier,
-) (definitionToFunc jobController.DefinitionToFunc, err error) {
-	cronService, err := cron.NewCronService(logger)
+) (cronService *cron.CronService, definitionToFunc jobController.DefinitionToFunc, err error) {
+	cronService, err = cron.NewCronService(logger)
 	if err != nil {
-		return nil, fmt.Errorf("cron service init failed: %w", err)
+		return nil, nil, fmt.Errorf("cron service init failed: %w", err)
 	}
 
 	cronDBService := cronDB.NewDBService(db)
 	runningJobs, err := cronDBService.FindRunningJob()
 	if err != nil {
-		return nil, fmt.Errorf("failed to find running cron jobs: %w", err)
+		return nil, nil, fmt.Errorf("failed to find running cron jobs: %w", err)
 	}
 
 	for _, job := range runningJobs {
 		definition, err := cronDBService.GetDefinition(job.TaskType)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get cron task definition: %w", err)
+			return nil, nil, fmt.Errorf("failed to get cron task definition: %w", err)
 		}
 
 		switch definition.Type {
@@ -347,16 +351,16 @@ func setupCronCrawlJob(logger *zap.Logger,
 		case cronDB.TypeXiaobot:
 			// Xiaobot crawl is quick and simple, so do not need to resume running job
 			if err = cronDBService.UpdateStatus(job.ID, cronDB.StatusStopped); err != nil {
-				return nil, fmt.Errorf("failed to stop xiaobot running job: %w", err)
+				return nil, nil, fmt.Errorf("failed to stop xiaobot running job: %w", err)
 			}
 		default:
-			return nil, fmt.Errorf("unknown cron job type %d", definition.Type)
+			return nil, nil, fmt.Errorf("unknown cron job type %d", definition.Type)
 		}
 	}
 
 	definitions, err := cronDBService.GetDefinitions()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cron task definitions: %w", err)
+		return nil, nil, fmt.Errorf("failed to get cron task definitions: %w", err)
 	}
 
 	definitionToFunc = make(jobController.DefinitionToFunc)
@@ -369,36 +373,36 @@ func setupCronCrawlJob(logger *zap.Logger,
 		case cronDB.TypeZsxq:
 			crawlFunc = zsxqCron.Crawl("", definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("zsxq_crawl", definition.CronExpr, crawlFunc); err != nil {
-				return nil, fmt.Errorf("failed to add zsxq cron job: %w", err)
+				return nil, nil, fmt.Errorf("failed to add zsxq cron job: %w", err)
 			}
 			logger.Info("Add zsxq cron crawl job successfully", zap.String("job_id", jobID))
 			if err = cronDBService.PatchDefinition(definition.ID, nil, nil, nil, &jobID); err != nil {
-				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
+				return nil, nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		case cronDB.TypeZhihu:
 			crawlFunc = zhihuCron.Crawl("", definition.ID, definition.Include, definition.Exclude, "", redisService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("zhihu_crawl", definition.CronExpr, crawlFunc); err != nil {
-				return nil, fmt.Errorf("failed to add zhihu cron job: %w", err)
+				return nil, nil, fmt.Errorf("failed to add zhihu cron job: %w", err)
 			}
 			logger.Info("Add zhihu cron crawl job successfully", zap.String("job_id", jobID))
 			if err = cronDBService.PatchDefinition(definition.ID, nil, nil, nil, &jobID); err != nil {
-				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
+				return nil, nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		case cronDB.TypeXiaobot:
 			crawlFunc = xiaobotCron.Crawl(redisService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("xiaobot_crawl", definition.CronExpr, crawlFunc); err != nil {
-				return nil, fmt.Errorf("failed to add xiaobot cron job: %w", err)
+				return nil, nil, fmt.Errorf("failed to add xiaobot cron job: %w", err)
 			}
 			logger.Info("Add xiaobot cron crawl job successfully", zap.String("job_id", jobID))
 			if err = cronDBService.PatchDefinition(definition.ID, nil, nil, nil, &jobID); err != nil {
-				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
+				return nil, nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		default:
-			return nil, fmt.Errorf("unknown cron job type %d", definition.Type)
+			return nil, nil, fmt.Errorf("unknown cron job type %d", definition.Type)
 		}
 
 		definitionToFunc[definition.ID] = crawlFunc
 	}
 
-	return definitionToFunc, nil
+	return cronService, definitionToFunc, nil
 }
