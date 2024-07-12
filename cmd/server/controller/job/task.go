@@ -87,7 +87,6 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 		if err = h.cronDBService.PatchDefinition(taskID, nil, nil, nil, &jobID); err != nil {
 			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
 		}
-		return jobID, nil
 	case cronDB.TypeZhihu:
 		crawlFunc = zhihuCron.Crawl("", taskID, include, exclude, "", h.redisService, h.db, h.notifier)
 		if jobID, err = h.cronService.AddCrawlJob("zhihu_crawl", cronExpr, crawlFunc); err != nil {
@@ -96,7 +95,6 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 		if err = h.cronDBService.PatchDefinition(taskID, nil, nil, nil, &jobID); err != nil {
 			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
 		}
-		return jobID, nil
 	case cronDB.TypeXiaobot:
 		crawlFunc = xiaobotCron.Crawl(h.redisService, h.db, h.notifier)
 		if jobID, err = h.cronService.AddCrawlJob("xiaobot_crawl", cronExpr, crawlFunc); err != nil {
@@ -105,10 +103,11 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 		if err = h.cronDBService.PatchDefinition(taskID, nil, nil, nil, &jobID); err != nil {
 			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
 		}
-		return jobID, nil
 	default:
 		return "", fmt.Errorf("unknown task type: %d", taskType)
 	}
+	h.definitionToFunc[taskID] = crawlFunc
+	return jobID, nil
 }
 
 func (h *Controller) PatchTask(c echo.Context) (err error) {
@@ -225,6 +224,8 @@ func (h *Controller) DeleteTask(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
 	}
 	logger.Info("Delete task definition successfully", zap.String("task_id", taskID))
+
+	delete(h.definitionToFunc, taskID)
 
 	return c.JSON(http.StatusOK, &Resp{
 		Message: "task definition deleted",
