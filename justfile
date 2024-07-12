@@ -43,3 +43,6 @@ switch:
 
 lol:
   git lol
+
+amend:
+  git commit --amend --no-edit
