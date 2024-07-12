@@ -44,16 +44,21 @@ func Crawl(cronID, taskID string, include []string, exclude []string, lastCrawl 
 			logger.Error("Failed to check job", zap.Error(err), zap.String("task_id", taskID))
 			return
 		}
+
+		// If there is another job running and this job is a new job(rawCronID is empty), skip this job.
 		if jobID != "" && rawCronID == "" {
 			logger.Info("There is another job running, skip this", zap.String("task_type", taskID))
 			return
 		}
 
 		if rawCronID == "" {
-			if _, err = cronDBService.AddJob(cronID, taskID); err != nil {
+			var job *cronDB.CronJob
+			if job, err = cronDBService.AddJob(cronID, taskID); err != nil {
 				logger.Error("Failed to add job", zap.Error(err), zap.String("task_id", taskID))
 				return
 			}
+			logger.Info("Add job to db successfully", zap.Any("job", job))
+			jobInfoChan <- *job
 		}
 
 		defer func() {

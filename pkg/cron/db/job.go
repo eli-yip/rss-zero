@@ -28,7 +28,7 @@ const (
 )
 
 type CronJobIface interface {
-	AddJob(jobID, taskType string) (string, error)
+	AddJob(jobID, taskType string) (job *CronJob, err error)
 	StopJob(jobID string) (err error)
 	CheckJob(taskType string) (jobID string, err error)
 	FindRunningJob() ([]*CronJob, error)
@@ -37,15 +37,16 @@ type CronJobIface interface {
 	RecordDetail(jobID, detail string) (err error)
 }
 
-func (ds *DBService) AddJob(jobID, taskType string) (string, error) {
+func (ds *DBService) AddJob(jobID, taskType string) (job *CronJob, err error) {
 	if jobID == "" {
 		jobID = xid.New().String()
 	}
-	return jobID, ds.Save(&CronJob{
+	job = &CronJob{
 		ID:       jobID,
 		TaskType: taskType,
-		Status:   StatusRunning,
-	}).Error
+		Status:   StatusPending}
+	err = ds.Save(job).Error
+	return job, err
 }
 
 func (ds *DBService) CheckJob(taskType string) (jobID string, err error) {

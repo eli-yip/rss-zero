@@ -34,7 +34,6 @@ func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, r
 		if cronID == "" {
 			cronID = xid.New().String()
 		}
-		// TODO: send job info to channel
 
 		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
 
@@ -47,6 +46,8 @@ func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, r
 			logger.Error("Failed to check job", zap.Error(err), zap.String("task_type", taskID))
 			return
 		}
+
+		// If there is another job running and this job is a new job(rawCronID is empty), skip this job
 		if jobID != "" && rawCronID == "" {
 			logger.Info("There is another job running, skip this", zap.String("job_id", jobID))
 			return
@@ -54,10 +55,13 @@ func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, r
 
 		// if raw cron id is empty, this is a new job, add it to db
 		if rawCronID == "" {
-			if _, err = cronDBService.AddJob(cronID, taskID); err != nil {
+			var job *cronDB.CronJob
+			if job, err = cronDBService.AddJob(cronID, taskID); err != nil {
 				logger.Error("Failed to add job", zap.Error(err))
 				return
 			}
+			logger.Info("Add job to db successfully", zap.Any("job", job))
+			jobInfoChan <- *job
 		}
 
 		defer func() {
