@@ -118,22 +118,23 @@ func Crawl(cronID, taskID string, include []string, exclude []string, lastCrawl 
 			}
 		}
 
-		groupIDNeedToCrawl, err := FilterGroupIDs(include, exclude, groupIDs)
+		filteredGroupIDs, err := FilterGroupIDs(include, exclude, groupIDs)
 		if err != nil {
 			logger.Error("Failed to filter group ids", zap.Error(err))
 			return
 		}
+		logger.Info("Filter group ids successfully", zap.Int("count", len(filteredGroupIDs)))
+
+		lastCrawlInt, err := strconv.Atoi(lastCrawl)
+		if err != nil {
+			logger.Error("Failed to convert lastCrawl to group id", zap.Error(err), zap.String("last_crawl", lastCrawl))
+			return
+		}
+		groupIDs = CutGroups(filteredGroupIDs, lastCrawlInt)
+		logger.Info("Group need to crawl", zap.Int("count", len(groupIDs)))
 
 		// Iterate group IDs
-		for _, groupID := range groupIDNeedToCrawl {
-			if lastCrawl != "" {
-				for _, idgroupID := range groupIDNeedToCrawl {
-					if idgroupID != groupID {
-						continue
-					}
-				}
-			}
-
+		for _, groupID := range groupIDs {
 			if err = crawlGroup(groupID, requestService, parseService, redisService, rssRenderer, dbService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to do cron job on group", zap.Error(err))
@@ -365,4 +366,9 @@ func FilterGroupIDs(include, exlucde []string, all []int) (results []int, err er
 
 	slices.Sort(results)
 	return results, nil
+}
+
+func CutGroups(groups []int, lastCrawl int) []int {
+	index := slices.Index(groups, lastCrawl)
+	return groups[index+1:]
 }

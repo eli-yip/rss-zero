@@ -3,6 +3,7 @@ package cron
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -103,14 +104,16 @@ func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, r
 		}
 		defer requestService.ClearCache(logger)
 
+		// Check last crawl sub existance
 		if lastCrawl != "" {
+			logger.Info("Last crawl sub id is set", zap.String("id", lastCrawl))
 			exist, err := dbService.CheckSubByID(lastCrawl)
 			if err != nil {
 				logger.Error("Failed to check sub by id", zap.String("id", lastCrawl), zap.Error(err))
 				return
 			}
 			if !exist {
-				logger.Error("Last crawl author not found", zap.String("id", lastCrawl))
+				logger.Error("Last crawl sub not found", zap.String("sub_id", lastCrawl))
 				lastCrawl = ""
 			}
 		}
@@ -120,22 +123,17 @@ func Crawl(cronID, taskID string, include, exclude []string, lastCrawl string, r
 			logger.Error("Failed to get zhihu subs", zap.Error(err))
 			return
 		}
-		logger.Info("Get zhihu subs successfully", zap.Int("count", len(subs)))
+		logger.Info("Get zhihu subs from db successfully", zap.Int("count", len(subs)))
 
-		subsNeedToCrawl := FilterSubs(include, exclude, SubsToSlice(subs))
-		subs = SliceToSubs(subsNeedToCrawl, subs)
+		filteredSubs := FilterSubs(include, exclude, SubsToSlice(subs))
+		subs = SliceToSubs(filteredSubs, subs)
+		logger.Info("Filter subs need to crawl successfully", zap.Int("count", len(subs)))
+
+		subs = CutSubs(subs, lastCrawl)
+		logger.Info("Subs need to crawl", zap.Int("count", len(subs)))
 
 		var path, content string
 		for _, sub := range subs {
-			// check if lastCrawl is set, if set, only crawl this author and subs after this author
-			if lastCrawl != "" {
-				for _, sub := range subs {
-					if sub.ID != lastCrawl {
-						continue
-					}
-				}
-			}
-
 			ts := common.ZhihuTypeToString(sub.Type) // type in string
 			logger.Info("Start to crawl zhihu sub", zap.String("author_id", sub.AuthorID), zap.String("type", ts))
 
@@ -526,4 +524,11 @@ func FilterSubs(include, exlucde, all []string) (results []string) {
 	}
 
 	return resultSet.ToSlice()
+}
+
+func CutSubs(subs []zhihuDB.Sub, lastCrawl string) []zhihuDB.Sub {
+	index := slices.IndexFunc(subs, func(sub zhihuDB.Sub) bool {
+		return sub.ID == lastCrawl
+	})
+	return subs[index+1:]
 }
