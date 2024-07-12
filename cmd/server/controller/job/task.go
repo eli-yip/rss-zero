@@ -177,16 +177,16 @@ func (h *Controller) PatchTask(c echo.Context) (err error) {
 	})
 }
 
+type TaskInfo struct {
+	ID       string   `json:"id"`
+	TaskType int      `json:"task_type"`
+	CronExpr string   `json:"cron_expr"`
+	Include  []string `json:"include"`
+	Exclude  []string `json:"exclude"`
+}
+
 func (h *Controller) DeleteTask(c echo.Context) (err error) {
 	type (
-		TaskInfo struct {
-			ID       string   `json:"id"`
-			TaskType int      `json:"task_type"`
-			CronExpr string   `json:"cron_expr"`
-			Include  []string `json:"include"`
-			Exclude  []string `json:"exclude"`
-		}
-
 		Resp struct {
 			Message  string `json:"message"`
 			TaskInfo TaskInfo
@@ -227,5 +227,45 @@ func (h *Controller) DeleteTask(c echo.Context) (err error) {
 			Include:  taskInfo.Include,
 			Exclude:  taskInfo.Exclude,
 		},
+	})
+}
+
+func (h *Controller) ListTask(c echo.Context) (err error) {
+	logger := common.ExtractLogger(c)
+
+	taskID := c.QueryParam("id")
+	if taskID == "" {
+		taskDefs, err := h.cronDBService.GetDefinitions()
+		if err != nil {
+			logger.Error("Failed to get task definitions", zap.Error(err))
+			return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
+		}
+
+		taskInfo := make([]*TaskInfo, 0, len(taskDefs))
+		for _, def := range taskDefs {
+			taskInfo = append(taskInfo, &TaskInfo{
+				ID:       def.ID,
+				TaskType: def.Type,
+				CronExpr: def.CronExpr,
+				Include:  def.Include,
+				Exclude:  def.Exclude,
+			})
+		}
+
+		return c.JSON(http.StatusOK, taskInfo)
+	}
+
+	taskDef, err := h.cronDBService.GetDefinition(taskID)
+	if err != nil {
+		logger.Error("Failed to get task definition", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, &TaskInfo{
+		ID:       taskDef.ID,
+		TaskType: taskDef.Type,
+		CronExpr: taskDef.CronExpr,
+		Include:  taskDef.Include,
+		Exclude:  taskDef.Exclude,
 	})
 }

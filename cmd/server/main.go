@@ -293,6 +293,8 @@ func setupEcho(redisService redis.Redis,
 	patchTaskApi.Name = "Patch task route"
 	deleteTaskApi := jobApi.DELETE("/task/:id", jobHandler.DeleteTask)
 	deleteTaskApi.Name = "Delete task route"
+	listTaskApi := jobApi.GET("/task/list", jobHandler.ListTask)
+	listTaskApi.Name = "List task route"
 
 	// /api/v1/rsshub
 	rssHubApi := apiGroup.Group("/rsshub")
