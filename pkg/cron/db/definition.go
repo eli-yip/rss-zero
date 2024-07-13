@@ -24,7 +24,7 @@ type CronTask struct {
 func (*CronTask) TableName() string { return "cron_tasks" }
 
 type CronTaskIface interface {
-	AddDefinition(taskType int, cronExpr string, include, exclude []string) (id string, err error)
+	AddDefinition(taskType int, cronExpr string, include, exclude []string, ids ...string) (id string, err error)
 	PatchDefinition(id string, cronExpr *string, include, exlucde []string, cronServiceJobID *string) (err error)
 	DeleteDefinition(id string) (err error)
 	GetDefinition(id string) (task *CronTask, err error)
@@ -37,8 +37,12 @@ const (
 	TypeXiaobot
 )
 
-func (ds *DBService) AddDefinition(taskType int, cronExpr string, include, exclude []string) (id string, err error) {
-	id = xid.New().String()
+func (ds *DBService) AddDefinition(taskType int, cronExpr string, include, exclude []string, ids ...string) (id string, err error) {
+	if len(ids) > 0 {
+		id = ids[0]
+	} else {
+		id = xid.New().String()
+	}
 	return id, ds.Save(&CronTask{
 		ID:       id,
 		Type:     taskType,
