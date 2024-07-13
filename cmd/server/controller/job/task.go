@@ -22,14 +22,6 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 			Include  []string `json:"include"`
 			Exclude  []string `json:"exclude"`
 		}
-
-		Resp struct {
-			ID       string   `json:"id"`
-			TaskType string   `json:"task_type"`
-			CronExpr string   `json:"cron_expr"`
-			Include  []string `json:"include"`
-			Exclude  []string `json:"exclude"`
-		}
 	)
 
 	logger := common.ExtractLogger(c)
@@ -40,17 +32,10 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
 	}
 
-	var taskType int
-	switch req.TaskType {
-	case "zsxq":
-		taskType = cronDB.TypeZsxq
-	case "zhihu":
-		taskType = cronDB.TypeZhihu
-	case "xiaobot":
-		taskType = cronDB.TypeXiaobot
-	default:
+	taskType, err := TaskTypeStrToInt(req.TaskType)
+	if err != nil {
 		logger.Error("Unknown task type", zap.String("task_type", req.TaskType))
-		return c.JSON(http.StatusBadRequest, &ErrResp{Message: "unknown task type"})
+		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
 	}
 
 	taskID, err := h.cronDBService.AddDefinition(taskType, req.CronExpr, req.Include, req.Exclude)
@@ -70,7 +55,7 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 	}
 	logger.Info("Add task to cron service successfully", zap.String("task_id", taskID), zap.String("cron_service_job_id", cronServiceJobID))
 
-	return c.JSON(http.StatusOK, &Resp{
+	return c.JSON(http.StatusOK, &TaskInfo{
 		ID:       taskID,
 		TaskType: req.TaskType,
 		CronExpr: req.CronExpr,
@@ -186,7 +171,7 @@ func (h *Controller) PatchTask(c echo.Context) (err error) {
 
 type TaskInfo struct {
 	ID       string   `json:"id"`
-	TaskType int      `json:"task_type"`
+	TaskType string   `json:"task_type"`
 	CronExpr string   `json:"cron_expr"`
 	Include  []string `json:"include"`
 	Exclude  []string `json:"exclude"`
@@ -230,11 +215,17 @@ func (h *Controller) DeleteTask(c echo.Context) (err error) {
 
 	delete(h.definitionToFunc, taskID)
 
+	taskTypeStr, err := TaskTypeIntToStr(taskInfo.Type)
+	if err != nil {
+		logger.Error("Failed to convert task type to string", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
+	}
+
 	return c.JSON(http.StatusOK, &Resp{
 		Message: "task definition deleted",
 		TaskInfo: TaskInfo{
 			ID:       taskInfo.ID,
-			TaskType: taskInfo.Type,
+			TaskType: taskTypeStr,
 			CronExpr: taskInfo.CronExpr,
 			Include:  taskInfo.Include,
 			Exclude:  taskInfo.Exclude,
@@ -256,9 +247,15 @@ func (h *Controller) ListTask(c echo.Context) (err error) {
 
 		taskInfo := make([]*TaskInfo, 0, len(taskDefs))
 		for _, def := range taskDefs {
+			taskTypeStr, err := TaskTypeIntToStr(def.Type)
+			if err != nil {
+				logger.Error("Failed to convert task type to string", zap.Error(err))
+				return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
+			}
+
 			taskInfo = append(taskInfo, &TaskInfo{
 				ID:       def.ID,
-				TaskType: def.Type,
+				TaskType: taskTypeStr,
 				CronExpr: def.CronExpr,
 				Include:  def.Include,
 				Exclude:  def.Exclude,
@@ -276,11 +273,45 @@ func (h *Controller) ListTask(c echo.Context) (err error) {
 	}
 	logger.Info("Get task definition successfully", zap.String("task_id", taskID))
 
-	return c.JSON(http.StatusOK, &TaskInfo{
-		ID:       taskDef.ID,
-		TaskType: taskDef.Type,
-		CronExpr: taskDef.CronExpr,
-		Include:  taskDef.Include,
-		Exclude:  taskDef.Exclude,
+	taskTypeStr, err := TaskTypeIntToStr(taskDef.Type)
+	if err != nil {
+		logger.Error("Failed to convert task type to string", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, &[]TaskInfo{
+		{
+			ID:       taskDef.ID,
+			TaskType: taskTypeStr,
+			CronExpr: taskDef.CronExpr,
+			Include:  taskDef.Include,
+			Exclude:  taskDef.Exclude,
+		},
 	})
+}
+
+func TaskTypeStrToInt(taskType string) (int, error) {
+	switch taskType {
+	case "zsxq":
+		return cronDB.TypeZsxq, nil
+	case "zhihu":
+		return cronDB.TypeZhihu, nil
+	case "xiaobot":
+		return cronDB.TypeXiaobot, nil
+	default:
+		return 0, fmt.Errorf("unknown task type: %s", taskType)
+	}
+}
+
+func TaskTypeIntToStr(taskType int) (string, error) {
+	switch taskType {
+	case cronDB.TypeZsxq:
+		return "zsxq", nil
+	case cronDB.TypeZhihu:
+		return "zhihu", nil
+	case cronDB.TypeXiaobot:
+		return "xiaobot", nil
+	default:
+		return "", fmt.Errorf("unknown task type: %d", taskType)
+	}
 }
