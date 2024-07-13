@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/rs/xid"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
@@ -54,21 +53,22 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, &ErrResp{Message: "unknown task type"})
 	}
 
-	taskID := xid.New().String()
-
-	cronServiceJobID, err := h.addTaskToCronService(taskID, req.CronExpr, req.Include, req.Exclude, taskType)
-	if err != nil {
-		logger.Error("Failed to add task to cron service", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
-	}
-	logger.Info("Add task to cron service successfully", zap.String("task_id", taskID), zap.String("cron_service_job_id", cronServiceJobID))
-
-	taskID, err = h.cronDBService.AddDefinition(taskType, req.CronExpr, req.Include, req.Exclude, taskID)
+	taskID, err := h.cronDBService.AddDefinition(taskType, req.CronExpr, req.Include, req.Exclude)
 	if err != nil {
 		logger.Error("Failed to add task definition", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
 	}
 	logger.Info("Add task definition successfully", zap.String("task_id", taskID))
+
+	cronServiceJobID, err := h.addTaskToCronService(taskID, req.CronExpr, req.Include, req.Exclude, taskType)
+	if err != nil {
+		logger.Error("Failed to add task to cron service", zap.Error(err))
+		if err = h.cronDBService.DeleteDefinition(taskID); err != nil {
+			logger.Error("Failed to delete task definition", zap.Error(err))
+		}
+		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
+	}
+	logger.Info("Add task to cron service successfully", zap.String("task_id", taskID), zap.String("cron_service_job_id", cronServiceJobID))
 
 	return c.JSON(http.StatusOK, &Resp{
 		ID:       taskID,
