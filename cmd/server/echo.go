@@ -39,8 +39,13 @@ func setupEcho(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier,
 		}("172.0.0.0/8")), // trust docker network
 	)
 	e.Use(
-		middleware.RequestID(),            // add request id
-		middleware.Recover(),              // recover from panic
+		middleware.RequestID(), // add request id
+		middleware.Recover(),   // recover from panic
+		middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowOrigins: []string{"*"},
+			AllowHeaders: []string{"*"},
+			AllowMethods: []string{"*"},
+		}),
 		myMiddleware.LogRequest(logger),   // log request
 		myMiddleware.InjectLogger(logger), // inject logger to context
 	)
