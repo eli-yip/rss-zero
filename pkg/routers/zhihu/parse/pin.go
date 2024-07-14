@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -16,20 +17,28 @@ import (
 )
 
 type PinParser interface {
-	ParsePinList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, pins []apiModels.Pin, err error)
+	ParsePinList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, pinsExcerpt []apiModels.Pin, pins []json.RawMessage, err error)
 	ParsePin(content []byte, logger *zap.Logger) (text string, err error)
 }
 
-func (p *ParseService) ParsePinList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, pins []apiModels.Pin, err error) {
+func (p *ParseService) ParsePinList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, pinsExcerpt []apiModels.Pin, pins []json.RawMessage, err error) {
 	logger.Info("Start to parse pin list", zap.Int("pin_list_page_index", index))
 
 	pinList := apiModels.PinList{}
 	if err = json.Unmarshal(content, &pinList); err != nil {
-		return apiModels.Paging{}, nil, fmt.Errorf("fail to unmarshal content data in to pin list: %w", err)
+		return apiModels.Paging{}, nil, nil, fmt.Errorf("fail to unmarshal content data in to pin list: %w", err)
 	}
 	logger.Info("Unmarshal pin list successfully")
 
-	return pinList.Paging, pinList.Data, nil
+	for _, rawMessage := range pinList.Data {
+		pin := apiModels.Pin{}
+		if err = json.Unmarshal(rawMessage, &pin); err != nil {
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("fail to unmarshal data in to pin: %w", err)
+		}
+		pinsExcerpt = append(pinsExcerpt, pin)
+	}
+
+	return pinList.Paging, pinsExcerpt, pinList.Data, nil
 }
 
 // ParsePin parses the zhihu.com/api/v4 resp
@@ -60,6 +69,30 @@ func (p *ParseService) parseAndSavePin(pin *apiModels.Pin, content []byte, pinID
 		return "", fmt.Errorf("failed to parse pin content: %w", err)
 	}
 	logger.Info("Parse pin content successfully")
+
+	var oText string
+	if pin.OriginPin != nil {
+		contentBytes, err := json.Marshal(pin.OriginPin)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal origin pin: %w", err)
+		}
+		oPinID, err := strconv.Atoi(pin.OriginPin.ID)
+		if err != nil {
+			return "", fmt.Errorf("failed to convert origin pin id to int: %w", err)
+		}
+		oText, err = p.parseAndSavePin(pin.OriginPin, contentBytes, oPinID, logger)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse origin pin content: %w", err)
+		}
+		const originPinLayout = `这篇想法引用了另一篇想法：`
+		oLink := fmt.Sprintf("https://www.zhihu.com/pin/%d", oPinID)
+		oPinArchiveLink := fmt.Sprintf("%s/api/v1/archive/%s", config.C.Settings.ServerURL, oLink)
+		oPinArchiveLink = fmt.Sprintf("[存档](%s)", oPinArchiveLink)
+		oPinLink := fmt.Sprintf("[原文](%s)", oLink)
+		oText = md.Join(originPinLayout, oText, oPinArchiveLink, oPinLink)
+		oText = md.Quote(oText)
+	}
+	text = md.Join(text, oText)
 
 	if text == "" {
 		logger.Info("Found text content, return")

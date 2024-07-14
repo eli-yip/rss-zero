@@ -1,7 +1,6 @@
 package crawl
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
 	"time"
@@ -41,7 +40,7 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 		}
 		logger.Info("Request zhihu api successfully", zap.String("url", next))
 
-		paging, pinList, err := parser.ParsePinList(bytes, index, logger)
+		paging, pinExcerptList, pinRawList, err := parser.ParsePinList(bytes, index, logger)
 		if err != nil {
 			logger.Error("Failed to parse pin list", zap.Error(err))
 			return fmt.Errorf("failed to parse pin list: %w", err)
@@ -56,7 +55,7 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 
 		next = paging.Next
 
-		for _, pin := range pinList {
+		for i, pin := range pinExcerptList {
 			logger := logger.With(zap.String("pin_id", pin.ID))
 
 			// see more in https://gitea.darkeli.com/yezi/rss-zero/issues/95
@@ -71,14 +70,7 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 				return nil
 			}
 
-			pinBytes, err := json.Marshal(pin)
-			if err != nil {
-				logger.Error("Failed to marshal pin", zap.Error(err))
-				return fmt.Errorf("failed to marshal pin: %w", err)
-			}
-
-			_, err = parser.ParsePin(pinBytes, logger)
-			if err != nil {
+			if _, err = parser.ParsePin(pinRawList[i], logger); err != nil {
 				logger.Error("Failed to parse pin", zap.Error(err))
 				return fmt.Errorf("failed to parse pin: %w", err)
 			}

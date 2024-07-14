@@ -3,10 +3,11 @@ package apiModels
 import "encoding/json"
 
 type Pin struct {
-	ID       string            `json:"id"`
-	CreateAt int64             `json:"created"`
-	Author   Author            `json:"author"`
-	Content  []json.RawMessage `json:"content"`
+	ID        string            `json:"id"`
+	CreateAt  int64             `json:"created"`
+	Author    Author            `json:"author"`
+	Content   []json.RawMessage `json:"content"`
+	OriginPin *Pin              `json:"origin_pin"`
 }
 
 type PinContentType struct {
@@ -30,6 +31,6 @@ type PinLink struct {
 }
 
 type PinList struct {
-	Paging Paging `json:"paging"`
-	Data   []Pin  `json:"data"` // NOTE: HTML is empty
+	Paging Paging            `json:"paging"`
+	Data   []json.RawMessage `json:"data"` // NOTE: HTML is empty
 }

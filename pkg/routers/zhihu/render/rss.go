@@ -100,7 +100,6 @@ func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err er
 
 func appendOriginLink(text, link string) string {
 	text = fmt.Sprintf("%s\n[原文链接](%s)", text, link)
-	fmt.Println(text)
 	return text
 }
 
