@@ -220,6 +220,7 @@ func (s *ExportService) exportPin(writer io.Writer, opt Option) (err error) {
 
 		for i, pin := range pins {
 			fullText, err := s.mr.Pin(&render.Pin{
+				Title: pin.Title,
 				BaseContent: render.BaseContent{
 					ID:       pin.ID,
 					CreateAt: pin.CreateAt,

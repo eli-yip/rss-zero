@@ -225,6 +225,7 @@ func (h *Controller) HandleZhihuPin(link string) (html string, err error) {
 	}
 
 	fullText, err := h.fullTextRenderService.Pin(&zhihuRender.Pin{
+		Title: pin.Title,
 		BaseContent: zhihuRender.BaseContent{
 			ID:       pin.ID,
 			CreateAt: pin.CreateAt,

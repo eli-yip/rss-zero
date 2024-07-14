@@ -36,7 +36,7 @@ func (r *FullTextRender) Answer(answer *Answer) (text string, err error) {
 
 func (r *FullTextRender) Article(article *Article) (text string, err error) {
 	titlePart := article.Title
-	titlePart = trimRightSpace(md.H2(titlePart))
+	titlePart = trimRightSpace(md.H1(titlePart))
 
 	link := GenerateArticleLink(article.ID)
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))
@@ -49,7 +49,13 @@ func (r *FullTextRender) Article(article *Article) (text string, err error) {
 }
 
 func (r *FullTextRender) Pin(pin *Pin) (text string, err error) {
-	titlePart := trimRightSpace(md.H3(strconv.Itoa(pin.ID)))
+	title := func() string {
+		if pin.Title != "" {
+			return pin.Title
+		}
+		return strconv.Itoa(pin.ID)
+	}()
+	titlePart := trimRightSpace(md.H1(title))
 
 	link := GeneratePinLink(pin.ID)
 	linkPart := trimRightSpace(fmt.Sprintf("[%s](%s)", link, link))

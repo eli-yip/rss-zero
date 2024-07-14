@@ -20,5 +20,8 @@ type (
 		BaseContent
 	}
 
-	Pin struct{ BaseContent }
+	Pin struct {
+		Title string
+		BaseContent
+	}
 )
