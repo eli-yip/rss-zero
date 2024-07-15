@@ -14,7 +14,7 @@ var ErrKeyNotExist = errors.New("key does not exist")
 const (
 	ZsxqCookiePath       = "zsxq_cookie"
 	XiaobotTokenPath     = "xiaobot_token"
-	ZhihuCookiePath      = "zhihu_cookie"
+	ZhihuCookiePathDC0   = "zhihu_cookie_d_c0"
 	ZhihuCookiePathZC0   = "zhihu_cookie_zc0"
 	ZhihuCookiePathZSECK = "zhihu_cookie_zse_ck"
 )
@@ -41,6 +41,7 @@ type Redis interface {
 	Set(key string, value interface{}, duration time.Duration) (err error)
 	Get(key string) (value string, err error)
 	Del(key string) (err error)
+	TTL(key string) (time.Duration, error)
 }
 
 type RedisService struct {
@@ -89,4 +90,14 @@ func (s *RedisService) Del(key string) (err error) {
 		return errors.New("delete key failed")
 	}
 	return nil
+}
+
+func (s *RedisService) TTL(key string) (ttl time.Duration, err error) {
+	ttl, err = s.client.TTL(s.ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return 0, ErrKeyNotExist
+		}
+	}
+	return ttl, nil
 }

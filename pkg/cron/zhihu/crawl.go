@@ -429,7 +429,7 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 
 	dbService = zhihuDB.NewDBService(db)
 
-	d_c0, err := rs.Get(redis.ZhihuCookiePath)
+	d_c0, err := rs.Get(redis.ZhihuCookiePathDC0)
 	if err != nil {
 		if errors.Is(err, redis.ErrKeyNotExist) {
 			logger.Warn("There is no d_c0 cookie, use server side cookie instead")
@@ -485,6 +485,6 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 	return dbService, requestService, parser, nil
 }
 
-func removeDC0Cookie(rs redis.Redis) (err error) { return rs.Del(redis.ZhihuCookiePath) }
+func removeDC0Cookie(rs redis.Redis) (err error) { return rs.Del(redis.ZhihuCookiePathDC0) }
 
 func removeZC0Cookie(rs redis.Redis) (err error) { return rs.Del(redis.ZhihuCookiePathZC0) }

@@ -30,7 +30,7 @@ type CheckCookieResp struct {
 func (h *Controller) CheckCookie(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	d_c0, err := h.redis.Get(redis.ZhihuCookiePath)
+	d_c0, err := h.redis.Get(redis.ZhihuCookiePathDC0)
 	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
 		logger.Error("Failed to get zhihu d_c0 cookie from redis", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
@@ -104,7 +104,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		}
 		logger.Info("Validate zhihu d_c0 cookie successfully", zap.String("cookie", d_c0))
 
-		if err = h.redis.Set(redis.ZhihuCookiePath, d_c0, redis.Forever); err != nil {
+		if err = h.redis.Set(redis.ZhihuCookiePathDC0, d_c0, redis.Forever); err != nil {
 			logger.Error("Failed to update zhihu d_c0 cookie in redis", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
