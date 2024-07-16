@@ -69,12 +69,11 @@ func setupEcho(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier,
 	registerFeed(apiGroup, zhihuHandler)
 	registerCookie(apiGroup, zsxqHandler, xiaobotHandler, zhihuHandler)
 	registerAuthor(apiGroup, zhihuHandler)
-	registerDBZhihu(apiGroup, zhihuHandler)
+	registerDEncryptionService(apiGroup, zhihuHandler)
 	registerReformat(apiGroup, zsxqHandler, zhihuHandler, xiaobotHandler)
 	registerExport(apiGroup, zsxqHandler, zhihuHandler, xiaobotHandler)
 	registerArchive(apiGroup, archiveHandler)
 	registerJob(apiGroup, jobHandler)
-	registerRSSHub(apiGroup)
 
 	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
@@ -93,13 +92,6 @@ func setupEcho(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier,
 	return e
 }
 
-// /api/v1/rsshub
-func registerRSSHub(apiGroup *echo.Group) {
-	rssHubApi := apiGroup.Group("/rsshub")
-	feedGeneratorApi := rssHubApi.POST("/feed", rsshubController.GenerateRSSHubFeed)
-	feedGeneratorApi.Name = "RSSHub feed generator route"
-}
-
 func registerAuthor(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller) {
 	// /api/v1/author/zhihu
 	zhihuAuthorApi := apiGroup.GET("/author/zhihu/:id", zhihuHandler.AuthorName)
@@ -108,11 +100,14 @@ func registerAuthor(apiGroup *echo.Group, zhihuHandler *zhihuController.Controll
 
 // /api/v1/feed
 // /api/v1/feed/zhihu/:id
+// /api/v1/feed/rsshub
 func registerFeed(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller) {
 	feedApi := apiGroup.Group("/feed")
 
 	zhihuFeedApi := feedApi.GET("/zhihu/:id", zhihuHandler.Feed)
 	zhihuFeedApi.Name = "Feed route for zhihu"
+	rssHubFeddApi := feedApi.POST("/rsshub", rsshubController.GenerateRSSHubFeed)
+	rssHubFeddApi.Name = "RSSHub feed generator route"
 }
 
 // /api/v1/job
@@ -164,19 +159,19 @@ func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqContro
 	exportXiaobotApi.Name = "Export route for xiaobot"
 }
 
-// /api/v1/db/zhihu
-func registerDBZhihu(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller) {
-	zhihuDBApi := apiGroup.Group("/db/zhihu")
-	zhihuDBAdd := zhihuDBApi.POST("/add", zhihuHandler.Add)
-	zhihuDBAdd.Name = "Add route for zhihu db api"
-	zhihuDBUpdate := zhihuDBApi.POST("/update", zhihuHandler.Update)
-	zhihuDBUpdate.Name = "Update route for zhihu db api"
-	zhihuDBDelete := zhihuDBApi.DELETE("/:id", zhihuHandler.Delete)
-	zhihuDBDelete.Name = "Delete route for zhihu db api"
-	zhihuDBList := zhihuDBApi.GET("", zhihuHandler.List)
-	zhihuDBList.Name = "List route for zhihu db api"
-	zhihuDBActivate := zhihuDBApi.POST("/activate/:id", zhihuHandler.Activate)
-	zhihuDBActivate.Name = "Activate route for zhihu db api"
+// /api/v1/es
+func registerDEncryptionService(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller) {
+	zhihuEncryptionServiceApi := apiGroup.Group("/es/zhihu")
+	zhihuEncryptionServiceAdd := zhihuEncryptionServiceApi.POST("/add", zhihuHandler.Add)
+	zhihuEncryptionServiceAdd.Name = "Add route for zhihu db api"
+	zhihuEncryptionServiceUpdate := zhihuEncryptionServiceApi.POST("/update", zhihuHandler.Update)
+	zhihuEncryptionServiceUpdate.Name = "Update route for zhihu db api"
+	zhihuEncryptionServiceDelete := zhihuEncryptionServiceApi.DELETE("/:id", zhihuHandler.Delete)
+	zhihuEncryptionServiceDelete.Name = "Delete route for zhihu db api"
+	zhihuEncryptionServiceList := zhihuEncryptionServiceApi.GET("", zhihuHandler.List)
+	zhihuEncryptionServiceList.Name = "List route for zhihu db api"
+	zhihuEncryptionServiceActivate := zhihuEncryptionServiceApi.POST("/activate/:id", zhihuHandler.Activate)
+	zhihuEncryptionServiceActivate.Name = "Activate route for zhihu db api"
 }
 
 // /api/v1/refmt
