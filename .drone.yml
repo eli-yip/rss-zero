@@ -25,7 +25,7 @@ steps:
           - tag
 
   - name: wait-for-docker-dind
-    image: docker:26-cli
+    image: docker:27-cli
     volumes:
       - name: dockersock
         path: /var/run
@@ -40,7 +40,7 @@ steps:
         - tag
 
   - name: build
-    image: docker:26-cli
+    image: docker:27-cli
     volumes:
       - name: dockersock
         path: /var/run
@@ -62,7 +62,7 @@ steps:
         - tag
 
   - name: publish
-    image: docker:26-cli
+    image: docker:27-cli
     volumes:
       - name: dockersock
         path: /var/run
@@ -122,7 +122,7 @@ steps:
 
 services:
   - name: docker
-    image: docker:26-dind
+    image: docker:27-dind
     privileged: true
     volumes:
       - name: dockersock
