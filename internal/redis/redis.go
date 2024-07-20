@@ -31,7 +31,7 @@ const (
 
 	EndOfLifePath = "endoflife_rss_%s"
 
-	GitHubRSSPath = "github_rss_%s_%s"
+	GitHubRSSPath = "github_rss_%s"
 )
 
 const (

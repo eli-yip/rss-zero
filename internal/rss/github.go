@@ -10,7 +10,7 @@ import (
 	render "github.com/eli-yip/rss-zero/pkg/routers/github/render"
 )
 
-func GenerateGitHub(id string, preRelease bool, dbService githubDB.DB, logger *zap.Logger) (path, content string, err error) {
+func GenerateGitHub(id string, dbService githubDB.DB, logger *zap.Logger) (path, content string, err error) {
 	logger.Info("Start to generate github release rss")
 	rssRender := render.NewRSSRenderService()
 	logger.Info("Init github rss render service successfully")
@@ -20,9 +20,9 @@ func GenerateGitHub(id string, preRelease bool, dbService githubDB.DB, logger *z
 		return "", "", fmt.Errorf("failed to get sub info from database: %w", err)
 	}
 
-	path = fmt.Sprintf(redis.GitHubRSSPath, sub.User, sub.Repo)
+	path = fmt.Sprintf(redis.GitHubRSSPath, id)
 
-	releases, err := dbService.GetReleases(id, preRelease, 1, 20)
+	releases, err := dbService.GetReleases(id, sub.PreRelease, 1, 20)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get releases from database: %w", err)
 	}

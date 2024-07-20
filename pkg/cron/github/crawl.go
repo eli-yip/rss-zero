@@ -64,7 +64,7 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 			}
 
 			var path, content string
-			if path, content, err = rss.GenerateGitHub(sub.ID, sub.PreRelease, dbService, logger); err != nil {
+			if path, content, err = rss.GenerateGitHub(sub.ID, dbService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to generate github rss", zap.Error(err))
 				return
