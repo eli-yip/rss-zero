@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -15,20 +16,28 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-type SetCookieReq struct {
-	DC0Cookie   *string `json:"d_c0_cookie"`
-	ZC0Cookie   *string `json:"z_c0_cookie"`
-	ZSECKCookie *string `json:"zse_ck_cookie"`
-}
+type (
+	Cookie struct {
+		Value    string `json:"value"`
+		ExpireAt string `json:"expire_at"`
+	}
 
-type CheckCookieResp struct {
-	DC0Cookie   *string `json:"d_c0_cookie"`
-	ZC0Cookie   *string `json:"z_c0_cookie"`
-	ZSECKCookie *string `json:"zse_ck_cookie"`
-}
+	CookieResp struct {
+		DC0Cookie   *Cookie `json:"d_c0_cookie,omitempty"`
+		ZC0Cookie   *Cookie `json:"z_c0_cookie,omitempty"`
+		ZSECKCookie *Cookie `json:"zse_ck_cookie,omitempty"`
+	}
+)
 
 func (h *Controller) CheckCookie(c echo.Context) (err error) {
+	type CheckCookieResp CookieResp
+
 	logger := common.ExtractLogger(c)
+
+	var resp CheckCookieResp
+	resp.DC0Cookie = &Cookie{}
+	resp.ZC0Cookie = &Cookie{}
+	resp.ZSECKCookie = &Cookie{}
 
 	d_c0, err := h.redis.Get(redis.ZhihuCookiePathDC0)
 	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
@@ -36,6 +45,17 @@ func (h *Controller) CheckCookie(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}
 	d_c0Ptr := getPointer(d_c0, err)
+	if d_c0Ptr != nil {
+		ttl, err := h.redis.TTL(redis.ZhihuCookiePathDC0)
+		if err != nil {
+			logger.Error("Failed to get zhihu d_c0 cookie ttl from redis", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+		}
+		resp.DC0Cookie = &Cookie{
+			Value:    *d_c0Ptr,
+			ExpireAt: time.Now().Add(ttl).Format(time.RFC3339),
+		}
+	}
 
 	z_c0, err := h.redis.Get(redis.ZhihuCookiePathZC0)
 	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
@@ -43,6 +63,17 @@ func (h *Controller) CheckCookie(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}
 	z_c0Ptr := getPointer(z_c0, err)
+	if z_c0Ptr != nil {
+		ttl, err := h.redis.TTL(redis.ZhihuCookiePathZC0)
+		if err != nil {
+			logger.Error("Failed to get zhihu z_c0 cookie ttl from redis", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+		}
+		resp.ZC0Cookie = &Cookie{
+			Value:    *z_c0Ptr,
+			ExpireAt: time.Now().Add(ttl).Format(time.RFC3339),
+		}
+	}
 
 	zse_ck, err := h.redis.Get(redis.ZhihuCookiePathZSECK)
 	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
@@ -50,11 +81,16 @@ func (h *Controller) CheckCookie(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}
 	zse_ckPtr := getPointer(zse_ck, err)
-
-	resp := CheckCookieResp{
-		DC0Cookie:   d_c0Ptr,
-		ZC0Cookie:   z_c0Ptr,
-		ZSECKCookie: zse_ckPtr,
+	if zse_ckPtr != nil {
+		ttl, err := h.redis.TTL(redis.ZhihuCookiePathZSECK)
+		if err != nil {
+			logger.Error("Failed to get zhihu zse_ck cookie ttl from redis", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+		}
+		resp.ZSECKCookie = &Cookie{
+			Value:    *zse_ckPtr,
+			ExpireAt: time.Now().Add(ttl).Format(time.RFC3339),
+		}
 	}
 
 	return c.JSON(http.StatusOK, resp)
@@ -70,16 +106,28 @@ func getPointer(s string, err error) *string {
 func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	var req SetCookieReq
+	type (
+		Req struct {
+			DC0Cookie   *Cookie `json:"d_c0_cookie"`
+			ZC0Cookie   *Cookie `json:"z_c0_cookie"`
+			ZSECKCookie *Cookie `json:"zse_ck_cookie"`
+		}
+
+		Resp CookieResp
+	)
+
+	var req Req
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Failed to update zhihu d_c0 cookie", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
+	logger.Info("Retrieve update zhihu cookies request successfully")
 
-	respData := make(map[string]string)
+	var respData Resp
 
 	if req.DC0Cookie != nil {
-		dC0Cookie := *req.DC0Cookie
+		respData.DC0Cookie = &Cookie{}
+		dC0Cookie := req.DC0Cookie.Value
 		d_c0 := extractCookieValue(dC0Cookie)
 		if d_c0 == "" {
 			logger.Error("Failed to extract d_c0 from cookie", zap.String("cookie", dC0Cookie))
@@ -110,11 +158,12 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		}
 		logger.Info("Update zhihu d_c0 cookie in redis successfully", zap.String("cookie", d_c0))
 
-		respData["d_c0"] = d_c0
+		respData.DC0Cookie.Value = d_c0
 	}
 
 	if req.ZC0Cookie != nil {
-		zC0Cookie := *req.ZC0Cookie
+		respData.ZC0Cookie = &Cookie{}
+		zC0Cookie := req.ZC0Cookie.Value
 		z_c0 := extractCookieValue(zC0Cookie)
 		if z_c0 == "" {
 			logger.Error("Failed to extract z_c0 from cookie", zap.String("cookie", zC0Cookie))
@@ -139,27 +188,58 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		}
 		logger.Info("Update zhihu z_c0 cookie in redis successfully", zap.String("cookie", z_c0))
 
-		respData["z_c0"] = z_c0
+		respData.ZC0Cookie.Value = z_c0
 	}
 
 	if req.ZSECKCookie != nil {
-		zse_ckCookie := *req.ZSECKCookie
-		zse_ck := extractCookieValue(zse_ckCookie)
+		respData.ZSECKCookie = &Cookie{}
+		var ttl time.Duration
+		if req.ZSECKCookie.ExpireAt != "" {
+			expireAt, err := parseExpireAt(req.ZSECKCookie.ExpireAt)
+			if err != nil {
+				logger.Error("Failed to parse expireAt", zap.Error(err))
+				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
+			}
+
+			ttl = time.Until(expireAt.Add(-1 * 24 * time.Hour))
+
+			if ttl < 0 {
+				logger.Error("Invalid expireAt", zap.String("expireAt", req.ZSECKCookie.ExpireAt))
+				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
+			}
+
+			respData.ZSECKCookie.ExpireAt = expireAt.Format(time.RFC3339)
+		} else {
+			ttl = redis.ZSECKTTL
+			expireAt := time.Now().Add(ttl)
+			respData.ZSECKCookie.ExpireAt = expireAt.Format(time.RFC3339)
+		}
+
+		zse_ckValue := req.ZSECKCookie.Value
+		zse_ck := extractCookieValue(zse_ckValue)
 		if zse_ck == "" {
-			logger.Error("Failed to extract zse_ck from cookie", zap.String("cookie", zse_ckCookie))
+			logger.Error("Failed to extract zse_ck from cookie", zap.String("cookie", zse_ckValue))
 			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid cookie"})
 		}
 
-		if err = h.redis.Set(redis.ZhihuCookiePathZSECK, zse_ck, redis.ZSECKTTL); err != nil {
+		if err = h.redis.Set(redis.ZhihuCookiePathZSECK, zse_ck, ttl); err != nil {
 			logger.Error("Failed to update zhihu zse_ck cookie in redis", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
 		logger.Info("Update zhihu zse_ck cookie in redis successfully", zap.String("cookie", zse_ck))
 
-		respData["zse_ck"] = zse_ck
+		respData.ZSECKCookie.Value = zse_ck
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: respData})
+	return c.JSON(http.StatusOK, &common.ApiResp{Message: "Update Zhihu Cookies successfully", Data: respData})
+}
+
+func parseExpireAt(expireAt string) (time.Time, error) {
+	// Sat Jul 27 2024 16:48:02 GMT+0800
+	expireAt = strings.TrimSuffix(expireAt, "(中国标准时间)")
+	expireAt = strings.TrimSpace(expireAt)
+	const layout = "Mon Jan 02 2006 15:04:05 GMT-0700"
+	return time.Parse(layout, expireAt)
 }
 
 func extractCookieValue(cookie string) (result string) {
