@@ -134,12 +134,12 @@ func (h *Controller) checkRepo(user, repo string, pre bool) (subID string, err e
 		return "", ErrRepoNotFound
 	}
 
-	sbuID := xid.New().String()
+	subID = xid.New().String()
 	err = h.db.SaveSub(&githubDB.Sub{
-		ID:         sbuID,
+		ID:         subID,
 		GithubUser: user,
 		Repo:       repo,
 		PreRelease: pre,
 	})
-	return sbuID, err
+	return subID, err
 }

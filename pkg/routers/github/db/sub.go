@@ -4,7 +4,7 @@ type Sub struct {
 	ID         string `gorm:"column:id"`
 	GithubUser string `gorm:"primaryKey;column:gh_user"`
 	Repo       string `gorm:"primaryKey"`
-	PreRelease bool   `gorm:"column:pre_release"`
+	PreRelease bool   `gorm:"primaryKey;column:pre_release"`
 }
 
 func (*Sub) TableName() string { return "github_subs" }
@@ -20,7 +20,7 @@ func (s *DBService) SaveSub(sub *Sub) error { return s.Save(sub).Error }
 
 func (s *DBService) GetSub(user, repo string, preRelease bool) (*Sub, error) {
 	var sub Sub
-	if err := s.Where("gh_user = ? AND repo = ? AND pre_release = ?", user, repo, preRelease).Debug().First(&sub).Error; err != nil {
+	if err := s.Where("gh_user = ? AND repo = ? AND pre_release = ?", user, repo, preRelease).First(&sub).Error; err != nil {
 		return nil, err
 	}
 	return &sub, nil
