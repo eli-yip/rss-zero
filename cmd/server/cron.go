@@ -11,6 +11,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
+	githubCron "github.com/eli-yip/rss-zero/pkg/cron/github"
 	xiaobotCron "github.com/eli-yip/rss-zero/pkg/cron/xiaobot"
 	zhihuCron "github.com/eli-yip/rss-zero/pkg/cron/zhihu"
 	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
@@ -64,6 +65,10 @@ func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, db *go
 			if err = cronDBService.UpdateStatus(job.ID, cronDB.StatusStopped); err != nil {
 				return fmt.Errorf("failed to stop xiaobot running job: %w", err)
 			}
+		case cronDB.TypeGitHub:
+			if err = cronDBService.UpdateStatus(job.ID, cronDB.StatusStopped); err != nil {
+				return fmt.Errorf("failed to stop github running job: %w", err)
+			}
 		default:
 			return fmt.Errorf("unknown cron job type %d", definition.Type)
 		}
@@ -108,6 +113,15 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 				return nil, fmt.Errorf("failed to add xiaobot cron job: %w", err)
 			}
 			logger.Info("Add xiaobot cron crawl job successfully", zap.String("job_id", jobID))
+			if err = cronDBService.PatchDefinition(def.ID, nil, nil, nil, &jobID); err != nil {
+				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
+			}
+		case cronDB.TypeGitHub:
+			crawlFunc = githubCron.Crawl(redisService, db, notifier)
+			if jobID, err = cronService.AddCrawlJob("github_crawl", def.CronExpr, crawlFunc); err != nil {
+				return nil, fmt.Errorf("failed to add github cron job: %w", err)
+			}
+			logger.Info("Add github cron crawl job successfully", zap.String("job_id", jobID))
 			if err = cronDBService.PatchDefinition(def.ID, nil, nil, nil, &jobID); err != nil {
 				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}

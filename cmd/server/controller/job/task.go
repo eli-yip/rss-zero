@@ -9,6 +9,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
+	githubCron "github.com/eli-yip/rss-zero/pkg/cron/github"
 	xiaobotCron "github.com/eli-yip/rss-zero/pkg/cron/xiaobot"
 	zhihuCron "github.com/eli-yip/rss-zero/pkg/cron/zhihu"
 	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
@@ -86,6 +87,14 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 	case cronDB.TypeXiaobot:
 		crawlFunc = xiaobotCron.Crawl(h.redisService, h.db, h.notifier)
 		if jobID, err = h.cronService.AddCrawlJob("xiaobot_crawl", cronExpr, crawlFunc); err != nil {
+			return "", fmt.Errorf("failed to add crawl job: %w", err)
+		}
+		if err = h.cronDBService.PatchDefinition(taskID, nil, nil, nil, &jobID); err != nil {
+			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
+		}
+	case cronDB.TypeGitHub:
+		crawlFunc = githubCron.Crawl(h.redisService, h.db, h.notifier)
+		if jobID, err = h.cronService.AddCrawlJob("github_crawl", cronExpr, crawlFunc); err != nil {
 			return "", fmt.Errorf("failed to add crawl job: %w", err)
 		}
 		if err = h.cronDBService.PatchDefinition(taskID, nil, nil, nil, &jobID); err != nil {
@@ -298,6 +307,8 @@ func TaskTypeStrToInt(taskType string) (int, error) {
 		return cronDB.TypeZhihu, nil
 	case "xiaobot":
 		return cronDB.TypeXiaobot, nil
+	case "github":
+		return cronDB.TypeGitHub, nil
 	default:
 		return 0, fmt.Errorf("unknown task type: %s", taskType)
 	}
@@ -311,6 +322,8 @@ func TaskTypeIntToStr(taskType int) (string, error) {
 		return "zhihu", nil
 	case cronDB.TypeXiaobot:
 		return "xiaobot", nil
+	case cronDB.TypeGitHub:
+		return "github", nil
 	default:
 		return "", fmt.Errorf("unknown task type: %d", taskType)
 	}
