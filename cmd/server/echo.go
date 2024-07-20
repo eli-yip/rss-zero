@@ -52,7 +52,7 @@ func setupEcho(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier,
 
 	zsxqHandler := zsxqController.NewZsxqHandler(redisService, db, notifier, logger)
 	zhihuDBService := zhihuDB.NewDBService(db)
-	zhihuHandler := zhihuController.NewZhihuHandler(redisService, zhihuDBService, notifier, logger)
+	zhihuHandler := zhihuController.NewZhihuHandler(redisService, zhihuDBService, notifier)
 	xiaobotDBService := xiaobotDB.NewDBService(db)
 	xiaobotHandler := xiaobotController.NewXiaobotController(redisService, xiaobotDBService, notifier, logger)
 	endOfLifeHandler := endoflifeController.NewController(redisService, logger)

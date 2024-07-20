@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"go.uber.org/zap"
-
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -13,16 +11,14 @@ import (
 type Controller struct {
 	redis    redis.Redis
 	db       zhihuDB.DB
-	logger   *zap.Logger
 	taskCh   chan common.Task
 	notifier notify.Notifier
 }
 
-func NewZhihuHandler(redis redis.Redis, db zhihuDB.DB, notifier notify.Notifier, logger *zap.Logger) *Controller {
+func NewZhihuHandler(redis redis.Redis, db zhihuDB.DB, notifier notify.Notifier) *Controller {
 	h := &Controller{
 		redis:    redis,
 		db:       db,
-		logger:   logger,
 		notifier: notifier,
 		taskCh:   make(chan common.Task, 100),
 	}
