@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gorilla/feeds"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"github.com/eli-yip/rss-zero/pkg/render"
 )
@@ -27,8 +28,8 @@ type RSSItem struct {
 }
 
 type RSSRender interface {
-	Render(rs []RSSItem) (string, error)
-	RenderEmpty(user, repoName string) (string, error)
+	Render(rs []RSSItem, pre bool) (string, error)
+	RenderEmpty(user, repoName string, pre bool) (string, error)
 }
 
 type RSSRenderService struct{ goldmark.Markdown }
@@ -40,10 +41,10 @@ func NewRSSRenderService() RSSRender {
 	)}
 }
 
-func (r *RSSRenderService) RenderEmpty(user, repoName string) (rss string, err error) {
+func (r *RSSRenderService) RenderEmpty(user, repoName string, pre bool) (rss string, err error) {
 
 	rssFeed := &feeds.Feed{
-		Title:   "[GitHub]" + strings.ToTitle(repoName),
+		Title:   "[GitHub]" + cases.Title(language.English, cases.Compact).String(repoName) + "-WithPre",
 		Link:    &feeds.Link{Href: fmt.Sprintf("https://github.com/%s/%s/releases", user, repoName)},
 		Created: defaultTime,
 		Updated: defaultTime,
@@ -52,13 +53,13 @@ func (r *RSSRenderService) RenderEmpty(user, repoName string) (rss string, err e
 	return rssFeed.ToAtom()
 }
 
-func (r *RSSRenderService) Render(rs []RSSItem) (rss string, err error) {
+func (r *RSSRenderService) Render(rs []RSSItem, pre bool) (rss string, err error) {
 	if len(rs) == 0 {
 		return "", errors.New("no rss items")
 	}
 
 	rssFeed := &feeds.Feed{
-		Title:   "[GitHub]" + strings.ToTitle(rs[0].RepoName),
+		Title:   "[GitHub]" + cases.Title(language.English, cases.Compact).String(rs[0].RepoName) + "-WithPre",
 		Link:    &feeds.Link{Href: rs[0].Link},
 		Created: rs[0].UpdateTime,
 		Updated: rs[0].UpdateTime,

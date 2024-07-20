@@ -35,7 +35,7 @@ func GenerateGitHub(subID string, dbService githubDB.DB, logger *zap.Logger) (pa
 	}
 	if len(releases) == 0 {
 		logger.Info("Found no release in database, render empty content now")
-		content, err = rssRender.RenderEmpty(repo.GithubUser, repo.Name)
+		content, err = rssRender.RenderEmpty(repo.GithubUser, repo.Name, sub.PreRelease)
 		return path, content, err
 	}
 
@@ -53,7 +53,7 @@ func GenerateGitHub(subID string, dbService githubDB.DB, logger *zap.Logger) (pa
 	}
 	logger.Info("Generate rss items successfully")
 
-	content, err = rssRender.Render(rs)
+	content, err = rssRender.Render(rs, sub.PreRelease)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to render rss: %w", err)
 	}
