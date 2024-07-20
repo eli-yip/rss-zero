@@ -19,7 +19,7 @@ func (s *DBService) SaveRepo(repo *Repo) error { return s.Save(repo).Error }
 
 func (s *DBService) GetRepo(user, repoName string) (*Repo, error) {
 	var r Repo
-	if err := s.Where("gh_user = ? AND repo_name = ?", user, repoName).First(&r).Error; err != nil {
+	if err := s.Where("gh_user = ? AND name = ?", user, repoName).First(&r).Error; err != nil {
 		return nil, err
 	}
 	return &r, nil

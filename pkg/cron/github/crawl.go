@@ -64,13 +64,14 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 			if err != nil {
 				errCount++
 				logger.Error("Failed to get github repo", zap.Error(err))
-				return
+				continue
 			}
 			logger.Info("Get repo info successfully")
 
 			if err = crawl.CrawlRepo(repo.GithubUser, repo.Name, repo.ID, token, parseService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to crawl github release", zap.Error(err))
+				continue
 			}
 			logger.Info("Crawl github release successfully")
 
@@ -78,14 +79,14 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 			if path, content, err = rss.GenerateGitHub(sub.ID, dbService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to generate github rss", zap.Error(err))
-				return
+				continue
 			}
 			logger.Info("Generate rss for github release successfully")
 
 			if err = r.Set(path, content, redis.RSSDefaultTTL); err != nil {
 				errCount++
 				logger.Error("Failed to set rss to redis", zap.Error(err))
-				return
+				continue
 			}
 			logger.Info("Set rss to redis successfully")
 
@@ -93,6 +94,6 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 			time.Sleep(5 * time.Second)
 		}
 
-		logger.Info("Crawl github releases successfully")
+		logger.Info("Crawl all github releases done")
 	}
 }

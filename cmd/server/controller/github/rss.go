@@ -118,7 +118,8 @@ var ErrRepoNotFound = errors.New("repo not found")
 func (h *Controller) checkRepo(user, repoName string, pre bool) (subID string, err error) {
 	var repoID string
 
-	if _, err = h.db.GetRepo(user, repoName); err != nil {
+	var repo *githubDB.Repo
+	if repo, err = h.db.GetRepo(user, repoName); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			resp, err := http.Get(fmt.Sprintf("https://github.com/%s/%s", user, repoName))
 			if err != nil {
@@ -141,6 +142,7 @@ func (h *Controller) checkRepo(user, repoName string, pre bool) (subID string, e
 			return "", fmt.Errorf("failed to get repo: %w", err)
 		}
 	}
+	repoID = repo.ID
 
 	sub, err := h.db.GetSub(repoID, pre)
 	if err == nil {
