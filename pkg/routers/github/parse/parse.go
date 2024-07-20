@@ -42,8 +42,10 @@ func (s *ParseService) ParseAndSaveRelease(subID string, release request.Release
 		return fmt.Errorf("failed to check release existance: %w", err)
 	}
 
-	if releaseInDB.PublishedAt.After(release.PublishedAt) {
-		return nil
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		if releaseInDB.PublishedAt.After(release.PublishedAt) {
+			return nil
+		}
 	}
 
 	releaseToSave := db.Release{
