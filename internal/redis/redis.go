@@ -17,6 +17,7 @@ const (
 	ZhihuCookiePathDC0   = "zhihu_cookie_d_c0"
 	ZhihuCookiePathZC0   = "zhihu_cookie_zc0"
 	ZhihuCookiePathZSECK = "zhihu_cookie_zse_ck"
+	GitHubTokenPath      = "github_token"
 )
 
 const (
@@ -29,6 +30,8 @@ const (
 	ZhihuPinPath     = "zhihu_rss_pin_%s"
 
 	EndOfLifePath = "endoflife_rss_%s"
+
+	GitHubRSSPath = "github_rss_%s_%s"
 )
 
 const (

@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func CrawlRepo(user, repo, token string, parser parse.Parser, logger *zap.Logger) (err error) {
+func CrawlRepo(user, repo, subID, token string, parser parse.Parser, logger *zap.Logger) (err error) {
 	crawlID := xid.New().String()
 	logger = logger.With(zap.String("crawl_id", crawlID))
 	logger.Info("Start to crawl github release", zap.String("user", user), zap.String("repo", repo))
@@ -21,7 +21,7 @@ func CrawlRepo(user, repo, token string, parser parse.Parser, logger *zap.Logger
 	}
 
 	for _, r := range releases {
-		if err = parser.ParseAndSaveRelease(r); err != nil {
+		if err = parser.ParseAndSaveRelease(subID, r); err != nil {
 			logger.Error("Failed to parse and save release", zap.Error(err))
 			return fmt.Errorf("failed to parse and save release: %w", err)
 		}

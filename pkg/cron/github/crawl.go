@@ -57,13 +57,13 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 		}
 
 		for _, sub := range subs {
-			if err = crawl.CrawlRepo(sub.User, sub.Repo, token, parseService, logger); err != nil {
+			if err = crawl.CrawlRepo(sub.User, sub.Repo, sub.ID, token, parseService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to crawl github release", zap.Error(err))
 			}
 
 			var path, content string
-			if path, content, err = rss.GenerateGitHub(sub.User, sub.Repo, dbService); err != nil {
+			if path, content, err = rss.GenerateGitHub(sub.ID, sub.PreRelease, dbService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to generate github rss", zap.Error(err))
 				return
@@ -78,5 +78,6 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 			logger.Info("Set rss to redis successfully")
 		}
 
+		logger.Info("Crawl github release successfully")
 	}
 }

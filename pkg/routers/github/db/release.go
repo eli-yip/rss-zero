@@ -4,6 +4,7 @@ import "time"
 
 type Release struct {
 	ID          int       `gorm:"primaryKey"`
+	SubID       string    `gorm:"column:sub_id"`
 	URL         string    `gorm:"column:url"`
 	Tag         string    `gorm:"column:tag"`
 	Title       string    `gorm:"column:title"`
@@ -18,8 +19,8 @@ func (*Release) TableName() string { return "github_releases" }
 type DBRelease interface {
 	SaveRelease(release *Release) error
 	GetRelease(id int) (*Release, error)
-	GetReleaseByTag(tag string) (*Release, error)
-	GetReleases(page, pageSize int) ([]Release, error)
+	GetReleaseByTag(subID, tag string) (*Release, error)
+	GetReleases(subID string, preRelease bool, page, pageSize int) ([]Release, error)
 }
 
 func (s *DBService) SaveRelease(release *Release) error { return s.Save(release).Error }
@@ -32,17 +33,17 @@ func (s *DBService) GetRelease(id int) (*Release, error) {
 	return &release, nil
 }
 
-func (s *DBService) GetReleaseByTag(tag string) (*Release, error) {
+func (s *DBService) GetReleaseByTag(subID, tag string) (*Release, error) {
 	var release Release
-	if err := s.Where("tag = ?", tag).First(&release).Error; err != nil {
+	if err := s.Where("sub_id = ? AND tag = ?", subID, tag).First(&release).Error; err != nil {
 		return nil, err
 	}
 	return &release, nil
 }
 
-func (s *DBService) GetReleases(page, pageSize int) (releases []Release, err error) {
+func (s *DBService) GetReleases(subID string, preRelease bool, page, pageSize int) (releases []Release, err error) {
 	releases = make([]Release, 0)
-	if err = s.Order("published_at DESC").Offset((page - 1) * pageSize).Limit(pageSize).Find(&releases).Error; err != nil {
+	if err = s.Where("sub_id = ? AND pre_release = ?", subID, preRelease).Order("published_at DESC").Offset((page - 1) * pageSize).Limit(pageSize).Find(&releases).Error; err != nil {
 		return nil, err
 	}
 	return releases, nil

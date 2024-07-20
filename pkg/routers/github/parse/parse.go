@@ -12,7 +12,7 @@ import (
 )
 
 type Parser interface {
-	ParseAndSaveRelease(release request.Release) error
+	ParseAndSaveRelease(subID string, release request.Release) error
 }
 
 type ParseService struct {
@@ -27,7 +27,7 @@ func NewParseService(db db.DB) Parser {
 	}
 }
 
-func (s *ParseService) ParseAndSaveRelease(release request.Release) (err error) {
+func (s *ParseService) ParseAndSaveRelease(subID string, release request.Release) (err error) {
 	if release.Draft {
 		return nil
 	}
@@ -48,6 +48,7 @@ func (s *ParseService) ParseAndSaveRelease(release request.Release) (err error) 
 
 	releaseToSave := db.Release{
 		ID:          release.ID,
+		SubID:       subID,
 		URL:         release.HTMLURL,
 		Tag:         release.TagName,
 		Title:       release.Name,
