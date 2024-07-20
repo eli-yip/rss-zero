@@ -12,6 +12,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
+	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	weiboDB "github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -65,6 +66,9 @@ func NewPostgresDB(c config.DatabaseConfig) (db *gorm.DB, err error) {
 
 		&cronDB.CronTask{},
 		&cronDB.CronJob{},
+
+		&githubDB.Release{},
+		&githubDB.Sub{},
 	); err != nil {
 		return nil, err
 	}

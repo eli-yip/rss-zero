@@ -11,6 +11,7 @@ import (
 
 	archiveController "github.com/eli-yip/rss-zero/cmd/server/controller/archive"
 	endoflifeController "github.com/eli-yip/rss-zero/cmd/server/controller/endoflife"
+	githubController "github.com/eli-yip/rss-zero/cmd/server/controller/github"
 	jobController "github.com/eli-yip/rss-zero/cmd/server/controller/job"
 	rsshubController "github.com/eli-yip/rss-zero/cmd/server/controller/rsshub"
 	xiaobotController "github.com/eli-yip/rss-zero/cmd/server/controller/xiaobot"
@@ -21,6 +22,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
+	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
@@ -61,12 +63,14 @@ func setupEcho(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier,
 		redisService, db, notifier,
 		cronDBService, definitionToFunc, logger)
 	archiveHandler := archiveController.NewController(db)
+	githubDBService := githubDB.NewDBService(db)
+	githubController := githubController.NewController(redisService, githubDBService, notifier)
 
-	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler)
+	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController)
 
 	// /api/v1
 	apiGroup := e.Group("/api/v1")
-	registerFeed(apiGroup, zhihuHandler)
+	registerFeed(apiGroup, zhihuHandler, githubController)
 	registerCookie(apiGroup, zsxqHandler, xiaobotHandler, zhihuHandler)
 	registerAuthor(apiGroup, zhihuHandler)
 	registerDEncryptionService(apiGroup, zhihuHandler)
@@ -101,13 +105,16 @@ func registerAuthor(apiGroup *echo.Group, zhihuHandler *zhihuController.Controll
 // /api/v1/feed
 // /api/v1/feed/zhihu/:id
 // /api/v1/feed/rsshub
-func registerFeed(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller) {
+func registerFeed(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
 	feedApi := apiGroup.Group("/feed")
 
 	zhihuFeedApi := feedApi.GET("/zhihu/:id", zhihuHandler.Feed)
 	zhihuFeedApi.Name = "Feed route for zhihu"
 	rssHubFeddApi := feedApi.POST("/rsshub", rsshubController.GenerateRSSHubFeed)
 	rssHubFeddApi.Name = "RSSHub feed generator route"
+
+	githubFeedApi := feedApi.GET("/github/:user_repo", githubController.Feed)
+	githubFeedApi.Name = "Feed route for github"
 }
 
 // /api/v1/job
@@ -218,7 +225,7 @@ func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqContro
 // /rss/zhihu/answer/:feed
 // /rss/zhihu/article/:feed
 // /rss/zhihu/pin/:feed
-func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.XiaobotController, endOfLifeHandler *endoflifeController.Controller) {
+func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.XiaobotController, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller) {
 	rssGroup := e.Group("/rss")
 	rssGroup.Use(
 		myMiddleware.SetRSSContentType(), // set content type to application/atom+xml
@@ -244,4 +251,7 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihu
 
 	rssEndOfLife := rssGroup.GET("/endoflife/:feed", endOfLifeHandler.RSS)
 	rssEndOfLife.Name = "RSS route for endoflife.date"
+
+	rssGithub := rssGroup.GET("/github/:feed", githubController.RSS)
+	rssGithub.Name = "RSS route for github"
 }
