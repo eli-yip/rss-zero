@@ -2,6 +2,7 @@ package cron
 
 import (
 	"errors"
+	"time"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -76,6 +77,9 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 				return
 			}
 			logger.Info("Set rss to redis successfully")
+
+			// TODO: Use token pool to avoid rate limit
+			time.Sleep(5 * time.Second)
 		}
 
 		logger.Info("Crawl github release successfully")
