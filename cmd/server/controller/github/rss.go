@@ -31,7 +31,6 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 	var pre bool
 	path := c.Request().URL.Path
 	if strings.HasPrefix(path, "/rss/github/pre") {
-		fmt.Println("jldsafjksjflksdjl")
 		pre = true
 	}
 
@@ -144,8 +143,9 @@ func (h *Controller) checkRepo(user, repoName string, pre bool) (subID string, e
 		} else {
 			return "", fmt.Errorf("failed to get repo: %w", err)
 		}
+	} else {
+		repoID = repo.ID
 	}
-	repoID = repo.ID
 
 	sub, err := h.db.GetSub(repoID, pre)
 	if err == nil {
