@@ -11,16 +11,16 @@ func (*Sub) TableName() string { return "github_subs" }
 
 type DBSub interface {
 	SaveSub(sub *Sub) error
-	GetSub(user, repo string) (*Sub, error)
+	GetSub(user, repo string, preRelease bool) (*Sub, error)
 	GetSubByID(id string) (*Sub, error)
 	GetSubs() ([]Sub, error)
 }
 
 func (s *DBService) SaveSub(sub *Sub) error { return s.Save(sub).Error }
 
-func (s *DBService) GetSub(user, repo string) (*Sub, error) {
+func (s *DBService) GetSub(user, repo string, preRelease bool) (*Sub, error) {
 	var sub Sub
-	if err := s.Where("user = ? AND repo = ?", user, repo).First(&sub).Error; err != nil {
+	if err := s.Where("user = ? AND repo = ? AND pre_release = ?", user, repo, preRelease).First(&sub).Error; err != nil {
 		return nil, err
 	}
 	return &sub, nil
@@ -28,7 +28,7 @@ func (s *DBService) GetSub(user, repo string) (*Sub, error) {
 
 func (s *DBService) GetSubByID(id string) (*Sub, error) {
 	var sub Sub
-	if err := s.First(&sub, id).Error; err != nil {
+	if err := s.Where("id = ?", id).First(&sub).Error; err != nil {
 		return nil, err
 	}
 	return &sub, nil

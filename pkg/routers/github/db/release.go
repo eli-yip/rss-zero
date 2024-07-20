@@ -43,7 +43,12 @@ func (s *DBService) GetReleaseByTag(subID, tag string) (*Release, error) {
 
 func (s *DBService) GetReleases(subID string, preRelease bool, page, pageSize int) (releases []Release, err error) {
 	releases = make([]Release, 0)
-	if err = s.Where("sub_id = ? AND pre_release = ?", subID, preRelease).Order("published_at DESC").Offset((page - 1) * pageSize).Limit(pageSize).Find(&releases).Error; err != nil {
+	query := s.Where("sub_id = ?", subID).Order("published_at DESC").Offset((page - 1) * pageSize).Limit(pageSize)
+	if !preRelease {
+		query = query.Where("pre_release = ?", preRelease)
+	}
+
+	if err = query.Find(&releases).Error; err != nil {
 		return nil, err
 	}
 	return releases, nil
