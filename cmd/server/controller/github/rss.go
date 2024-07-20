@@ -137,7 +137,7 @@ func (h *Controller) checkRepo(user, repo string, pre bool) (subID string, err e
 	sbuID := xid.New().String()
 	err = h.db.SaveSub(&githubDB.Sub{
 		ID:         sbuID,
-		User:       user,
+		GithubUser: user,
 		Repo:       repo,
 		PreRelease: pre,
 	})

@@ -28,7 +28,7 @@ func GenerateGitHub(id string, dbService githubDB.DB, logger *zap.Logger) (path,
 	}
 	if len(releases) == 0 {
 		logger.Info("Found no release in database, render empty content now")
-		content, err = rssRender.RenderEmpty(sub.User, sub.Repo)
+		content, err = rssRender.RenderEmpty(sub.GithubUser, sub.Repo)
 		return path, content, err
 	}
 

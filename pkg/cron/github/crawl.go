@@ -58,7 +58,7 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 		}
 
 		for _, sub := range subs {
-			if err = crawl.CrawlRepo(sub.User, sub.Repo, sub.ID, token, parseService, logger); err != nil {
+			if err = crawl.CrawlRepo(sub.GithubUser, sub.Repo, sub.ID, token, parseService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to crawl github release", zap.Error(err))
 			}
@@ -82,6 +82,6 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 			time.Sleep(5 * time.Second)
 		}
 
-		logger.Info("Crawl github release successfully")
+		logger.Info("Crawl github releases successfully")
 	}
 }
