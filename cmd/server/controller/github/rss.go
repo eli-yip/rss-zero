@@ -27,8 +27,8 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
 	user, repo := userRepo[0], userRepo[1]
-	var pre bool
 
+	var pre bool
 	path := c.Request().URL.Path
 	if strings.HasPrefix(path, "/rss/github/pre") {
 		fmt.Println("jldsafjksjflksdjl")

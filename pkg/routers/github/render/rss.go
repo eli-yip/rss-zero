@@ -44,7 +44,7 @@ func NewRSSRenderService() RSSRender {
 func (r *RSSRenderService) RenderEmpty(user, repoName string, pre bool) (rss string, err error) {
 
 	rssFeed := &feeds.Feed{
-		Title:   "[GitHub]" + cases.Title(language.English, cases.Compact).String(repoName) + "-WithPre",
+		Title:   buildRSSFeedTitle(repoName, pre),
 		Link:    &feeds.Link{Href: fmt.Sprintf("https://github.com/%s/%s/releases", user, repoName)},
 		Created: defaultTime,
 		Updated: defaultTime,
@@ -59,7 +59,7 @@ func (r *RSSRenderService) Render(rs []RSSItem, pre bool) (rss string, err error
 	}
 
 	rssFeed := &feeds.Feed{
-		Title:   "[GitHub]" + cases.Title(language.English, cases.Compact).String(rs[0].RepoName) + "-WithPre",
+		Title:   buildRSSFeedTitle(rs[0].RepoName, pre),
 		Link:    &feeds.Link{Href: rs[0].Link},
 		Created: rs[0].UpdateTime,
 		Updated: rs[0].UpdateTime,
@@ -72,7 +72,7 @@ func (r *RSSRenderService) Render(rs []RSSItem, pre bool) (rss string, err error
 		}
 
 		rssFeed.Items = append(rssFeed.Items, &feeds.Item{
-			Title:       buildTitle(item.Title, item.Prelease),
+			Title:       buildRSSItemTitle(item.Title, item.Prelease),
 			Link:        &feeds.Link{Href: item.Link},
 			Author:      &feeds.Author{Name: item.RepoName},
 			Id:          fmt.Sprintf("%d", item.ID),
@@ -86,7 +86,15 @@ func (r *RSSRenderService) Render(rs []RSSItem, pre bool) (rss string, err error
 	return rssFeed.ToAtom()
 }
 
-func buildTitle(title string, preRelease bool) string {
+func buildRSSFeedTitle(repoName string, pre bool) string {
+	title := "[GitHub]" + cases.Title(language.English, cases.Compact).String(repoName)
+	if pre {
+		title += "-WithPre"
+	}
+	return title
+}
+
+func buildRSSItemTitle(title string, preRelease bool) string {
 	if preRelease {
 		return "[Pre-Release]" + title
 	}
