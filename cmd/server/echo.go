@@ -71,7 +71,7 @@ func setupEcho(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier,
 	// /api/v1
 	apiGroup := e.Group("/api/v1")
 	registerFeed(apiGroup, zhihuHandler, githubController)
-	registerCookie(apiGroup, zsxqHandler, xiaobotHandler, zhihuHandler)
+	registerCookie(apiGroup, zsxqHandler, xiaobotHandler, zhihuHandler, githubController)
 	registerAuthor(apiGroup, zhihuHandler)
 	registerDEncryptionService(apiGroup, zhihuHandler)
 	registerReformat(apiGroup, zsxqHandler, zhihuHandler, xiaobotHandler)
@@ -203,7 +203,7 @@ func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqCont
 // /api/v1/cookie/xiaobot
 // /api/v1/cookie/zhihu
 // /api/v1/cookie/zhihu/check
-func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, xiaobotHandler *xiaobotController.XiaobotController, zhihuHandler *zhihuController.Controller) {
+func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, xiaobotHandler *xiaobotController.XiaobotController, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
 	cookieApi := apiGroup.Group("/cookie")
 
 	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateZsxqCookie)
@@ -217,6 +217,9 @@ func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqContro
 
 	zhihuCheckCookieApi := cookieApi.GET("/zhihu", zhihuHandler.CheckCookie)
 	zhihuCheckCookieApi.Name = "Cookie checking route for zhihu"
+
+	githubCookieApi := cookieApi.POST("/github", githubController.UpdateToken)
+	githubCookieApi.Name = "Token updating route for github"
 }
 
 // /rss
