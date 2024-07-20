@@ -36,6 +36,12 @@ func (h *Controller) Feed(c echo.Context) (err error) {
 
 	const feedLayout = `%s/rss/github/%s/%s`
 
+	externalFeedUrl, err := url.Parse(fmt.Sprintf(feedLayout, config.C.Settings.ServerURL, user, repo))
+	if err != nil {
+		logger.Error("Failed to parse external feed url", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
+	}
+
 	internalFeedUrl, err := url.Parse(fmt.Sprintf(feedLayout, config.C.Settings.InternalServerURL, user, repo))
 	if err != nil {
 		logger.Error("Failed to parse internal feed url", zap.Error(err))
@@ -53,27 +59,17 @@ func (h *Controller) Feed(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
 	}
 
-	externalFeedUrl, err := url.Parse(fmt.Sprintf(feedLayout, config.C.Settings.ServerURL, user, repo))
-	if err != nil {
-		logger.Error("Failed to parse external feed url", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
-	}
+	externalFeedPreUrl := *externalFeedUrl
+	externalFeedPreUrl.Path = strings.ReplaceAll(externalFeedPreUrl.Path, "/rss/github", "/rss/github/pre")
 
 	internalFeedPreUrl := *internalFeedUrl
-	q := internalFeedPreUrl.Query()
-	q.Set("pre", "true")
-	internalFeedPreUrl.RawQuery = q.Encode()
+	internalFeedPreUrl.Path = strings.ReplaceAll(internalFeedPreUrl.Path, "/rss/github", "/rss/github/pre")
 
 	freshRSSFeedPre, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, internalFeedPreUrl.String())
 	if err != nil {
-		logger.Error("Failed to generate github fresh rss feed", zap.Error(err))
+		logger.Error("Failed to generate github fresh rss feed with pre", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
 	}
-
-	externalFeedPreUrl := *externalFeedUrl
-	q = externalFeedPreUrl.Query()
-	q.Set("pre", "true")
-	externalFeedPreUrl.RawQuery = q.Encode()
 
 	return c.JSON(http.StatusOK, &Resp{
 		Normal: Feed{

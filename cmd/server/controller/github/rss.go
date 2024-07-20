@@ -20,15 +20,18 @@ import (
 func (h *Controller) RSS(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	userRepo := strings.Split(c.Get("feed_id").(string), "/")
+	feed := c.Get("feed_id").(string)
+	userRepo := strings.Split(feed, "/")
 	if len(userRepo) != 2 {
-		logger.Error("Error getting user and repo", zap.Error(err))
+		logger.Error("Error getting user and repo, length not equal to 2", zap.String("feed", feed))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
 	user, repo := userRepo[0], userRepo[1]
-	preParam := c.QueryParam("pre")
 	var pre bool
-	if preParam == "true" {
+
+	path := c.Request().URL.Path
+	if strings.HasPrefix(path, "/rss/github/pre") {
+		fmt.Println("jldsafjksjflksdjl")
 		pre = true
 	}
 

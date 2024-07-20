@@ -257,4 +257,8 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihu
 
 	rssGithub := rssGroup.GET("/github/:feed", githubController.RSS)
 	rssGithub.Name = "RSS route for github"
+
+	githubRSSPreApi := rssGroup.GET("/github/pre/:feed", githubController.RSS)
+	githubRSSPreApi.Name = "RSS route for github pre"
+
 }
