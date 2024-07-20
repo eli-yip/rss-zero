@@ -35,6 +35,7 @@ const (
 	TypeZsxq = iota
 	TypeZhihu
 	TypeXiaobot
+	TypeGitHub
 )
 
 func (ds *DBService) AddDefinition(taskType int, cronExpr string, include, exclude []string) (id string, err error) {
