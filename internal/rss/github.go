@@ -10,25 +10,32 @@ import (
 	render "github.com/eli-yip/rss-zero/pkg/routers/github/render"
 )
 
-func GenerateGitHub(id string, dbService githubDB.DB, logger *zap.Logger) (path, content string, err error) {
+func GenerateGitHub(subID string, dbService githubDB.DB, logger *zap.Logger) (path, content string, err error) {
 	logger.Info("Start to generate github release rss")
 	rssRender := render.NewRSSRenderService()
 	logger.Info("Init github rss render service successfully")
 
-	sub, err := dbService.GetSubByID(id)
+	sub, err := dbService.GetSubByID(subID)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get sub info from database: %w", err)
 	}
+	logger.Info("Get sub info successfully")
 
-	path = fmt.Sprintf(redis.GitHubRSSPath, id)
+	repo, err := dbService.GetRepoByID(sub.RepoID)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get repo info from database: %w", err)
+	}
+	logger.Info("Get repo info successfully")
 
-	releases, err := dbService.GetReleases(id, sub.PreRelease, 1, 20)
+	path = fmt.Sprintf(redis.GitHubRSSPath, subID)
+
+	releases, err := dbService.GetReleases(subID, sub.PreRelease, 1, 20)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get releases from database: %w", err)
 	}
 	if len(releases) == 0 {
 		logger.Info("Found no release in database, render empty content now")
-		content, err = rssRender.RenderEmpty(sub.GithubUser, sub.Repo)
+		content, err = rssRender.RenderEmpty(repo.GithubUser, repo.Name)
 		return path, content, err
 	}
 
@@ -38,7 +45,7 @@ func GenerateGitHub(id string, dbService githubDB.DB, logger *zap.Logger) (path,
 			ID:         r.ID,
 			Link:       r.URL,
 			UpdateTime: r.PublishedAt,
-			RepoName:   sub.Repo,
+			RepoName:   repo.Name,
 			Title:      r.Title,
 			Body:       r.Body,
 			Prelease:   r.PreRelease,

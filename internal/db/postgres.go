@@ -69,6 +69,7 @@ func NewPostgresDB(c config.DatabaseConfig) (db *gorm.DB, err error) {
 
 		&githubDB.Release{},
 		&githubDB.Sub{},
+		&githubDB.Repo{},
 	); err != nil {
 		return nil, err
 	}

@@ -2,8 +2,7 @@ package db
 
 type Sub struct {
 	ID         string `gorm:"column:id"`
-	GithubUser string `gorm:"primaryKey;column:gh_user"`
-	Repo       string `gorm:"primaryKey"`
+	RepoID     string `gorm:"column:repo_id;primaryKey"`
 	PreRelease bool   `gorm:"primaryKey;column:pre_release"`
 }
 
@@ -11,16 +10,16 @@ func (*Sub) TableName() string { return "github_subs" }
 
 type DBSub interface {
 	SaveSub(sub *Sub) error
-	GetSub(user, repo string, preRelease bool) (*Sub, error)
+	GetSub(repoID string, preRelease bool) (*Sub, error)
 	GetSubByID(id string) (*Sub, error)
 	GetSubs() ([]Sub, error)
 }
 
 func (s *DBService) SaveSub(sub *Sub) error { return s.Save(sub).Error }
 
-func (s *DBService) GetSub(user, repo string, preRelease bool) (*Sub, error) {
+func (s *DBService) GetSub(repoID string, preRelease bool) (*Sub, error) {
 	var sub Sub
-	if err := s.Where("gh_user = ? AND repo = ? AND pre_release = ?", user, repo, preRelease).First(&sub).Error; err != nil {
+	if err := s.Where("repo_id = ? AND pre_release = ?", repoID, preRelease).First(&sub).Error; err != nil {
 		return nil, err
 	}
 	return &sub, nil

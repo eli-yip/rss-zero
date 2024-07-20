@@ -115,8 +115,34 @@ func (h *Controller) generateRSS(key string, logger *zap.Logger) (rssContent str
 
 var ErrRepoNotFound = errors.New("repo not found")
 
-func (h *Controller) checkRepo(user, repo string, pre bool) (subID string, err error) {
-	sub, err := h.db.GetSub(user, repo, pre)
+func (h *Controller) checkRepo(user, repoName string, pre bool) (subID string, err error) {
+	var repoID string
+
+	if _, err = h.db.GetRepo(user, repoName); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			resp, err := http.Get(fmt.Sprintf("https://github.com/%s/%s", user, repoName))
+			if err != nil {
+				return "", fmt.Errorf("failed to request github normal page")
+			}
+
+			if resp.StatusCode != http.StatusOK {
+				return "", ErrRepoNotFound
+			}
+
+			repoID = xid.New().String()
+			if err = h.db.SaveRepo(&githubDB.Repo{
+				ID:         repoID,
+				GithubUser: user,
+				Name:       repoName,
+			}); err != nil {
+				return "", fmt.Errorf("failed to save repo: %w", err)
+			}
+		} else {
+			return "", fmt.Errorf("failed to get repo: %w", err)
+		}
+	}
+
+	sub, err := h.db.GetSub(repoID, pre)
 	if err == nil {
 		return sub.ID, nil
 	}
@@ -125,20 +151,10 @@ func (h *Controller) checkRepo(user, repo string, pre bool) (subID string, err e
 		return "", fmt.Errorf("failed to get sub: %w", err)
 	}
 
-	resp, err := http.Get(fmt.Sprintf("https://github.com/%s/%s", user, repo))
-	if err != nil {
-		return "", fmt.Errorf("failed to request github normal page")
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", ErrRepoNotFound
-	}
-
 	subID = xid.New().String()
 	err = h.db.SaveSub(&githubDB.Sub{
 		ID:         subID,
-		GithubUser: user,
-		Repo:       repo,
+		RepoID:     repoID,
 		PreRelease: pre,
 	})
 	return subID, err
