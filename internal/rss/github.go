@@ -29,7 +29,7 @@ func GenerateGitHub(subID string, dbService githubDB.DB, logger *zap.Logger) (pa
 
 	path = fmt.Sprintf(redis.GitHubRSSPath, subID)
 
-	releases, err := dbService.GetReleases(subID, sub.PreRelease, 1, 20)
+	releases, err := dbService.GetReleases(repo.ID, sub.PreRelease, 1, 20)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get releases from database: %w", err)
 	}
