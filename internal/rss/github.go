@@ -46,9 +46,14 @@ func GenerateGitHub(subID string, dbService githubDB.DB, logger *zap.Logger) (pa
 			Link:       r.URL,
 			UpdateTime: r.PublishedAt,
 			RepoName:   repo.Name,
-			Title:      r.Title,
-			Body:       r.Body,
-			Prelease:   r.PreRelease,
+			Title: func() string {
+				if r.Title == "" {
+					return r.Tag
+				}
+				return r.Title
+			}(),
+			Body:     r.Body,
+			Prelease: r.PreRelease,
 		})
 	}
 	logger.Info("Generate rss items successfully")

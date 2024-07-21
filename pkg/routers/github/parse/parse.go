@@ -49,11 +49,16 @@ func (s *ParseService) ParseAndSaveRelease(repoID string, release request.Releas
 	}
 
 	releaseToSave := db.Release{
-		ID:          release.ID,
-		RepoID:      repoID,
-		URL:         release.HTMLURL,
-		Tag:         release.TagName,
-		Title:       release.Name,
+		ID:     release.ID,
+		RepoID: repoID,
+		URL:    release.HTMLURL,
+		Tag:    release.TagName,
+		Title: func() string {
+			if release.Name == "" {
+				return release.TagName
+			}
+			return release.Name
+		}(),
 		Body:        formattedBody,
 		PreRelease:  release.Prerelease,
 		PublishedAt: release.PublishedAt,
