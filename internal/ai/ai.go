@@ -7,10 +7,8 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
-// gptModel is the gpt-3.5 gptModel used for text generation.
-//
 // It should be changed as openai updates their models.
-const gptModel = openai.GPT3Dot5Turbo0125
+const gptModel = "deepseek-chat"
 
 // whisperModel is the whisper model used for speech to text.
 //
