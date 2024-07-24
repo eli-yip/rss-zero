@@ -160,19 +160,21 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
 				logger.Error("Failed to increase failed count", zap.Error(err))
 			}
+			logger.Info("Increase encryption service failed count successfully")
 			var e403 Error403
 			if err = json.Unmarshal(body, &e403); err != nil {
 				logger.Error("Failed to unmarshal 403 error", zap.Error(err))
 				continue
 			}
+			logger.Error("403 error", zap.String("resp_body", string(body)))
 			if e403.Error.NeedLogin {
 				logger.Error("Need login according to 403 error")
 				if err = r.dbService.MarkUnavailable(es.ID); err != nil {
 					logger.Error("Failed to mark unavailable", zap.Error(err))
 				}
+				logger.Info("Mark encryption service unavailable successfully")
 				return nil, ErrNeedLogin
 			} else {
-				logger.Error("403 error", zap.String("resp_body", string(body)))
 				return nil, ErrForbidden
 			}
 		case http.StatusUnauthorized:
