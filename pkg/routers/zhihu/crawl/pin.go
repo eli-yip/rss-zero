@@ -58,8 +58,8 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 		for i, pin := range pinExcerptList {
 			logger := logger.With(zap.String("pin_id", pin.ID))
 
-			// see more in https://gitea.darkeli.com/yezi/rss-zero/issues/95
-			skipPins := []string{"1762436566352252928"}
+			// see more in https://gitea.darkeli.com/yezi/rss-zero/issues/95 https://gitea.darkeli.com/yezi/rss-zero#140
+			skipPins := []string{"1762436566352252928", "1798834802864037889"}
 			if slices.Contains(skipPins, pin.ID) {
 				logger.Info("skip pin because images in it returns 400 error")
 				continue
