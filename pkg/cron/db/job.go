@@ -9,12 +9,12 @@ import (
 )
 
 type CronJob struct {
-	ID        string    `gorm:"primaryKey;column:id;type:string"`
-	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
-	TaskType  string    `gorm:"column:task_type;type:string"` // definition id
-	Status    int       `gorm:"column:status;type:int"`
-	Detail    string    `gorm:"column:detail;type:string"`
+	ID        string    `gorm:"primaryKey;column:id;type:string" json:"id"`
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
+	TaskType  string    `gorm:"column:task_type;type:string" json:"task_type"` // definition id
+	Status    int       `gorm:"column:status;type:int" json:"status"`
+	Detail    string    `gorm:"column:detail;type:string" json:"detail"`
 }
 
 func (*CronJob) TableName() string { return "cron_jobs" }
