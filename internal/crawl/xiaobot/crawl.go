@@ -7,6 +7,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
+	"github.com/rs/xid"
 
 	"go.uber.org/zap"
 )
@@ -15,6 +16,9 @@ const limit = 20
 
 func CrawXiaobot(paperID string, request request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
+	crawlID := xid.New().String()
+	logger = logger.With(zap.String("crawl_id", crawlID))
+
 	logger.Info("Start to crawl xiaobot paper", zap.String("paper id", paperID))
 
 	next := generateNextURL(paperID, offset)

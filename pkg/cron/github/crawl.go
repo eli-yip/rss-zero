@@ -16,13 +16,16 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/github/crawl"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	githubParse "github.com/eli-yip/rss-zero/pkg/routers/github/parse"
+	"github.com/rs/xid"
 )
 
 func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
+		cronID := xid.New().String()
+		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
+
 		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{}}
 
-		logger := log.NewZapLogger()
 		var err error
 		var errCount int = 0
 

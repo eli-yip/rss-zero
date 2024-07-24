@@ -18,13 +18,16 @@ import (
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
+	"github.com/rs/xid"
 )
 
 func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
+		cronID := xid.New().String()
+		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
+
 		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{}}
 
-		logger := log.NewZapLogger()
 		var err error
 		var errCount int = 0
 
