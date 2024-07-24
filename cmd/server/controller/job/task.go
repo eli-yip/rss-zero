@@ -189,8 +189,8 @@ type TaskInfo struct {
 func (h *Controller) DeleteTask(c echo.Context) (err error) {
 	type (
 		Resp struct {
-			Message  string `json:"message"`
-			TaskInfo TaskInfo
+			Message  string   `json:"message"`
+			TaskInfo TaskInfo `json:"task_info"`
 		}
 	)
 
