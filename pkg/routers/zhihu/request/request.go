@@ -117,13 +117,13 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 
 		es, err := r.dbService.SelectService()
 		if err != nil {
-			logger.Error("Failed to get encryption service", zap.Error(err))
+			logger.Error("Failed to Select encryption service", zap.Error(err))
 			if errors.Is(err, zhihuDB.ErrNoAvailableService) {
 				return nil, err
 			}
 			continue
 		}
-		logger.Info("Get zhihu encryption service successfully", zap.Any("service", es))
+		logger.Info("Select zhihu encryption service successfully", zap.Any("service", es))
 
 		<-r.limiter
 		logger.Info("Get limiter successfully, start to request url")
