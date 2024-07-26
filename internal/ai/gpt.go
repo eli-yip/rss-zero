@@ -14,7 +14,7 @@ func (a *AIService) Polish(text string) (result string, err error) {
 }
 
 func (a *AIService) Conclude(text string) (result string, err error) {
-	const concludePrompt = "请为下面的内容取一个贴近内容的标题，只需要回答标题的纯文本，不需要其他内容和任何格式。\n\"\"\"%s\"\"\""
+	const concludePrompt = "请为下面的内容取一个贴近内容的标题，只需要回答标题的纯文本（不需要使用引号包裹），不需要其他内容和任何格式。\n\"\"\"%s\"\"\""
 
 	return a.askGPT(fmt.Sprintf(concludePrompt, text))
 }
