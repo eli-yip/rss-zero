@@ -245,8 +245,14 @@ func (h *Controller) parseAuthorName(authorID string, logger *zap.Logger) (autho
 	}
 	logger.Info("Get zhihu _zse_ck cookie from redis successfully", zap.String("__zse_ck", zse_ck))
 
+	z_c0, err := h.redis.Get(redis.ZhihuCookiePathZC0)
+	if err != nil {
+		return "", fmt.Errorf("failed to get zhihu z_c0 cookie from redis: %w", err)
+	}
+	logger.Info("Get zhihu z_c0 cookie from redis successfully", zap.String("z_c0", z_c0))
+
 	// skip d_c0 cookie injection, as it's not needed for this request
-	requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), zse_ck)
+	requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), zse_ck, request.WithZC0(z_c0))
 	if err != nil {
 		return "", fmt.Errorf("failed to create request service: %w", err)
 	}

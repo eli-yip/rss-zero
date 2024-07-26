@@ -163,6 +163,28 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 
 	if req.ZC0Cookie != nil {
 		respData.ZC0Cookie = &Cookie{}
+		var ttl time.Duration
+		if req.ZC0Cookie.ExpireAt != "" {
+			expireAt, err := parseExpireAt(req.ZC0Cookie.ExpireAt)
+			if err != nil {
+				logger.Error("Failed to parse expireAt", zap.Error(err))
+				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
+			}
+
+			ttl = time.Until(expireAt.Add(-1 * 24 * time.Hour))
+
+			if ttl < 0 {
+				logger.Error("Invalid expireAt", zap.String("expireAt", req.ZC0Cookie.ExpireAt))
+				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
+			}
+
+			respData.ZC0Cookie.ExpireAt = expireAt.Format(time.RFC3339)
+		} else {
+			ttl = redis.ZSECKTTL // Use __zse_ck cookie ttl as default
+			expireAt := time.Now().Add(ttl)
+			respData.ZC0Cookie.ExpireAt = expireAt.Format(time.RFC3339)
+		}
+
 		zC0Cookie := req.ZC0Cookie.Value
 		z_c0 := extractCookieValue(zC0Cookie)
 		if z_c0 == "" {
@@ -170,19 +192,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid cookie"})
 		}
 
-		requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), z_c0)
-		if err != nil {
-			logger.Error("Failed to create request service", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})
-		}
-
-		if _, err = requestService.LimitRaw(config.C.TestURL.Zhihu, logger); err != nil {
-			logger.Error("Failed to validate zhihu z_c0 cookie", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})
-		}
-		logger.Info("Validate zhihu z_c0 cookie successfully", zap.String("cookie", z_c0))
-
-		if err = h.redis.Set(redis.ZhihuCookiePathZC0, z_c0, redis.Forever); err != nil {
+		if err = h.redis.Set(redis.ZhihuCookiePathZC0, z_c0, ttl); err != nil {
 			logger.Error("Failed to update zhihu z_c0 cookie in redis", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}

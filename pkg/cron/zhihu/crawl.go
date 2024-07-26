@@ -109,8 +109,12 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 				logger.Error("There is no zse_ck cookie, stop")
 				notify.NoticeWithLogger(notifier, "Need to provide zhihu zse_ck cookie", "", logger)
 				return
+			case errors.Is(err, errNoZC0):
+				logger.Error("There is no z_c0 cookie, stop")
+				notify.NoticeWithLogger(notifier, "Need to provide zhihu z_c0 cookie", "", logger)
+				return
 			}
-			logger.Error("Failed to init services", zap.Error(err))
+			logger.Error("Failed to init zhihu services", zap.Error(err))
 			return
 		}
 		defer requestService.ClearCache(logger)
@@ -411,6 +415,7 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 
 var (
 	errNoDC0   = errors.New("no d_c0 cookie")
+	errNoZC0   = errors.New("no z_c0 cookie")
 	errNoZSECK = errors.New("no zse_ck cookie")
 )
 
@@ -429,17 +434,18 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 
 	dbService = zhihuDB.NewDBService(db)
 
-	d_c0, err := rs.Get(redis.ZhihuCookiePathDC0)
+	z_c0, err := rs.Get(redis.ZhihuCookiePathZC0)
 	if err != nil {
 		if errors.Is(err, redis.ErrKeyNotExist) {
-			logger.Warn("There is no d_c0 cookie, use server side cookie instead")
+			return nil, nil, nil, errNoZC0
 		} else {
 			return nil, nil, nil, err
 		}
 	}
-	if d_c0 == "" {
-		logger.Warn("There is no d_c0 cookie, use server side cookie instead")
+	if z_c0 == "" {
+		logger.Warn("There is no z_c0 cookie, use server side cookie instead")
 	}
+	logger.Info("Get z_c0 cookie successfully", zap.String("z_c0", z_c0))
 
 	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
 	zse_ck, err := rs.Get(redis.ZhihuCookiePathZSECK)
@@ -455,7 +461,7 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 	}
 	logger.Info("Get zse_ck cookie successfully", zap.String("__zse_ck", zse_ck))
 
-	requestService, err = request.NewRequestService(logger, dbService, notifier, zse_ck, request.WithDC0(d_c0))
+	requestService, err = request.NewRequestService(logger, dbService, notifier, zse_ck, request.WithZC0(z_c0))
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("fail to init request service: %w", err)
 	}
