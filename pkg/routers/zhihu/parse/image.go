@@ -6,6 +6,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
+	"go.uber.org/zap"
 )
 
 type Imager interface {
@@ -13,7 +14,7 @@ type Imager interface {
 	// 	- text: text string in markdown format
 	// 	- id: content id, like zhihu answer id
 	//  - t: content type, see more in github.com/eli-yip/rss-zero/pkg/common.type.go
-	ParseImages(text string, id, t int) (result string, err error)
+	ParseImages(text string, id, t int, logger *zap.Logger) (result string, err error)
 }
 
 // Online image parser will download images from websites,
@@ -33,11 +34,11 @@ func NewOnlineImageParser(requestService request.Requester, fileService file.Fil
 }
 
 // ParseImages download images and replace image links in markdown content
-func (p *OnlineImageParser) ParseImages(text string, id int, t int) (result string, err error) {
+func (p *OnlineImageParser) ParseImages(text string, id int, t int, logger *zap.Logger) (result string, err error) {
 	for _, imageLink := range findImageLinks(text) {
 		picID := URLToID(imageLink) // generate a unique int id from url by hash
 
-		resp, err := p.request.NoLimitStream(imageLink)
+		resp, err := p.request.NoLimitStream(imageLink, logger)
 		if err != nil {
 			return "", fmt.Errorf("failed to get image stream for url %s: %w", imageLink, err)
 		}
@@ -74,7 +75,7 @@ func NewOfflineImageParser(dbService db.DB) Imager {
 	return &OfflineImageParser{db: dbService}
 }
 
-func (p *OfflineImageParser) ParseImages(text string, id int, t int) (result string, err error) {
+func (p *OfflineImageParser) ParseImages(text string, id int, t int, logger *zap.Logger) (result string, err error) {
 	for _, imageLink := range findImageLinks(text) {
 		picID := URLToID(imageLink)
 		object, err := p.db.GetObjectInfo(picID)

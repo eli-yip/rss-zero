@@ -170,7 +170,7 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 			}
 			picID := URLToID(imageContent.OriginalURL)
 
-			resp, err := p.request.NoLimitStream(imageContent.OriginalURL)
+			resp, err := p.request.NoLimitStream(imageContent.OriginalURL, logger)
 			if err != nil {
 				return emptyString, emptyString, fmt.Errorf("failed to get image %s stream: %w", imageContent.OriginalURL, err)
 			}

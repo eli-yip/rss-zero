@@ -37,7 +37,7 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 	}
 	logger.Info("Unmarshal answer successfully")
 
-	text, err = p.parseHTML(answer.HTML, answer.ID, common.TypeZhihuAnswer)
+	text, err = p.parseHTML(answer.HTML, answer.ID, common.TypeZhihuAnswer, logger)
 	if err != nil {
 		return emptyString, fmt.Errorf("failed to parse html content: %w", err)
 	}

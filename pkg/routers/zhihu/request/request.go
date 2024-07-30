@@ -22,7 +22,7 @@ type Requester interface {
 	LimitRaw(string, *zap.Logger) ([]byte, error)
 	// NoLimitRaw requests to the given url without limiter and returns raw data,
 	// Commonly used in file download
-	NoLimitStream(string) (*http.Response, error)
+	NoLimitStream(string, *zap.Logger) (*http.Response, error)
 	// Clear d_c0 cache
 	ClearCache(*zap.Logger)
 }
@@ -212,8 +212,8 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 	return nil, err
 }
 
-func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error) {
-	logger := r.logger.With(zap.String("url", u))
+func (r *RequestService) NoLimitStream(u string, logger *zap.Logger) (resp *http.Response, err error) {
+	logger = logger.With(zap.String("url", u))
 	logger.Info("request without limit for stream")
 
 	for i := 0; i < r.maxRetry; i++ {
