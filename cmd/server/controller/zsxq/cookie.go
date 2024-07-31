@@ -10,6 +10,7 @@ import (
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	zsxqRequest "github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 )
 
@@ -38,7 +39,7 @@ func (h *ZsxqController) UpdateZsxqCookie(c echo.Context) (err error) {
 	}
 	logger.Info("Validated zsxq cookie", zap.String("cookie", req.Cookie))
 
-	if err = h.redis.Set(redis.ZsxqCookiePath, req.Cookie, redis.Forever); err != nil {
+	if err = h.cookie.Set(cookie.CookieTypeZsxqAccessToken, req.Cookie, redis.Forever); err != nil {
 		logger.Error("Error updating zsxq cookie", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}

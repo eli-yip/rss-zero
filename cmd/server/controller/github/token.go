@@ -9,7 +9,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 )
 
 func (h *Controller) UpdateToken(c echo.Context) (err error) {
@@ -48,7 +48,7 @@ func (h *Controller) UpdateToken(c echo.Context) (err error) {
 
 	ttl := time.Until(t)
 
-	if err = h.redis.Set(redis.GitHubTokenPath, req.Token, ttl); err != nil {
+	if err = h.cookie.Set(cookie.CookieTypeGitHubAccessToken, req.Token, ttl); err != nil {
 		logger.Error("Error updating token", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}

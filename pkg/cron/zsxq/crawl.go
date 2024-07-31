@@ -17,6 +17,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/crawl"
@@ -26,7 +27,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 )
 
-func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCrawl string, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronJobInfo := cron.CronJobInfo{}
 
@@ -97,16 +98,16 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 			}
 		}()
 
-		// Get cookie from redis, if not exist, log an cookie error.
-		var cookie string
-		if cookie, err = getZsxqCookie(redisService, notifier, logger); err != nil {
-			logger.Error("Failed to get zsxq cookie from redis", zap.Error(err))
+		// Get zsxqAccessToken from db, if not exist, log an zsxqAccessToken error.
+		var zsxqAccessToken string
+		if zsxqAccessToken, err = getZsxqCookie(cookieService, notifier, logger); err != nil {
+			logger.Error("Failed to get zsxq cookie from db", zap.Error(err))
 			return
 		}
-		logger.Info("Get zsxq cookie successfully", zap.String("cookie", cookie))
+		logger.Info("Get zsxq cookie successfully", zap.String("cookie", zsxqAccessToken))
 
 		// init services needed by cron crawl and render job
-		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(cookie, db, logger)
+		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(zsxqAccessToken, db, logger)
 		if err != nil {
 			logger.Error("Failed to init zsxq services", zap.Error(err))
 			return
@@ -161,7 +162,7 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 				if errors.Is(err, request.ErrInvalidCookie) {
 					logger.Error("Cookie is invalid, delete it and notice user now")
 					var message string
-					if err = redisService.Del(redis.ZsxqCookiePath); err != nil {
+					if err = cookieService.Del(cookie.CookieTypeZsxqAccessToken); err != nil {
 						logger.Error("Failed to delete zsxq cookie in redis", zap.Error(err))
 						message = "Failed to delete zsxq cookie in redis"
 					}
@@ -212,30 +213,30 @@ func prepareZsxqServices(cookie string, db *gorm.DB, logger *zap.Logger,
 	return dbService, requestService, parseService, rssRenderService, nil
 }
 
-func getZsxqCookie(redisService redis.Redis, notifier notify.Notifier, logger *zap.Logger) (cookie string, err error) {
-	if cookie, err = redisService.Get(redis.ZsxqCookiePath); err != nil {
-		if errors.Is(err, redis.ErrKeyNotExist) {
-			logger.Error("Found no zsxq cookie in redis, notify user now")
-			notify.NoticeWithLogger(notifier, "Found no zsxq cookie in redis", "", logger)
+func getZsxqCookie(cookieService cookie.Cookie, notifier notify.Notifier, logger *zap.Logger) (accessToken string, err error) {
+	if accessToken, err = cookieService.Get(cookie.CookieTypeZsxqAccessToken); err != nil {
+		if errors.Is(err, cookie.ErrKeyNotExist) {
+			logger.Error("Found no zsxq cookie in db, notify user now")
+			notify.NoticeWithLogger(notifier, "Found no zsxq cookie in db", "", logger)
 		}
-		logger.Error("Failed to get zsxq cookie from redis", zap.Error(err))
-		return "", fmt.Errorf("failed to get zsxq cookie from redis: %w", err)
+		logger.Error("Failed to get zsxq cookie from db", zap.Error(err))
+		return "", fmt.Errorf("failed to get zsxq cookie from db: %w", err)
 	}
 
-	if cookie != "" {
-		return cookie, nil
+	if accessToken != "" {
+		return accessToken, nil
 	}
 
-	logger.Error("Found empty zsxq cookie in redis, notify user now")
-	notify.NoticeWithLogger(notifier, "Found empty zsxq cookie in redis", "", logger)
+	logger.Error("Found empty zsxq cookie in db, notify user now")
+	notify.NoticeWithLogger(notifier, "Found empty zsxq cookie in db", "", logger)
 
-	if err := redisService.Del(redis.ZsxqCookiePath); err != nil {
-		logger.Error("Failed to delete empty zsxq cookie in redis", zap.Error(err))
-		notify.NoticeWithLogger(notifier, "Failed to delete empty zsxq cookie in redis", "", logger)
-		return "", fmt.Errorf("failed to delete empty zsxq cookie key in redis: %w", err)
+	if err := cookieService.Del(cookie.CookieTypeZsxqAccessToken); err != nil {
+		logger.Error("Failed to delete empty zsxq cookie in db", zap.Error(err))
+		notify.NoticeWithLogger(notifier, "Failed to delete empty zsxq cookie in db", "", logger)
+		return "", fmt.Errorf("failed to delete empty zsxq cookie key in db: %w", err)
 	}
 
-	return "", fmt.Errorf("found empty zsxq cookie in redis")
+	return "", fmt.Errorf("found empty zsxq cookie in db")
 }
 
 func crawlGroup(groupID int, requestService request.Requester, parseService parse.Parser, redisService redis.Redis, rssRenderService render.RSSRenderer, dbService zsxqDB.DB, logger *zap.Logger) (err error) {
@@ -313,7 +314,7 @@ func fetchTopics(groupID int, latestTopicTimeInDB time.Time, dbService zsxqDB.DB
 // buildRSSTopic returns rss topics slice for render service
 func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string, logger *zap.Logger) (rssTopics []render.RSSTopic, err error) {
 	for _, topic := range topics {
-		logger := logger.With(zap.Int("topic id", topic.ID))
+		logger := logger.With(zap.Int("topic_id", topic.ID))
 
 		if !render.Support(topic.Type) {
 			logger.Info("found unsupported topic type", zap.String("topic type", topic.Type))

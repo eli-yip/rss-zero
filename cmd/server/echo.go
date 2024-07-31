@@ -20,6 +20,7 @@ import (
 	myMiddleware "github.com/eli-yip/rss-zero/cmd/server/middleware"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
@@ -27,7 +28,7 @@ import (
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
-func setupEcho(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier,
+func setupEcho(redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier,
 	definitionToFunc jobController.DefinitionToFunc,
 	cronService *cron.CronService, logger *zap.Logger,
 ) (e *echo.Echo) {
@@ -52,19 +53,19 @@ func setupEcho(redisService redis.Redis, db *gorm.DB, notifier notify.Notifier,
 		myMiddleware.InjectLogger(logger), // inject logger to context
 	)
 
-	zsxqHandler := zsxqController.NewZsxqHandler(redisService, db, notifier, logger)
+	zsxqHandler := zsxqController.NewZsxqHandler(redisService, cookieService, db, notifier, logger)
 	zhihuDBService := zhihuDB.NewDBService(db)
-	zhihuHandler := zhihuController.NewZhihuHandler(redisService, zhihuDBService, notifier)
+	zhihuHandler := zhihuController.NewZhihuHandler(redisService, cookieService, zhihuDBService, notifier)
 	xiaobotDBService := xiaobotDB.NewDBService(db)
-	xiaobotHandler := xiaobotController.NewXiaobotController(redisService, xiaobotDBService, notifier, logger)
+	xiaobotHandler := xiaobotController.NewXiaobotController(redisService, cookieService, xiaobotDBService, notifier, logger)
 	endOfLifeHandler := endoflifeController.NewController(redisService, logger)
 	cronDBService := cronDB.NewDBService(db)
 	jobHandler := jobController.NewController(cronService,
-		redisService, db, notifier,
+		redisService, cookieService, db, notifier,
 		cronDBService, definitionToFunc, logger)
 	archiveHandler := archiveController.NewController(db)
 	githubDBService := githubDB.NewDBService(db)
-	githubController := githubController.NewController(redisService, githubDBService, notifier)
+	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)
 
 	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController)
 

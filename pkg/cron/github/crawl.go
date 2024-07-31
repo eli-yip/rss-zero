@@ -7,19 +7,21 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
+	"github.com/rs/xid"
+
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/github/crawl"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	githubParse "github.com/eli-yip/rss-zero/pkg/routers/github/parse"
-	"github.com/rs/xid"
 )
 
-func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func Crawl(r redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronID := xid.New().String()
 		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
@@ -39,13 +41,13 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 		}()
 
 		var token string
-		if token, err = r.Get(redis.GitHubTokenPath); err != nil {
+		if token, err = cookieService.Get(cookie.CookieTypeGitHubAccessToken); err != nil {
 			errCount++
-			if errors.Is(err, redis.ErrKeyNotExist) {
+			if errors.Is(err, cookie.ErrKeyNotExist) {
 				notify.NoticeWithLogger(notifier, "No token for github", "", logger)
-				logger.Error("github token not found in redis")
+				logger.Error("github token not found in cookie")
 			} else {
-				logger.Error("failed to get github token from redis", zap.Error(err))
+				logger.Error("failed to get github token from cookie", zap.Error(err))
 			}
 			return
 		}

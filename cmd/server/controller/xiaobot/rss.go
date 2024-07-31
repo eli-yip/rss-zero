@@ -12,6 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 )
@@ -126,13 +127,13 @@ func (h *XiaobotController) checkPaper(paperID string, l *zap.Logger) (err error
 
 	if !exist {
 		l.Info("Paper does not exist in db")
-		token, err := h.redis.Get(redis.XiaobotTokenPath)
+		token, err := h.cookie.Get(cookie.CookieTypeXiaobotAccessToken)
 		if err != nil {
 			return err
 		}
-		l.Info("Retrieved xiaobot token from redis")
+		l.Info("Retrieved xiaobot token from db")
 
-		requestService := request.NewRequestService(h.redis, token, h.l)
+		requestService := request.NewRequestService(h.cookie, token, h.l)
 		data, err := requestService.Limit(fmt.Sprintf("https://api.xiaobot.net/paper/%s?refer_channel=", paperID))
 		if err != nil {
 			return err

@@ -6,11 +6,13 @@ import (
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 )
 
 type XiaobotController struct {
 	redis    redis.Redis
+	cookie   cookie.Cookie
 	db       xiaobotDB.DB
 	taskCh   chan common.Task
 	l        *zap.Logger
@@ -18,11 +20,13 @@ type XiaobotController struct {
 }
 
 func NewXiaobotController(redis redis.Redis,
+	cookie cookie.Cookie,
 	db xiaobotDB.DB,
 	n notify.Notifier,
 	l *zap.Logger) *XiaobotController {
 	h := &XiaobotController{
 		redis:    redis,
+		cookie:   cookie,
 		db:       db,
 		taskCh:   make(chan common.Task, 100),
 		notifier: n,

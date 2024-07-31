@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/encrypt"
 	"go.uber.org/zap"
@@ -26,23 +26,23 @@ var (
 )
 
 type RequestService struct {
-	client       *http.Client
-	limiter      chan struct{}
-	maxRetry     int
-	token        string // token is used to request xiaobot api in authorization header
-	redisService redis.Redis
-	logger       *zap.Logger
+	client        *http.Client
+	limiter       chan struct{}
+	maxRetry      int
+	token         string // token is used to request xiaobot api in authorization header
+	cookieService cookie.Cookie
+	logger        *zap.Logger
 }
 
-func NewRequestService(redisService redis.Redis, token string, logger *zap.Logger) request.Requester {
+func NewRequestService(cookieService cookie.Cookie, token string, logger *zap.Logger) request.Requester {
 	const defaultMaxRetry = 5
 	s := &RequestService{
-		client:       &http.Client{},
-		limiter:      make(chan struct{}),
-		maxRetry:     defaultMaxRetry,
-		redisService: redisService,
-		token:        token,
-		logger:       logger,
+		client:        &http.Client{},
+		limiter:       make(chan struct{}),
+		maxRetry:      defaultMaxRetry,
+		cookieService: cookieService,
+		token:         token,
+		logger:        logger,
 	}
 
 	go func() {
@@ -125,7 +125,7 @@ func (r *RequestService) validateAPIResp(code int, bytes []byte, logger *zap.Log
 			return err
 		}
 		logger.Error("Need sign in", zap.String("message", badMessage))
-		if err := r.redisService.Del(redis.XiaobotTokenPath); err != nil {
+		if err := r.cookieService.Del(cookie.CookieTypeXiaobotAccessToken); err != nil {
 			logger.Error("Failed deleting xiaobot token", zap.Error(err))
 		}
 		logger.Info("Deleted xiaobot token")

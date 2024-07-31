@@ -13,6 +13,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
@@ -39,16 +40,16 @@ func (h *Controller) CheckCookie(c echo.Context) (err error) {
 	resp.ZC0Cookie = &Cookie{}
 	resp.ZSECKCookie = &Cookie{}
 
-	d_c0, err := h.redis.Get(redis.ZhihuCookiePathDC0)
-	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
-		logger.Error("Failed to get zhihu d_c0 cookie from redis", zap.Error(err))
+	d_c0, err := h.cookie.Get(cookie.CookieTypeZhihuDC0)
+	if err != nil && !errors.Is(err, cookie.ErrKeyNotExist) {
+		logger.Error("Failed to get zhihu d_c0 cookie from db", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}
 	d_c0Ptr := getPointer(d_c0, err)
 	if d_c0Ptr != nil {
-		ttl, err := h.redis.TTL(redis.ZhihuCookiePathDC0)
+		ttl, err := h.cookie.GetTTL(cookie.CookieTypeZhihuDC0)
 		if err != nil {
-			logger.Error("Failed to get zhihu d_c0 cookie ttl from redis", zap.Error(err))
+			logger.Error("Failed to get zhihu d_c0 cookie ttl from db", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
 		resp.DC0Cookie = &Cookie{
@@ -57,16 +58,16 @@ func (h *Controller) CheckCookie(c echo.Context) (err error) {
 		}
 	}
 
-	z_c0, err := h.redis.Get(redis.ZhihuCookiePathZC0)
-	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
-		logger.Error("Failed to get zhihu z_c0 cookie from redis", zap.Error(err))
+	z_c0, err := h.cookie.Get(cookie.CookieTypeZhihuZC0)
+	if err != nil && !errors.Is(err, cookie.ErrKeyNotExist) {
+		logger.Error("Failed to get zhihu z_c0 cookie from db", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}
 	z_c0Ptr := getPointer(z_c0, err)
 	if z_c0Ptr != nil {
-		ttl, err := h.redis.TTL(redis.ZhihuCookiePathZC0)
+		ttl, err := h.cookie.GetTTL(cookie.CookieTypeZhihuZC0)
 		if err != nil {
-			logger.Error("Failed to get zhihu z_c0 cookie ttl from redis", zap.Error(err))
+			logger.Error("Failed to get zhihu z_c0 cookie ttl from db", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
 		resp.ZC0Cookie = &Cookie{
@@ -75,16 +76,16 @@ func (h *Controller) CheckCookie(c echo.Context) (err error) {
 		}
 	}
 
-	zse_ck, err := h.redis.Get(redis.ZhihuCookiePathZSECK)
-	if err != nil && !errors.Is(err, redis.ErrKeyNotExist) {
-		logger.Error("Failed to get zhihu zse_ck cookie from redis", zap.Error(err))
+	zse_ck, err := h.cookie.Get(cookie.CookieTypeZhihuZSECK)
+	if err != nil && !errors.Is(err, cookie.ErrKeyNotExist) {
+		logger.Error("Failed to get zhihu zse_ck cookie from db", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}
 	zse_ckPtr := getPointer(zse_ck, err)
 	if zse_ckPtr != nil {
-		ttl, err := h.redis.TTL(redis.ZhihuCookiePathZSECK)
+		ttl, err := h.cookie.GetTTL(cookie.CookieTypeZhihuZSECK)
 		if err != nil {
-			logger.Error("Failed to get zhihu zse_ck cookie ttl from redis", zap.Error(err))
+			logger.Error("Failed to get zhihu zse_ck cookie ttl from db", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
 		resp.ZSECKCookie = &Cookie{
@@ -97,7 +98,7 @@ func (h *Controller) CheckCookie(c echo.Context) (err error) {
 }
 
 func getPointer(s string, err error) *string {
-	if errors.Is(err, redis.ErrKeyNotExist) {
+	if errors.Is(err, cookie.ErrKeyNotExist) {
 		return nil
 	}
 	return &s
@@ -135,9 +136,9 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		}
 		logger.Info("Retrieve zhihu d_c0 cookie successfully", zap.String("cookie", d_c0))
 
-		zse_ck, err := h.redis.Get(redis.ZhihuCookiePathZSECK)
+		zse_ck, err := h.cookie.Get(cookie.CookieTypeZhihuZSECK)
 		if err != nil {
-			logger.Error("Failed to get zhihu zse_ck cookie from redis", zap.Error(err))
+			logger.Error("Failed to get zhihu zse_ck cookie from db", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
 		requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), zse_ck, request.WithDC0(dC0Cookie))
@@ -152,11 +153,11 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		}
 		logger.Info("Validate zhihu d_c0 cookie successfully", zap.String("cookie", d_c0))
 
-		if err = h.redis.Set(redis.ZhihuCookiePathDC0, d_c0, redis.Forever); err != nil {
-			logger.Error("Failed to update zhihu d_c0 cookie in redis", zap.Error(err))
+		if err = h.cookie.Set(cookie.CookieTypeZhihuDC0, d_c0, redis.Forever); err != nil {
+			logger.Error("Failed to update zhihu d_c0 cookie in db", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
-		logger.Info("Update zhihu d_c0 cookie in redis successfully", zap.String("cookie", d_c0))
+		logger.Info("Update zhihu d_c0 cookie in db successfully", zap.String("cookie", d_c0))
 
 		respData.DC0Cookie.Value = d_c0
 	}
@@ -192,11 +193,11 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid cookie"})
 		}
 
-		if err = h.redis.Set(redis.ZhihuCookiePathZC0, z_c0, ttl); err != nil {
-			logger.Error("Failed to update zhihu z_c0 cookie in redis", zap.Error(err))
+		if err = h.cookie.Set(cookie.CookieTypeZhihuZC0, z_c0, ttl); err != nil {
+			logger.Error("Failed to update zhihu z_c0 cookie in db", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
-		logger.Info("Update zhihu z_c0 cookie in redis successfully", zap.String("cookie", z_c0))
+		logger.Info("Update zhihu z_c0 cookie in db successfully", zap.String("cookie", z_c0))
 
 		respData.ZC0Cookie.Value = z_c0
 	}
@@ -232,11 +233,11 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid cookie"})
 		}
 
-		if err = h.redis.Set(redis.ZhihuCookiePathZSECK, zse_ck, ttl); err != nil {
-			logger.Error("Failed to update zhihu zse_ck cookie in redis", zap.Error(err))
+		if err = h.cookie.Set(cookie.CookieTypeZhihuZSECK, zse_ck, ttl); err != nil {
+			logger.Error("Failed to update zhihu zse_ck cookie in db", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}
-		logger.Info("Update zhihu zse_ck cookie in redis successfully", zap.String("cookie", zse_ck))
+		logger.Info("Update zhihu zse_ck cookie in db successfully", zap.String("cookie", zse_ck))
 
 		respData.ZSECKCookie.Value = zse_ck
 	}

@@ -17,6 +17,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/common"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
@@ -27,7 +28,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronJobInfo := cron.CronJobInfo{}
 
@@ -98,7 +99,7 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 			}
 		}()
 
-		dbService, requestService, parser, err := initZhihuServices(db, redisService, logger)
+		dbService, requestService, parser, err := initZhihuServices(db, cookieService, logger)
 		if err != nil {
 			switch {
 			case errors.Is(err, errNoDC0):
@@ -175,17 +176,17 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(redisService); err != nil {
+							if err = removeDC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
-							if err = removeZC0Cookie(redisService); err != nil {
+							if err = removeZC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
 							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
 							logger.Error("Need login, break")
 							return
 						case errors.Is(err, request.ErrInvalidZSECK):
-							if err = removeZC0Cookie(redisService); err != nil {
+							if err = removeZC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
 							notify.NoticeWithLogger(notifier, "Zhihu need new zse_ck", "please provide __zse_ck cookie", logger)
@@ -213,10 +214,10 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(redisService); err != nil {
+							if err = removeDC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
-							if err = removeZC0Cookie(redisService); err != nil {
+							if err = removeZC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
 							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
@@ -260,10 +261,10 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(redisService); err != nil {
+							if err = removeDC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
-							if err = removeZC0Cookie(redisService); err != nil {
+							if err = removeZC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
 							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
@@ -291,10 +292,10 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(redisService); err != nil {
+							if err = removeDC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
-							if err = removeZC0Cookie(redisService); err != nil {
+							if err = removeZC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
 							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
@@ -338,10 +339,10 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(redisService); err != nil {
+							if err = removeDC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
-							if err = removeZC0Cookie(redisService); err != nil {
+							if err = removeZC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
 							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
@@ -369,10 +370,10 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 							logger.Error("There is no d_c0 cookie, break")
 							return
 						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(redisService); err != nil {
+							if err = removeDC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
 							}
-							if err = removeZC0Cookie(redisService); err != nil {
+							if err = removeZC0Cookie(cookieService); err != nil {
 								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 							}
 							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
@@ -419,7 +420,7 @@ var (
 	errNoZSECK = errors.New("no zse_ck cookie")
 )
 
-func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
+func initZhihuServices(db *gorm.DB, cs cookie.Cookie, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
 	var err error
 
 	var (
@@ -434,9 +435,9 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 
 	dbService = zhihuDB.NewDBService(db)
 
-	z_c0, err := rs.Get(redis.ZhihuCookiePathZC0)
+	z_c0, err := cs.Get(cookie.CookieTypeZhihuZC0)
 	if err != nil {
-		if errors.Is(err, redis.ErrKeyNotExist) {
+		if errors.Is(err, cookie.ErrKeyNotExist) {
 			return nil, nil, nil, errNoZC0
 		} else {
 			return nil, nil, nil, err
@@ -448,9 +449,9 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 	logger.Info("Get z_c0 cookie successfully", zap.String("z_c0", z_c0))
 
 	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
-	zse_ck, err := rs.Get(redis.ZhihuCookiePathZSECK)
+	zse_ck, err := cs.Get(cookie.CookieTypeZhihuZSECK)
 	if err != nil {
-		if errors.Is(err, redis.ErrKeyNotExist) {
+		if errors.Is(err, cookie.ErrKeyNotExist) {
 			return nil, nil, nil, errNoZSECK
 		} else {
 			return nil, nil, nil, err
@@ -491,6 +492,6 @@ func initZhihuServices(db *gorm.DB, rs redis.Redis, logger *zap.Logger) (zhihuDB
 	return dbService, requestService, parser, nil
 }
 
-func removeDC0Cookie(rs redis.Redis) (err error) { return rs.Del(redis.ZhihuCookiePathDC0) }
+func removeDC0Cookie(cs cookie.Cookie) (err error) { return cs.Del(cookie.CookieTypeZhihuDC0) }
 
-func removeZC0Cookie(rs redis.Redis) (err error) { return rs.Del(redis.ZhihuCookiePathZC0) }
+func removeZC0Cookie(cs cookie.Cookie) (err error) { return cs.Del(cookie.CookieTypeZhihuZC0) }

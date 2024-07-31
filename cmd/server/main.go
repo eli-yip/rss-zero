@@ -20,6 +20,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/version"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
@@ -46,7 +47,7 @@ func main() {
 	logger := log.NewZapLogger()
 	logger.Info("config initialized", zap.Any("config", config.C))
 
-	redisService, db, bark, err := initService(logger)
+	redisService, cookieService, db, bark, err := initService(logger)
 	if err != nil {
 		logger.Fatal("fail to init service", zap.Error(err))
 	}
@@ -64,12 +65,12 @@ func main() {
 
 	var definitionToFunc jobController.DefinitionToFunc
 	var cronService *cron.CronService
-	if cronService, definitionToFunc, err = setupCronCrawlJob(logger, redisService, db, bark); err != nil {
+	if cronService, definitionToFunc, err = setupCronCrawlJob(logger, redisService, cookieService, db, bark); err != nil {
 		logger.Fatal("fail to setup cron", zap.Error(err))
 	}
 	logger.Info("cron service initialized")
 
-	e := setupEcho(redisService, db, bark, definitionToFunc, cronService, logger)
+	e := setupEcho(redisService, cookieService, db, bark, definitionToFunc, cronService, logger)
 	logger.Info("echo server initialized")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -96,23 +97,26 @@ func main() {
 }
 
 func initService(logger *zap.Logger) (redisService redis.Redis,
+	cookieService cookie.Cookie,
 	dbService *gorm.DB,
 	notifier notify.Notifier,
 	err error) {
 	if redisService, err = redis.NewRedisService(config.C.Redis); err != nil {
 		logger.Error("Fail to init redis service", zap.Error(err))
-		return nil, nil, nil, fmt.Errorf("fail to init redis service: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("fail to init redis service: %w", err)
 	}
 	logger.Info("redis service initialized")
 
+	cookieService = cookie.NewCookieService(dbService)
+
 	if dbService, err = db.NewPostgresDB(config.C.Database); err != nil {
 		logger.Error("Fail to init postgres database service", zap.Error(err))
-		return nil, nil, nil, fmt.Errorf("fail to init db: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("fail to init db: %w", err)
 	}
 	logger.Info("db initialized")
 
 	notifier = notify.NewBarkNotifier(config.C.Bark.URL)
 	logger.Info("bark notifier initialized")
 
-	return redisService, dbService, notifier, nil
+	return redisService, cookieService, dbService, notifier, nil
 }

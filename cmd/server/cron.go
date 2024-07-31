@@ -9,6 +9,7 @@ import (
 	jobController "github.com/eli-yip/rss-zero/cmd/server/controller/job"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	githubCron "github.com/eli-yip/rss-zero/pkg/cron/github"
@@ -18,7 +19,7 @@ import (
 )
 
 // setupCronCrawlJob sets up cron jobs
-func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier,
+func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier,
 ) (cronService *cron.CronService, definitionToFunc jobController.DefinitionToFunc, err error) {
 	cronService, err = cron.NewCronService(logger)
 	if err != nil {
@@ -26,12 +27,12 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, db *gorm.DB
 	}
 
 	cronDBService := cronDB.NewDBService(db)
-	err = resumeRunningJobs(cronDBService, redisService, db, notifier, logger)
+	err = resumeRunningJobs(cronDBService, redisService, cookieService, db, notifier, logger)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to resume running jobs: %w", err)
 	}
 
-	definitionToFunc, err = addJobToCronService(cronService, cronDBService, redisService, db, notifier, logger)
+	definitionToFunc, err = addJobToCronService(cronService, cronDBService, redisService, cookieService, db, notifier, logger)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to add job to cron service: %w", err)
 	}
@@ -39,7 +40,7 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, db *gorm.DB
 	return cronService, definitionToFunc, nil
 }
 
-func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) (err error) {
+func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) (err error) {
 	runningJobs, err := cronDBService.FindRunningJob()
 	if err != nil {
 		return fmt.Errorf("failed to find running cron jobs: %w", err)
@@ -53,11 +54,11 @@ func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, db *go
 
 		switch definition.Type {
 		case cronDB.TypeZsxq:
-			crawlFunc := cron.GenerateRealCrawlFunc(zsxqCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier))
+			crawlFunc := cron.GenerateRealCrawlFunc(zsxqCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, cookieService, db, notifier))
 			go crawlFunc()
 			logger.Info("Start zsxq running job", zap.String("job_id", job.ID))
 		case cronDB.TypeZhihu:
-			crawlFunc := cron.GenerateRealCrawlFunc(zhihuCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, db, notifier))
+			crawlFunc := cron.GenerateRealCrawlFunc(zhihuCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, cookieService, db, notifier))
 			go crawlFunc()
 			logger.Info("Start zhihu running job", zap.String("job_id", job.ID))
 		case cronDB.TypeXiaobot:
@@ -76,7 +77,7 @@ func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, db *go
 	return nil
 }
 
-func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB, redisService redis.Redis, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) (jobController.DefinitionToFunc, error) {
+func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB, redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) (jobController.DefinitionToFunc, error) {
 	definitions, err := cronDBService.GetDefinitions()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cron task definitions: %w", err)
@@ -90,7 +91,7 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 
 		switch def.Type {
 		case cronDB.TypeZsxq:
-			crawlFunc = zsxqCron.Crawl("", def.ID, def.Include, def.Exclude, "", redisService, db, notifier)
+			crawlFunc = zsxqCron.Crawl("", def.ID, def.Include, def.Exclude, "", redisService, cookieService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("zsxq_crawl", def.CronExpr, crawlFunc); err != nil {
 				return nil, fmt.Errorf("failed to add zsxq cron job: %w", err)
 			}
@@ -99,7 +100,7 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		case cronDB.TypeZhihu:
-			crawlFunc = zhihuCron.Crawl("", def.ID, def.Include, def.Exclude, "", redisService, db, notifier)
+			crawlFunc = zhihuCron.Crawl("", def.ID, def.Include, def.Exclude, "", redisService, cookieService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("zhihu_crawl", def.CronExpr, crawlFunc); err != nil {
 				return nil, fmt.Errorf("failed to add zhihu cron job: %w", err)
 			}
@@ -108,7 +109,7 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		case cronDB.TypeXiaobot:
-			crawlFunc = xiaobotCron.Crawl(redisService, db, notifier)
+			crawlFunc = xiaobotCron.Crawl(redisService, cookieService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("xiaobot_crawl", def.CronExpr, crawlFunc); err != nil {
 				return nil, fmt.Errorf("failed to add xiaobot cron job: %w", err)
 			}
@@ -117,7 +118,7 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		case cronDB.TypeGitHub:
-			crawlFunc = githubCron.Crawl(redisService, db, notifier)
+			crawlFunc = githubCron.Crawl(redisService, cookieService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("github_crawl", def.CronExpr, crawlFunc); err != nil {
 				return nil, fmt.Errorf("failed to add github cron job: %w", err)
 			}

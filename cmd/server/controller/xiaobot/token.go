@@ -10,6 +10,7 @@ import (
 	"github.com/eli-yip/rss-zero/cmd/server/controller/common"
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 )
 
@@ -28,7 +29,7 @@ func (h *XiaobotController) UpdateToken(c echo.Context) (err error) {
 	}
 	l.Info("Retrieved xiaobot token", zap.String("token", req.Token))
 
-	r := request.NewRequestService(h.redis, req.Token, l)
+	r := request.NewRequestService(h.cookie, req.Token, l)
 	if _, err = r.Limit(config.C.TestURL.Xiaobot); err != nil {
 		err = errors.Join(errors.New("invalid token"), err)
 		l.Error("Error updating xiaobot token",
@@ -38,7 +39,7 @@ func (h *XiaobotController) UpdateToken(c echo.Context) (err error) {
 	}
 	l.Info("Validated xiaobot token", zap.String("token", req.Token))
 
-	if err = h.redis.Set(redis.XiaobotTokenPath, req.Token, redis.Forever); err != nil {
+	if err = h.cookie.Set(cookie.CookieTypeXiaobotAccessToken, req.Token, redis.Forever); err != nil {
 		l.Error("Error updating xiaobot token", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}

@@ -7,21 +7,23 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
+	"github.com/rs/xid"
+
 	crawl "github.com/eli-yip/rss-zero/internal/crawl/xiaobot"
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
-	"github.com/rs/xid"
 )
 
-func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func Crawl(r redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronID := xid.New().String()
 		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
@@ -41,13 +43,13 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 		}()
 
 		var token string
-		if token, err = r.Get(redis.XiaobotTokenPath); err != nil {
+		if token, err = cookieService.Get(cookie.CookieTypeXiaobotAccessToken); err != nil {
 			errCount++
-			if errors.Is(err, redis.ErrKeyNotExist) {
+			if errors.Is(err, cookie.ErrKeyNotExist) {
 				notify.NoticeWithLogger(notifier, "No token for xiaobot", "", logger)
-				logger.Error("xiaobot token not found in redis")
+				logger.Error("xiaobot token not found in cookie")
 			} else {
-				logger.Error("failed to get xiaobot token from redis", zap.Error(err))
+				logger.Error("failed to get xiaobot token from cookie", zap.Error(err))
 			}
 			return
 		}
@@ -58,7 +60,7 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 			xiaobotParser         parse.Parser
 		)
 
-		xiaobotDBService, xiaobotRequestService, xiaobotParser, err = initXiaobotServices(db, logger, r, token)
+		xiaobotDBService, xiaobotRequestService, xiaobotParser, err = initXiaobotServices(db, logger, cookieService, token)
 		if err != nil {
 			errCount++
 			return
@@ -107,13 +109,13 @@ func Crawl(r redis.Redis, db *gorm.DB, notifier notify.Notifier) func(chan cron.
 	}
 }
 
-func initXiaobotServices(db *gorm.DB, logger *zap.Logger, r redis.Redis, token string) (xiaobotDB.DB, requestIface.Requester, parse.Parser, error) {
+func initXiaobotServices(db *gorm.DB, logger *zap.Logger, cs cookie.Cookie, token string) (xiaobotDB.DB, requestIface.Requester, parse.Parser, error) {
 	var err error
 
 	xiaobotDBService := xiaobotDB.NewDBService(db)
 	logger.Info("Init xiaobot database service")
 
-	xiaobotRequestService := request.NewRequestService(r, token, logger)
+	xiaobotRequestService := request.NewRequestService(cs, token, logger)
 	logger.Info("Init xiaobot request service")
 
 	var xiaobotParser parse.Parser
