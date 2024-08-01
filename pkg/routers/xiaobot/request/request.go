@@ -30,11 +30,11 @@ type RequestService struct {
 	limiter       chan struct{}
 	maxRetry      int
 	token         string // token is used to request xiaobot api in authorization header
-	cookieService cookie.Cookie
+	cookieService cookie.CookieIface
 	logger        *zap.Logger
 }
 
-func NewRequestService(cookieService cookie.Cookie, token string, logger *zap.Logger) request.Requester {
+func NewRequestService(cookieService cookie.CookieIface, token string, logger *zap.Logger) request.Requester {
 	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:        &http.Client{},

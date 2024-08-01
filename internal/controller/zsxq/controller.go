@@ -12,14 +12,14 @@ import (
 
 type ZsxqController struct {
 	redis    redis.Redis
-	cookie   cookie.Cookie
+	cookie   cookie.CookieIface
 	db       *gorm.DB
 	logger   *zap.Logger
 	taskCh   chan common.Task
 	notifier notify.Notifier
 }
 
-func NewZsxqHandler(redis redis.Redis, cookie cookie.Cookie, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *ZsxqController {
+func NewZsxqHandler(redis redis.Redis, cookie cookie.CookieIface, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *ZsxqController {
 	h := &ZsxqController{
 		redis:    redis,
 		cookie:   cookie,

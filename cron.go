@@ -19,7 +19,7 @@ import (
 )
 
 // setupCronCrawlJob sets up cron jobs
-func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier,
+func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier,
 ) (cronService *cron.CronService, definitionToFunc jobController.DefinitionToFunc, err error) {
 	cronService, err = cron.NewCronService(logger)
 	if err != nil {
@@ -40,7 +40,7 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 	return cronService, definitionToFunc, nil
 }
 
-func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) (err error) {
+func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) (err error) {
 	runningJobs, err := cronDBService.FindRunningJob()
 	if err != nil {
 		return fmt.Errorf("failed to find running cron jobs: %w", err)
@@ -77,7 +77,7 @@ func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookie
 	return nil
 }
 
-func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB, redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) (jobController.DefinitionToFunc, error) {
+func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) (jobController.DefinitionToFunc, error) {
 	definitions, err := cronDBService.GetDefinitions()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cron task definitions: %w", err)

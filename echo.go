@@ -28,7 +28,7 @@ import (
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
-func setupEcho(redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier,
+func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier,
 	definitionToFunc jobController.DefinitionToFunc,
 	cronService *cron.CronService, logger *zap.Logger,
 ) (e *echo.Echo) {

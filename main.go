@@ -13,8 +13,8 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
-	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
 	"github.com/eli-yip/rss-zero/config"
+	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
@@ -97,7 +97,7 @@ func main() {
 }
 
 func initService(logger *zap.Logger) (redisService redis.Redis,
-	cookieService cookie.Cookie,
+	cookieService cookie.CookieIface,
 	dbService *gorm.DB,
 	notifier notify.Notifier,
 	err error) {

@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	weiboDB "github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
@@ -70,6 +71,8 @@ func NewPostgresDB(c config.DatabaseConfig) (db *gorm.DB, err error) {
 		&githubDB.Release{},
 		&githubDB.Sub{},
 		&githubDB.Repo{},
+
+		&cookie.Cookie{},
 	); err != nil {
 		return nil, err
 	}

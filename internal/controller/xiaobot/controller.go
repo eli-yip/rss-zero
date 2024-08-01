@@ -12,7 +12,7 @@ import (
 
 type XiaobotController struct {
 	redis    redis.Redis
-	cookie   cookie.Cookie
+	cookie   cookie.CookieIface
 	db       xiaobotDB.DB
 	taskCh   chan common.Task
 	l        *zap.Logger
@@ -20,7 +20,7 @@ type XiaobotController struct {
 }
 
 func NewXiaobotController(redis redis.Redis,
-	cookie cookie.Cookie,
+	cookie cookie.CookieIface,
 	db xiaobotDB.DB,
 	n notify.Notifier,
 	l *zap.Logger) *XiaobotController {

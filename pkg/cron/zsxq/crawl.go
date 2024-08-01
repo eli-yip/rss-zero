@@ -27,7 +27,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 )
 
-func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronJobInfo := cron.CronJobInfo{}
 
@@ -213,7 +213,7 @@ func prepareZsxqServices(cookie string, db *gorm.DB, logger *zap.Logger,
 	return dbService, requestService, parseService, rssRenderService, nil
 }
 
-func getZsxqCookie(cookieService cookie.Cookie, notifier notify.Notifier, logger *zap.Logger) (accessToken string, err error) {
+func getZsxqCookie(cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (accessToken string, err error) {
 	if accessToken, err = cookieService.Get(cookie.CookieTypeZsxqAccessToken); err != nil {
 		if errors.Is(err, cookie.ErrKeyNotExist) {
 			logger.Error("Found no zsxq cookie in db, notify user now")

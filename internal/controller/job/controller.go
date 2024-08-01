@@ -14,7 +14,7 @@ import (
 type Controller struct {
 	cronService      *cron.CronService
 	redisService     redis.Redis
-	cookie           cookie.Cookie
+	cookie           cookie.CookieIface
 	db               *gorm.DB
 	notifier         notify.Notifier
 	cronDBService    cronDB.DB
@@ -22,7 +22,7 @@ type Controller struct {
 	logger           *zap.Logger
 }
 
-func NewController(cronService *cron.CronService, redisService redis.Redis, cs cookie.Cookie, db *gorm.DB, notifier notify.Notifier, cronDBService cronDB.DB, definitionToFunc DefinitionToFunc, logger *zap.Logger) *Controller {
+func NewController(cronService *cron.CronService, redisService redis.Redis, cs cookie.CookieIface, db *gorm.DB, notifier notify.Notifier, cronDBService cronDB.DB, definitionToFunc DefinitionToFunc, logger *zap.Logger) *Controller {
 	return &Controller{cronService: cronService,
 		redisService: redisService, cookie: cs, db: db, notifier: notifier,
 		cronDBService: cronDBService, definitionToFunc: definitionToFunc, logger: logger}

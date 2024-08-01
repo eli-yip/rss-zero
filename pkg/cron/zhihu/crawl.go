@@ -28,7 +28,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronJobInfo := cron.CronJobInfo{}
 
@@ -420,7 +420,7 @@ var (
 	errNoZSECK = errors.New("no zse_ck cookie")
 )
 
-func initZhihuServices(db *gorm.DB, cs cookie.Cookie, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
+func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
 	var err error
 
 	var (
@@ -492,6 +492,6 @@ func initZhihuServices(db *gorm.DB, cs cookie.Cookie, logger *zap.Logger) (zhihu
 	return dbService, requestService, parser, nil
 }
 
-func removeDC0Cookie(cs cookie.Cookie) (err error) { return cs.Del(cookie.CookieTypeZhihuDC0) }
+func removeDC0Cookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuDC0) }
 
-func removeZC0Cookie(cs cookie.Cookie) (err error) { return cs.Del(cookie.CookieTypeZhihuZC0) }
+func removeZC0Cookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuZC0) }

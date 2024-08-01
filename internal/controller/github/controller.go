@@ -10,13 +10,13 @@ import (
 
 type Controller struct {
 	redis    redis.Redis
-	cookie   cookie.Cookie
+	cookie   cookie.CookieIface
 	db       githubDB.DB
 	taskCh   chan common.Task
 	notifier notify.Notifier
 }
 
-func NewController(redis redis.Redis, cookie cookie.Cookie, db githubDB.DB, notifier notify.Notifier) *Controller {
+func NewController(redis redis.Redis, cookie cookie.CookieIface, db githubDB.DB, notifier notify.Notifier) *Controller {
 	h := &Controller{
 		redis:    redis,
 		db:       db,

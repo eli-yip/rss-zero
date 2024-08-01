@@ -23,7 +23,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 )
 
-func Crawl(r redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronID := xid.New().String()
 		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
@@ -109,7 +109,7 @@ func Crawl(r redis.Redis, cookieService cookie.Cookie, db *gorm.DB, notifier not
 	}
 }
 
-func initXiaobotServices(db *gorm.DB, logger *zap.Logger, cs cookie.Cookie, token string) (xiaobotDB.DB, requestIface.Requester, parse.Parser, error) {
+func initXiaobotServices(db *gorm.DB, logger *zap.Logger, cs cookie.CookieIface, token string) (xiaobotDB.DB, requestIface.Requester, parse.Parser, error) {
 	var err error
 
 	xiaobotDBService := xiaobotDB.NewDBService(db)
