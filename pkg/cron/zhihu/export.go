@@ -9,7 +9,7 @@ import (
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 
-	zhihuController "github.com/eli-yip/rss-zero/cmd/server/controller/zhihu"
+	zhihuController "github.com/eli-yip/rss-zero/internal/controller/zhihu"
 	"github.com/eli-yip/rss-zero/internal/log"
 )
 

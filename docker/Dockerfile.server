@@ -12,7 +12,7 @@ RUN go env -w GO111MODULE=on && \
 
 COPY . .
 
-RUN go build -ldflags "-X github.com/eli-yip/rss-zero/internal/version.Version=${VERSION}" -tags="timetzdata" -o server ./cmd/server
+RUN go build -ldflags "-X github.com/eli-yip/rss-zero/internal/version.Version=${VERSION}" -tags="timetzdata" -o server .
 
 FROM alpine:3.20
 

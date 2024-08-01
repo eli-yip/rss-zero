@@ -1,0 +1,33 @@
+package controller
+
+import (
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+
+	"github.com/eli-yip/rss-zero/internal/controller/common"
+	"github.com/eli-yip/rss-zero/internal/notify"
+	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/pkg/cookie"
+)
+
+type ZsxqController struct {
+	redis    redis.Redis
+	cookie   cookie.Cookie
+	db       *gorm.DB
+	logger   *zap.Logger
+	taskCh   chan common.Task
+	notifier notify.Notifier
+}
+
+func NewZsxqHandler(redis redis.Redis, cookie cookie.Cookie, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *ZsxqController {
+	h := &ZsxqController{
+		redis:    redis,
+		cookie:   cookie,
+		db:       db,
+		logger:   logger,
+		notifier: notifier,
+		taskCh:   make(chan common.Task, 100),
+	}
+	go h.processTask()
+	return h
+}

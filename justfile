@@ -8,7 +8,7 @@ update:
   go mod tidy
 
 run:
-  go run ./cmd/server --config=config.toml
+  go run . --config=config.toml
 
 commit:
   git add -A
