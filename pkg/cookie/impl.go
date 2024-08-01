@@ -14,8 +14,8 @@ type CookieService struct{ *gorm.DB }
 func NewCookieService(db *gorm.DB) CookieIface { return &CookieService{db} }
 
 func (s *CookieService) Set(cookieType int, value string, ttl time.Duration) (err error) {
-	if err = s.Check(cookieType); err != nil && !errors.Is(err, ErrKeyNotExist) {
-		return fmt.Errorf("failed to check cookie: %w", err)
+	if err = s.Check(cookieType); !errors.Is(err, ErrKeyNotExist) {
+		return fmt.Errorf("cookie already exists or some other error: %w", err)
 	}
 
 	return s.Save(&Cookie{
