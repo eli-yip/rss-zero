@@ -1,6 +1,10 @@
 package cookie
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Cookie struct {
 	ID         string    `gorm:"primaryKey;type:string;column:id"`
@@ -9,6 +13,7 @@ type Cookie struct {
 	ExpireAt   time.Time `gorm:"type:timestamptz;column:expire_at"`
 	CreatedAt  time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt  time.Time `gorm:"column:updated_at;autoUpdateTime"`
+	DeletedAt  gorm.DeletedAt
 }
 
 func (c *Cookie) TableName() string { return "cookies" }
