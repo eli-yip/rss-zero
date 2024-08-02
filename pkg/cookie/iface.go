@@ -10,6 +10,10 @@ type CookieIface interface {
 	Get(cookieType int) (value string, err error)
 	GetCookieTypes() (cookieTypes []int, err error)
 	Check(cookieType int) (err error)
+	// CheckTTL function accepts a cookie type and an expected minimum expiration time.
+	// For instance, if the minimum expiration time is set to one day,
+	// and the value of the specified cookie type is set to expire within one day,
+	// it will return an ErrKeyNotExist error.
 	CheckTTL(cookieType int, ttl time.Duration) (err error)
 	GetTTL(cookieType int) (ttl time.Duration, err error)
 	Del(cookieType int) (err error)
