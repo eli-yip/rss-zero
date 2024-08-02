@@ -45,4 +45,5 @@ lol:
   git lol
 
 amend:
+  git add -A
   git commit --amend --no-edit
