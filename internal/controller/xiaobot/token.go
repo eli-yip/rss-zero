@@ -7,9 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 )
@@ -39,7 +38,7 @@ func (h *XiaobotController) UpdateToken(c echo.Context) (err error) {
 	}
 	l.Info("Validated xiaobot token", zap.String("token", req.Token))
 
-	if err = h.cookie.Set(cookie.CookieTypeXiaobotAccessToken, req.Token, redis.Forever); err != nil {
+	if err = h.cookie.Set(cookie.CookieTypeXiaobotAccessToken, req.Token, cookie.DefaultTTL); err != nil {
 		l.Error("Error updating xiaobot token", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}

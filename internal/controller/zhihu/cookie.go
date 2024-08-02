@@ -9,8 +9,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
@@ -153,7 +153,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		}
 		logger.Info("Validate zhihu d_c0 cookie successfully", zap.String("cookie", d_c0))
 
-		if err = h.cookie.Set(cookie.CookieTypeZhihuDC0, d_c0, redis.Forever); err != nil {
+		if err = h.cookie.Set(cookie.CookieTypeZhihuDC0, d_c0, cookie.DefaultTTL); err != nil {
 			logger.Error("Failed to update zhihu d_c0 cookie in db", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}

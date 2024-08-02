@@ -7,9 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	zsxqRequest "github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 )
@@ -39,7 +38,7 @@ func (h *ZsxqController) UpdateZsxqCookie(c echo.Context) (err error) {
 	}
 	logger.Info("Validated zsxq cookie", zap.String("cookie", req.Cookie))
 
-	if err = h.cookie.Set(cookie.CookieTypeZsxqAccessToken, req.Cookie, redis.Forever); err != nil {
+	if err = h.cookie.Set(cookie.CookieTypeZsxqAccessToken, req.Cookie, cookie.DefaultTTL); err != nil {
 		logger.Error("Error updating zsxq cookie", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}

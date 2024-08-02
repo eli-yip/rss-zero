@@ -15,6 +15,8 @@ type CookieIface interface {
 	Del(cookieType int) (err error)
 }
 
+var DefaultTTL = 24 * 365 * time.Hour
+
 const (
 	CookieTypeZsxqAccessToken = iota
 	CookieTypeZhihuZC0

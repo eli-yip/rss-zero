@@ -32,7 +32,7 @@ func (s *CookieService) Set(cookieType int, value string, ttl time.Duration) (er
 
 func (s *CookieService) Get(cookieType int) (value string, err error) {
 	var c Cookie
-	err = s.Where("type = ? AND expire_at >= ?", cookieType, time.Now()).First(&c).Error
+	err = s.Where("type = ? AND expire_at >= ?", cookieType, time.Now()).Debug().First(&c).Error
 	return c.Value, err
 }
 
