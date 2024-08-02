@@ -8,6 +8,7 @@ import (
 type CookieIface interface {
 	Set(cookieType int, value string, ttl time.Duration) (err error)
 	Get(cookieType int) (value string, err error)
+	GetCookieTypes() (cookieTypes []int, err error)
 	Check(cookieType int) (err error)
 	GetTTL(cookieType int) (ttl time.Duration, err error)
 	Del(cookieType int) (err error)

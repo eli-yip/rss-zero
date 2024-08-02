@@ -39,6 +39,19 @@ func (c *CronService) AddCrawlJob(name, cronExpr string, taskFunc func(chan Cron
 	return j.ID().String(), nil
 }
 
+func (c *CronService) AddJob(name, cronExpr string, taskFunc func()) (jobID string, err error) {
+	j, err := c.s.NewJob(
+		gocron.CronJob(cronExpr, false),
+		gocron.NewTask(taskFunc),
+		gocron.WithSingletonMode(gocron.LimitModeReschedule),
+		gocron.WithName(name),
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to add job %s: %w", name, err)
+	}
+	return j.ID().String(), nil
+}
+
 func (c *CronService) RemoveCrawlJob(jobID string) (err error) {
 	id, err := uuid.Parse(jobID)
 	if err != nil {

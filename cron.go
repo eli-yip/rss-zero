@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -36,6 +37,12 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to add job to cron service: %w", err)
 	}
+
+	jobID, err := cronService.AddJob("check_cookies", "0 0 * * *", checkCookies(cookieService, notifier, logger))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to add check cookies job: %w", err)
+	}
+	logger.Info("Add check cookies job successfully", zap.String("job_id", jobID))
 
 	return cronService, definitionToFunc, nil
 }
@@ -133,4 +140,25 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 		defToFunc[def.ID] = crawlFunc
 	}
 	return defToFunc, nil
+}
+
+func checkCookies(cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) func() {
+	return func() {
+		cookieTypes, err := cookieService.GetCookieTypes()
+		if err != nil {
+			logger.Error("Failed to get cookie types", zap.Error(err))
+			notify.NoticeWithLogger(notifier, "Failed to get cookie types", err.Error(), logger)
+		}
+
+		for _, cookieType := range cookieTypes {
+			err = cookieService.Check(cookieType)
+			if errors.Is(err, cookie.ErrKeyNotExist) {
+				logger.Error("Cookie not exist", zap.Int("cookie_type", cookieType))
+				notify.NoticeWithLogger(notifier, "Cookie not exist", fmt.Sprintf("Cookie type: %d", cookieType), logger)
+			} else if err != nil {
+				logger.Error("Failed to check cookie", zap.Int("cookie_type", cookieType), zap.Error(err))
+				notify.NoticeWithLogger(notifier, "Failed to check cookie", fmt.Sprintf("Cookie type: %d", cookieType), logger)
+			}
+		}
+	}
 }

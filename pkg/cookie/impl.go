@@ -53,3 +53,8 @@ func (s *CookieService) GetTTL(cookieType int) (ttl time.Duration, err error) {
 func (s *CookieService) Del(cookieType int) (err error) {
 	return s.Where("type = ?", cookieType).Delete(&Cookie{}).Error
 }
+
+func (s *CookieService) GetCookieTypes() (cookieTypes []int, err error) {
+	err = s.Model(&Cookie{}).Select("DISTINCT type").Pluck("type", &cookieTypes).Error
+	return cookieTypes, err
+}
