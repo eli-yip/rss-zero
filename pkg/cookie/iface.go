@@ -10,6 +10,7 @@ type CookieIface interface {
 	Get(cookieType int) (value string, err error)
 	GetCookieTypes() (cookieTypes []int, err error)
 	Check(cookieType int) (err error)
+	CheckTTL(cookieType int, ttl time.Duration) (err error)
 	GetTTL(cookieType int) (ttl time.Duration, err error)
 	Del(cookieType int) (err error)
 }

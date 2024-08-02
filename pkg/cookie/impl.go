@@ -44,6 +44,18 @@ func (s *CookieService) Check(cookieType int) (err error) {
 	return nil
 }
 
+func (s *CookieService) CheckTTL(cookieType int, ttl time.Duration) (err error) {
+	var count int64
+	err = s.Model(&Cookie{}).Where("type = ? AND expire_at >= ?", cookieType, time.Now().Add(ttl)).Count(&count).Error
+	if err != nil {
+		return fmt.Errorf("failed to count cookie: %w", err)
+	}
+	if count == 0 {
+		return ErrKeyNotExist
+	}
+	return nil
+}
+
 func (s *CookieService) GetTTL(cookieType int) (ttl time.Duration, err error) {
 	var c Cookie
 	err = s.Where("type = ? AND expire_at >= ?", cookieType, time.Now()).First(&c).Error

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -152,7 +153,7 @@ func checkCookies(cookieService cookie.CookieIface, notifier notify.Notifier, lo
 
 		for _, cookieType := range cookieTypes {
 			typeStr := cookie.TypeToStr(cookieType)
-			err = cookieService.Check(cookieType)
+			err = cookieService.CheckTTL(cookieType, 48*time.Hour)
 			if errors.Is(err, cookie.ErrKeyNotExist) {
 				logger.Error("Cookie not exist", zap.String("cookie_type", typeStr))
 				notify.NoticeWithLogger(notifier, "Cookie not exist", fmt.Sprintf("Cookie type: %s", typeStr), logger)
