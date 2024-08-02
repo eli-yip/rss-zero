@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 )
 
@@ -31,6 +31,7 @@ func (h *Controller) UpdateToken(c echo.Context) (err error) {
 		logger.Error("Error updating token", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
+	logger.Info("Get token successfully", zap.String("token", req.Token))
 
 	// 2024-01-01
 	if req.ExpireAt == "" {
@@ -43,8 +44,7 @@ func (h *Controller) UpdateToken(c echo.Context) (err error) {
 		logger.Error("Error updating token", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
-	t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, config.C.BJT)
-	t = t.Add(-24 * time.Hour)
+	t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, config.C.BJT).Add(-24 * time.Hour)
 
 	ttl := time.Until(t)
 

@@ -107,13 +107,13 @@ func initService(logger *zap.Logger) (redisService redis.Redis,
 	}
 	logger.Info("redis service initialized")
 
-	cookieService = cookie.NewCookieService(dbService)
-
 	if dbService, err = db.NewPostgresDB(config.C.Database); err != nil {
 		logger.Error("Fail to init postgres database service", zap.Error(err))
 		return nil, nil, nil, nil, fmt.Errorf("fail to init db: %w", err)
 	}
 	logger.Info("db initialized")
+
+	cookieService = cookie.NewCookieService(dbService)
 
 	notifier = notify.NewBarkNotifier(config.C.Bark.URL)
 	logger.Info("bark notifier initialized")
