@@ -151,13 +151,14 @@ func checkCookies(cookieService cookie.CookieIface, notifier notify.Notifier, lo
 		}
 
 		for _, cookieType := range cookieTypes {
+			typeStr := cookie.TypeToStr(cookieType)
 			err = cookieService.Check(cookieType)
 			if errors.Is(err, cookie.ErrKeyNotExist) {
-				logger.Error("Cookie not exist", zap.Int("cookie_type", cookieType))
-				notify.NoticeWithLogger(notifier, "Cookie not exist", fmt.Sprintf("Cookie type: %d", cookieType), logger)
+				logger.Error("Cookie not exist", zap.String("cookie_type", typeStr))
+				notify.NoticeWithLogger(notifier, "Cookie not exist", fmt.Sprintf("Cookie type: %s", typeStr), logger)
 			} else if err != nil {
-				logger.Error("Failed to check cookie", zap.Int("cookie_type", cookieType), zap.Error(err))
-				notify.NoticeWithLogger(notifier, "Failed to check cookie", fmt.Sprintf("Cookie type: %d", cookieType), logger)
+				logger.Error("Failed to check cookie", zap.String("cookie_type", typeStr), zap.Error(err))
+				notify.NoticeWithLogger(notifier, "Failed to check cookie", fmt.Sprintf("Cookie type: %s", typeStr), logger)
 			}
 		}
 	}

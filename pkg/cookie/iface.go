@@ -24,3 +24,22 @@ const (
 )
 
 var ErrKeyNotExist = errors.New("Cookie key not exist")
+
+func TypeToStr(cookieType int) string {
+	switch cookieType {
+	case CookieTypeZsxqAccessToken:
+		return "zsxq_access_token"
+	case CookieTypeZhihuZC0:
+		return "zhihu_z_c0"
+	case CookieTypeZhihuZSECK:
+		return "zhihu_z_seck"
+	case CookieTypeZhihuDC0:
+		return "zhihu_dc0"
+	case CookieTypeXiaobotAccessToken:
+		return "xiaobot_access_token"
+	case CookieTypeGitHubAccessToken:
+		return "github_access_token"
+	default:
+		return "unknown"
+	}
+}
