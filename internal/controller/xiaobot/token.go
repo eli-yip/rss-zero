@@ -17,32 +17,33 @@ type SetXiaobotTokenReq struct {
 	Token string `json:"token"`
 }
 
+type SetXiaobotTokenResp struct {
+	Token string `json:"token"`
+}
+
 func (h *XiaobotController) UpdateToken(c echo.Context) (err error) {
-	l := common.ExtractLogger(c)
+	logger := common.ExtractLogger(c)
 
 	var req SetXiaobotTokenReq
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(errors.New("invalid request"), err)
-		l.Error("Error updating xiaobot token", zap.Error(err))
+		logger.Error("Error updating xiaobot token", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
-	l.Info("Retrieved xiaobot token", zap.String("token", req.Token))
+	logger.Info("Retrieved xiaobot token", zap.String("token", req.Token))
 
-	r := request.NewRequestService(h.cookie, req.Token, l)
+	r := request.NewRequestService(h.cookie, req.Token, logger)
 	if _, err = r.Limit(config.C.TestURL.Xiaobot); err != nil {
-		err = errors.Join(errors.New("invalid token"), err)
-		l.Error("Error updating xiaobot token",
-			zap.String("token", req.Token), zap.Error(err))
-		return c.JSON(http.StatusInternalServerError,
-			&common.ApiResp{Message: "invalid token"})
+		logger.Error("Failed to validate xiaobot token", zap.String("token", req.Token), zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid token"})
 	}
-	l.Info("Validated xiaobot token", zap.String("token", req.Token))
+	logger.Info("Validated xiaobot token", zap.String("token", req.Token))
 
 	if err = h.cookie.Set(cookie.CookieTypeXiaobotAccessToken, req.Token, cookie.DefaultTTL); err != nil {
-		l.Error("Error updating xiaobot token", zap.Error(err))
+		logger.Error("Error updating xiaobot token", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 	}
-	l.Info("Updated xiaobot token", zap.String("token", req.Token))
+	logger.Info("Updated xiaobot token", zap.String("token", req.Token))
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})
+	return c.JSON(http.StatusOK, &SetXiaobotTokenResp{Token: req.Token})
 }
