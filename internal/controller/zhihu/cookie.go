@@ -166,7 +166,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		respData.ZC0Cookie = &Cookie{}
 		var ttl time.Duration
 		if req.ZC0Cookie.ExpireAt != "" {
-			expireAt, err := parseExpireAt(req.ZC0Cookie.ExpireAt)
+			expireAt, err := cookie.ParseArcExpireAt(req.ZC0Cookie.ExpireAt)
 			if err != nil {
 				logger.Error("Failed to parse expireAt", zap.Error(err))
 				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
@@ -206,7 +206,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		respData.ZSECKCookie = &Cookie{}
 		var ttl time.Duration
 		if req.ZSECKCookie.ExpireAt != "" {
-			expireAt, err := parseExpireAt(req.ZSECKCookie.ExpireAt)
+			expireAt, err := cookie.ParseArcExpireAt(req.ZSECKCookie.ExpireAt)
 			if err != nil {
 				logger.Error("Failed to parse expireAt", zap.Error(err))
 				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
@@ -243,14 +243,6 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 	}
 
 	return c.JSON(http.StatusOK, &common.ApiResp{Message: "Update Zhihu Cookies successfully", Data: respData})
-}
-
-func parseExpireAt(expireAt string) (time.Time, error) {
-	// Sat Jul 27 2024 16:48:02 GMT+0800
-	expireAt = strings.TrimSuffix(expireAt, "(中国标准时间)")
-	expireAt = strings.TrimSpace(expireAt)
-	const layout = "Mon Jan 02 2006 15:04:05 GMT-0700"
-	return time.Parse(layout, expireAt)
 }
 
 func extractCookieValue(cookie string) (result string) {
