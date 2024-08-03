@@ -38,9 +38,22 @@ func GenerateHTML(title, bodyContent string) (string, error) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>%s</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+        }
+        .content {
+            max-width: 800px;
+            width: 100%%;
+						text-align: left;
+        }
+    </style>
 </head>
 <body>
-    %s
+    <div class="content">
+        %s
+    </div>
 </body>
 </html>`, title, bodyContent)
 
