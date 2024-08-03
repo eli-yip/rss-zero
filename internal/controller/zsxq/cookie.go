@@ -18,6 +18,11 @@ type ZsxqSetCookieReq struct {
 	ExpireAt string `json:"expire_at"`
 }
 
+type SetCookieResp struct {
+	Value    string `json:"value"`
+	ExpireAt string `json:"expire_at"`
+}
+
 func (h *ZsxqController) UpdateCookie(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
@@ -54,5 +59,8 @@ func (h *ZsxqController) UpdateCookie(c echo.Context) (err error) {
 	}
 	logger.Info("Updated zsxq cookie", zap.String("cookie", req.Cookie))
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})
+	return c.JSON(http.StatusOK, &SetCookieResp{
+		Value:    req.Cookie,
+		ExpireAt: expireAt.Format(time.RFC3339),
+	})
 }
