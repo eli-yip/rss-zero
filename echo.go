@@ -207,7 +207,7 @@ func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqCont
 func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, xiaobotHandler *xiaobotController.XiaobotController, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
 	cookieApi := apiGroup.Group("/cookie")
 
-	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateZsxqCookie)
+	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateCookie)
 	zsxqCookieApi.Name = "Cookie updating route for zsxq"
 
 	xiaobotCookieApi := cookieApi.POST("/xiaobot", xiaobotHandler.UpdateToken)
