@@ -39,7 +39,7 @@ func TypeToStr(cookieType int) string {
 	case CookieTypeZhihuZC0:
 		return "zhihu_z_c0"
 	case CookieTypeZhihuZSECK:
-		return "zhihu_z_seck"
+		return "zhihu_zseck"
 	case CookieTypeZhihuDC0:
 		return "zhihu_dc0"
 	case CookieTypeXiaobotAccessToken:

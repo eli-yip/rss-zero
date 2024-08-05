@@ -155,8 +155,8 @@ func checkCookies(cookieService cookie.CookieIface, notifier notify.Notifier, lo
 			typeStr := cookie.TypeToStr(cookieType)
 			err = cookieService.CheckTTL(cookieType, 48*time.Hour)
 			if errors.Is(err, cookie.ErrKeyNotExist) {
-				logger.Error("Cookie not exist", zap.String("cookie_type", typeStr))
-				notify.NoticeWithLogger(notifier, "Cookie not exist", fmt.Sprintf("Cookie type: %s", typeStr), logger)
+				logger.Error("Need to update cookies", zap.String("cookie_type", typeStr))
+				notify.NoticeWithLogger(notifier, "Need to update cookies", fmt.Sprintf("Cookie type: %s", typeStr), logger)
 			} else if err != nil {
 				logger.Error("Failed to check cookie", zap.String("cookie_type", typeStr), zap.Error(err))
 				notify.NoticeWithLogger(notifier, "Failed to check cookie", fmt.Sprintf("Cookie type: %s", typeStr), logger)
