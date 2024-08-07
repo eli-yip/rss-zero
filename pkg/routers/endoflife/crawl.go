@@ -1,24 +1,23 @@
-package crawl
+package endoflife
 
 import (
 	"fmt"
 
 	"github.com/eli-yip/rss-zero/internal/redis"
-	"github.com/eli-yip/rss-zero/pkg/routers/endoflife"
 )
 
-func CrawlEndOfLife(product string, redisService redis.Redis) (err error) {
-	cycles, err := endoflife.GetReleaseCycles(product)
+func Crawl(product string, redisService redis.Redis) (err error) {
+	cycles, err := GetReleaseCycles(product)
 	if err != nil {
 		return fmt.Errorf("fail to get release cycles from endoflife: %w", err)
 	}
 
-	versionInfoList, err := endoflife.ParseCycles(cycles)
+	versionInfoList, err := ParseCycles(cycles)
 	if err != nil {
 		return fmt.Errorf("fail to parse release cycles: %w", err)
 	}
 
-	renderService := endoflife.NewRSSRenderService()
+	renderService := NewRSSRenderService()
 	rssContent, err := renderService.RenderRSS(product, versionInfoList)
 	if err != nil {
 		return fmt.Errorf("fail to render rss content: %w", err)

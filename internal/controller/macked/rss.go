@@ -1,37 +1,32 @@
-package endoflife
+package controller
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
-	"github.com/eli-yip/rss-zero/pkg/routers/endoflife"
+	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 )
 
 func (h *Controller) RSS(c echo.Context) (err error) {
-	l := common.ExtractLogger(c)
+	logger := common.ExtractLogger(c)
 
-	productName := c.Get("feed_id").(string)
-	l.Info("retrieved endoflife rss request", zap.String("product", productName))
-
-	rss, err := h.getRSS(fmt.Sprintf(redis.EndOfLifePath, productName), l)
+	rss, err := h.getRSS(logger)
 	if err != nil {
-		l.Error("fail to get rss from redis", zap.Error(err))
+		logger.Error("fail to get rss from redis", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "Failed getting rss from redis")
 	}
-	l.Info("retrieved rss from redis")
+	logger.Info("retrieved rss from redis")
 
 	return c.String(http.StatusOK, rss)
 }
 
-func (h *Controller) getRSS(key string, logger *zap.Logger) (output string, err error) {
-	logger = logger.With(zap.String("rss path", key))
+func (h *Controller) getRSS(logger *zap.Logger) (output string, err error) {
+	logger = logger.With(zap.String("rss_path", "macked"))
 	defer logger.Info("task chnnel closes")
 
 	task := common.Task{TextCh: make(chan string), ErrCh: make(chan error)}
@@ -39,7 +34,6 @@ func (h *Controller) getRSS(key string, logger *zap.Logger) (output string, err 
 	defer close(task.ErrCh)
 
 	h.taskCh <- task
-	task.TextCh <- key
 	logger.Info("task sent to task channel")
 
 	select {
@@ -52,7 +46,7 @@ func (h *Controller) getRSS(key string, logger *zap.Logger) (output string, err 
 
 func (h *Controller) processTask() {
 	for task := range h.taskCh {
-		key := <-task.TextCh
+		key := redis.RssMackedPath
 
 		content, err := h.redis.Get(key)
 		if err == nil {
@@ -76,12 +70,7 @@ func (h *Controller) processTask() {
 }
 
 func (h *Controller) generateRSS(key string) (output string, err error) {
-	productName, err := h.extractProductName(key)
-	if err != nil {
-		return "", err
-	}
-
-	if err = endoflife.Crawl(productName, h.redis); err != nil {
+	if err = macked.Crawl(h.redis); err != nil {
 		return "", err
 	}
 
@@ -90,13 +79,4 @@ func (h *Controller) generateRSS(key string) (output string, err error) {
 	}
 
 	return output, nil
-}
-
-func (h *Controller) extractProductName(key string) (productName string, err error) {
-	strs := strings.Split(key, "_")
-	if len(strs) != 3 {
-		return "", errors.New("invalid rss key")
-	}
-
-	return strs[2], nil
 }
