@@ -29,6 +29,10 @@ password = ''
 [bark]
 url = ''
 
+[telegram]
+token = ''
+macked_chat_id = ''
+
 [test_url]
 zsxq = ''
 zhihu = ''
