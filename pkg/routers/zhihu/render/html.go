@@ -48,6 +48,9 @@ func GenerateHTML(title, bodyContent string) (string, error) {
             width: 100%%;
 						text-align: left;
         }
+				a {
+            color: blue;
+        }
     </style>
 </head>
 <body>
