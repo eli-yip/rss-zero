@@ -47,6 +47,10 @@ type TomlConfig struct {
 	Bark     struct {
 		URL string `toml:"url"`
 	} `toml:"bark"`
+	Telegram struct {
+		Token        string `toml:"token"`
+		MackedChatID string `toml:"macked_chat_id"`
+	} `toml:"telegram"`
 	TestURL struct {
 		Zsxq    string `toml:"zsxq"`
 		Zhihu   string `toml:"zhihu"`

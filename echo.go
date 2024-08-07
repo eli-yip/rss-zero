@@ -25,11 +25,12 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
-func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier,
+func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, tg macked.BotIface, notifier notify.Notifier,
 	definitionToFunc jobController.DefinitionToFunc,
 	cronService *cron.CronService, logger *zap.Logger,
 ) (e *echo.Echo) {
@@ -67,7 +68,8 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 	archiveHandler := archiveController.NewController(db)
 	githubDBService := githubDB.NewDBService(db)
 	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)
-	mackedController := mackedController.NewController(redisService, logger)
+
+	mackedController := mackedController.NewController(redisService, tg, macked.NewDBService(db), logger)
 
 	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mackedController)
 

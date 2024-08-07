@@ -17,7 +17,7 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 
 	rss, err := h.getRSS(logger)
 	if err != nil {
-		logger.Error("fail to get rss from redis", zap.Error(err))
+		logger.Error("Failed to get rss from redis", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "Failed getting rss from redis")
 	}
 	logger.Info("retrieved rss from redis")
@@ -70,7 +70,7 @@ func (h *Controller) processTask() {
 }
 
 func (h *Controller) generateRSS(key string) (output string, err error) {
-	if err = macked.Crawl(h.redis); err != nil {
+	if err = macked.Crawl(h.redis, h.tg, h.db, h.logger); err != nil {
 		return "", err
 	}
 

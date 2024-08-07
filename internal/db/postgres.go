@@ -14,6 +14,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 	weiboDB "github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -71,6 +72,8 @@ func NewPostgresDB(c config.DatabaseConfig) (db *gorm.DB, err error) {
 		&githubDB.Release{},
 		&githubDB.Sub{},
 		&githubDB.Repo{},
+
+		&macked.TimeInfo{},
 
 		&cookie.Cookie{},
 	); err != nil {
