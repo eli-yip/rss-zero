@@ -62,7 +62,7 @@ func Crawl(redisService redis.Redis, bot BotIface, db DB, logger *zap.Logger) (e
 				return
 			}
 
-			text := fmt.Sprintf(`Release: %s
+			text := fmt.Sprintf(`%s
 %s`, parsedPosts[i].Title, parsedPosts[i].Link)
 
 			if err = bot.SendText(config.C.Telegram.MackedChatID, text); err != nil {
