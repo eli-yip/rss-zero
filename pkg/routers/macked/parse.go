@@ -14,6 +14,7 @@ type (
 		Modified  time.Time `json:"modified"`
 		Title     string    `json:"title"`
 		Content   string    `json:"content"`
+		Link      string    `json:"link"`
 	}
 )
 
@@ -31,12 +32,17 @@ func ParsePosts(posts []WPPost) (parsedPosts []ParsedPost, err error) {
 			return nil, fmt.Errorf("failed to parse modified time: %w", err)
 		}
 
+		if modified.IsZero() {
+			modified = published
+		}
+
 		parsedPosts = append(parsedPosts, ParsedPost{
 			ID:        idStr,
 			Published: published,
 			Modified:  modified,
 			Title:     html.UnescapeString(p.Title.Rendered),
 			Content:   html.UnescapeString(p.Content.Rendered),
+			Link:      p.Link,
 		})
 	}
 

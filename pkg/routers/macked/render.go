@@ -32,7 +32,7 @@ func (r *RSSRenderService) RenderRSS(posts []ParsedPost) (content string, err er
 	for _, p := range posts {
 		feedItem := feeds.Item{
 			Title:       p.Title,
-			Link:        &feeds.Link{Href: fmt.Sprintf("https://macked.app/post/?p=%s", p.ID)},
+			Link:        &feeds.Link{Href: p.Link},
 			Author:      &feeds.Author{Name: "Macked"},
 			Id:          p.ID,
 			Description: p.Content,

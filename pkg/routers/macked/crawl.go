@@ -3,6 +3,7 @@ package macked
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -43,22 +44,33 @@ func Crawl(redisService redis.Redis, bot BotIface, db DB, logger *zap.Logger) (e
 		return fmt.Errorf("fail to parse posts: %w", err)
 	}
 
+	var count int
 	go func() {
 		for i := len(parsedPosts) - 1; i >= 0; i-- {
-			if parsedPosts[i].Modified.After(latestPostTimeInDB) {
-				if err = db.SaveTime(parsedPosts[i].Modified); err != nil {
-					logger.Error("Failed to save post time to db", zap.Error(err))
-					return
-				}
-
-				text := fmt.Sprintf(`Release: %s
-https://macked.app/?p=%s`, parsedPosts[i].Title, parsedPosts[i].ID)
-
-				if err = bot.SendText(config.C.Telegram.MackedChatID, text); err != nil {
-					logger.Error("Failed to send message to telegram", zap.Error(err))
-					return
-				}
+			if !parsedPosts[i].Modified.After(latestPostTimeInDB) {
+				return
 			}
+
+			if count >= 10 {
+				logger.Info("Reach telegram bot limit, sleep 30 seconds")
+				time.Sleep(30 * time.Second)
+				count = 0
+			}
+
+			if err = db.SaveTime(parsedPosts[i].Modified); err != nil {
+				logger.Error("Failed to save post time to db", zap.Error(err))
+				return
+			}
+
+			text := fmt.Sprintf(`Release: %s
+%s`, parsedPosts[i].Title, parsedPosts[i].Link)
+
+			if err = bot.SendText(config.C.Telegram.MackedChatID, text); err != nil {
+				logger.Error("Failed to send message to telegram", zap.Error(err))
+				return
+			}
+
+			count++
 		}
 	}()
 
