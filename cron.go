@@ -18,10 +18,11 @@ import (
 	xiaobotCron "github.com/eli-yip/rss-zero/pkg/cron/xiaobot"
 	zhihuCron "github.com/eli-yip/rss-zero/pkg/cron/zhihu"
 	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
+	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 )
 
 // setupCronCrawlJob sets up cron jobs
-func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier,
+func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieService cookie.CookieIface, tg macked.BotIface, db *gorm.DB, notifier notify.Notifier,
 ) (cronService *cron.CronService, definitionToFunc jobController.DefinitionToFunc, err error) {
 	cronService, err = cron.NewCronService(logger)
 	if err != nil {
@@ -44,6 +45,12 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 		return nil, nil, fmt.Errorf("failed to add check cookies job: %w", err)
 	}
 	logger.Info("Add check cookies job successfully", zap.String("job_id", jobID))
+
+	jobID, err = cronService.AddJob("macked_crawl", "0 * * * *", macked.CrawlFunc(redisService, tg, macked.NewDBService(db), logger))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to add macked job: %w", err)
+	}
+	logger.Info("Add check macked job successfully", zap.String("job_id", jobID))
 
 	return cronService, definitionToFunc, nil
 }

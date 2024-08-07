@@ -66,7 +66,7 @@ func main() {
 
 	var definitionToFunc jobController.DefinitionToFunc
 	var cronService *cron.CronService
-	if cronService, definitionToFunc, err = setupCronCrawlJob(logger, redisService, cookieService, db, bark); err != nil {
+	if cronService, definitionToFunc, err = setupCronCrawlJob(logger, redisService, cookieService, tg, db, bark); err != nil {
 		logger.Fatal("fail to setup cron", zap.Error(err))
 	}
 	logger.Info("cron service initialized")

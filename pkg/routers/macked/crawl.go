@@ -2,6 +2,7 @@ package macked
 
 import (
 	"fmt"
+	"sync"
 
 	"go.uber.org/zap"
 
@@ -9,7 +10,24 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 )
 
+var mutex *sync.Mutex
+
+func init() {
+	mutex = &sync.Mutex{}
+}
+
+func CrawlFunc(redisService redis.Redis, bot BotIface, db DB, logger *zap.Logger) func() {
+	return func() {
+		if err := Crawl(redisService, bot, db, logger); err != nil {
+			logger.Error("Failed to crawl macked", zap.Error(err))
+		}
+	}
+}
+
 func Crawl(redisService redis.Redis, bot BotIface, db DB, logger *zap.Logger) (err error) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	latestPostTimeInDB, err := db.GetLatestTime()
 	if err != nil {
 		return fmt.Errorf("fail to get latest post time in db: %w", err)
