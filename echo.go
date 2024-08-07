@@ -13,6 +13,7 @@ import (
 	endoflifeController "github.com/eli-yip/rss-zero/internal/controller/endoflife"
 	githubController "github.com/eli-yip/rss-zero/internal/controller/github"
 	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
+	mackedController "github.com/eli-yip/rss-zero/internal/controller/macked"
 	rsshubController "github.com/eli-yip/rss-zero/internal/controller/rsshub"
 	xiaobotController "github.com/eli-yip/rss-zero/internal/controller/xiaobot"
 	zhihuController "github.com/eli-yip/rss-zero/internal/controller/zhihu"
@@ -66,8 +67,9 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 	archiveHandler := archiveController.NewController(db)
 	githubDBService := githubDB.NewDBService(db)
 	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)
+	mackedController := mackedController.NewController(redisService, logger)
 
-	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController)
+	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mackedController)
 
 	// /api/v1
 	apiGroup := e.Group("/api/v1")
@@ -229,7 +231,7 @@ func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqContro
 // /rss/zhihu/answer/:feed
 // /rss/zhihu/article/:feed
 // /rss/zhihu/pin/:feed
-func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.XiaobotController, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller) {
+func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.XiaobotController, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedController.Controller) {
 	rssGroup := e.Group("/rss")
 	rssGroup.Use(
 		myMiddleware.SetRSSContentType(), // set content type to application/atom+xml
@@ -256,10 +258,16 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihu
 	rssEndOfLife := rssGroup.GET("/endoflife/:feed", endOfLifeHandler.RSS)
 	rssEndOfLife.Name = "RSS route for endoflife.date"
 
+	rssMackedBare := rssGroup.GET("/macked", mackedController.RSS)
+	rssMackedBare.Name = "RSS bare route for macked"
+
+	// Add :feed here to fit the ExtractFeedID middleware
+	rssMacked := rssGroup.GET("/macked/:feed", mackedController.RSS)
+	rssMacked.Name = "RSS route for macked"
+
 	rssGithub := rssGroup.GET("/github/:feed", githubController.RSS)
 	rssGithub.Name = "RSS route for github"
 
 	githubRSSPreApi := rssGroup.GET("/github/pre/:feed", githubController.RSS)
 	githubRSSPreApi.Name = "RSS route for github pre"
-
 }
