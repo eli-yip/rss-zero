@@ -9,7 +9,6 @@ import (
 
 	"github.com/rs/xid"
 
-	crawl "github.com/eli-yip/rss-zero/internal/crawl/xiaobot"
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -18,6 +17,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	requestIface "github.com/eli-yip/rss-zero/pkg/request"
+	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/crawl"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
