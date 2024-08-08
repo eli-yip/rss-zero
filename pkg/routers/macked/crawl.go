@@ -44,11 +44,11 @@ func Crawl(redisService redis.Redis, bot BotIface, db DB, logger *zap.Logger) (e
 		return fmt.Errorf("fail to parse posts: %w", err)
 	}
 
-	var count int
+	var count int = 0
 	go func() {
 		for i := len(parsedPosts) - 1; i >= 0; i-- {
 			if !parsedPosts[i].Modified.After(latestPostTimeInDB) {
-				return
+				continue
 			}
 
 			if count >= 10 {
