@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gorilla/feeds"
+	"github.com/rs/xid"
 )
 
 type RSSRenderer interface {
@@ -31,7 +32,7 @@ func (r *RSSRenderService) RenderRSS(posts []ParsedPost) (content string, err er
 			Title:       p.Title,
 			Link:        &feeds.Link{Href: p.Link},
 			Author:      &feeds.Author{Name: "Macked"},
-			Id:          p.ID,
+			Id:          xid.New().String(), // Use a random id as reeder 5 will not handle updated correctly
 			Description: p.Content,
 			Created:     p.Modified, // Use modified as created, as reeder 5 will not handle updated correctly
 			Updated:     p.Modified,
