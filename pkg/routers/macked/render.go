@@ -10,12 +10,9 @@ type RSSRenderer interface {
 	RenderRSS(posts []ParsedPost) (content string, err error)
 }
 
-type RSSRenderService struct {
-}
+type RSSRenderService struct{}
 
-func NewRSSRenderService() RSSRenderer {
-	return &RSSRenderService{}
-}
+func NewRSSRenderService() RSSRenderer { return &RSSRenderService{} }
 
 func (r *RSSRenderService) RenderRSS(posts []ParsedPost) (content string, err error) {
 	if len(posts) == 0 {
@@ -36,7 +33,7 @@ func (r *RSSRenderService) RenderRSS(posts []ParsedPost) (content string, err er
 			Author:      &feeds.Author{Name: "Macked"},
 			Id:          p.ID,
 			Description: p.Content,
-			Created:     p.Published,
+			Created:     p.Modified, // Use modified as created, as reeder 5 will not handle updated correctly
 			Updated:     p.Modified,
 			Content:     p.Content,
 		}
