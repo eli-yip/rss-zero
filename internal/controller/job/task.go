@@ -10,9 +10,9 @@ import (
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	githubCron "github.com/eli-yip/rss-zero/pkg/cron/github"
-	xiaobotCron "github.com/eli-yip/rss-zero/pkg/cron/xiaobot"
 	zhihuCron "github.com/eli-yip/rss-zero/pkg/cron/zhihu"
 	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
+	xiaobotCron "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/cron"
 )
 
 func (h *Controller) AddTask(c echo.Context) (err error) {
@@ -85,7 +85,7 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
 		}
 	case cronDB.TypeXiaobot:
-		crawlFunc = xiaobotCron.Crawl(h.redisService, h.cookie, h.db, h.notifier)
+		crawlFunc = xiaobotCron.BuildCronCrawlFunc(h.redisService, h.cookie, h.db, h.notifier)
 		if jobID, err = h.cronService.AddCrawlJob("xiaobot_crawl", cronExpr, crawlFunc); err != nil {
 			return "", fmt.Errorf("failed to add crawl job: %w", err)
 		}

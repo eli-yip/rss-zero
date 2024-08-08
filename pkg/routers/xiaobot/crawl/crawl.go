@@ -14,7 +14,7 @@ import (
 
 const limit = 20
 
-func CrawXiaobot(paperID string, request request.Requester, parser parse.Parser,
+func Crawl(paperID string, request request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	crawlID := xid.New().String()
 	logger = logger.With(zap.String("crawl_id", crawlID))

@@ -1,4 +1,4 @@
-package cron
+package crawl
 
 import (
 	"errors"
@@ -23,7 +23,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 )
 
-func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronID := xid.New().String()
 		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
@@ -84,7 +84,7 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifie
 				continue
 			}
 
-			if err = crawl.CrawXiaobot(paper.ID, xiaobotRequestService, xiaobotParser, latestPostTimeInDB, 0, true, logger); err != nil {
+			if err = crawl.Crawl(paper.ID, xiaobotRequestService, xiaobotParser, latestPostTimeInDB, 0, true, logger); err != nil {
 				errCount++
 				logger.Error("Failed crawling xiaobot paper", zap.Error(err))
 				return
