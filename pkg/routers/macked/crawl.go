@@ -53,6 +53,10 @@ func Crawl(redisService redis.Redis, bot BotIface, db DB, logger *zap.Logger) (e
 		unreadPosts = append(unreadPosts, p)
 	}
 
+	if len(unreadPosts) == 0 {
+		return nil
+	}
+
 	slices.Reverse(unreadPosts) // Reverse unread posts because we want to notify in tg channel from old to latest
 	var count int = 0
 	go func() {
