@@ -9,7 +9,6 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
-	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 )
 
 func (h *Controller) RSS(c echo.Context) (err error) {
@@ -55,28 +54,11 @@ func (h *Controller) processTask() {
 		}
 
 		if errors.Is(err, redis.ErrKeyNotExist) {
-			content, err = h.generateRSS(key)
-			if err != nil {
-				task.ErrCh <- err
-				continue
-			}
-			task.TextCh <- content
+			task.TextCh <- ""
 			continue
 		}
 
 		task.ErrCh <- err
 		continue
 	}
-}
-
-func (h *Controller) generateRSS(key string) (output string, err error) {
-	if err = macked.Crawl(h.redis, h.tg, h.db, h.logger); err != nil {
-		return "", err
-	}
-
-	if output, err = h.redis.Get(key); err != nil {
-		return "", err
-	}
-
-	return output, nil
 }
