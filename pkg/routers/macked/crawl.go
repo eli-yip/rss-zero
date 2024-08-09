@@ -32,17 +32,17 @@ func Crawl(redisService redis.Redis, bot BotIface, db DB, logger *zap.Logger) (e
 
 	latestPostTimeInDB, err := db.GetLatestTime()
 	if err != nil {
-		return fmt.Errorf("fail to get latest post time in db: %w", err)
+		return fmt.Errorf("failed to get latest post time in db: %w", err)
 	}
 
 	posts, err := GetLatestPosts()
 	if err != nil {
-		return fmt.Errorf("fail to get latest posts: %w", err)
+		return fmt.Errorf("failed to get latest posts: %w", err)
 	}
 
 	parsedPosts, err := ParsePosts(posts)
 	if err != nil {
-		return fmt.Errorf("fail to parse posts: %w", err)
+		return fmt.Errorf("failed to parse posts: %w", err)
 	}
 
 	var unreadPosts []ParsedPost
@@ -87,11 +87,11 @@ func Crawl(redisService redis.Redis, bot BotIface, db DB, logger *zap.Logger) (e
 	renderService := NewRSSRenderService()
 	rssContent, err := renderService.RenderRSS(unreadPosts)
 	if err != nil {
-		return fmt.Errorf("fail to render rss content: %w", err)
+		return fmt.Errorf("failed to render rss content: %w", err)
 	}
 
 	if err = redisService.Set(redis.RssMackedPath, rssContent, redis.RSSDefaultTTL); err != nil {
-		return fmt.Errorf("fail to set rss content to redis: %w", err)
+		return fmt.Errorf("failed to set rss content to redis: %w", err)
 	}
 
 	return nil
