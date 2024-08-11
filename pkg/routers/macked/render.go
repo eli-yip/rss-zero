@@ -2,6 +2,7 @@ package macked
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gorilla/feeds"
 	"github.com/rs/xid"
@@ -9,6 +10,7 @@ import (
 
 type RSSRenderer interface {
 	RenderRSS(posts []ParsedPost) (content string, err error)
+	RenderEmptyRSS() (content string, err error)
 }
 
 type RSSRenderService struct{}
@@ -40,6 +42,17 @@ func (r *RSSRenderService) RenderRSS(posts []ParsedPost) (content string, err er
 		}
 
 		rssFeed.Items = append(rssFeed.Items, &feedItem)
+	}
+
+	return rssFeed.ToAtom()
+}
+
+func (r *RSSRenderService) RenderEmptyRSS() (content string, err error) {
+	rssFeed := &feeds.Feed{
+		Title:   "Macked Release",
+		Link:    &feeds.Link{Href: "https://macked.app"},
+		Created: time.Now(),
+		Updated: time.Now(),
 	}
 
 	return rssFeed.ToAtom()

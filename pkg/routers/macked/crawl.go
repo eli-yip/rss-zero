@@ -53,6 +53,10 @@ func Crawl(redisService redis.Redis, bot BotIface, db DB, logger *zap.Logger) (e
 		unreadPosts = append(unreadPosts, p)
 	}
 
+	if err = renderAndSaveRSS(redisService, unreadPosts); err != nil {
+		return fmt.Errorf("failed to render and save rss: %w", err)
+	}
+
 	if len(unreadPosts) == 0 {
 		return nil
 	}
@@ -84,10 +88,22 @@ func Crawl(redisService redis.Redis, bot BotIface, db DB, logger *zap.Logger) (e
 		}
 	}()
 
+	return nil
+}
+
+func renderAndSaveRSS(redisService redis.Redis, posts []ParsedPost) (err error) {
+	var rssContent string
 	renderService := NewRSSRenderService()
-	rssContent, err := renderService.RenderRSS(unreadPosts)
-	if err != nil {
-		return fmt.Errorf("failed to render rss content: %w", err)
+	if len(posts) == 0 {
+		rssContent, err = renderService.RenderEmptyRSS()
+		if err != nil {
+			return fmt.Errorf("failed to render empty rss content: %w", err)
+		}
+	} else {
+		rssContent, err = renderService.RenderRSS(posts)
+		if err != nil {
+			return fmt.Errorf("failed to render rss content: %w", err)
+		}
 	}
 
 	if err = redisService.Set(redis.RssMackedPath, rssContent, redis.RSSDefaultTTL); err != nil {
