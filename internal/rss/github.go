@@ -53,6 +53,7 @@ func GenerateGitHub(subID string, dbService githubDB.DB, logger *zap.Logger) (pa
 				return r.Title
 			}(),
 			Body:     r.Body,
+			TagName:  r.Tag,
 			Prelease: r.PreRelease,
 		})
 	}

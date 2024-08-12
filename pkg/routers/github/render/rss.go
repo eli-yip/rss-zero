@@ -24,6 +24,7 @@ type RSSItem struct {
 	RepoName   string
 	Title      string
 	Body       string
+	TagName    string
 	Prelease   bool
 }
 
@@ -42,7 +43,6 @@ func NewRSSRenderService() RSSRender {
 }
 
 func (r *RSSRenderService) RenderEmpty(user, repoName string, pre bool) (rss string, err error) {
-
 	rssFeed := &feeds.Feed{
 		Title:   buildRSSFeedTitle(repoName, pre),
 		Link:    &feeds.Link{Href: fmt.Sprintf("https://github.com/%s/%s/releases", user, repoName)},
@@ -66,8 +66,10 @@ func (r *RSSRenderService) Render(rs []RSSItem, pre bool) (rss string, err error
 	}
 
 	for _, item := range rs {
+		text := fmt.Sprintf("Tag: %s\n\n%s", item.TagName, item.Body) // Include tag name in body, as some release title do not include version info, see https://gitea.darkeli.com/yezi/rss-zero/issues/158
+
 		var buf bytes.Buffer
-		if err = r.Convert([]byte(item.Body), &buf); err != nil {
+		if err = r.Convert([]byte(text), &buf); err != nil {
 			return "", fmt.Errorf("failed to convert markdown to html: %w", err)
 		}
 
