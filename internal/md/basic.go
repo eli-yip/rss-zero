@@ -83,3 +83,11 @@ func Bold(text string) (markdown string) {
 	buffer.WriteString("**")
 	return strings.TrimRight(buffer.String(), "\n")
 }
+
+func Italic(text string) (markdown string) {
+	var buffer strings.Builder
+	buffer.WriteString("*")
+	buffer.WriteString(strings.TrimRight(text, "\n"))
+	buffer.WriteString("*")
+	return strings.TrimRight(buffer.String(), "\n")
+}

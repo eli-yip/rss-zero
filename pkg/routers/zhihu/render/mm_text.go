@@ -36,7 +36,7 @@ func (r *MattermostTextRender) Answer(answer *Answer) (text string, err error) {
 
 	timePart := formatTimeForRead(answer.Answer.CreateAt)
 
-	text = joinFullText(titlePart, answer.Answer.Text, timePart, linkPart)
+	text = joinFullText(titlePart, "", answer.Answer.Text, timePart, linkPart)
 
 	return r.FormatStr(text)
 }

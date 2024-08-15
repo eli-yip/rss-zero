@@ -50,7 +50,7 @@ func main() {
 
 	redisService, cookieService, db, tg, bark, err := initService(logger)
 	if err != nil {
-		logger.Fatal("fail to init service", zap.Error(err))
+		logger.Fatal("Failed to init service", zap.Error(err))
 	}
 	logger.Info("service initialized")
 

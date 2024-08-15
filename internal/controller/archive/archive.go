@@ -149,6 +149,11 @@ func (h *Controller) HandleZhihuAnswer(link string) (html string, err error) {
 		return "", fmt.Errorf("failed to get question from db: %w", err)
 	}
 
+	authorName, err := h.zhihuDBService.GetAuthorName(answer.AuthorID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get author name: %w", err)
+	}
+
 	fullText, err := h.fullTextRenderService.Answer(&zhihuRender.Answer{
 		Question: zhihuRender.BaseContent{
 			ID:       answer.QuestionID,
@@ -160,17 +165,10 @@ func (h *Controller) HandleZhihuAnswer(link string) (html string, err error) {
 			CreateAt: answer.CreateAt,
 			Text:     answer.Text,
 		},
-	})
+	}, zhihuRender.WithAuthorName(authorName))
 	if err != nil {
 		return "", fmt.Errorf("failed to render full text: %w", err)
 	}
-
-	authorName, err := h.zhihuDBService.GetAuthorName(answer.AuthorID)
-	if err != nil {
-		return "", fmt.Errorf("failed to get author name: %w", err)
-	}
-
-	fullText = fmt.Sprintf("**作者：%s**\n\n%s", authorName, fullText)
 
 	html, err = h.htmlRender.Render(question.Title, fullText)
 	if err != nil {
@@ -196,6 +194,11 @@ func (h *Controller) HandleZhihuArticle(link string) (html string, err error) {
 		return "", fmt.Errorf("failed to get article from db: %w", err)
 	}
 
+	authorName, err := h.zhihuDBService.GetAuthorName(article.AuthorID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get author name: %w", err)
+	}
+
 	fullText, err := h.fullTextRenderService.Article(&zhihuRender.Article{
 		Title: article.Title,
 		BaseContent: zhihuRender.BaseContent{
@@ -203,17 +206,10 @@ func (h *Controller) HandleZhihuArticle(link string) (html string, err error) {
 			CreateAt: article.CreateAt,
 			Text:     article.Text,
 		},
-	})
+	}, zhihuRender.WithAuthorName(authorName))
 	if err != nil {
 		return "", fmt.Errorf("failed to render full text: %w", err)
 	}
-
-	authorName, err := h.zhihuDBService.GetAuthorName(article.AuthorID)
-	if err != nil {
-		return "", fmt.Errorf("failed to get author name: %w", err)
-	}
-
-	fullText = fmt.Sprintf("**作者：%s**\n\n%s", authorName, fullText)
 
 	html, err = h.htmlRender.Render(article.Title, fullText)
 	if err != nil {
@@ -238,23 +234,21 @@ func (h *Controller) HandleZhihuPin(link string) (html string, err error) {
 		return "", fmt.Errorf("failed to get pin from db: %w", err)
 	}
 
+	authorName, err := h.zhihuDBService.GetAuthorName(pin.AuthorID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get author name: %w", err)
+	}
+
 	fullText, err := h.fullTextRenderService.Pin(&zhihuRender.Pin{
 		Title: pin.Title,
 		BaseContent: zhihuRender.BaseContent{
 			ID:       pin.ID,
 			CreateAt: pin.CreateAt,
 			Text:     pin.Text,
-		}})
+		}}, zhihuRender.WithAuthorName(authorName))
 	if err != nil {
 		return "", fmt.Errorf("failed to render full text: %w", err)
 	}
-
-	authorName, err := h.zhihuDBService.GetAuthorName(pin.AuthorID)
-	if err != nil {
-		return "", fmt.Errorf("failed to get author name: %w", err)
-	}
-
-	fullText = fmt.Sprintf("**作者：%s**\n\n%s", authorName, fullText)
 
 	html, err = h.htmlRender.Render(pin.Title, fullText)
 	if err != nil {
