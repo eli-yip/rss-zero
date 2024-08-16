@@ -46,13 +46,13 @@ func main() {
 	}
 
 	logger := log.NewZapLogger()
-	logger.Info("config initialized", zap.Any("config", config.C))
+	logger.Info("Init config from toml successfully", zap.Any("config", config.C))
 
 	redisService, cookieService, db, tg, bark, err := initService(logger)
 	if err != nil {
 		logger.Fatal("Failed to init service", zap.Error(err))
 	}
-	logger.Info("service initialized")
+	logger.Info("Init services successfully")
 
 	n, err := zhihuDB.SetEmptySubID(db)
 	if err != nil {
@@ -67,19 +67,19 @@ func main() {
 	var definitionToFunc jobController.DefinitionToFunc
 	var cronService *cron.CronService
 	if cronService, definitionToFunc, err = setupCronCrawlJob(logger, redisService, cookieService, tg, db, bark); err != nil {
-		logger.Fatal("fail to setup cron", zap.Error(err))
+		logger.Fatal("Failed to setup cron jobs", zap.Error(err))
 	}
-	logger.Info("cron service initialized")
+	logger.Info("Init cron service and jobs successfully")
 
 	e := setupEcho(redisService, cookieService, db, tg, bark, definitionToFunc, cronService, logger)
-	logger.Info("echo server initialized")
+	logger.Info("Init echo server successfully")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
 	// Start echo server
 	go func() {
-		logger.Info("start server", zap.String("address", ":8080"), zap.String("version", version.Version))
+		logger.Info("Start server now!", zap.String("address", ":8080"), zap.String("version", version.Version))
 		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Shutdown server", zap.Error(err))
 		}
