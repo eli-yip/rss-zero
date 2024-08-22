@@ -74,7 +74,7 @@ func (r *RSSRenderService) Render(rs []RSSItem, pre bool) (rss string, err error
 		}
 
 		rssFeed.Items = append(rssFeed.Items, &feeds.Item{
-			Title:       buildRSSItemTitle(item.Title, item.Prelease),
+			Title:       buildRSSItemTitle(item.RepoName, item.Title, item.Prelease),
 			Link:        &feeds.Link{Href: item.Link},
 			Author:      &feeds.Author{Name: item.RepoName},
 			Id:          fmt.Sprintf("%d", item.ID),
@@ -96,7 +96,9 @@ func buildRSSFeedTitle(repoName string, pre bool) string {
 	return title
 }
 
-func buildRSSItemTitle(title string, preRelease bool) string {
+func buildRSSItemTitle(repoName, title string, preRelease bool) string {
+	repoName = cases.Title(language.English, cases.Compact).String(repoName)
+	title = repoName + ": " + title
 	if preRelease {
 		return "[Pre-Release]" + title
 	}
