@@ -34,6 +34,7 @@ var (
 	ErrUnreachable  = errors.New("unreachable")
 	ErrNeedLogin    = errors.New("need login")
 	ErrInvalidZSECK = errors.New("invalid zse_ck")
+	ErrInvalidZC0   = errors.New("invalid z_c0")
 	ErrForbidden    = errors.New("forbidden")
 )
 
@@ -93,6 +94,16 @@ type Error403 struct {
 		NeedLogin bool `json:"need_login"`
 	} `json:"error"`
 }
+
+type Error401 struct {
+	Error struct {
+		Code    int    `json:"code"`
+		Name    string `json:"name"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
+
+const zC0ErrMsg = `ERR_TICKET_NOT_EXIST`
 
 type EncryptReq struct {
 	RequestID string `json:"request_id"`
@@ -178,6 +189,15 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 				return nil, ErrForbidden
 			}
 		case http.StatusUnauthorized:
+			var errResp Error401
+			if err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&errResp); err != nil {
+				logger.Error("Failed to unmarshal 401 error", zap.Error(err))
+				continue
+			}
+			if errResp.Error.Code == 100 && errResp.Error.Name == zC0ErrMsg {
+				logger.Error("Invalid z_c0", zap.String("resp_body", string(body)))
+				return nil, ErrInvalidZC0
+			}
 			logger.Error("Invalid zse_ck", zap.String("resp_body", string(body)))
 			return nil, ErrInvalidZSECK
 		case http.StatusNotFound:
