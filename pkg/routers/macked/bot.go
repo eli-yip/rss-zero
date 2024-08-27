@@ -24,9 +24,10 @@ func NewBot(token string) (BotIface, error) {
 
 func (b *Bot) SendText(chatID string, text string) (err error) {
 	_, err = b.SendMessage(context.Background(), &bot.SendMessageParams{
-		ChatID:    chatID,
-		Text:      bot.EscapeMarkdownUnescaped(text),
-		ParseMode: models.ParseModeMarkdown,
+		ChatID:             chatID,
+		Text:               bot.EscapeMarkdownUnescaped(text),
+		ParseMode:          models.ParseModeMarkdown,
+		LinkPreviewOptions: &models.LinkPreviewOptions{IsDisabled: bot.True()},
 	})
 	return err
 }
