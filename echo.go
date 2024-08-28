@@ -83,6 +83,7 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 	registerExport(apiGroup, zsxqHandler, zhihuHandler, xiaobotHandler)
 	registerArchive(apiGroup, archiveHandler)
 	registerJob(apiGroup, jobHandler)
+	registerSub(apiGroup, zhihuHandler, githubController)
 
 	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
@@ -272,4 +273,22 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihu
 
 	githubRSSPreApi := rssGroup.GET("/github/pre/:feed", githubController.RSS)
 	githubRSSPreApi.Name = "RSS route for github pre"
+}
+
+func registerSub(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller, github *githubController.Controller) {
+	// /api/v1/sub/zhihu
+	zhihuSubApi := apiGroup.GET("/sub/zhihu", zhihuHandler.GetSubs)
+	zhihuSubApi.Name = "Sub list route for zhihu"
+	zhihuDeleteSubApi := apiGroup.DELETE("/sub/zhihu/:id", zhihuHandler.DeleteSub)
+	zhihuDeleteSubApi.Name = "Delete sub route for zhihu"
+	zhihuActivateSubApi := apiGroup.POST("/sub/zhihu/activate/:id", zhihuHandler.ActivateSub)
+	zhihuActivateSubApi.Name = "Activate sub route for zhihu"
+
+	// /api/v1/sub/github
+	githubSubApi := apiGroup.GET("/sub/github", github.GetSubs)
+	githubSubApi.Name = "Sub list route for github"
+	githubDeleteSubApi := apiGroup.DELETE("/sub/github/:id", github.DeleteSub)
+	githubDeleteSubApi.Name = "Delete sub route for github"
+	githubActivateSubApi := apiGroup.POST("/sub/github/activate/:id", github.ActivateSub)
+	githubActivateSubApi.Name = "Activate sub route for github"
 }

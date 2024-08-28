@@ -14,9 +14,9 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
-	githubCron "github.com/eli-yip/rss-zero/pkg/cron/github"
 	zhihuCron "github.com/eli-yip/rss-zero/pkg/cron/zhihu"
 	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
+	githubCron "github.com/eli-yip/rss-zero/pkg/routers/github/cron"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 	xiaobotCron "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/cron"
 )

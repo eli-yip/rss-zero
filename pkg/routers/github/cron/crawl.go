@@ -26,7 +26,7 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifie
 		cronID := xid.New().String()
 		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
 
-		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{}}
+		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: cronID}}
 
 		var err error
 		var errCount int = 0

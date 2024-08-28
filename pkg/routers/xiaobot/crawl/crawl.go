@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
+	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 	"github.com/rs/xid"
 
 	"go.uber.org/zap"

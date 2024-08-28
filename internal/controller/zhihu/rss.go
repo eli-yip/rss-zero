@@ -11,8 +11,8 @@ import (
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 
-	serverCommon "github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/config"
+	serverCommon "github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
@@ -211,7 +211,9 @@ func (h *Controller) extractTypeAuthorFromKey(key string) (t int, authorID strin
 // checkSub checks if the sub exists in db, if not, add it to db
 func (h *Controller) checkSub(t int, authorID string, logger *zap.Logger) (err error) {
 	// check if sub exists
-	exist, err := h.db.CheckSub(authorID, t)
+	// Use CheckSubIncludeDeleted instead of CheckSubByID to check if the sub exists
+	// As we will return histroy rss content even if the sub is deleted
+	exist, err := h.db.CheckSubIncludeDeleted(authorID, t)
 	if err != nil {
 		return fmt.Errorf("failed to check sub: %w", err)
 	}

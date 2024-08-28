@@ -9,11 +9,17 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/eli-yip/rss-zero/pkg/cookie"
-	"github.com/eli-yip/rss-zero/pkg/request"
-	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/encrypt"
 	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/pkg/cookie"
+	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/encrypt"
 )
+
+type Requester interface {
+	// Limit requests to the given url with limiter and returns data,
+	// and it will validate the response json data
+	Limit(string) ([]byte, error)
+}
 
 const userAgent = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36`
 
@@ -34,7 +40,7 @@ type RequestService struct {
 	logger        *zap.Logger
 }
 
-func NewRequestService(cookieService cookie.CookieIface, token string, logger *zap.Logger) request.Requester {
+func NewRequestService(cookieService cookie.CookieIface, token string, logger *zap.Logger) Requester {
 	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:        &http.Client{},
@@ -218,20 +224,4 @@ func (r *RequestService) setAPIReq(u string) (req *http.Request, err error) {
 	req.Header.Add("Accept-Language", "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7")
 
 	return req, nil
-}
-
-func (r *RequestService) LimitRaw(u string) (respByte []byte, err error) {
-	return nil, errors.Join(ErrUnimplemented, errors.New("Limit Raw should not be called in xiaobot"))
-}
-
-func (r *RequestService) LimitStream(u string) (resp *http.Response, err error) {
-	return nil, errors.Join(ErrUnimplemented, errors.New("LimitStream should not be called in xiaobot"))
-}
-
-func (r *RequestService) NoLimit(u string) (respByte []byte, err error) {
-	return nil, errors.Join(ErrUnimplemented, errors.New("NoLimit should not be called in xiaobot"))
-}
-
-func (r *RequestService) NoLimitStream(u string) (resp *http.Response, err error) {
-	return nil, errors.Join(ErrUnimplemented, errors.New("NoLimitStream should not be called in xiaobot"))
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
-	requestIface "github.com/eli-yip/rss-zero/pkg/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/crawl"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
@@ -56,7 +55,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 
 		var (
 			xiaobotDBService      xiaobotDB.DB
-			xiaobotRequestService requestIface.Requester
+			xiaobotRequestService request.Requester
 			xiaobotParser         parse.Parser
 		)
 
@@ -109,7 +108,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 	}
 }
 
-func initXiaobotServices(db *gorm.DB, logger *zap.Logger, cs cookie.CookieIface, token string) (xiaobotDB.DB, requestIface.Requester, parse.Parser, error) {
+func initXiaobotServices(db *gorm.DB, logger *zap.Logger, cs cookie.CookieIface, token string) (xiaobotDB.DB, request.Requester, parse.Parser, error) {
 	var err error
 
 	xiaobotDBService := xiaobotDB.NewDBService(db)

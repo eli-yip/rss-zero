@@ -18,3 +18,16 @@ func ZhihuTypeToString(subType int) (ts string) {
 
 	return ts
 }
+
+func ZhihuTypeToLinkType(subType int) (u string) {
+	switch subType {
+	case TypeZhihuAnswer:
+		u = "answers"
+	case TypeZhihuArticle:
+		u = "posts"
+	case TypeZhihuPin:
+		u = "pins"
+	}
+
+	return u
+}

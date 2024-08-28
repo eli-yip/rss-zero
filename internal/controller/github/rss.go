@@ -147,7 +147,7 @@ func (h *Controller) checkRepo(user, repoName string, pre bool) (subID string, e
 		repoID = repo.ID
 	}
 
-	sub, err := h.db.GetSub(repoID, pre)
+	sub, err := h.db.GetSubIncludeDeleted(repoID, pre)
 	if err == nil {
 		return sub.ID, nil
 	}

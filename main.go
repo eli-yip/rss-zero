@@ -17,6 +17,7 @@ import (
 	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/log"
+	"github.com/eli-yip/rss-zero/internal/migrate"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/version"
@@ -104,22 +105,27 @@ func initService(logger *zap.Logger) (redisService redis.Redis,
 	notifier notify.Notifier,
 	err error) {
 	if redisService, err = redis.NewRedisService(config.C.Redis); err != nil {
-		logger.Error("Fail to init redis service", zap.Error(err))
-		return nil, nil, nil, nil, nil, fmt.Errorf("fail to init redis service: %w", err)
+		logger.Error("Failed to init redis service", zap.Error(err))
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to init redis service: %w", err)
 	}
 	logger.Info("redis service initialized")
 
 	if dbService, err = db.NewPostgresDB(config.C.Database); err != nil {
-		logger.Error("Fail to init postgres database service", zap.Error(err))
-		return nil, nil, nil, nil, nil, fmt.Errorf("fail to init db: %w", err)
+		logger.Error("Failed to init postgres database service", zap.Error(err))
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to init db: %w", err)
 	}
 	logger.Info("db initialized")
+
+	if err = migrate.MigrateDB(dbService); err != nil {
+		logger.Error("Failed to migrate database", zap.Error(err))
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to migrate db: %w", err)
+	}
 
 	cookieService = cookie.NewCookieService(dbService)
 
 	if tg, err = macked.NewBot(config.C.Telegram.Token); err != nil {
-		logger.Error("Fail to init telegram bot", zap.Error(err))
-		return nil, nil, nil, nil, nil, fmt.Errorf("fail to init telegram bot: %w", err)
+		logger.Error("Failed to init telegram bot", zap.Error(err))
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to init telegram bot: %w", err)
 	}
 
 	notifier = notify.NewBarkNotifier(config.C.Bark.URL)

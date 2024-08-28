@@ -123,13 +123,14 @@ func calculateTime(t time.Time) time.Time {
 // generateTitleAndLinkType returns title type and link type of zhihu item according to its type,
 // see pkg/common/type.go for type list
 func (r *RSSRenderService) generateTitleAndLinkType(t int) (titleType, linkType string, err error) {
+	linkType = common.ZhihuTypeToLinkType(t)
 	switch t {
 	case common.TypeZhihuAnswer:
-		return "回答", "answers", nil
+		return "回答", linkType, nil
 	case common.TypeZhihuArticle:
-		return "文章", "posts", nil
+		return "文章", linkType, nil
 	case common.TypeZhihuPin:
-		return "想法", "pins", nil
+		return "想法", linkType, nil
 	default:
 		return "", "", errors.New("unknow zhihu content type")
 	}
