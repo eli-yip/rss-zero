@@ -36,6 +36,10 @@ type DBTopic interface {
 	FetchNTopicsBefore(gid int, n int, t time.Time) (ts []Topic, err error)
 	// Fetch n topics with options from zsxq_topic table
 	FetchNTopics(n int, opt Options) (ts []Topic, err error)
+	// Get topic by id from zsxq_topic table
+	GetTopicByID(id int) (t Topic, err error)
+	// Get topic id by share link from zsxq_topic table
+	GetTopicIDByShareLink(shareLink string) (id int, err error)
 }
 
 func (s *ZsxqDBService) SaveTopic(t *Topic) error {
@@ -51,6 +55,11 @@ func (s *ZsxqDBService) GetLatestTopicTime(gid int) (time.Time, error) {
 		return time.Time{}, err
 	}
 	return topic.Time, nil
+}
+
+func (s *ZsxqDBService) GetTopicByID(id int) (t Topic, err error) {
+	err = s.db.Where("id = ?", id).First(&t).Error
+	return t, err
 }
 
 func (s *ZsxqDBService) GetEarliestTopicTime(gid int) (time.Time, error) {
@@ -124,4 +133,15 @@ func (s *ZsxqDBService) FetchNTopics(n int, opt Options) (ts []Topic, err error)
 	}
 
 	return ts, nil
+}
+
+func (s *ZsxqDBService) GetTopicIDByShareLink(shareLink string) (int, error) {
+	var topic Topic
+	if err := s.db.Where("share_link = ?", shareLink).First(&topic).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return topic.ID, nil
 }

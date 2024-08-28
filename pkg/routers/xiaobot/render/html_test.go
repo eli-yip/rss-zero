@@ -3,7 +3,6 @@ package render
 import (
 	"testing"
 
-	"github.com/eli-yip/rss-zero/internal/log"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,7 +23,7 @@ func testStrong(t *testing.T) {
 	}
 
 	assert := assert.New(t)
-	converter := renderIface.NewHTMLToMarkdownService(log.NewZapLogger(), GetHtmlRules()...)
+	converter := renderIface.NewHTMLToMarkdownService(GetHtmlRules()...)
 	for _, c := range cases {
 		actual, err := converter.Convert([]byte(c.input))
 		assert.Nil(err)

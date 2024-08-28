@@ -543,7 +543,7 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 		return nil, nil, nil, fmt.Errorf("fail to init file service: %w", err)
 	}
 
-	htmlToMarkdown = renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
+	htmlToMarkdown = renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
 
 	imageParser = parse.NewOnlineImageParser(requestService, fileService, dbService)
 

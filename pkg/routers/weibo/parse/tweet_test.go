@@ -37,7 +37,7 @@ func TestParseTweet(t *testing.T) {
 	assert.NotEmpty(cookies)
 	requestService, err := request.NewRequestService(redisService, cookies, logger)
 	assert.Nil(err)
-	htmlToMarkdownService := render.NewHTMLToMarkdownService(logger)
+	htmlToMarkdownService := render.NewHTMLToMarkdownService()
 	parseService := NewParseService(fileService, requestService, weiboDBService, htmlToMarkdownService, md.NewMarkdownFormatter(), logger)
 
 	data, err := os.ReadFile(usersFile)

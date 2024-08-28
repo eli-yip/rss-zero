@@ -54,7 +54,7 @@ func NewParseService(options ...Option) (Parser, error) {
 	}
 
 	if s.htmlToMarkdown == nil {
-		s.htmlToMarkdown = renderIface.NewHTMLToMarkdownService(s.logger, render.GetHtmlRules()...)
+		s.htmlToMarkdown = renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
 	}
 
 	if s.Imager == nil {

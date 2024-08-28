@@ -186,7 +186,7 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 
 func prepareZsxqServices(cookie string, db *gorm.DB, logger *zap.Logger,
 ) (dbService zsxqDB.DB, requestService request.Requester, parseService parse.Parser, rssRenderService render.RSSRenderer, err error) {
-	dbService = zsxqDB.NewZsxqDBService(db)
+	dbService = zsxqDB.NewDBService(db)
 
 	requestService = request.NewRequestService(cookie, logger)
 
@@ -197,7 +197,7 @@ func prepareZsxqServices(cookie string, db *gorm.DB, logger *zap.Logger,
 
 	aiService := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
 
-	markdownRender := render.NewMarkdownRenderService(dbService, logger)
+	markdownRender := render.NewMarkdownRenderService(dbService)
 
 	if parseService, err = parse.NewParseService(
 		fileService,

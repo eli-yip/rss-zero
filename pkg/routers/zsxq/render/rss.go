@@ -7,10 +7,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/gorilla/feeds"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
+
+	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/pkg/render"
 )
 
 type RSSRenderer interface {
@@ -43,7 +45,9 @@ func (r *RSSRenderService) RenderRSS(ts []RSSTopic) (output string, err error) {
 
 	for _, t := range ts {
 		var buffer bytes.Buffer
-		if err := r.HTMLRender.Convert([]byte(t.Text), &buffer); err != nil {
+		webLink := fmt.Sprintf("https://wx.zsxq.com/dweb2/index/topic_detail/%d", t.TopicID)
+		text := render.AppendOriginLink(t.Text, webLink)
+		if err := r.HTMLRender.Convert([]byte(text), &buffer); err != nil {
 			return "", err
 		}
 
@@ -54,7 +58,7 @@ func (r *RSSRenderService) RenderRSS(ts []RSSTopic) (output string, err error) {
 				}
 				return strconv.Itoa(t.TopicID)
 			}(),
-			Link:        &feeds.Link{Href: t.ShareLink},
+			Link:        &feeds.Link{Href: render.BuildArchiveLink(config.C.Settings.ServerURL, webLink)},
 			Author:      &feeds.Author{Name: t.AuthorName},
 			Id:          strconv.Itoa(t.TopicID),
 			Description: render.ExtractExcerpt(t.Text),

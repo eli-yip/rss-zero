@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/log"
+	"github.com/eli-yip/rss-zero/internal/md"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse/api_models"
@@ -33,7 +33,7 @@ type ParseService struct {
 
 func NewParseService(options ...Option) (Parser, error) {
 	p := &ParseService{
-		HTMLToMarkdown:    renderIface.NewHTMLToMarkdownService(log.NewZapLogger(), render.GetHtmlRules()...),
+		HTMLToMarkdown:    renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...),
 		MarkdownFormatter: md.NewMarkdownFormatter(),
 		logger:            log.NewZapLogger(),
 	}

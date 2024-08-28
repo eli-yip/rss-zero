@@ -84,7 +84,7 @@ func (h *ZsxqController) generateRSS(key string) (output string, err error) {
 		return "", err
 	}
 
-	zsxqDBService := zsxqDB.NewZsxqDBService(h.db)
+	zsxqDBService := zsxqDB.NewDBService(h.db)
 
 	path, content, err := rss.GenerateZSXQ(groupID, zsxqDBService, h.logger)
 	if err != nil {

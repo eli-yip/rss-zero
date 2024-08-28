@@ -6,21 +6,31 @@ import (
 	"github.com/eli-yip/rss-zero/internal/md"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
+	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	zsxqRender "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 )
 
 type Controller struct {
-	db                    *gorm.DB
-	zhihuDBService        zhihuDB.DB
-	htmlRender            zhihuRender.HtmlRenderIface
-	fullTextRenderService zhihuRender.FullTextRenderIface
+	db *gorm.DB
+
+	zhihuDBService             zhihuDB.DB
+	zhihuFullTextRenderService zhihuRender.FullTextRenderIface
+	zsxqDBService              zsxqDB.DB
+	zsxqFullTextRenderService  zsxqRender.MarkdownRenderer
+
+	htmlRender zhihuRender.HtmlRenderIface
 }
 
 func NewController(db *gorm.DB) *Controller {
+	zsxqDBService := zsxqDB.NewDBService(db)
 	return &Controller{
-		db:                    db,
-		zhihuDBService:        zhihuDB.NewDBService(db),
-		htmlRender:            zhihuRender.NewHtmlRenderService(),
-		fullTextRenderService: zhihuRender.NewFullTextRender(md.NewMarkdownFormatter()),
+		db:                         db,
+		zhihuDBService:             zhihuDB.NewDBService(db),
+		zhihuFullTextRenderService: zhihuRender.NewFullTextRender(md.NewMarkdownFormatter()),
+		zsxqDBService:              zsxqDBService,
+		zsxqFullTextRenderService:  zsxqRender.NewMarkdownRenderService(zsxqDBService),
+
+		htmlRender: zhihuRender.NewHtmlRenderService(),
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/JohannesKaufmann/html-to-markdown/plugin"
 	"github.com/PuerkitoBio/goquery"
-	"go.uber.org/zap"
 )
 
 // HTMLToMarkdown is a interface for converting HTML to Markdown text
@@ -24,13 +23,12 @@ type HTMLToMarkdownService struct{ *md.Converter }
 //  1. CJK strong tag
 //  2. GitHub Flavored Markdown
 //  3. Remove head and footer tag
-func NewHTMLToMarkdownService(logger *zap.Logger, rules ...ConvertRule) HTMLToMarkdown {
+func NewHTMLToMarkdownService(rules ...ConvertRule) HTMLToMarkdown {
 	converter := md.NewConverter("", true, nil)
 
 	rules = append(getDefaultRules(), rules...)
 	for _, rule := range rules {
 		converter.AddRules(rule.Rule)
-		logger.Info("add article render rule", zap.String("name", rule.Name))
 	}
 
 	converter.Use(plugin.GitHubFlavored())

@@ -34,7 +34,7 @@ func (h *XiaobotController) Reformat(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to init xiaobot parse service"})
 	}
 
-	htmlConverter := renderIface.NewHTMLToMarkdownService(logger, render.GetHtmlRules()...)
+	htmlConverter := renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
 	mdfmt := md.NewMarkdownFormatter()
 	reformatService := refmt.NewReformatService(logger, h.db, htmlConverter, parser, h.notifier, mdfmt)
 

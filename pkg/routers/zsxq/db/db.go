@@ -14,4 +14,4 @@ type DB interface {
 
 type ZsxqDBService struct{ db *gorm.DB }
 
-func NewZsxqDBService(db *gorm.DB) DB { return &ZsxqDBService{db: db} }
+func NewDBService(db *gorm.DB) DB { return &ZsxqDBService{db: db} }

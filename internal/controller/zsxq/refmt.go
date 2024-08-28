@@ -28,9 +28,9 @@ func (h *ZsxqController) Reformat(c echo.Context) (err error) {
 	}
 	logger.Info("Retrieved zsxq reformat group", zap.Int("group_id", req.GroupID))
 
-	zsxqDBService := zsxqDB.NewZsxqDBService(h.db)
+	zsxqDBService := zsxqDB.NewDBService(h.db)
 	refmtService := zsxqRefmt.NewRefmtService(logger, zsxqDBService,
-		zsxqRender.NewMarkdownRenderService(zsxqDBService, logger),
+		zsxqRender.NewMarkdownRenderService(zsxqDBService),
 		h.notifier)
 	go refmtService.Reformat(req.GroupID)
 	logger.Info("Start to reformat zsxq")

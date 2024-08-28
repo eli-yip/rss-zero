@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 
-	log "github.com/eli-yip/rss-zero/internal/log"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	render "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 )
@@ -83,7 +82,7 @@ text
 	assert := assert.New(t)
 
 	zsxqDB := &mockZsxqDBService{}
-	exportService := NewExportService(zsxqDB, render.NewMarkdownRenderService(zsxqDB, log.NewZapLogger()))
+	exportService := NewExportService(zsxqDB, render.NewMarkdownRenderService(zsxqDB))
 
 	var buf bytes.Buffer
 	for _, v := range testCases {
@@ -122,7 +121,7 @@ func TestExportOptionError(t *testing.T) {
 	assert := assert.New(t)
 
 	zsxqDB := &mockZsxqDBService{}
-	exportService := NewExportService(zsxqDB, render.NewMarkdownRenderService(zsxqDB, log.NewZapLogger()))
+	exportService := NewExportService(zsxqDB, render.NewMarkdownRenderService(zsxqDB))
 
 	for _, v := range testCases {
 		var buf bytes.Buffer
