@@ -49,7 +49,13 @@ func GenerateHTML(title, bodyContent string) (string, error) {
 						text-align: left;
         }
 				a {
+						max-width: 100%%;
+						word-wrap: break-word;
             color: blue;
+        }
+				img {
+            max-width: 100%%;
+            height: auto;
         }
     </style>
 </head>
