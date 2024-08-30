@@ -10,7 +10,7 @@ import (
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 )
 
-type XiaobotController struct {
+type Controller struct {
 	redis    redis.Redis
 	cookie   cookie.CookieIface
 	db       xiaobotDB.DB
@@ -23,8 +23,8 @@ func NewXiaobotController(redis redis.Redis,
 	cookie cookie.CookieIface,
 	db xiaobotDB.DB,
 	n notify.Notifier,
-	l *zap.Logger) *XiaobotController {
-	h := &XiaobotController{
+	l *zap.Logger) *Controller {
+	h := &Controller{
 		redis:    redis,
 		cookie:   cookie,
 		db:       db,

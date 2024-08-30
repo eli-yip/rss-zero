@@ -18,7 +18,7 @@ type XiaobotReformatReq struct {
 	PaperID string `json:"paper_id"`
 }
 
-func (h *XiaobotController) Reformat(c echo.Context) error {
+func (h *Controller) Reformat(c echo.Context) error {
 	logger := common.ExtractLogger(c)
 
 	var req XiaobotReformatReq

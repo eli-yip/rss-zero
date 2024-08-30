@@ -17,7 +17,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 )
 
-func (h *XiaobotController) RSS(c echo.Context) (err error) {
+func (h *Controller) RSS(c echo.Context) (err error) {
 	l := common.ExtractLogger(c)
 
 	paperID := c.Get("feed_id").(string)
@@ -44,7 +44,7 @@ func (h *XiaobotController) RSS(c echo.Context) (err error) {
 	return c.String(http.StatusOK, rss)
 }
 
-func (h *XiaobotController) getRSS(key string, l *zap.Logger) (output string, err error) {
+func (h *Controller) getRSS(key string, l *zap.Logger) (output string, err error) {
 	l = l.With(zap.String("rss path", key))
 	defer l.Info("task chnnel closes")
 
@@ -66,7 +66,7 @@ func (h *XiaobotController) getRSS(key string, l *zap.Logger) (output string, er
 
 var errPaperNotExistInXiaobot = errors.New("paper does not exist in xiaobot")
 
-func (h *XiaobotController) processTask() {
+func (h *Controller) processTask() {
 	for task := range h.taskCh {
 		key := <-task.TextCh
 
@@ -91,7 +91,7 @@ func (h *XiaobotController) processTask() {
 	}
 }
 
-func (h *XiaobotController) generateRSS(key string) (output string, err error) {
+func (h *Controller) generateRSS(key string) (output string, err error) {
 	paperID, err := h.extractPaperID(key)
 	if err != nil {
 		return "", err
@@ -109,7 +109,7 @@ func (h *XiaobotController) generateRSS(key string) (output string, err error) {
 	return content, nil
 }
 
-func (h *XiaobotController) extractPaperID(key string) (paperID string, err error) {
+func (h *Controller) extractPaperID(key string) (paperID string, err error) {
 	strs := strings.Split(key, "_")
 	if len(strs) != 3 {
 		return "", errors.New("invalid rss key")
@@ -118,27 +118,27 @@ func (h *XiaobotController) extractPaperID(key string) (paperID string, err erro
 	return strs[2], nil
 }
 
-func (h *XiaobotController) checkPaper(paperID string, l *zap.Logger) (err error) {
-	exist, err := h.db.CheckPaper(paperID)
+func (h *Controller) checkPaper(paperID string, logger *zap.Logger) (err error) {
+	exist, err := h.db.CheckPaperIncludeDeleted(paperID)
 	if err != nil {
 		return err
 	}
-	l.Info("Checked paper existence")
+	logger.Info("Checked paper existence")
 
 	if !exist {
-		l.Info("Paper does not exist in db")
+		logger.Info("Paper does not exist in db")
 		token, err := h.cookie.Get(cookie.CookieTypeXiaobotAccessToken)
 		if err != nil {
 			return err
 		}
-		l.Info("Retrieved xiaobot token from db")
+		logger.Info("Retrieved xiaobot token from db")
 
 		requestService := request.NewRequestService(h.cookie, token, h.l)
 		data, err := requestService.Limit(fmt.Sprintf("https://api.xiaobot.net/paper/%s?refer_channel=", paperID))
 		if err != nil {
 			return err
 		}
-		l.Info("Retrieved paper from xiaobot")
+		logger.Info("Retrieved paper from xiaobot")
 
 		parser, err := parse.NewParseService(parse.WithDB(h.db))
 		if err != nil {
@@ -148,7 +148,7 @@ func (h *XiaobotController) checkPaper(paperID string, l *zap.Logger) (err error
 		if err != nil {
 			return err
 		}
-		l.Info("Parsed paper")
+		logger.Info("Parsed paper")
 	}
 
 	return nil

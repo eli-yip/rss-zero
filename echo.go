@@ -83,7 +83,7 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 	registerExport(apiGroup, zsxqHandler, zhihuHandler, xiaobotHandler)
 	registerArchive(apiGroup, archiveHandler)
 	registerJob(apiGroup, jobHandler)
-	registerSub(apiGroup, zhihuHandler, githubController)
+	registerSub(apiGroup, zhihuHandler, githubController, xiaobotHandler)
 
 	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
@@ -159,7 +159,7 @@ func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Con
 // /api/v1/export/zsxq
 // /api/v1/export/zhihu
 // /api/v1/export/xiaobot
-func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.XiaobotController) {
+func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	exportApi := apiGroup.Group("/export")
 
 	exportZsxqApi := exportApi.POST("/zsxq", zsxqHandler.Export)
@@ -191,7 +191,7 @@ func registerDEncryptionService(apiGroup *echo.Group, zhihuHandler *zhihuControl
 // /api/v1/refmt/zsxq
 // /api/v1/refmt/zhihu
 // /api/v1/refmt/xiaobot
-func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.XiaobotController) {
+func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	refmtApi := apiGroup.Group("/refmt")
 
 	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Reformat)
@@ -209,7 +209,7 @@ func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqCont
 // /api/v1/cookie/xiaobot
 // /api/v1/cookie/zhihu
 // /api/v1/cookie/zhihu/check
-func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, xiaobotHandler *xiaobotController.XiaobotController, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
+func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, xiaobotHandler *xiaobotController.Controller, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
 	cookieApi := apiGroup.Group("/cookie")
 
 	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateCookie)
@@ -234,7 +234,7 @@ func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqContro
 // /rss/zhihu/answer/:feed
 // /rss/zhihu/article/:feed
 // /rss/zhihu/pin/:feed
-func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.XiaobotController, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedController.Controller) {
+func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedController.Controller) {
 	rssGroup := e.Group("/rss")
 	rssGroup.Use(
 		myMiddleware.SetRSSContentType(), // set content type to application/atom+xml
@@ -275,7 +275,7 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihu
 	githubRSSPreApi.Name = "RSS route for github pre"
 }
 
-func registerSub(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller, github *githubController.Controller) {
+func registerSub(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller, github *githubController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	// /api/v1/sub/zhihu
 	zhihuSubApi := apiGroup.GET("/sub/zhihu", zhihuHandler.GetSubs)
 	zhihuSubApi.Name = "Sub list route for zhihu"
@@ -291,4 +291,12 @@ func registerSub(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller,
 	githubDeleteSubApi.Name = "Delete sub route for github"
 	githubActivateSubApi := apiGroup.POST("/sub/github/activate/:id", github.ActivateSub)
 	githubActivateSubApi.Name = "Activate sub route for github"
+
+	// /api/v1/sub/xiaobot
+	xiaobotSubApi := apiGroup.GET("/sub/xiaobot", xiaobotHandler.GetSubs)
+	xiaobotSubApi.Name = "Sub list route for xiaobot"
+	xiaobotDeleteSubApi := apiGroup.DELETE("/sub/xiaobot/:id", xiaobotHandler.DeleteSub)
+	xiaobotDeleteSubApi.Name = "Delete sub route for xiaobot"
+	xiaobotActivateSubApi := apiGroup.POST("/sub/xiaobot/activate/:id", xiaobotHandler.ActivateSub)
+	xiaobotActivateSubApi.Name = "Activate sub route for xiaobot"
 }

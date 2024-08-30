@@ -33,7 +33,7 @@ type XiaobotExportResp struct {
 	URL      string `json:"url"`
 }
 
-func (h *XiaobotController) Export(c echo.Context) (err error) {
+func (h *Controller) Export(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req XiaobotExportReq
@@ -161,7 +161,7 @@ func (h *XiaobotController) Export(c echo.Context) (err error) {
 	})
 }
 
-func (h *XiaobotController) parseOption(req XiaobotExportReq) (opts export.Option, err error) {
+func (h *Controller) parseOption(req XiaobotExportReq) (opts export.Option, err error) {
 	if req.PaperID == nil {
 		err = errors.New("invalid paper id")
 		return

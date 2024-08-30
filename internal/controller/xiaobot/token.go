@@ -21,7 +21,7 @@ type SetXiaobotTokenResp struct {
 	Token string `json:"token"`
 }
 
-func (h *XiaobotController) UpdateToken(c echo.Context) (err error) {
+func (h *Controller) UpdateToken(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req SetXiaobotTokenReq
