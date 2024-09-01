@@ -14,21 +14,29 @@ import (
 
 type ArticleParser interface {
 	// ParseArticleList parse api response from https://www.zhihu.com/api/v4/members/{url_token}/articles
-	ParseArticleList(apiResp []byte, index int, logger *zap.Logger) (paging apiModels.Paging, articles []apiModels.Article, err error)
+	ParseArticleList(apiResp []byte, index int, logger *zap.Logger) (paging apiModels.Paging, articlesExcerpt []apiModels.Article, articles []json.RawMessage, err error)
 	// ParseArticle parse single article
 	ParseArticle(content []byte, logger *zap.Logger) (text string, err error)
 }
 
-func (p *ParseService) ParseArticleList(apiResp []byte, index int, logger *zap.Logger) (paging apiModels.Paging, articles []apiModels.Article, err error) {
+func (p *ParseService) ParseArticleList(apiResp []byte, index int, logger *zap.Logger) (paging apiModels.Paging, articlesExcerpt []apiModels.Article, articles []json.RawMessage, err error) {
 	logger.Info("Start to parse article list", zap.Int("article_list_page_index", index))
 
 	articleList := apiModels.ArticleList{}
 	if err = json.Unmarshal(apiResp, &articleList); err != nil {
-		return apiModels.Paging{}, nil, fmt.Errorf("failed to unmarshal article list: %w", err)
+		return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal article list: %w", err)
 	}
 	logger.Info("Unmarshal article list successfully")
 
-	return articleList.Paging, articleList.Data, nil
+	for _, rawMessage := range articleList.Data {
+		article := apiModels.Article{}
+		if err = json.Unmarshal(rawMessage, &article); err != nil {
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal article: %w", err)
+		}
+		articlesExcerpt = append(articlesExcerpt, article)
+	}
+
+	return articleList.Paging, articlesExcerpt, articleList.Data, nil
 }
 
 // ParseArticle parses the zhihu.com/api/v4 resp

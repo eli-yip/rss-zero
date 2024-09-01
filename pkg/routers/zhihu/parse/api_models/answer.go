@@ -1,5 +1,7 @@
 package apiModels
 
+import "encoding/json"
+
 type Answer struct {
 	ID       int      `json:"id"`
 	CreateAt int64    `json:"created_time"`
@@ -15,6 +17,6 @@ type Question struct {
 }
 
 type AnswerList struct {
-	Paging Paging   `json:"paging"`
-	Data   []Answer `json:"data"`
+	Paging Paging            `json:"paging"`
+	Data   []json.RawMessage `json:"data"`
 }

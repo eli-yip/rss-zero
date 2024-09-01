@@ -1,7 +1,6 @@
 package crawl
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
@@ -47,7 +46,7 @@ func CrawlAnswer(user string, rs request.Requester, parser parse.Parser,
 		}
 		logger.Info("Request zhihu api successfully", zap.String("url", next))
 
-		paging, answerList, err := parser.ParseAnswerList(bytes, index, logger)
+		paging, answerExcerptList, answerList, err := parser.ParseAnswerList(bytes, index, logger)
 		if err != nil {
 			logger.Error("Failed to parse answer list", zap.Error(err))
 			return fmt.Errorf("failed to parse answer list: %w", err)
@@ -62,7 +61,7 @@ func CrawlAnswer(user string, rs request.Requester, parser parse.Parser,
 
 		next = paging.Next
 
-		for _, answer := range answerList {
+		for i, answer := range answerExcerptList {
 			logger := logger.With(zap.Int("ans_id", answer.ID))
 
 			if !time.Unix(answer.CreateAt, 0).After(targetTime) {
@@ -70,13 +69,7 @@ func CrawlAnswer(user string, rs request.Requester, parser parse.Parser,
 				return nil
 			}
 
-			answereBytes, err := json.Marshal(answer)
-			if err != nil {
-				logger.Error("Failed to marshal answer", zap.Error(err))
-				return fmt.Errorf("failed to marshal answer: %w", err)
-			}
-
-			if _, err = parser.ParseAnswer(answereBytes, user, logger); err != nil {
+			if _, err = parser.ParseAnswer(answerList[i], user, logger); err != nil {
 				logger.Error("Failed to parse answer", zap.Error(err))
 				return fmt.Errorf("failed to parse answer: %w", err)
 			}

@@ -78,7 +78,7 @@ func TestAnswerListPaging(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	paging, answerList, err := parser.ParseAnswerList(bytes, 0, logger)
+	paging, answerList, _, err := parser.ParseAnswerList(bytes, 0, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func TestAnswerListPaging(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	paging, answerList, err = parser.ParseAnswerList(bytes, 1, logger)
+	paging, answerList, _, err = parser.ParseAnswerList(bytes, 1, logger)
 	if err != nil {
 		t.Fatal(err)
 	}

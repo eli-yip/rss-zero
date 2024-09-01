@@ -14,20 +14,29 @@ import (
 )
 
 type AnswerParser interface {
-	ParseAnswerList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, answers []apiModels.Answer, err error)
+	// answerExcerpt: answer list for answer id etc. why: some may need some info before parse raw message
+	ParseAnswerList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, answersExcerpt []apiModels.Answer, answers []json.RawMessage, err error)
 	ParseAnswer(content []byte, authorID string, logger *zap.Logger) (text string, err error)
 }
 
-func (p *ParseService) ParseAnswerList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, answers []apiModels.Answer, err error) {
+func (p *ParseService) ParseAnswerList(content []byte, index int, logger *zap.Logger) (paging apiModels.Paging, answersExcerpt []apiModels.Answer, answers []json.RawMessage, err error) {
 	logger.Info("Start to parse answer list", zap.Int("answer_list_page_index", index))
 
 	answerList := apiModels.AnswerList{}
 	if err = json.Unmarshal(content, &answerList); err != nil {
-		return apiModels.Paging{}, nil, fmt.Errorf("failed to unmarshal answer list: %w", err)
+		return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal answer list: %w", err)
 	}
 	logger.Info("Unmarshal answer list successfully")
 
-	return answerList.Paging, answerList.Data, nil
+	for _, rawMessage := range answerList.Data {
+		answer := apiModels.Answer{}
+		if err = json.Unmarshal(rawMessage, &answer); err != nil {
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal answer: %w", err)
+		}
+		answersExcerpt = append(answersExcerpt, answer)
+	}
+
+	return answerList.Paging, answersExcerpt, answerList.Data, nil
 }
 
 func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.Logger) (text string, err error) {

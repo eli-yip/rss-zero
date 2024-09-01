@@ -12,7 +12,7 @@ type AuthorParser interface {
 }
 
 func (p *ParseService) ParseAuthorName(apiResp []byte) (authorName string, err error) {
-	_, answers, err := p.ParseAnswerList(apiResp, 0, p.logger)
+	_, answers, _, err := p.ParseAnswerList(apiResp, 0, p.logger)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse answer list: %w", err)
 	}

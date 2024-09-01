@@ -1,5 +1,7 @@
 package apiModels
 
+import "encoding/json"
+
 type Article struct {
 	ID       int    `json:"id"`
 	CreateAt int64  `json:"created"`
@@ -9,6 +11,6 @@ type Article struct {
 }
 
 type ArticleList struct {
-	Paging Paging    `json:"paging"`
-	Data   []Article `json:"data"` // NOTE: HTML part is empty
+	Paging Paging            `json:"paging"`
+	Data   []json.RawMessage `json:"data"` // NOTE: HTML part is empty
 }

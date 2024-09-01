@@ -1,7 +1,6 @@
 package crawl
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
@@ -46,7 +45,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 		}
 		logger.Info("Request zhihu api successfully", zap.String("url", next))
 
-		paging, articleList, err := parser.ParseArticleList(bytes, index, logger)
+		paging, articleExcerptList, articleList, err := parser.ParseArticleList(bytes, index, logger)
 		if err != nil {
 			logger.Error("Failed to parse article list", zap.Error(err))
 			return fmt.Errorf("failed to parse article list: %w", err)
@@ -61,7 +60,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 
 		next = paging.Next
 
-		for _, article := range articleList {
+		for i, article := range articleExcerptList {
 			logger := logger.With(zap.Int("article_id", article.ID))
 
 			if !time.Unix(article.CreateAt, 0).After(targetTime) {
@@ -69,13 +68,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 				return nil
 			}
 
-			bytes, err := json.Marshal(article)
-			if err != nil {
-				logger.Error("Failed to marshal article", zap.Error(err))
-				return fmt.Errorf("failed to marshal article: %w", err)
-			}
-
-			if _, err = parser.ParseArticle(bytes, logger); err != nil {
+			if _, err = parser.ParseArticle(articleList[i], logger); err != nil {
 				logger.Error("Failed to parse article", zap.Error(err))
 				return fmt.Errorf("failed to parse article: %w", err)
 			}
