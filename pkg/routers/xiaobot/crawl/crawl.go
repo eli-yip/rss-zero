@@ -19,7 +19,7 @@ func Crawl(paperID string, request request.Requester, parser parse.Parser,
 	crawlID := xid.New().String()
 	logger = logger.With(zap.String("crawl_id", crawlID))
 
-	logger.Info("Start to crawl xiaobot paper", zap.String("paper id", paperID))
+	logger.Info("Start to crawl xiaobot paper", zap.String("paper_id", paperID))
 
 	next := generateNextURL(paperID, offset)
 

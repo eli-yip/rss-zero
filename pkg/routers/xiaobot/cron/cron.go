@@ -27,7 +27,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 		cronID := xid.New().String()
 		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
 
-		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{}}
+		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: cronID}}
 
 		var err error
 		var errCount int = 0
@@ -43,7 +43,6 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 
 		var token string
 		if token, err = cookieService.Get(cookie.CookieTypeXiaobotAccessToken); err != nil {
-			errCount++
 			if errors.Is(err, cookie.ErrKeyNotExist) {
 				notify.NoticeWithLogger(notifier, "No token for xiaobot", "", logger)
 				logger.Error("xiaobot token not found in cookie")
@@ -52,6 +51,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 			}
 			return
 		}
+		logger.Info("Get xiaobot token from cookie successfully")
 
 		var (
 			xiaobotDBService      xiaobotDB.DB
@@ -61,20 +61,20 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 
 		xiaobotDBService, xiaobotRequestService, xiaobotParser, err = initXiaobotServices(db, logger, cookieService, token)
 		if err != nil {
-			errCount++
+			logger.Error("Failed to init xiaobot crawl services", zap.Error(err))
 			return
 		}
+		logger.Info("Init xiaobot crawl services successfully")
 
 		var papers []xiaobotDB.Paper
 		if papers, err = xiaobotDBService.GetPapers(); err != nil {
-			errCount++
-			logger.Error("Failed getting xiaobot paper subs from database", zap.Error(err))
+			logger.Error("Failed to  get xiaobot paper subs from database", zap.Error(err))
 			return
 		}
 		logger.Info("Get xiaobot papers subs from database")
 
 		for _, paper := range papers {
-			logger := logger.With(zap.String("paper id", paper.ID))
+			logger := logger.With(zap.String("paper_id", paper.ID))
 			logger.Info("Start to crawl xiaobot paper")
 
 			var latestPostTimeInDB time.Time
@@ -86,7 +86,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 			if err = crawl.Crawl(paper.ID, xiaobotRequestService, xiaobotParser, latestPostTimeInDB, 0, true, logger); err != nil {
 				errCount++
 				logger.Error("Failed crawling xiaobot paper", zap.Error(err))
-				return
+				continue
 			}
 			logger.Info("Crawl xiaobot paper successfully")
 
@@ -94,14 +94,14 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 			if path, content, err = rss.GenerateXiaobot(paper.ID, xiaobotDBService, logger); err != nil {
 				errCount++
 				logger.Error("Failed generating rss for xiaobot paper", zap.Error(err))
-				return
+				continue
 			}
 			logger.Info("Generate rss for xiaobot paper successfully")
 
 			if err = r.Set(path, content, redis.RSSDefaultTTL); err != nil {
 				errCount++
 				logger.Error("Failed setting rss to redis", zap.Error(err))
-				return
+				continue
 			}
 			logger.Info("Set rss content to redis")
 		}
@@ -112,17 +112,13 @@ func initXiaobotServices(db *gorm.DB, logger *zap.Logger, cs cookie.CookieIface,
 	var err error
 
 	xiaobotDBService := xiaobotDB.NewDBService(db)
-	logger.Info("Init xiaobot database service")
 
 	xiaobotRequestService := request.NewRequestService(cs, token, logger)
-	logger.Info("Init xiaobot request service")
 
 	var xiaobotParser parse.Parser
 	if xiaobotParser, err = parse.NewParseService(parse.WithLogger(logger), parse.WithDB(xiaobotDBService)); err != nil {
-		logger.Error("Failed to init xiaobot parse service", zap.Error(err))
 		return nil, nil, nil, err
 	}
-	logger.Info("Init xiaobot parse service")
 
 	return xiaobotDBService, xiaobotRequestService, xiaobotParser, nil
 }
