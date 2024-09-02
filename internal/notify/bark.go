@@ -19,9 +19,7 @@ type Message struct {
 
 type BarkNotifier struct{ url string }
 
-func NewBarkNotifier(url string) Notifier {
-	return &BarkNotifier{url: url}
-}
+func NewBarkNotifier(url string) Notifier { return &BarkNotifier{url: url} }
 
 func (b *BarkNotifier) Notify(title, content string) error {
 	const urlLayout = "%s/%s/%s?group=RSS-Zero"
