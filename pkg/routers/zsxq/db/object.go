@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+	"gorm.io/gorm"
 )
 
 type Object struct {
@@ -17,6 +18,10 @@ type Object struct {
 	// Note: for zsxq files, download link maybe expired, not testes yet.
 	// If it's expired, we can get another download link by requesting api with file id
 	Url string `gorm:"column:url;type:text"`
+	// Note: some older records don't have created_at and updated_at columns
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
+	DeletedAt gorm.DeletedAt
 }
 
 func (o *Object) TableName() string { return "zsxq_object" }
@@ -28,9 +33,7 @@ type DBObject interface {
 	GetObjectInfo(oid int) (o *Object, err error)
 }
 
-func (s *ZsxqDBService) SaveObjectInfo(o *Object) error {
-	return s.db.Save(o).Error
-}
+func (s *ZsxqDBService) SaveObjectInfo(o *Object) error { return s.db.Save(o).Error }
 
 func (s *ZsxqDBService) GetObjectInfo(oid int) (*Object, error) {
 	var object Object
