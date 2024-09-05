@@ -9,10 +9,10 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
-	zhihuCron "github.com/eli-yip/rss-zero/pkg/cron/zhihu"
 	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
 	githubCron "github.com/eli-yip/rss-zero/pkg/routers/github/cron"
 	xiaobotCron "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/cron"
+	zhihuCron "github.com/eli-yip/rss-zero/pkg/routers/zhihu/cron"
 )
 
 func (h *Controller) AddTask(c echo.Context) (err error) {
