@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rs/xid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -14,6 +15,7 @@ import (
 
 // Get objects from db, save them to minio
 func MigrateMinio20240905(file file.File, db *gorm.DB, logger *zap.Logger) {
+	logger = logger.With(zap.String("migrate_id", xid.New().String()))
 	logger.Info("Start to migrate minio files")
 
 	zhihuDBService := zhihuDB.NewDBService(db)
@@ -50,4 +52,6 @@ func MigrateMinio20240905(file file.File, db *gorm.DB, logger *zap.Logger) {
 
 		time.Sleep(5 * time.Second)
 	}
+
+	logger.Info("Finish to migrate minio files")
 }
