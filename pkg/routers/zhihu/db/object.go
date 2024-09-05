@@ -1,6 +1,11 @@
 package db
 
-import "github.com/lib/pq"
+import (
+	"time"
+
+	"github.com/lib/pq"
+	"gorm.io/gorm"
+)
 
 type Object struct {
 	ID              int            `gorm:"column:id;type:text;primary_key"` // Use hash to convert zhihu content url to id
@@ -10,6 +15,10 @@ type Object struct {
 	ObjectKey       string         `gorm:"column:object_key;type:text"`
 	URL             string         `gorm:"column:url;type:text"`
 	StorageProvider pq.StringArray `gorm:"column:storage_provider;type:text[]"`
+	// Note: some older records don't have created_at and updated_at columns
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
+	DeletedAt gorm.DeletedAt
 }
 
 func (o *Object) TableName() string { return "zhihu_object" }
