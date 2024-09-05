@@ -110,7 +110,7 @@ func (h *Controller) History(c echo.Context) (err error) {
 	html, err := h.handleRequestArchiveLink(u)
 	if err != nil {
 		logger.Error("Failed to handle zhihu link", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to handle zhihu link: " + err.Error()})
+		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to handle link: " + err.Error()})
 	}
 	return c.HTML(http.StatusOK, html)
 }
