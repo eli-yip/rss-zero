@@ -55,6 +55,7 @@ func (s *ParseService) saveImages(images []models.Image, topicID int, createTime
 			Type:            "image",
 			ObjectKey:       objectKey,
 			StorageProvider: []string{s.file.AssetsDomain()},
+			Url:             url,
 		}); err != nil {
 			return fmt.Errorf("failed to save image info to database: %w", err)
 		}

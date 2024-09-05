@@ -73,6 +73,7 @@ func (s *ParseService) saveFiles(files []models.File, topicID int, createTimeStr
 			Type:            "file",
 			ObjectKey:       objectKey,
 			StorageProvider: []string{s.file.AssetsDomain()},
+			Url:             downloadLink,
 		}); err != nil {
 			return fmt.Errorf("failed to save file info to database: %w", err)
 		}

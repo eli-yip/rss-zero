@@ -14,6 +14,9 @@ type Object struct {
 	ObjectKey       string         `gorm:"column:object_key;type:text"`
 	StorageProvider pq.StringArray `gorm:"column:storage_provider;type:text[]"`
 	Transcript      string         `gorm:"column:transcript;type:text"`
+	// Note: for zsxq files, download link maybe expired, not testes yet.
+	// If it's expired, we can get another download link by requesting api with file id
+	Url string `gorm:"column:url;type:text"`
 }
 
 func (o *Object) TableName() string { return "zsxq_object" }

@@ -81,6 +81,7 @@ func (s *ParseService) saveVoice(logger *zap.Logger, voice *models.Voice, topicI
 		ObjectKey:       objectKey,
 		StorageProvider: []string{s.file.AssetsDomain()},
 		Transcript:      polishedTranscript,
+		Url:             voice.URL,
 	}); err != nil {
 		return fmt.Errorf("failed to save voice info to database: %w", err)
 	}
