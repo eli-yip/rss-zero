@@ -16,6 +16,12 @@ import (
 // Get objects from db, save them to minio
 func MigrateMinio20240905(file file.File, db *gorm.DB, logger *zap.Logger) {
 	logger = logger.With(zap.String("migrate_id", xid.New().String()))
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("Panic", zap.Any("recover", r))
+		}
+	}()
+
 	logger.Info("Start to migrate minio files")
 
 	zhihuDBService := zhihuDB.NewDBService(db)
