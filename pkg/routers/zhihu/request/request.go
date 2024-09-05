@@ -233,20 +233,24 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 }
 
 func (r *RequestService) NoLimitStream(u string, logger *zap.Logger) (resp *http.Response, err error) {
+	return NoLimitStream(r.client, u, r.maxRetry, logger)
+}
+
+func NoLimitStream(client *http.Client, u string, maxRetry int, logger *zap.Logger) (resp *http.Response, err error) {
 	logger = logger.With(zap.String("url", u))
 	logger.Info("request without limit for stream")
 
-	for i := 0; i < r.maxRetry; i++ {
+	for i := 0; i < maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
 
 		var req *http.Request
-		req, err = r.setReq(u)
+		req, err = setReq(u)
 		if err != nil {
 			logger.Error("fail to new a request", zap.Error(err))
 			continue
 		}
 
-		resp, err = r.client.Do(req)
+		resp, err = client.Do(req)
 		if err != nil {
 			logger.Error("fail to request url", zap.Error(err))
 			continue
@@ -289,8 +293,7 @@ func (rs *RequestService) ClearCache(logger *zap.Logger) {
 	logger.Warn("Failed to clear d_c0 cache", zap.Int("error_count", errCount))
 }
 
-// Set request header and method
-func (r *RequestService) setReq(u string) (req *http.Request, err error) {
+func setReq(u string) (req *http.Request, err error) {
 	req, err = http.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err

@@ -14,4 +14,6 @@ type File interface {
 	AssetsDomain() string
 	// Delete method will take a name, and delete the file from the file service
 	Delete(string) error
+	// Check existance of a file
+	Exist(string) (bool, error)
 }

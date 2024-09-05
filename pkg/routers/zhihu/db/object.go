@@ -23,6 +23,8 @@ type DBObject interface {
 	SaveObjectInfo(o *Object) error
 	// Get object info from zhihu_object table
 	GetObjectInfo(oid int) (o *Object, err error)
+	// Get all objects from zhihu_object table
+	GetAllObjects() (objects []*Object, err error)
 }
 
 func (d *DBService) SaveObjectInfo(o *Object) error {
@@ -33,4 +35,10 @@ func (d *DBService) GetObjectInfo(id int) (o *Object, err error) {
 	o = &Object{}
 	err = d.Where("id = ?", id).First(o).Error
 	return
+}
+
+func (d *DBService) GetAllObjects() (objects []*Object, err error) {
+	var objs []*Object
+	err = d.Find(&objs).Error
+	return objs, err
 }

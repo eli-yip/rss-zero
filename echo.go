@@ -14,6 +14,7 @@ import (
 	githubController "github.com/eli-yip/rss-zero/internal/controller/github"
 	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
 	mackedController "github.com/eli-yip/rss-zero/internal/controller/macked"
+	migrateController "github.com/eli-yip/rss-zero/internal/controller/migrate"
 	rsshubController "github.com/eli-yip/rss-zero/internal/controller/rsshub"
 	xiaobotController "github.com/eli-yip/rss-zero/internal/controller/xiaobot"
 	zhihuController "github.com/eli-yip/rss-zero/internal/controller/zhihu"
@@ -68,8 +69,9 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 	archiveHandler := archiveController.NewController(db)
 	githubDBService := githubDB.NewDBService(db)
 	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)
-
 	mackedController := mackedController.NewController(redisService, tg, macked.NewDBService(db), logger)
+
+	migrateHandler := migrateController.NewController(logger, db)
 
 	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mackedController)
 
@@ -84,6 +86,7 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 	registerArchive(apiGroup, archiveHandler)
 	registerJob(apiGroup, jobHandler)
 	registerSub(apiGroup, zhihuHandler, githubController, xiaobotHandler)
+	registerMigrate(apiGroup, migrateHandler)
 
 	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
@@ -299,4 +302,10 @@ func registerSub(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller,
 	xiaobotDeleteSubApi.Name = "Delete sub route for xiaobot"
 	xiaobotActivateSubApi := apiGroup.POST("/sub/xiaobot/activate/:id", xiaobotHandler.ActivateSub)
 	xiaobotActivateSubApi.Name = "Activate sub route for xiaobot"
+}
+
+func registerMigrate(apiGroup *echo.Group, migrateHandler *migrateController.Controller) {
+	migrateApi := apiGroup.Group("/migrate")
+	migrateMinioApi := migrateApi.POST("/20240905", migrateHandler.Migrate)
+	migrateMinioApi.Name = "Migrate minio files route 20240905"
 }

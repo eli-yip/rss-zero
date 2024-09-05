@@ -88,3 +88,14 @@ func (s *FileServiceMinio) AssetsDomain() (url string) { return s.assetsDomain }
 func (s *FileServiceMinio) Delete(key string) (err error) {
 	return s.minioClient.RemoveObject(context.Background(), s.bucketName, key, minio.RemoveObjectOptions{})
 }
+
+func (s *FileServiceMinio) Exist(key string) (exist bool, err error) {
+	_, err = s.minioClient.StatObject(context.Background(), s.bucketName, key, minio.StatObjectOptions{})
+	if err != nil {
+		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
