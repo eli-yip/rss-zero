@@ -39,7 +39,7 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 			cronID = cronIDInDB
 		}
 
-		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
+		logger := log.DefaultLogger.With(zap.String("cron_id", cronID))
 
 		var err error
 		var errCount int = 0

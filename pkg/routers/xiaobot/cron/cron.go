@@ -25,7 +25,7 @@ import (
 func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronID := xid.New().String()
-		logger := log.NewZapLogger().With(zap.String("cron_id", cronID))
+		logger := log.DefaultLogger.With(zap.String("cron_id", cronID))
 
 		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: cronID}}
 

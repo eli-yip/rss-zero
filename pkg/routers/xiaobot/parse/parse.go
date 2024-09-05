@@ -35,7 +35,7 @@ func NewParseService(options ...Option) (Parser, error) {
 	p := &ParseService{
 		HTMLToMarkdown:    renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...),
 		MarkdownFormatter: md.NewMarkdownFormatter(),
-		logger:            log.NewZapLogger(),
+		logger:            log.DefaultLogger,
 	}
 
 	for _, o := range options {

@@ -15,7 +15,7 @@ import (
 
 func Export() func() {
 	return func() {
-		logger := log.NewZapLogger().With(zap.String("export_id", xid.New().String()))
+		logger := log.DefaultLogger.With(zap.String("export_id", xid.New().String()))
 
 		logger.Info("Start to export zhihu data of mocangli answer")
 		startDate, endDate := getStartDateEndDate(time.Now())

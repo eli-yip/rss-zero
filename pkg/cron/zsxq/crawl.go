@@ -39,7 +39,7 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 		}
 
 		// Init services
-		logger := log.NewZapLogger().With(zap.String("cron_id", xid.New().String()))
+		logger := log.DefaultLogger.With(zap.String("cron_id", xid.New().String()))
 
 		var err error
 		var errCount int = 0

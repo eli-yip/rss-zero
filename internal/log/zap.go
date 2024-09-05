@@ -10,6 +10,8 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 )
 
+var DefaultLogger *zap.Logger
+
 // NewZapLogger returns a new zap logger.
 // To enable debug mode, add DEBUG=true to .env file.
 // It will use production config otherwise.
@@ -46,6 +48,7 @@ func NewZapLogger() *zap.Logger {
 		logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
 	}
 	zap.ReplaceGlobals(logger)
+	DefaultLogger = logger
 
 	return logger
 }

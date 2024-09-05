@@ -50,7 +50,7 @@ func NewParseService(options ...Option) (Parser, error) {
 	}
 
 	if s.logger == nil {
-		s.logger = log.NewZapLogger()
+		s.logger = log.DefaultLogger
 	}
 
 	if s.htmlToMarkdown == nil {
