@@ -105,7 +105,8 @@ steps:
         from_secret: ssh_username
       key:
         from_secret: ssh_password
-      port: 2222
+      port:
+        from_secret: ssh_port
       command_timeout: 2m
       script:
         - cd /home/yip/services/rss-zero
