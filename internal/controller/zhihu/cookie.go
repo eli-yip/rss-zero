@@ -3,7 +3,6 @@ package controller
 import (
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -135,7 +134,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 	if req.DC0Cookie != nil {
 		respData.DC0Cookie = &Cookie{}
 		dC0Cookie := req.DC0Cookie.Value
-		d_c0 := extractCookieValue(dC0Cookie, DC0CookieName)
+		d_c0 := cookie.ExtractCookieValue(dC0Cookie, DC0CookieName)
 		if d_c0 == "" {
 			logger.Error("Failed to extract d_c0 from cookie", zap.String("cookie", dC0Cookie))
 			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid cookie"})
@@ -193,7 +192,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		}
 
 		zC0Cookie := req.ZC0Cookie.Value
-		z_c0 := extractCookieValue(zC0Cookie, ZC0CookieName)
+		z_c0 := cookie.ExtractCookieValue(zC0Cookie, ZC0CookieName)
 		if z_c0 == "" {
 			logger.Error("Failed to extract z_c0 from cookie", zap.String("cookie", zC0Cookie))
 			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid cookie"})
@@ -233,7 +232,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		}
 
 		ZSECKValue := req.ZSECKCookie.Value
-		zse_ck := extractCookieValue(ZSECKValue, ZSECKCookieName)
+		zse_ck := cookie.ExtractCookieValue(ZSECKValue, ZSECKCookieName)
 		if zse_ck == "" {
 			logger.Error("Failed to extract zse_ck from cookie", zap.String("cookie", ZSECKValue))
 			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid cookie"})
@@ -249,10 +248,4 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 	}
 
 	return c.JSON(http.StatusOK, &common.ApiResp{Message: "Update Zhihu Cookies successfully", Data: respData})
-}
-
-func extractCookieValue(cookie, cookieName string) (result string) {
-	cookie = strings.TrimSpace(cookie)
-	cookie = strings.TrimSuffix(cookie, ";")
-	return strings.TrimPrefix(cookie, cookieName+"=")
 }

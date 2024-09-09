@@ -10,18 +10,23 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
-	zsxqRequest "github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 )
 
-type ZsxqSetCookieReq struct {
-	Cookie   string `json:"cookie"`
-	ExpireAt string `json:"expire_at"`
-}
+type (
+	ZsxqSetCookieReq struct {
+		AccessToken *Cookie `json:"access_token"`
+	}
 
-type SetCookieResp struct {
-	Value    string `json:"value"`
-	ExpireAt string `json:"expire_at"`
-}
+	Cookie struct {
+		Value    string `json:"value"`
+		ExpireAt string `json:"expire_at"`
+	}
+
+	CookieResp struct {
+		AccessToken *Cookie `json:"access_token,omitempty"`
+	}
+)
 
 func (h *ZsxqController) UpdateCookie(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
@@ -31,36 +36,50 @@ func (h *ZsxqController) UpdateCookie(c echo.Context) (err error) {
 		logger.Error("Failed to bind request", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
 	}
-	logger.Info("Retrieved zsxq cookie", zap.String("cookie", req.Cookie))
+	logger.Info("Retrieved update zsxq cookies request successfully")
 
-	requestService := zsxqRequest.NewRequestService(req.Cookie, logger)
-	if _, err = requestService.Limit(config.C.TestURL.Zsxq, logger); err != nil {
-		logger.Error("Failed to validate zsxq access token", zap.String("cookie", req.Cookie), zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})
+	var respData CookieResp
+
+	if req.AccessToken != nil {
+		respData.AccessToken = &Cookie{}
+		var ttl time.Duration
+		if req.AccessToken.ExpireAt != "" {
+			expireAt, err := cookie.ParseArcExpireAt(req.AccessToken.ExpireAt)
+			if err != nil {
+				logger.Error("Failed to parse expire_at", zap.Error(err))
+				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
+			}
+
+			ttl = time.Until(expireAt.Add(-1 * time.Hour))
+
+			if ttl < 0 {
+				logger.Error("Invalid expire_at", zap.String("expire_at", req.AccessToken.ExpireAt))
+				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
+			}
+
+			respData.AccessToken.ExpireAt = expireAt.Format(time.RFC3339)
+		} else {
+			ttl = 2 * 24 * time.Hour
+			expireAt := time.Now().Add(ttl)
+			respData.AccessToken.ExpireAt = expireAt.Format(time.RFC3339)
+		}
+
+		accessToken := cookie.ExtractCookieValue(req.AccessToken.Value, "access_token")
+		requestService := request.NewRequestService(accessToken, logger)
+		if _, err = requestService.Limit(config.C.TestURL.Zsxq, logger); err != nil {
+			logger.Error("Failed to validate zsxq access token", zap.String("cookie", req.AccessToken.Value), zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})
+		}
+		logger.Info("Validated zsxq access token")
+
+		if err = h.cookie.Set(cookie.CookieTypeZsxqAccessToken, accessToken, ttl); err != nil {
+			logger.Error("Error updating zsxq cookie", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+		}
+		logger.Info("Updated zsxq cookie")
+
+		respData.AccessToken.Value = req.AccessToken.Value
 	}
-	logger.Info("Validated zsxq cookie", zap.String("cookie", req.Cookie))
 
-	expireAt, err := cookie.ParseArcExpireAt(req.ExpireAt)
-	if err != nil {
-		logger.Error("Failed to parse expire_at", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
-	}
-	logger.Info("Parsed expire_at", zap.String("expire_at", req.ExpireAt))
-
-	ttl := time.Until(expireAt)
-	if ttl <= 0 {
-		logger.Error("Invalid expire_at", zap.String("expire_at", req.ExpireAt))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
-	}
-
-	if err = h.cookie.Set(cookie.CookieTypeZsxqAccessToken, req.Cookie, ttl); err != nil {
-		logger.Error("Error updating zsxq cookie", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
-	}
-	logger.Info("Updated zsxq cookie", zap.String("cookie", req.Cookie))
-
-	return c.JSON(http.StatusOK, &SetCookieResp{
-		Value:    req.Cookie,
-		ExpireAt: expireAt.Format(time.RFC3339),
-	})
+	return c.JSON(http.StatusOK, &common.ApiResp{Message: "Update zsxq cookies successfully", Data: respData})
 }

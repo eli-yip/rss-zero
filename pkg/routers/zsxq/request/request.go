@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/rs/xid"
@@ -78,13 +77,8 @@ func (r *RequestService) SetCookies(c string) {
 
 	for _, d := range domains {
 		u, _ := url.Parse("https://" + d)
-		// split cookies by ";" into cookie parts
-		for _, cp := range strings.SplitN(c, ";", -1) {
-			if n, v, ok := strings.Cut(strings.TrimSpace(cp), "="); ok {
-				cookie := &http.Cookie{Name: n, Value: v}
-				r.client.Jar.SetCookies(u, []*http.Cookie{cookie})
-			}
-		}
+		cookie := &http.Cookie{Name: "zsxq_access_token", Value: c}
+		r.client.Jar.SetCookies(u, []*http.Cookie{cookie})
 		r.logger.Info("Set zsxq cookie successfully",
 			zap.String("cookie", c), zap.String("domain", d))
 	}

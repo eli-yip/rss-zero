@@ -12,3 +12,9 @@ func ParseArcExpireAt(expireAt string) (time.Time, error) {
 	const layout = "Mon Jan 02 2006 15:04:05 GMT-0700"
 	return time.Parse(layout, expireAt)
 }
+
+func ExtractCookieValue(cookie, cookieName string) (result string) {
+	cookie = strings.TrimSpace(cookie)
+	cookie = strings.TrimSuffix(cookie, ";")
+	return strings.TrimPrefix(cookie, cookieName+"=")
+}
