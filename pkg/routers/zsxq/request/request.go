@@ -16,6 +16,17 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
+var TokenPool chan struct{} = make(chan struct{})
+
+func init() {
+	go func() {
+		for {
+			TokenPool <- struct{}{}
+			time.Sleep(time.Duration(30+rand.IntN(6)) * time.Second)
+		}
+	}()
+}
+
 var (
 	ErrBadResponse   = errors.New("bad response")
 	ErrInvalidCookie = errors.New("invalid cookie")
@@ -40,7 +51,7 @@ type Requester interface {
 type RequestService struct {
 	client      *http.Client
 	emptyClient *http.Client
-	limiter     chan struct{}
+	limiter     <-chan struct{}
 	maxRetry    int
 	logger      *zap.Logger
 }
@@ -52,19 +63,12 @@ func NewRequestService(cookie string, logger *zap.Logger) Requester {
 	s := &RequestService{
 		client:      &http.Client{Jar: jar},
 		emptyClient: &http.Client{},
-		limiter:     make(chan struct{}),
+		limiter:     TokenPool,
 		maxRetry:    defaultMaxRetry,
 		logger:      logger,
 	}
 
 	s.SetCookies(cookie)
-
-	go func() {
-		for {
-			s.limiter <- struct{}{}
-			time.Sleep(time.Duration(30+rand.IntN(6)) * time.Second)
-		}
-	}()
 
 	return s
 }

@@ -15,6 +15,17 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/encrypt"
 )
 
+var TokenPool chan struct{} = make(chan struct{})
+
+func init() {
+	go func() {
+		for {
+			TokenPool <- struct{}{}
+			time.Sleep(time.Duration(30+rand.IntN(6)) * time.Second)
+		}
+	}()
+}
+
 type Requester interface {
 	// Limit requests to the given url with limiter and returns data,
 	// and it will validate the response json data
@@ -33,7 +44,7 @@ var (
 
 type RequestService struct {
 	client        *http.Client
-	limiter       chan struct{}
+	limiter       <-chan struct{}
 	maxRetry      int
 	token         string // token is used to request xiaobot api in authorization header
 	cookieService cookie.CookieIface
@@ -44,19 +55,12 @@ func NewRequestService(cookieService cookie.CookieIface, token string, logger *z
 	const defaultMaxRetry = 5
 	s := &RequestService{
 		client:        &http.Client{},
-		limiter:       make(chan struct{}),
+		limiter:       TokenPool,
 		maxRetry:      defaultMaxRetry,
 		cookieService: cookieService,
 		token:         token,
 		logger:        logger,
 	}
-
-	go func() {
-		for {
-			s.limiter <- struct{}{}
-			time.Sleep(time.Duration(30+rand.Int64N(6)) * time.Second)
-		}
-	}()
 
 	return s
 }

@@ -17,6 +17,17 @@ import (
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
+var TokenCh chan struct{} = make(chan struct{})
+
+func init() {
+	go func() {
+		for {
+			TokenCh <- struct{}{}
+			time.Sleep(time.Duration(300+rand.IntN(300)) * time.Second)
+		}
+	}()
+}
+
 type Requester interface {
 	// LimitRaw requests to the given url with limiter and returns raw data,
 	LimitRaw(string, *zap.Logger) ([]byte, error)
@@ -45,7 +56,7 @@ const (
 
 type RequestService struct {
 	client             *http.Client
-	limiter            chan struct{}
+	limiter            <-chan struct{}
 	maxRetry           int // default 5
 	logger             *zap.Logger
 	d_c0, z_c0, zse_ck string
@@ -67,7 +78,7 @@ func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIf
 
 	s := &RequestService{
 		client:    &http.Client{},
-		limiter:   make(chan struct{}),
+		limiter:   TokenCh,
 		maxRetry:  defaultMaxRetry,
 		dbService: dbService,
 		notify:    notifier,
@@ -78,13 +89,6 @@ func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIf
 	for _, opt := range opts {
 		opt(s)
 	}
-
-	go func() {
-		for {
-			s.limiter <- struct{}{}
-			time.Sleep(time.Duration(300+rand.IntN(300)) * time.Second)
-		}
-	}()
 
 	return s, nil
 }
