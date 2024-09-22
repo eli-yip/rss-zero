@@ -258,6 +258,9 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihu
 	rssZhihuPin := rssZhihu.GET("/pin/:feed", zhihuHandler.PinRSS)
 	rssZhihuPin.Name = "RSS route for zhihu pin"
 
+	rssZhihuRandom := rssZhihu.GET("/random", zhihuHandler.RandomCanglimoAnswers)
+	rssZhihuRandom.Name = "RSS route for zhihu random canglimo answers"
+
 	rssXiaobot := rssGroup.GET("/xiaobot/:feed", xiaobotHandler.RSS)
 	rssXiaobot.Name = "RSS route for xiaobot"
 

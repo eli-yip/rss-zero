@@ -20,6 +20,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	zhihuCrawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawl"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/random"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
@@ -166,6 +167,10 @@ func (h *Controller) processTask() {
 
 // generateRSS generates rss content and set it to redis.
 func (h *Controller) generateRSS(key string, logger *zap.Logger) (content string, err error) {
+	if key == redis.ZhihuRandomCanglimoAnswersPath {
+		return h.generateRandomCanglimoAnswers(logger)
+	}
+
 	contentType, authorID, err := h.extractTypeAuthorFromKey(key)
 	if err != nil {
 		return "", fmt.Errorf("failed to extract type and authorID from key: %w", err)
@@ -181,6 +186,19 @@ func (h *Controller) generateRSS(key string, logger *zap.Logger) (content string
 	}
 
 	return content, nil
+}
+
+func (h *Controller) generateRandomCanglimoAnswers(logger *zap.Logger) (string, error) {
+	rssContent, err := random.GenerateRandomCanglimoAnswerRSS(h.db, logger)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate random canglimo answers: %w", err)
+	}
+
+	if err := h.redis.Set(redis.ZhihuRandomCanglimoAnswersPath, rssContent, redis.RSSRandomTTL); err != nil {
+		return "", fmt.Errorf("failed to set random canglimo answers to redis: %w", err)
+	}
+
+	return rssContent, nil
 }
 
 // extractTypeAuthorFromKey extracts type and authorID from rss content key.

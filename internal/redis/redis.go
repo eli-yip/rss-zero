@@ -16,9 +16,10 @@ const (
 
 	XiaobotRSSPath = "xiaobot_rss_%s"
 
-	ZhihuAnswerPath  = "zhihu_rss_answer_%s"
-	ZhihuArticlePath = "zhihu_rss_article_%s"
-	ZhihuPinPath     = "zhihu_rss_pin_%s"
+	ZhihuAnswerPath                = "zhihu_rss_answer_%s"
+	ZhihuArticlePath               = "zhihu_rss_article_%s"
+	ZhihuPinPath                   = "zhihu_rss_pin_%s"
+	ZhihuRandomCanglimoAnswersPath = "zhihu_rss_random_canglimo_answers"
 
 	EndOfLifePath = "endoflife_rss_%s"
 
@@ -30,6 +31,7 @@ const (
 const (
 	ZSECKTTL      = 24 * 2 * time.Hour
 	RSSDefaultTTL = time.Hour * 2
+	RSSRandomTTL  = time.Hour * 24
 )
 
 type Redis interface {
