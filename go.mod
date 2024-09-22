@@ -8,8 +8,8 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.0
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.6.0
-	github.com/go-co-op/gocron/v2 v2.11.0
-	github.com/go-telegram/bot v1.8.0
+	github.com/go-co-op/gocron/v2 v2.12.1
+	github.com/go-telegram/bot v1.8.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/feeds v1.2.0
 	github.com/labstack/echo/v4 v4.12.0
@@ -18,7 +18,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/rs/xid v1.6.0
-	github.com/sashabaranov/go-openai v1.29.2
+	github.com/sashabaranov/go-openai v1.30.3
 	github.com/stretchr/testify v1.9.0
 	github.com/yuin/goldmark v1.7.4
 	go.uber.org/zap v1.27.0
