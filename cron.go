@@ -52,6 +52,12 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 	}
 	logger.Info("Add check macked job successfully", zap.String("job_id", jobID))
 
+	jobID, err = cronService.AddJob("canglimo_random_select", "0 * * * *", zhihuCron.BuildRandomSelectCanglimoAnswerCronFunc(db, redisService))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to add canglimo random select job: %w", err)
+	}
+	logger.Info("Add canglimo random select job successfully", zap.String("job_id", jobID))
+
 	return cronService, definitionToFunc, nil
 }
 
