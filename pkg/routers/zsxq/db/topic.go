@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+	"math/rand"
 	"time"
 
 	"gorm.io/gorm"
@@ -40,6 +42,8 @@ type DBTopic interface {
 	GetTopicByID(id int) (t Topic, err error)
 	// Get topic id by share link from zsxq_topic table
 	GetTopicIDByShareLink(shareLink string) (id int, err error)
+	// Random select n topics from zsxq_topic table
+	RandomSelect(userID, n int, digest bool) (topics []Topic, err error)
 }
 
 func (s *ZsxqDBService) SaveTopic(t *Topic) error {
@@ -144,4 +148,30 @@ func (s *ZsxqDBService) GetTopicIDByShareLink(shareLink string) (int, error) {
 		return 0, err
 	}
 	return topic.ID, nil
+}
+
+func (s *ZsxqDBService) RandomSelect(userID, n int, digest bool) (topics []Topic, err error) {
+	topics = make([]Topic, 0, n)
+
+	topicIDs := make([]int, 0, n)
+	s.db.Model(&Topic{}).Where("author_id = ? AND digested = ?", userID, digest).Pluck("id", &topicIDs)
+
+	if len(topicIDs) <= n {
+		if err = s.db.Where("id in ?", topicIDs).Find(&topics).Error; err != nil {
+			return nil, fmt.Errorf("failed to get topics: %w", err)
+		}
+		return topics, nil
+	}
+
+	rand.Shuffle(len(topicIDs), func(i, j int) {
+		topicIDs[i], topicIDs[j] = topicIDs[j], topicIDs[i]
+	})
+
+	topicIDs = topicIDs[:n]
+
+	if err := s.db.Where("id in ?", topicIDs).Find(&topics).Error; err != nil {
+		return nil, fmt.Errorf("failed to get topics: %w", err)
+	}
+
+	return topics, nil
 }

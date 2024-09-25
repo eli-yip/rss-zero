@@ -15,9 +15,10 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/random"
 )
 
-func (h *ZsxqController) RSS(c echo.Context) (err error) {
+func (h *Controoler) RSS(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	groupIDStr := c.Get("feed_id").(string)
@@ -34,7 +35,7 @@ func (h *ZsxqController) RSS(c echo.Context) (err error) {
 	return c.String(http.StatusOK, rssContent)
 }
 
-func (h *ZsxqController) getRSS(key string, logger *zap.Logger) (content string, err error) {
+func (h *Controoler) getRSS(key string, logger *zap.Logger) (content string, err error) {
 	logger = logger.With(zap.String("key", key))
 	defer logger.Info("task channel closed")
 
@@ -67,6 +68,10 @@ func NewRssGenerator(db *gorm.DB, redis redis.Redis) *RssGenerator {
 }
 
 func (r *RssGenerator) generateRSS(key string, logger *zap.Logger) (output string, err error) {
+	if key == redis.ZsxqRandomCanglimoDigestPath {
+		return r.generateRandomCanglimoDigest(logger)
+	}
+
 	groupID, err := r.extractGroupIDFromKey(key)
 	if err != nil {
 		return "", err
@@ -84,6 +89,19 @@ func (r *RssGenerator) generateRSS(key string, logger *zap.Logger) (output strin
 	}
 
 	return content, nil
+}
+
+func (r *RssGenerator) generateRandomCanglimoDigest(logger *zap.Logger) (rssContent string, err error) {
+	rssContent, err = random.GenerateRandomCanglimoDigestRss(r.db, logger)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate random canglimo digest rss: %w", err)
+	}
+
+	if err = r.redis.Set(redis.ZsxqRandomCanglimoDigestPath, rssContent, redis.RSSDefaultTTL); err != nil {
+		return "", fmt.Errorf("failed to set random canglimo digest rss to redis: %w", err)
+	}
+
+	return rssContent, nil
 }
 
 func (r *RssGenerator) extractGroupIDFromKey(key string) (groupID int, err error) {

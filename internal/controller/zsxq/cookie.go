@@ -28,7 +28,7 @@ type (
 	}
 )
 
-func (h *ZsxqController) UpdateCookie(c echo.Context) (err error) {
+func (h *Controoler) UpdateCookie(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req ZsxqSetCookieReq

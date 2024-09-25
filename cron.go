@@ -14,11 +14,11 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
-	zsxqCron "github.com/eli-yip/rss-zero/pkg/cron/zsxq"
 	githubCron "github.com/eli-yip/rss-zero/pkg/routers/github/cron"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 	xiaobotCron "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/cron"
 	zhihuCron "github.com/eli-yip/rss-zero/pkg/routers/zhihu/cron"
+	zsxqCron "github.com/eli-yip/rss-zero/pkg/routers/zsxq/cron"
 )
 
 // setupCronCrawlJob sets up cron jobs
@@ -57,6 +57,12 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 		return nil, nil, fmt.Errorf("failed to add canglimo random select job: %w", err)
 	}
 	logger.Info("Add canglimo random select job successfully", zap.String("job_id", jobID))
+
+	jobID, err = cronService.AddJob("canglimo_digest_random_select", "0 0 * * *", zsxqCron.BuildRandomSelectCanglimoDigestTopicFunc(db, redisService))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to add canglimo digest random select job: %w", err)
+	}
+	logger.Info("Add canglimo digest random select job successfully", zap.String("job_id", jobID))
 
 	return cronService, definitionToFunc, nil
 }

@@ -17,7 +17,7 @@ type Controller struct {
 	notifier notify.Notifier
 }
 
-func NewZhihuHandler(redis redis.Redis, cookie cookie.CookieIface, db zhihuDB.DB, notifier notify.Notifier) *Controller {
+func NewController(redis redis.Redis, cookie cookie.CookieIface, db zhihuDB.DB, notifier notify.Notifier) *Controller {
 	h := &Controller{
 		redis:    redis,
 		cookie:   cookie,

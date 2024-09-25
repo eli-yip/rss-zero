@@ -12,7 +12,8 @@ import (
 var ErrKeyNotExist = errors.New("key does not exist")
 
 const (
-	ZsxqRSSPath = "zsxq_rss_%s"
+	ZsxqRSSPath                  = "zsxq_rss_%s"
+	ZsxqRandomCanglimoDigestPath = "zsxq_rss_random_canglimo_digest"
 
 	XiaobotRSSPath = "xiaobot_rss_%s"
 

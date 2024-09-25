@@ -20,8 +20,9 @@ func BuildRandomSelectCanglimoAnswerCronFunc(gormDB *gorm.DB, redisService redis
 		rssContent, err := random.GenerateRandomCanglimoAnswerRSS(zhihuDBService, logger)
 		if err != nil {
 			logger.Error("Failed to generate random canglimo answer rss", zap.Error(err))
+			return
 		}
-		logger.Info("Generate random canglimo answer rss", zap.String("rss_content", rssContent))
+		logger.Info("Generate random canglimo answer rss")
 
 		if err := redisService.Set(redis.ZhihuRandomCanglimoAnswersPath, rssContent, redis.RSSRandomTTL); err != nil {
 			logger.Error("Failed to set random canglimo answer rss to redis", zap.Error(err))

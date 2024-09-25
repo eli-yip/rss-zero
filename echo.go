@@ -56,11 +56,11 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 		myMiddleware.InjectLogger(logger), // inject logger to context
 	)
 
-	zsxqHandler := zsxqController.NewZsxqHandler(redisService, cookieService, db, notifier, logger)
+	zsxqHandler := zsxqController.NewZsxqController(redisService, cookieService, db, notifier, logger)
 	zhihuDBService := zhihuDB.NewDBService(db)
-	zhihuHandler := zhihuController.NewZhihuHandler(redisService, cookieService, zhihuDBService, notifier)
+	zhihuHandler := zhihuController.NewController(redisService, cookieService, zhihuDBService, notifier)
 	xiaobotDBService := xiaobotDB.NewDBService(db)
-	xiaobotHandler := xiaobotController.NewXiaobotController(redisService, cookieService, xiaobotDBService, notifier, logger)
+	xiaobotHandler := xiaobotController.NewController(redisService, cookieService, xiaobotDBService, notifier, logger)
 	endOfLifeHandler := endoflifeController.NewController(redisService, logger)
 	cronDBService := cronDB.NewDBService(db)
 	jobHandler := jobController.NewController(cronService,
@@ -162,7 +162,7 @@ func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Con
 // /api/v1/export/zsxq
 // /api/v1/export/zhihu
 // /api/v1/export/xiaobot
-func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
+func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.Controoler, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	exportApi := apiGroup.Group("/export")
 
 	exportZsxqApi := exportApi.POST("/zsxq", zsxqHandler.Export)
@@ -194,7 +194,7 @@ func registerDEncryptionService(apiGroup *echo.Group, zhihuHandler *zhihuControl
 // /api/v1/refmt/zsxq
 // /api/v1/refmt/zhihu
 // /api/v1/refmt/xiaobot
-func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
+func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.Controoler, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	refmtApi := apiGroup.Group("/refmt")
 
 	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Reformat)
@@ -212,7 +212,7 @@ func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqCont
 // /api/v1/cookie/xiaobot
 // /api/v1/cookie/zhihu
 // /api/v1/cookie/zhihu/check
-func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqController, xiaobotHandler *xiaobotController.Controller, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
+func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.Controoler, xiaobotHandler *xiaobotController.Controller, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
 	cookieApi := apiGroup.Group("/cookie")
 
 	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateCookie)
@@ -232,12 +232,7 @@ func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.ZsxqContro
 }
 
 // /rss
-// /rss/zsxq/:feed
-// /rss/zhihu/:feed
-// /rss/zhihu/answer/:feed
-// /rss/zhihu/article/:feed
-// /rss/zhihu/pin/:feed
-func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedController.Controller) {
+func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controoler, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedController.Controller) {
 	rssGroup := e.Group("/rss")
 	rssGroup.Use(
 		myMiddleware.SetRSSContentType(), // set content type to application/atom+xml
@@ -246,6 +241,9 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.ZsxqController, zhihu
 
 	rssZsxq := rssGroup.GET("/zsxq/:feed", zsxqHandler.RSS)
 	rssZsxq.Name = "RSS route for zsxq group"
+
+	rssZsxqRandom := rssGroup.GET("/zsxq/random", zsxqHandler.RandomCanglimoDigest)
+	rssZsxqRandom.Name = "RSS route for zsxq random canglimo digest"
 
 	rssZhihu := rssGroup.Group("/zhihu")
 

@@ -19,7 +19,7 @@ type Controller struct {
 	notifier notify.Notifier
 }
 
-func NewXiaobotController(redis redis.Redis,
+func NewController(redis redis.Redis,
 	cookie cookie.CookieIface,
 	db xiaobotDB.DB,
 	n notify.Notifier,

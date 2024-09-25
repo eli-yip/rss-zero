@@ -36,7 +36,7 @@ type ZsxqExportResp struct {
 	URL      string `json:"url"`
 }
 
-func (h *ZsxqController) Export(c echo.Context) (err error) {
+func (h *Controoler) Export(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req ZxsqExportReq
@@ -169,7 +169,7 @@ func (h *ZsxqController) Export(c echo.Context) (err error) {
 
 var errGroupIDEmpty = errors.New("group id is empty")
 
-func (h *ZsxqController) parseOption(req *ZxsqExportReq) (zsxqExport.Option, error) {
+func (h *Controoler) parseOption(req *ZxsqExportReq) (zsxqExport.Option, error) {
 	var opts zsxqExport.Option
 	var err error
 
