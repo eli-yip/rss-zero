@@ -97,7 +97,7 @@ func (r *RssGenerator) generateRandomCanglimoDigest(logger *zap.Logger) (rssCont
 		return "", fmt.Errorf("failed to generate random canglimo digest rss: %w", err)
 	}
 
-	if err = r.redis.Set(redis.ZsxqRandomCanglimoDigestPath, rssContent, redis.RSSDefaultTTL); err != nil {
+	if err = r.redis.Set(redis.ZsxqRandomCanglimoDigestPath, rssContent, redis.RSSRandomTTL); err != nil {
 		return "", fmt.Errorf("failed to set random canglimo digest rss to redis: %w", err)
 	}
 
