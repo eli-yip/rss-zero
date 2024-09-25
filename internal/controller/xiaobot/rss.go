@@ -13,48 +13,49 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
+	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 )
 
 func (h *Controller) RSS(c echo.Context) (err error) {
-	l := common.ExtractLogger(c)
+	logger := common.ExtractLogger(c)
 
 	paperID := c.Get("feed_id").(string)
-	l.Info("Retrieved rss request", zap.String("paper id", paperID))
+	logger.Info("Retrieved rss request", zap.String("paper id", paperID))
 
-	if err = h.checkPaper(paperID, l); err != nil {
+	if err = h.checkPaper(paperID, logger); err != nil {
 		if errors.Is(err, errPaperNotExistInXiaobot) {
 			err = errors.Join(err, errors.New("paper does not exist in xiaobot"))
-			l.Error("Error return rss", zap.String("paper id", paperID), zap.Error(err))
+			logger.Error("Error return rss", zap.String("paper id", paperID), zap.Error(err))
 			return c.String(http.StatusBadRequest, "paper does not exist in xiaobot")
 		}
-		l.Error("Failed checking paper", zap.Error(err))
+		logger.Error("Failed checking paper", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "failed to check paper")
 	}
-	l.Info("Checked paper")
+	logger.Info("Checked paper")
 
-	rss, err := h.getRSS(fmt.Sprintf(redis.XiaobotRSSPath, paperID), l)
+	rss, err := h.getRSS(fmt.Sprintf(redis.XiaobotRSSPath, paperID), logger)
 	if err != nil {
-		l.Error("Failed getting rss from redis", zap.Error(err))
+		logger.Error("Failed getting rss from redis", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "Failed getting rss from redis")
 	}
-	l.Info("Retrieved rss from redis")
+	logger.Info("Retrieved rss from redis")
 
 	return c.String(http.StatusOK, rss)
 }
 
-func (h *Controller) getRSS(key string, l *zap.Logger) (output string, err error) {
-	l = l.With(zap.String("rss path", key))
-	defer l.Info("task chnnel closes")
+func (h *Controller) getRSS(key string, logger *zap.Logger) (output string, err error) {
+	logger = logger.With(zap.String("rss path", key))
+	defer logger.Info("Task channel closes")
 
-	task := common.Task{TextCh: make(chan string), ErrCh: make(chan error)}
+	task := common.Task{TextCh: make(chan string), ErrCh: make(chan error), Logger: logger}
 	defer close(task.TextCh)
 	defer close(task.ErrCh)
 
 	h.taskCh <- task
 	task.TextCh <- key
-	l.Info("task sent to task channel")
+	logger.Info("Task sent to task channel")
 
 	select {
 	case output := <-task.TextCh:
@@ -66,50 +67,37 @@ func (h *Controller) getRSS(key string, l *zap.Logger) (output string, err error
 
 var errPaperNotExistInXiaobot = errors.New("paper does not exist in xiaobot")
 
-func (h *Controller) processTask() {
-	for task := range h.taskCh {
-		key := <-task.TextCh
+type RssGenerator struct {
+	db    xiaobotDB.DB
+	redis redis.Redis
+}
 
-		content, err := h.redis.Get(key)
-		if err == nil {
-			task.TextCh <- content
-			continue
-		}
-
-		if errors.Is(err, redis.ErrKeyNotExist) {
-			content, err = h.generateRSS(key)
-			if err != nil {
-				task.ErrCh <- err
-				continue
-			}
-			task.TextCh <- content
-			continue
-		}
-
-		task.ErrCh <- err
-		continue
+func NewRssGenerator(db xiaobotDB.DB, redis redis.Redis) *RssGenerator {
+	return &RssGenerator{
+		db:    db,
+		redis: redis,
 	}
 }
 
-func (h *Controller) generateRSS(key string) (output string, err error) {
-	paperID, err := h.extractPaperID(key)
+func (r *RssGenerator) generateRSS(key string, logger *zap.Logger) (output string, err error) {
+	paperID, err := r.extractPaperID(key)
 	if err != nil {
 		return "", err
 	}
 
-	_, content, err := rss.GenerateXiaobot(paperID, h.db, h.l)
+	_, content, err := rss.GenerateXiaobot(paperID, r.db, logger)
 	if err != nil {
 		return "", err
 	}
 
-	if err = h.redis.Set(key, content, redis.RSSDefaultTTL); err != nil {
+	if err = r.redis.Set(key, content, redis.RSSDefaultTTL); err != nil {
 		return "", err
 	}
 
 	return content, nil
 }
 
-func (h *Controller) extractPaperID(key string) (paperID string, err error) {
+func (r *RssGenerator) extractPaperID(key string) (paperID string, err error) {
 	strs := strings.Split(key, "_")
 	if len(strs) != 3 {
 		return "", errors.New("invalid rss key")
@@ -133,7 +121,7 @@ func (h *Controller) checkPaper(paperID string, logger *zap.Logger) (err error) 
 		}
 		logger.Info("Retrieved xiaobot token from db")
 
-		requestService := request.NewRequestService(h.cookie, token, h.l)
+		requestService := request.NewRequestService(h.cookie, token, h.logger)
 		data, err := requestService.Limit(fmt.Sprintf("https://api.xiaobot.net/paper/%s?refer_channel=", paperID))
 		if err != nil {
 			return err

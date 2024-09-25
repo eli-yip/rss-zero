@@ -15,7 +15,7 @@ type Controller struct {
 	cookie   cookie.CookieIface
 	db       xiaobotDB.DB
 	taskCh   chan common.Task
-	l        *zap.Logger
+	logger   *zap.Logger
 	notifier notify.Notifier
 }
 
@@ -23,15 +23,17 @@ func NewXiaobotController(redis redis.Redis,
 	cookie cookie.CookieIface,
 	db xiaobotDB.DB,
 	n notify.Notifier,
-	l *zap.Logger) *Controller {
+	logger *zap.Logger) *Controller {
 	h := &Controller{
 		redis:    redis,
 		cookie:   cookie,
 		db:       db,
 		taskCh:   make(chan common.Task, 100),
 		notifier: n,
-		l:        l,
+		logger:   logger,
 	}
-	go h.processTask()
+	rssGenerator := NewRssGenerator(h.db, h.redis)
+	taskProcessor := common.BuildTaskProcessor(h.taskCh, h.redis, rssGenerator.generateRSS)
+	go taskProcessor()
 	return h
 }

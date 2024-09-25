@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -37,7 +38,7 @@ func (h *ZsxqController) getRSS(key string, logger *zap.Logger) (content string,
 	logger = logger.With(zap.String("key", key))
 	defer logger.Info("task channel closed")
 
-	task := common.Task{TextCh: make(chan string), ErrCh: make(chan error)}
+	task := common.Task{TextCh: make(chan string), ErrCh: make(chan error), Logger: logger}
 	defer close(task.TextCh)
 	defer close(task.ErrCh)
 
@@ -53,52 +54,39 @@ func (h *ZsxqController) getRSS(key string, logger *zap.Logger) (content string,
 	}
 }
 
-func (h *ZsxqController) processTask() {
-	for task := range h.taskCh {
-		key := <-task.TextCh
+type RssGenerator struct {
+	db    *gorm.DB
+	redis redis.Redis
+}
 
-		content, err := h.redis.Get(key)
-		if err == nil {
-			task.TextCh <- content
-			continue
-		}
-
-		if errors.Is(err, redis.ErrKeyNotExist) {
-			content, err = h.generateRSS(key)
-			if err != nil {
-				task.ErrCh <- err
-				continue
-			}
-			task.TextCh <- content
-			continue
-		}
-
-		task.ErrCh <- err
-		continue
+func NewRssGenerator(db *gorm.DB, redis redis.Redis) *RssGenerator {
+	return &RssGenerator{
+		db:    db,
+		redis: redis,
 	}
 }
 
-func (h *ZsxqController) generateRSS(key string) (output string, err error) {
-	groupID, err := h.extractGroupIDFromKey(key)
+func (r *RssGenerator) generateRSS(key string, logger *zap.Logger) (output string, err error) {
+	groupID, err := r.extractGroupIDFromKey(key)
 	if err != nil {
 		return "", err
 	}
 
-	zsxqDBService := zsxqDB.NewDBService(h.db)
+	zsxqDBService := zsxqDB.NewDBService(r.db)
 
-	path, content, err := rss.GenerateZSXQ(groupID, zsxqDBService, h.logger)
+	path, content, err := rss.GenerateZSXQ(groupID, zsxqDBService, logger)
 	if err != nil {
 		return "", err
 	}
 
-	if err = h.redis.Set(path, content, redis.RSSDefaultTTL); err != nil {
+	if err = r.redis.Set(path, content, redis.RSSDefaultTTL); err != nil {
 		return "", err
 	}
 
 	return content, nil
 }
 
-func (h *ZsxqController) extractGroupIDFromKey(key string) (groupID int, err error) {
+func (r *RssGenerator) extractGroupIDFromKey(key string) (groupID int, err error) {
 	strs := strings.Split(key, "_")
 	if len(strs) != 3 {
 		return 0, errors.New("invalid key")

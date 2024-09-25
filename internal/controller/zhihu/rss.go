@@ -19,6 +19,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	zhihuCrawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawl"
+	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/random"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
@@ -134,67 +135,45 @@ func (h *Controller) getRSS(key string, logger *zap.Logger) (content string, err
 	}
 }
 
-// processTask processes the task from the task channel.
-// It will get the RSS content from Redis and send it to the task channel.
-// If the content does not exist in Redis, it will generate the RSS content and set it to Redis.
-func (h *Controller) processTask() {
-	for task := range h.taskCh {
-		key := <-task.TextCh
-		logger := task.Logger
-
-		content, err := h.redis.Get(key)
-		if err == nil {
-			task.TextCh <- content
-			logger.Info("Get rss from redis successfully")
-			continue
-		}
-
-		if errors.Is(err, redis.ErrKeyNotExist) {
-			logger.Info("Key does not exist in redis, start to generate rss")
-			content, err = h.generateRSS(key, task.Logger)
-			if err != nil {
-				task.ErrCh <- err
-				continue
-			}
-			logger.Info("Generate rss successfully")
-			task.TextCh <- content
-			continue
-		}
-
-		task.ErrCh <- err
-	}
+type RssGenerator struct {
+	redis redis.Redis
+	db    zhihuDB.DB
 }
 
-// generateRSS generates rss content and set it to redis.
-func (h *Controller) generateRSS(key string, logger *zap.Logger) (content string, err error) {
+func NewRssGenerator(redis redis.Redis, db zhihuDB.DB) *RssGenerator {
+	return &RssGenerator{redis: redis, db: db}
+}
+
+// GenerateRSS generates rss content and set it to redis.
+func (r *RssGenerator) GenerateRSS(key string, logger *zap.Logger) (content string, err error) {
 	if key == redis.ZhihuRandomCanglimoAnswersPath {
-		return h.generateRandomCanglimoAnswers(logger)
+		return r.generateRandomCanglimoAnswers(logger)
 	}
 
-	contentType, authorID, err := h.extractTypeAuthorFromKey(key)
+	contentType, authorID, err := r.extractTypeAuthorFromKey(key)
 	if err != nil {
 		return "", fmt.Errorf("failed to extract type and authorID from key: %w", err)
 	}
 
-	_, content, err = rss.GenerateZhihu(contentType, authorID, time.Time{}, h.db, logger)
+	_, content, err = rss.GenerateZhihu(contentType, authorID, time.Time{}, r.db, logger)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate zhihu rss: %w", err)
 	}
 
-	if err := h.redis.Set(key, content, redis.RSSDefaultTTL); err != nil {
+	if err := r.redis.Set(key, content, redis.RSSDefaultTTL); err != nil {
 		return "", fmt.Errorf("failed to set rss to redis: %w", err)
 	}
 
 	return content, nil
 }
 
-func (h *Controller) generateRandomCanglimoAnswers(logger *zap.Logger) (string, error) {
-	rssContent, err := random.GenerateRandomCanglimoAnswerRSS(h.db, logger)
+func (r *RssGenerator) generateRandomCanglimoAnswers(logger *zap.Logger) (string, error) {
+	rssContent, err := random.GenerateRandomCanglimoAnswerRSS(r.db, logger)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate random canglimo answers: %w", err)
 	}
 
-	if err := h.redis.Set(redis.ZhihuRandomCanglimoAnswersPath, rssContent, redis.RSSRandomTTL); err != nil {
+	if err := r.redis.Set(redis.ZhihuRandomCanglimoAnswersPath, rssContent, redis.RSSRandomTTL); err != nil {
 		return "", fmt.Errorf("failed to set random canglimo answers to redis: %w", err)
 	}
 
@@ -204,7 +183,7 @@ func (h *Controller) generateRandomCanglimoAnswers(logger *zap.Logger) (string, 
 // extractTypeAuthorFromKey extracts type and authorID from rss content key.
 //
 // key format: zhihu_rss_{type}_{authorID}
-func (h *Controller) extractTypeAuthorFromKey(key string) (t int, authorID string, err error) {
+func (r *RssGenerator) extractTypeAuthorFromKey(key string) (t int, authorID string, err error) {
 	strs := strings.Split(key, "_")
 	if len(strs) != 4 {
 		return 0, "", fmt.Errorf("invalid key: %s", key)

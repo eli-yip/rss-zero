@@ -28,6 +28,8 @@ func NewZsxqHandler(redis redis.Redis, cookie cookie.CookieIface, db *gorm.DB, n
 		notifier: notifier,
 		taskCh:   make(chan common.Task, 100),
 	}
-	go h.processTask()
+	rssGenerator := NewRssGenerator(db, redis)
+	taskProcessor := common.BuildTaskProcessor(h.taskCh, h.redis, rssGenerator.generateRSS)
+	go taskProcessor()
 	return h
 }

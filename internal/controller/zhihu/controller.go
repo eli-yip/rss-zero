@@ -25,6 +25,9 @@ func NewZhihuHandler(redis redis.Redis, cookie cookie.CookieIface, db zhihuDB.DB
 		notifier: notifier,
 		taskCh:   make(chan common.Task, 100),
 	}
-	go h.processTask()
+
+	rssGenerator := NewRssGenerator(h.redis, h.db)
+	taskProcessor := common.BuildTaskProcessor(h.taskCh, h.redis, rssGenerator.GenerateRSS)
+	go taskProcessor()
 	return h
 }
