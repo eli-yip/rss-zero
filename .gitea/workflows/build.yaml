@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags: ["*"]
+
+jobs:
+  lint:
+    uses: ./.gitea/workflows/lint.yaml
+    secrets: inherit
+  build:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # setup-go automatically cache go.mod and go.sum.
+      # So we don't need use actions/cache to cache go dependencies.
+      # more info: https://github.com/actions/setup-go#caching-dependency-files-and-build-outputs
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          token: ${{ secrets.GH_TOKEN }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN}}
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: docker pull and docker run
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          port: ${{ secrets.PORT }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script_stop: true
+          script: |
+            cd /home/yip/services/rss-zero
+            sed -i "s/TAG=.*/TAG=${{ gitea.ref_name }}/" .env
+            docker compose pull
+            docker compose up -d

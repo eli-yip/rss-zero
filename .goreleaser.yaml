@@ -1,0 +1,43 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+      - GOPROXY=https://goproxy.cn,direct
+    ldflags:
+      - -w -s -X "github.com/eli-yip/rss-zero/internal/version.Version={{ .Tag }}"
+    goos: [darwin, linux]
+    goarch: [arm64, amd64]
+    goamd64:
+      - v1
+      - v3
+    ignore:
+      - goos: darwin
+        goarch: amd64
+      - goos: linux
+        goarch: arm64
+
+dockers:
+  - goos: linux
+    goarch: amd64
+    dockerfile: docker/Dockerfile.goreleaser
+    image_templates:
+      - "eliyip/rss-zero:{{ .Tag }}"
+      - "eliyip/rss-zero:latest"
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--build-arg=VERSION={{ .Tag }}"
+
+archives:
+  - format: tar.gz
+
+release:
+  draft: true
+
+gitea_urls:
+  api: https://gitea.darkeli.com/api/v1
+  download: https://gitea.darkeli.com
