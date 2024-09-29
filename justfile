@@ -30,6 +30,13 @@ tag:
   git tag ${tag_name}
   echo "Created tag: ${tag_name}"
 
+dtag +tags:
+  #!/usr/bin/env bash
+  for tag in {{tags}}; do
+    git tag -d "${tag}" && \
+    git push origin --delete "${tag}"
+  done
+
 list-tag:
   git tag --sort=-v:refname
 
