@@ -34,7 +34,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 
 		defer func() {
 			if errCount > 0 {
-				notify.NoticeWithLogger(notifier, "Failed to crawl xiaobot", "", logger)
+				notify.NoticeWithLogger(notifier, "Failed to crawl xiaobot content", cronID, logger)
 			}
 			if err := recover(); err != nil {
 				logger.Error("xiaobot crawl function panic", zap.Any("err", err))

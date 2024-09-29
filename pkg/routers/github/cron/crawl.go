@@ -33,7 +33,7 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifie
 
 		defer func() {
 			if errCount > 0 {
-				notify.NoticeWithLogger(notifier, "Failed to crawl github release", "", logger)
+				notify.NoticeWithLogger(notifier, "Failed to crawl github content", cronID, logger)
 			}
 			if err := recover(); err != nil {
 				logger.Error("github release crawl function panic", zap.Any("err", err))

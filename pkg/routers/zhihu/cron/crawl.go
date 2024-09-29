@@ -79,7 +79,7 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 
 		defer func() {
 			if errCount > 0 || err != nil {
-				notify.NoticeWithLogger(notifier, "Failed to crawl zhihu", "", logger)
+				notify.NoticeWithLogger(notifier, "Failed to crawl zhihu content", cronID, logger)
 				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
 					logger.Error("Failed to update cron job status", zap.Error(err))
 				}
