@@ -307,6 +307,8 @@ func registerSub(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller,
 
 func registerMigrate(apiGroup *echo.Group, migrateHandler *migrateController.Controller) {
 	migrateApi := apiGroup.Group("/migrate")
-	migrateMinioApi := migrateApi.POST("/20240905", migrateHandler.Migrate)
+	migrateMinioApi := migrateApi.POST("/20240905", migrateHandler.Migrate20240905)
 	migrateMinioApi.Name = "Migrate minio files route 20240905"
+	migrate20240929Api := migrateApi.POST("/20240929", migrateHandler.Migrate20240929)
+	migrate20240929Api.Name = "Migrate db 20240929 route"
 }

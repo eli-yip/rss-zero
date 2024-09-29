@@ -44,6 +44,8 @@ type DBTopic interface {
 	GetTopicIDByShareLink(shareLink string) (id int, err error)
 	// Random select n topics from zsxq_topic table
 	RandomSelect(userID, n int, digest bool) (topics []Topic, err error)
+	// GetTopicForMigrate
+	GetTopicForMigrate() (ts []Topic, err error)
 }
 
 func (s *ZsxqDBService) SaveTopic(t *Topic) error {
@@ -174,4 +176,9 @@ func (s *ZsxqDBService) RandomSelect(userID, n int, digest bool) (topics []Topic
 	}
 
 	return topics, nil
+}
+
+func (s *ZsxqDBService) GetTopicForMigrate() (ts []Topic, err error) {
+	err = s.db.Where("type in ? and title is null", []string{"talk", "q&a"}).Find(&ts).Error
+	return ts, err
 }

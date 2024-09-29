@@ -24,7 +24,7 @@ func NewController(logger *zap.Logger, db *gorm.DB) *Controller {
 	}
 }
 
-func (h *Controller) Migrate(c echo.Context) (err error) {
+func (h *Controller) Migrate20240905(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
@@ -38,4 +38,14 @@ func (h *Controller) Migrate(c echo.Context) (err error) {
 	go migrate.MigrateMinio20240905(minioService, h.db, logger)
 
 	return c.JSON(http.StatusOK, "Start to migrate minio files")
+}
+
+func (h *Controller) Migrate20240929(c echo.Context) (err error) {
+	logger := common.ExtractLogger(c)
+
+	logger.Info("Start to migrate db 20240929")
+
+	go migrate.MigrateDB20240929(h.db, logger)
+
+	return c.JSON(http.StatusOK, "Start to migrate db 20240929")
 }
