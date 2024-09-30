@@ -227,7 +227,7 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			logger.Error("501 error", zap.String("error", encryptErrResp.Error))
 			return nil, ErrBadResponse
 		default:
-			logger.Error("Bad status code", zap.Int("status_code", resp.StatusCode))
+			logger.Error("Bad status code", zap.Int("status_code", resp.StatusCode), zap.String("resp_body", string(body)))
 			continue
 		}
 	}
