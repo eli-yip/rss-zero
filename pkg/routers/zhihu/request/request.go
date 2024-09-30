@@ -66,15 +66,10 @@ type RequestService struct {
 
 type OptionFunc func(*RequestService)
 
-func WithDC0(d_c0 string) OptionFunc { return func(r *RequestService) { r.d_c0 = d_c0 } }
+type Cookie struct{ DC0, ZseCk, ZC0 string }
 
-func WithZC0(z_c0 string) OptionFunc { return func(r *RequestService) { r.z_c0 = z_c0 } }
-
-func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, notifier notify.Notifier, zse_ck string, opts ...OptionFunc) (Requester, error) {
+func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, notifier notify.Notifier, cookie Cookie) (Requester, error) {
 	const defaultMaxRetry = 5
-	if zse_ck == "" {
-		return nil, errors.New("zse_ck is empty")
-	}
 
 	s := &RequestService{
 		client:    &http.Client{},
@@ -82,12 +77,10 @@ func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIf
 		maxRetry:  defaultMaxRetry,
 		dbService: dbService,
 		notify:    notifier,
-		zse_ck:    zse_ck,
+		zse_ck:    cookie.ZseCk,
+		d_c0:      cookie.DC0,
+		z_c0:      cookie.ZC0,
 		logger:    logger,
-	}
-
-	for _, opt := range opts {
-		opt(s)
 	}
 
 	return s, nil

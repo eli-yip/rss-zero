@@ -8,12 +8,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
-	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
-	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
 type (
@@ -133,6 +130,28 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 
 	if req.DC0Cookie != nil {
 		respData.DC0Cookie = &Cookie{}
+		var ttl time.Duration
+		if req.DC0Cookie.ExpireAt != "" {
+			expireAt, err := cookie.ParseArcExpireAt(req.DC0Cookie.ExpireAt)
+			if err != nil {
+				logger.Error("Failed to parse expireAt", zap.Error(err))
+				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
+			}
+
+			ttl = time.Until(expireAt.Add(-1 * 24 * time.Hour))
+
+			if ttl < 0 {
+				logger.Error("Invalid expireAt", zap.String("expireAt", req.DC0Cookie.ExpireAt))
+				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
+			}
+
+			respData.DC0Cookie.ExpireAt = expireAt.Format(time.RFC3339)
+		} else {
+			ttl = redis.ZSECKTTL // Use __zse_ck cookie ttl as default
+			expireAt := time.Now().Add(ttl)
+			respData.DC0Cookie.ExpireAt = expireAt.Format(time.RFC3339)
+		}
+
 		dC0Cookie := req.DC0Cookie.Value
 		d_c0 := cookie.ExtractCookieValue(dC0Cookie, DC0CookieName)
 		if d_c0 == "" {
@@ -141,24 +160,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 		}
 		logger.Info("Retrieve zhihu d_c0 cookie successfully", zap.String("cookie", d_c0))
 
-		zse_ck, err := h.cookie.Get(cookie.CookieTypeZhihuZSECK)
-		if err != nil {
-			logger.Error("Failed to get zhihu zse_ck cookie from db", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
-		}
-		requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), zse_ck, request.WithDC0(dC0Cookie))
-		if err != nil {
-			logger.Error("Failed to create request service", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})
-		}
-
-		if _, err = requestService.LimitRaw(config.C.TestURL.Zhihu, logger); err != nil {
-			logger.Error("Failed to validate zhihu d_c0 cookie", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})
-		}
-		logger.Info("Validate zhihu d_c0 cookie successfully", zap.String("cookie", d_c0))
-
-		if err = h.cookie.Set(cookie.CookieTypeZhihuDC0, d_c0, cookie.DefaultTTL); err != nil {
+		if err = h.cookie.Set(cookie.CookieTypeZhihuDC0, d_c0, ttl); err != nil {
 			logger.Error("Failed to update zhihu d_c0 cookie in db", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
 		}

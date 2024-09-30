@@ -515,11 +515,10 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 		}
 	}
 	if z_c0 == "" {
-		logger.Warn("There is no z_c0 cookie, use server side cookie instead")
+		return nil, nil, nil, errNoZC0
 	}
 	logger.Info("Get z_c0 cookie successfully", zap.String("z_c0", z_c0))
 
-	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
 	zse_ck, err := cs.Get(cookie.CookieTypeZhihuZSECK)
 	if err != nil {
 		if errors.Is(err, cookie.ErrKeyNotExist) {
@@ -533,7 +532,21 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 	}
 	logger.Info("Get zse_ck cookie successfully", zap.String("__zse_ck", zse_ck))
 
-	requestService, err = request.NewRequestService(logger, dbService, notifier, zse_ck, request.WithZC0(z_c0))
+	d_c0, err := cs.Get(cookie.CookieTypeZhihuDC0)
+	if err != nil {
+		if errors.Is(err, cookie.ErrKeyNotExist) {
+			return nil, nil, nil, errNoDC0
+		} else {
+			return nil, nil, nil, err
+		}
+	}
+	if d_c0 == "" {
+		return nil, nil, nil, errNoDC0
+	}
+	logger.Info("Get d_c0 cookie successfully", zap.String("d_c0", d_c0))
+
+	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
+	requestService, err = request.NewRequestService(logger, dbService, notifier, request.Cookie{DC0: d_c0, ZC0: z_c0, ZseCk: zse_ck})
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("fail to init request service: %w", err)
 	}
