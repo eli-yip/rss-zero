@@ -104,15 +104,15 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 			switch {
 			case errors.Is(err, errNoDC0):
 				logger.Error("There is no d_c0 cookie, stop")
-				notify.NoticeWithLogger(notifier, "Need to provide zhihu d_c0 cookie", "", logger)
+				notify.NoticeWithLogger(notifier, "Need to provide zhihu cookie", "Cookie type: d_c0", logger)
 				return
 			case errors.Is(err, errNoZSECK):
-				logger.Error("There is no zse_ck cookie, stop")
-				notify.NoticeWithLogger(notifier, "Need to provide zhihu zse_ck cookie", "", logger)
+				logger.Error("There is no __zse_ck cookie, stop")
+				notify.NoticeWithLogger(notifier, "Need to provide zhihu cookie", "Cookie type: __zse_ck", logger)
 				return
 			case errors.Is(err, errNoZC0):
 				logger.Error("There is no z_c0 cookie, stop")
-				notify.NoticeWithLogger(notifier, "Need to provide zhihu z_c0 cookie", "", logger)
+				notify.NoticeWithLogger(notifier, "Need to provide zhihu cookie", "Cookie type: z_c0", logger)
 				return
 			}
 			logger.Error("Failed to init zhihu services", zap.Error(err))
