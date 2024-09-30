@@ -118,7 +118,6 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 			logger.Error("Failed to init zhihu services", zap.Error(err))
 			return
 		}
-		defer requestService.ClearCache(logger)
 
 		// Check last crawl sub existance
 		if lastCrawl != "" {

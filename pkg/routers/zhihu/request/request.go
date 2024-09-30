@@ -34,8 +34,6 @@ type Requester interface {
 	// NoLimitRaw requests to the given url without limiter and returns raw data,
 	// Commonly used in file download
 	NoLimitStream(string, *zap.Logger) (*http.Response, error)
-	// Clear d_c0 cache
-	ClearCache(*zap.Logger)
 }
 
 var (
@@ -266,28 +264,6 @@ func NoLimitStream(client *http.Client, u string, maxRetry int, logger *zap.Logg
 
 	logger.Error("fail to get zhihu no limit stream", zap.Error(err))
 	return nil, err
-}
-
-func (rs *RequestService) ClearCache(logger *zap.Logger) {
-	logger.Info("Start to clear d_c0 cache")
-	errCount := 0
-	es, err := rs.dbService.GetServices()
-	if err != nil {
-		logger.Error("Failed to get encryption services", zap.Error(err))
-		return
-	}
-	for _, e := range es {
-		if _, err := http.Post(e.URL+"/clear-cache", "application/json", nil); err != nil {
-			logger.Error("Failed to clear d_c0 cache", zap.Error(err), zap.String("zhihu_encryption_url", e.URL))
-			errCount++
-			continue
-		}
-	}
-	if errCount == 0 {
-		logger.Info("Clear d_c0 cache successfully")
-		return
-	}
-	logger.Warn("Failed to clear d_c0 cache", zap.Int("error_count", errCount))
 }
 
 func setReq(u string) (req *http.Request, err error) {

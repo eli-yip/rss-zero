@@ -262,7 +262,6 @@ func (h *Controller) parseAuthorName(authorID string, logger *zap.Logger) (autho
 	if err != nil {
 		return "", fmt.Errorf("failed to create request service: %w", err)
 	}
-	defer requestService.ClearCache(logger)
 
 	bytes, err := requestService.LimitRaw(zhihuCrawl.GenerateAnswerApiURL(authorID, 0), logger)
 	if err != nil {
