@@ -38,10 +38,9 @@ type Requester interface {
 
 var (
 	ErrBadResponse  = errors.New("bad response")
-	ErrEmptyDC0     = errors.New("empty d_c0 cookie")
 	ErrMaxRetry     = errors.New("max retry")
 	ErrUnreachable  = errors.New("unreachable")
-	ErrNeedLogin    = errors.New("need login")
+	ErrNeedZC0      = errors.New("need login")
 	ErrInvalidZSECK = errors.New("invalid zse_ck")
 	ErrInvalidZC0   = errors.New("invalid z_c0")
 	ErrForbidden    = errors.New("forbidden")
@@ -193,14 +192,14 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 				logger.Error("Failed to unmarshal 403 error", zap.Error(err))
 				continue
 			}
-			logger.Error("403 error", zap.String("resp_body", string(body)))
+			logger.Error("Get 403 error", zap.String("resp_body", string(body)))
 			if e403.Error.NeedLogin {
 				logger.Error("Need login according to 403 error")
 				if err = r.dbService.MarkUnavailable(es.ID); err != nil {
 					logger.Error("Failed to mark unavailable", zap.Error(err))
 				}
 				logger.Info("Mark encryption service unavailable successfully")
-				return nil, ErrNeedLogin
+				return nil, ErrNeedZC0
 			} else {
 				return nil, ErrForbidden
 			}
@@ -220,14 +219,8 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
 				logger.Error("Failed to increase failed count", zap.Error(err))
 			}
-			logger.Error("404 error")
+			logger.Error("Get 404 error")
 			return nil, ErrUnreachable
-		case http.StatusInternalServerError:
-			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
-				logger.Error("Failed to increase failed count", zap.Error(err))
-			}
-			logger.Error("Failed to get d_c0 cookie")
-			return nil, ErrEmptyDC0
 		case http.StatusNotImplemented:
 			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
 				logger.Error("Failed to increase failed count", zap.Error(err))

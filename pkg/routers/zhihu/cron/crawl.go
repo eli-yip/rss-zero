@@ -1,7 +1,6 @@
 package cron
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -159,36 +158,8 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						switch {
-						case errors.Is(err, request.ErrEmptyDC0):
-							logger.Error("There is no d_c0 cookie, break")
-							return
-						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
-							}
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
-							logger.Error("Need login, break")
-							return
-						case errors.Is(err, request.ErrInvalidZSECK):
-							if err = removeZSECKCookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new zse_ck", "please provide __zse_ck cookie", logger)
-							logger.Error("Need new zse_ck, break")
-							return
-						case errors.Is(err, request.ErrInvalidZC0):
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new z_c0", "please provide z_c0 cookie", logger)
-							logger.Error("Need new z_c0, break")
-						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
-							logger.Error("No available service for zhihu encryption", zap.Error(err))
+						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						if shouldReturn {
 							return
 						}
 						logger.Error("Failed to crawl answer", zap.Error(err))
@@ -203,36 +174,8 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
 						errCount++
-						switch {
-						case errors.Is(err, request.ErrEmptyDC0):
-							logger.Error("There is no d_c0 cookie, break")
-							return
-						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
-							}
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
-							logger.Error("Need login, break")
-							return
-						case errors.Is(err, request.ErrInvalidZSECK):
-							if err = removeZSECKCookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new zse_ck", "please provide __zse_ck cookie", logger)
-							logger.Error("Need new zse_ck, break")
-							return
-						case errors.Is(err, request.ErrInvalidZC0):
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new z_c0", "please provide z_c0 cookie", logger)
-							logger.Error("Need new z_c0, break")
-						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
-							logger.Error("No available service for zhihu encryption", zap.Error(err))
+						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						if shouldReturn {
 							return
 						}
 						logger.Error("Failed to crawl answer", zap.Error(err))
@@ -263,36 +206,8 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						switch {
-						case errors.Is(err, request.ErrEmptyDC0):
-							logger.Error("There is no d_c0 cookie, break")
-							return
-						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
-							}
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
-							logger.Error("Need login, break")
-							return
-						case errors.Is(err, request.ErrInvalidZSECK):
-							if err = removeZSECKCookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new zse_ck", "please provide __zse_ck cookie", logger)
-							logger.Error("Need new zse_ck, break")
-							return
-						case errors.Is(err, request.ErrInvalidZC0):
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new z_c0", "please provide z_c0 cookie", logger)
-							logger.Error("Need new z_c0, break")
-						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
-							logger.Error("No available service for zhihu encryption", zap.Error(err))
+						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						if shouldReturn {
 							return
 						}
 						logger.Error("Failed to crawl article", zap.Error(err))
@@ -307,36 +222,8 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
 						errCount++
-						switch {
-						case errors.Is(err, request.ErrEmptyDC0):
-							logger.Error("There is no d_c0 cookie, break")
-							return
-						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
-							}
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
-							logger.Error("Need login, break")
-							return
-						case errors.Is(err, request.ErrInvalidZSECK):
-							if err = removeZSECKCookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new zse_ck", "please provide __zse_ck cookie", logger)
-							logger.Error("Need new zse_ck, break")
-							return
-						case errors.Is(err, request.ErrInvalidZC0):
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new z_c0", "please provide z_c0 cookie", logger)
-							logger.Error("Need new z_c0, break")
-						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
-							logger.Error("No available service for zhihu encryption", zap.Error(err))
+						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						if shouldReturn {
 							return
 						}
 						logger.Error("Failed to crawl article", zap.Error(err))
@@ -367,36 +254,8 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						switch {
-						case errors.Is(err, request.ErrEmptyDC0):
-							logger.Error("There is no d_c0 cookie, break")
-							return
-						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
-							}
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
-							logger.Error("Need login, break")
-							return
-						case errors.Is(err, request.ErrInvalidZSECK):
-							if err = removeZSECKCookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new zse_ck", "please provide __zse_ck cookie", logger)
-							logger.Error("Need new zse_ck, break")
-							return
-						case errors.Is(err, request.ErrInvalidZC0):
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new z_c0", "please provide z_c0 cookie", logger)
-							logger.Error("Need new z_c0, break")
-						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
-							logger.Error("No available service for zhihu encryption", zap.Error(err))
+						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						if shouldReturn {
 							return
 						}
 						logger.Error("Failed to crawl pin", zap.Error(err))
@@ -411,36 +270,8 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
 						errCount++
-						switch {
-						case errors.Is(err, request.ErrEmptyDC0):
-							logger.Error("There is no d_c0 cookie, break")
-							return
-						case errors.Is(err, request.ErrNeedLogin):
-							if err = removeDC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove d_c0 cookie", zap.Error(err))
-							}
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
-							logger.Error("Need login, break")
-							return
-						case errors.Is(err, request.ErrInvalidZSECK):
-							if err = removeZSECKCookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new zse_ck", "please provide __zse_ck cookie", logger)
-							logger.Error("Need new zse_ck, break")
-							return
-						case errors.Is(err, request.ErrInvalidZC0):
-							if err = removeZC0Cookie(cookieService); err != nil {
-								logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-							}
-							notify.NoticeWithLogger(notifier, "Zhihu need new z_c0", "please provide z_c0 cookie", logger)
-							logger.Error("Need new z_c0, break")
-						case errors.Is(err, zhihuDB.ErrNoAvailableService):
-							notify.NoticeWithLogger(notifier, "No available service for zhihu encryption", "", logger)
-							logger.Error("No available service for zhihu encryption", zap.Error(err))
+						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						if shouldReturn {
 							return
 						}
 						logger.Error("Failed to crawl pin", zap.Error(err))
@@ -524,8 +355,6 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 
 	return dbService, requestService, parser, nil
 }
-
-func removeDC0Cookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuDC0) }
 
 func removeZSECKCookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuZSECK) }
 
