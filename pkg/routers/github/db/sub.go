@@ -16,6 +16,7 @@ type DBSub interface {
 	GetSub(repoID string, preRelease bool) (*Sub, error)
 	GetSubIncludeDeleted(repoID string, preRelease bool) (*Sub, error)
 	GetSubByID(id string) (*Sub, error)
+	GetSubByIDIncludeDeleted(id string) (*Sub, error)
 	GetSubs() ([]Sub, error)
 	GetSubsIncludeDeleted() ([]Sub, error)
 	DeleteSub(id string) error
@@ -43,6 +44,14 @@ func (s *DBService) GetSubIncludeDeleted(repoID string, preRelease bool) (*Sub, 
 func (s *DBService) GetSubByID(id string) (*Sub, error) {
 	var sub Sub
 	if err := s.Where("id = ?", id).First(&sub).Error; err != nil {
+		return nil, err
+	}
+	return &sub, nil
+}
+
+func (s *DBService) GetSubByIDIncludeDeleted(id string) (*Sub, error) {
+	var sub Sub
+	if err := s.Unscoped().Where("id = ?", id).First(&sub).Error; err != nil {
 		return nil, err
 	}
 	return &sub, nil

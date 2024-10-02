@@ -15,7 +15,7 @@ func GenerateGitHub(subID string, dbService githubDB.DB, logger *zap.Logger) (pa
 	rssRender := render.NewRSSRenderService()
 	logger.Info("Init github rss render service successfully")
 
-	sub, err := dbService.GetSubByID(subID)
+	sub, err := dbService.GetSubByIDIncludeDeleted(subID)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get sub info from database: %w", err)
 	}
