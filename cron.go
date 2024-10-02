@@ -64,7 +64,7 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 	}
 	logger.Info("Add canglimo digest random select job successfully", zap.String("job_id", jobID))
 
-	jobID, err = cronService.AddJob("zvideo_crawl", "0,20,40 * * * *", zhihuCron.BuildZvideoCrawlFunc("canglimo", db, notifier, cookieService))
+	jobID, err = cronService.AddJob("zvideo_crawl", "0 0,3,6,9,12,15,18,21 * * *", zhihuCron.BuildZvideoCrawlFunc("canglimo", db, notifier, cookieService))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to add zvideo crawl job: %w", err)
 	}
