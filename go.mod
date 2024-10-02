@@ -9,16 +9,16 @@ require (
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/go-co-op/gocron/v2 v2.12.1
-	github.com/go-telegram/bot v1.8.1
+	github.com/go-telegram/bot v1.8.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/feeds v1.2.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/lib/pq v1.10.9
-	github.com/minio/minio-go/v7 v7.0.76
+	github.com/minio/minio-go/v7 v7.0.77
 	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/rs/xid v1.6.0
-	github.com/sashabaranov/go-openai v1.30.3
+	github.com/sashabaranov/go-openai v1.31.0
 	github.com/stretchr/testify v1.9.0
 	github.com/yuin/goldmark v1.7.4
 	go.uber.org/zap v1.27.0
@@ -45,7 +45,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.17.10 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
