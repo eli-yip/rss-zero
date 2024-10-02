@@ -24,6 +24,8 @@ func NewController(redis redis.Redis, cookie cookie.CookieIface, db githubDB.DB,
 		notifier: notifier,
 		taskCh:   make(chan common.Task, 100),
 	}
-	go h.processTask()
+	rssGenerator := NewRssGenerator(h.redis, h.db)
+	rssTaskProcessor := common.BuildTaskProcessor(h.taskCh, h.redis, rssGenerator.generateRSS)
+	go rssTaskProcessor()
 	return h
 }

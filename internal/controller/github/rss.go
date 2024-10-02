@@ -75,40 +75,24 @@ func (h *Controller) getRSS(key string, logger *zap.Logger) (rssContent string, 
 	}
 }
 
-func (h *Controller) processTask() {
-	for task := range h.taskCh {
-		key := <-task.TextCh
-
-		content, err := h.redis.Get(key)
-		if err == nil {
-			task.TextCh <- content
-			continue
-		}
-
-		if errors.Is(err, redis.ErrKeyNotExist) {
-			content, err = h.generateRSS(key, task.Logger)
-			if err != nil {
-				task.ErrCh <- err
-				continue
-			}
-			task.TextCh <- content
-			continue
-		}
-
-		task.ErrCh <- err
-		continue
-	}
+type RssGenerator struct {
+	redis redis.Redis
+	db    githubDB.DB
 }
 
-func (h *Controller) generateRSS(key string, logger *zap.Logger) (rssContent string, err error) {
+func NewRssGenerator(redis redis.Redis, db githubDB.DB) *RssGenerator {
+	return &RssGenerator{redis: redis, db: db}
+}
+
+func (r *RssGenerator) generateRSS(key string, logger *zap.Logger) (rssContent string, err error) {
 	id := strings.TrimPrefix(key, fmt.Sprintf(redis.GitHubRSSPath, ""))
 
-	_, content, err := rss.GenerateGitHub(id, h.db, logger)
+	_, content, err := rss.GenerateGitHub(id, r.db, logger)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate rss: %w", err)
 	}
 
-	if err = h.redis.Set(key, content, redis.RSSDefaultTTL); err != nil {
+	if err = r.redis.Set(key, content, redis.RSSDefaultTTL); err != nil {
 		return "", fmt.Errorf("failed to set rss: %w", err)
 	}
 
