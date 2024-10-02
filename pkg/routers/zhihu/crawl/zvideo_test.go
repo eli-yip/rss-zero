@@ -18,7 +18,7 @@ import (
 func TestCrawlZvideo(t *testing.T) {
 	assert := assert.New(t)
 
-	config.InitForTestToml()
+	_ = config.InitForTestToml()
 
 	const user = `canglimo`
 
