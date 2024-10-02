@@ -37,8 +37,8 @@ dtag +tags:
     git push origin --delete "${tag}"
   done
 
-list-tag:
-  git tag --sort=-v:refname
+ltag:
+  git tag | rg -v "v" | sort -r | xargs -n 5 | less
 
 test:
   go test -v {{invocation_directory()}}
