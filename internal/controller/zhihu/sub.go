@@ -58,21 +58,25 @@ func (h *Controller) GetSubs(c echo.Context) error {
 
 	type (
 		SingleSubInfo struct {
+			ID      string `json:"id"`
 			SubType string `json:"sub_type"`
 			Url     string `json:"url"`
 			Deleted bool   `json:"deleted"`
 		}
+
 		SubInfo struct {
 			Nickname  string          `json:"nickname"`
 			SignleSub []SingleSubInfo `json:"single_sub"`
 		}
-		Sub  map[string]SubInfo
+
+		Sub map[string]SubInfo // AuthorID -> All subs of this author
+
 		Resp struct {
 			Subs Sub `json:"subs"`
 		}
 	)
 
-	nicknameMap := make(map[string]string)
+	nicknameMap := make(map[string]string) // AuthorID -> Nickname
 	respMap := make(Sub)
 
 	for _, sub := range filteredSubs {
@@ -87,12 +91,13 @@ func (h *Controller) GetSubs(c echo.Context) error {
 		}
 
 		singleSub := SingleSubInfo{
+			ID:      sub.ID,
 			SubType: pkgCommon.ZhihuTypeToString(sub.Type),
 			Url:     fmt.Sprintf("https://www.zhihu.com/people/%s/%s", sub.AuthorID, pkgCommon.ZhihuTypeToLinkType(sub.Type)),
 			Deleted: sub.DeletedAt.Valid,
 		}
 
-		subInfo, ok := respMap[nickname]
+		subInfo, ok := respMap[sub.AuthorID]
 		if !ok {
 			subInfo = SubInfo{
 				Nickname:  nickname,
