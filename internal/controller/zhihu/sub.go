@@ -138,15 +138,29 @@ func filterSubs(subs []db.Sub, config filterConfig) ([]db.Sub, error) {
 		return filteredSubs, nil
 	}
 
+	contentTypeFilter := buildContentTypeFilter(config.ContentType)
+
 	for _, sub := range subs {
 		if (slices.Contains(config.AuthorID, sub.AuthorID) ||
-			slices.Contains(config.SubID, sub.ID)) &&
-			slices.Contains(config.ContentType, pkgCommon.ZhihuTypeToString(sub.Type)) {
+			slices.Contains(config.SubID, sub.ID)) && contentTypeFilter(sub.Type) {
 			filteredSubs = append(filteredSubs, sub)
 		}
 	}
 
 	return filteredSubs, nil
+}
+
+// buildContentTypeFilter returns a function that filters sub by content type.
+//
+// Parameters contentType is a slice of content type string that user wants to filter.
+func buildContentTypeFilter(contentType []string) func(subContentType int) bool {
+	return func(subContentType int) bool {
+		if len(contentType) == 0 {
+			return true
+		}
+		subContentTypeStr := pkgCommon.ZhihuTypeToString(subContentType)
+		return slices.Contains(contentType, subContentTypeStr)
+	}
 }
 
 func (h *Controller) ActivateSub(c echo.Context) (err error) {
