@@ -29,6 +29,7 @@ func MigrateDB(db *gorm.DB) (err error) {
 		&zhihuDB.Pin{},
 		&zhihuDB.Sub{},
 		&zhihuDB.EncryptionService{},
+		&zhihuDB.Zvideo{},
 
 		&xiaobotDB.Paper{},
 		&xiaobotDB.Post{},

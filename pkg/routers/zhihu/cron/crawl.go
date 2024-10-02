@@ -102,15 +102,15 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 		dbService, requestService, parser, err := initZhihuServices(db, cookieService, logger)
 		if err != nil {
 			switch {
-			case errors.Is(err, errNoDC0):
+			case errors.Is(err, cookie.ErrZhihuNoDC0):
 				logger.Error("There is no d_c0 cookie, stop")
 				notify.NoticeWithLogger(notifier, "Need to provide zhihu cookie", "Cookie type: d_c0", logger)
 				return
-			case errors.Is(err, errNoZSECK):
+			case errors.Is(err, cookie.ErrZhihuNoZSECK):
 				logger.Error("There is no __zse_ck cookie, stop")
 				notify.NoticeWithLogger(notifier, "Need to provide zhihu cookie", "Cookie type: __zse_ck", logger)
 				return
-			case errors.Is(err, errNoZC0):
+			case errors.Is(err, cookie.ErrZhihuNoZC0):
 				logger.Error("There is no z_c0 cookie, stop")
 				notify.NoticeWithLogger(notifier, "Need to provide zhihu cookie", "Cookie type: z_c0", logger)
 				return
@@ -484,12 +484,6 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 	}
 }
 
-var (
-	errNoDC0   = errors.New("no d_c0 cookie")
-	errNoZC0   = errors.New("no z_c0 cookie")
-	errNoZSECK = errors.New("no zse_ck cookie")
-)
-
 func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
 	var err error
 
@@ -505,44 +499,11 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 
 	dbService = zhihuDB.NewDBService(db)
 
-	z_c0, err := cs.Get(cookie.CookieTypeZhihuZC0)
+	d_c0, z_c0, zse_ck, err := cookie.GetCookies(cs, logger)
 	if err != nil {
-		if errors.Is(err, cookie.ErrKeyNotExist) {
-			return nil, nil, nil, errNoZC0
-		} else {
-			return nil, nil, nil, err
-		}
-	}
-	if z_c0 == "" {
-		return nil, nil, nil, errNoZC0
+		return nil, nil, nil, fmt.Errorf("fail to get cookies: %w", err)
 	}
 	logger.Info("Get z_c0 cookie successfully", zap.String("z_c0", z_c0))
-
-	zse_ck, err := cs.Get(cookie.CookieTypeZhihuZSECK)
-	if err != nil {
-		if errors.Is(err, cookie.ErrKeyNotExist) {
-			return nil, nil, nil, errNoZSECK
-		} else {
-			return nil, nil, nil, err
-		}
-	}
-	if zse_ck == "" {
-		return nil, nil, nil, errNoZSECK
-	}
-	logger.Info("Get zse_ck cookie successfully", zap.String("__zse_ck", zse_ck))
-
-	d_c0, err := cs.Get(cookie.CookieTypeZhihuDC0)
-	if err != nil {
-		if errors.Is(err, cookie.ErrKeyNotExist) {
-			return nil, nil, nil, errNoDC0
-		} else {
-			return nil, nil, nil, err
-		}
-	}
-	if d_c0 == "" {
-		return nil, nil, nil, errNoDC0
-	}
-	logger.Info("Get d_c0 cookie successfully", zap.String("d_c0", d_c0))
 
 	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
 	requestService, err = request.NewRequestService(logger, dbService, notifier, request.Cookie{DC0: d_c0, ZC0: z_c0, ZseCk: zse_ck})

@@ -56,6 +56,11 @@ type TomlConfig struct {
 		Zhihu   string `toml:"zhihu"`
 		Xiaobot string `toml:"xiaobot"`
 	} `toml:"test_url"`
+	Zlive struct {
+		ServerUrl string `toml:"server_url"`
+		Username  string `toml:"username"`
+		Password  string `toml:"password"`
+	} `toml:"zlive"`
 	Utils struct {
 		RsshubURL string `toml:"rsshub_url"`
 	} `toml:"utils"`

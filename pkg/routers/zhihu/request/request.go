@@ -62,11 +62,28 @@ type RequestService struct {
 	notify             notify.Notifier
 }
 
+func NewLimiter() <-chan struct{} {
+	var tokenCh chan struct{} = make(chan struct{})
+	go func() {
+		for {
+			tokenCh <- struct{}{}
+			time.Sleep(time.Duration(300+rand.IntN(300)) * time.Second)
+		}
+	}()
+	return tokenCh
+}
+
 type OptionFunc func(*RequestService)
+
+func WithLimiter(limiter <-chan struct{}) OptionFunc {
+	return func(r *RequestService) {
+		r.limiter = limiter
+	}
+}
 
 type Cookie struct{ DC0, ZseCk, ZC0 string }
 
-func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, notifier notify.Notifier, cookie Cookie) (Requester, error) {
+func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, notifier notify.Notifier, cookie Cookie, opts ...OptionFunc) (Requester, error) {
 	const defaultMaxRetry = 5
 
 	s := &RequestService{
@@ -79,6 +96,10 @@ func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIf
 		d_c0:      cookie.DC0,
 		z_c0:      cookie.ZC0,
 		logger:    logger,
+	}
+
+	for _, opt := range opts {
+		opt(s)
 	}
 
 	return s, nil
@@ -190,10 +211,10 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 				continue
 			}
 			if errResp.Error.Code == 100 && errResp.Error.Name == zC0ErrMsg {
-				logger.Error("Invalid z_c0", zap.String("resp_body", string(body)))
+				logger.Error("Invalid z_c0 cookie", zap.String("resp_body", string(body)))
 				return nil, ErrInvalidZC0
 			}
-			logger.Error("Invalid zse_ck", zap.String("resp_body", string(body)))
+			logger.Error("Invalid __zse_ck cookie", zap.String("resp_body", string(body)))
 			return nil, ErrInvalidZSECK
 		case http.StatusNotFound:
 			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {

@@ -14,6 +14,7 @@ type DB interface {
 	DBAuthor
 	DBObject
 	DBSub
+	DBZvideo
 	EncryptionServiceIface
 }
 
