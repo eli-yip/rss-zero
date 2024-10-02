@@ -35,6 +35,8 @@ macked_chat_id = ''
 
 [zlive]
 server_url = ''
+username = ''
+password = ''
 
 [test_url]
 zsxq = ''
