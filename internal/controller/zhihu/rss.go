@@ -239,26 +239,13 @@ var errAuthorNotExistInZhihu = errors.New("author does not exist in zhihu")
 //
 // It will save the author name to db if it's not found in db.
 func (h *Controller) parseAuthorName(authorID string, logger *zap.Logger) (authorName string, err error) {
-	zse_ck, err := h.cookie.Get(cookie.CookieTypeZhihuZSECK)
+	zhihuCookies, err := cookie.GetZhihuCookies(h.cookie, logger)
 	if err != nil {
-		return "", fmt.Errorf("failed to get zhihu __zse_ck cookie from db: %w", err)
+		return "", fmt.Errorf("failed to get zhihu cookies: %w", err)
 	}
-	logger.Info("Get zhihu _zse_ck cookie from db successfully", zap.String("__zse_ck", zse_ck))
+	logger.Info("Get zhihu cookies successfully", zap.Any("cookies", zhihuCookies))
 
-	z_c0, err := h.cookie.Get(cookie.CookieTypeZhihuZC0)
-	if err != nil {
-		return "", fmt.Errorf("failed to get zhihu z_c0 cookie from db: %w", err)
-	}
-	logger.Info("Get zhihu z_c0 cookie from db successfully", zap.String("z_c0", z_c0))
-
-	d_c0, err := h.cookie.Get(cookie.CookieTypeZhihuDC0)
-	if err != nil {
-		return "", fmt.Errorf("failed to get zhihu d_c0 cookie from db: %w", err)
-	}
-	logger.Info("Get zhihu d_c0 cookie from db successfully", zap.String("d_c0", d_c0))
-
-	// skip d_c0 cookie injection, as it's not needed for this request
-	requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), request.Cookie{ZseCk: zse_ck, DC0: d_c0, ZC0: z_c0})
+	requestService, err := request.NewRequestService(logger, h.db, notify.NewBarkNotifier(config.C.Bark.URL), zhihuCookies, request.WithLimiter(request.NewLimiter()))
 	if err != nil {
 		return "", fmt.Errorf("failed to create request service: %w", err)
 	}
