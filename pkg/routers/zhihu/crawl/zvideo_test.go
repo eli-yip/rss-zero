@@ -30,12 +30,12 @@ func TestCrawlZvideo(t *testing.T) {
 	assert.Nil(err)
 
 	cookieService := cookie.NewCookieService(db)
-	d_c0, z_c0, zse_ck, err := cookie.GetCookies(cookieService, logger)
+	cookie, err := cookie.GetZhihuCookies(cookieService, logger)
 	assert.Nil(err)
 	zhihuDBService := zhihuDB.NewDBService(db)
 	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
 
-	requestService, err := request.NewRequestService(logger, zhihuDBService, notifier, request.Cookie{DC0: d_c0, ZseCk: zse_ck, ZC0: z_c0}, request.WithLimiter(request.TokenCh))
+	requestService, err := request.NewRequestService(logger, zhihuDBService, notifier, cookie, request.WithLimiter(request.TokenCh))
 	assert.Nil(err)
 
 	parser := parse.NewZvideoParseService(zhihuDBService)

@@ -499,14 +499,14 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 
 	dbService = zhihuDB.NewDBService(db)
 
-	d_c0, z_c0, zse_ck, err := cookie.GetCookies(cs, logger)
+	zhihuCookies, err := cookie.GetZhihuCookies(cs, logger)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("fail to get cookies: %w", err)
 	}
-	logger.Info("Get z_c0 cookie successfully", zap.String("z_c0", z_c0))
+	logger.Info("Get zhihu cookies successfully", zap.Any("cookie", zhihuCookies))
 
 	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
-	requestService, err = request.NewRequestService(logger, dbService, notifier, request.Cookie{DC0: d_c0, ZC0: z_c0, ZseCk: zse_ck})
+	requestService, err = request.NewRequestService(logger, dbService, notifier, zhihuCookies)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("fail to init request service: %w", err)
 	}

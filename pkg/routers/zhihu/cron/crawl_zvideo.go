@@ -63,12 +63,12 @@ func initZhihuZvideoServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Log
 
 	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
 
-	d_c0, z_c0, zse_ck, err := cookie.GetCookies(cs, logger)
+	zhihuCookies, err := cookie.GetZhihuCookies(cs, logger)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fail to get cookies: %w", err)
 	}
 
-	requestService, err = request.NewRequestService(logger, dbService, notifier, request.Cookie{DC0: d_c0, ZseCk: zse_ck, ZC0: z_c0}, request.WithLimiter(request.NewLimiter()))
+	requestService, err = request.NewRequestService(logger, dbService, notifier, zhihuCookies, request.WithLimiter(request.NewLimiter()))
 	if err != nil {
 		return nil, nil, fmt.Errorf("fail to init request service: %w", err)
 	}

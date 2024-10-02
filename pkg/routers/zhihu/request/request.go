@@ -83,7 +83,7 @@ func WithLimiter(limiter <-chan struct{}) OptionFunc {
 
 type Cookie struct{ DC0, ZseCk, ZC0 string }
 
-func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, notifier notify.Notifier, cookie Cookie, opts ...OptionFunc) (Requester, error) {
+func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIface, notifier notify.Notifier, cookie *Cookie, opts ...OptionFunc) (Requester, error) {
 	const defaultMaxRetry = 5
 
 	s := &RequestService{

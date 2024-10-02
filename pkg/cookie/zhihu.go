@@ -3,6 +3,7 @@ package cookie
 import (
 	"errors"
 
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"go.uber.org/zap"
 )
 
@@ -12,45 +13,50 @@ var (
 	ErrZhihuNoZSECK = errors.New("no zse_ck cookie")
 )
 
-func GetCookies(cs CookieIface, logger *zap.Logger) (d_c0, z_c0, zse_ck string, err error) {
-	d_c0, err = cs.Get(CookieTypeZhihuDC0)
+func GetZhihuCookies(cs CookieIface, logger *zap.Logger) (cookie *request.Cookie, err error) {
+	cookie = &request.Cookie{}
+	d_c0, err := cs.Get(CookieTypeZhihuDC0)
 	if err != nil {
 		if errors.Is(err, ErrKeyNotExist) {
-			return "", "", "", ErrZhihuNoDC0
+			return nil, ErrZhihuNoDC0
 		} else {
-			return "", "", "", err
+			return nil, err
 		}
 	}
 	if d_c0 == "" {
-		return "", "", "", ErrZhihuNoDC0
+		return nil, ErrZhihuNoDC0
 	}
 	logger.Info("Get d_c0 cookie successfully", zap.String("d_c0", d_c0))
 
-	z_c0, err = cs.Get(CookieTypeZhihuZC0)
+	z_c0, err := cs.Get(CookieTypeZhihuZC0)
 	if err != nil {
 		if errors.Is(err, ErrKeyNotExist) {
-			return "", "", "", ErrZhihuNoZC0
+			return nil, ErrZhihuNoZC0
 		} else {
-			return "", "", "", err
+			return nil, err
 		}
 	}
 	if z_c0 == "" {
-		return "", "", "", ErrZhihuNoZC0
+		return nil, ErrZhihuNoZC0
 	}
 	logger.Info("Get z_c0 cookie successfully", zap.String("z_c0", z_c0))
 
-	zse_ck, err = cs.Get(CookieTypeZhihuZSECK)
+	zse_ck, err := cs.Get(CookieTypeZhihuZSECK)
 	if err != nil {
 		if errors.Is(err, ErrKeyNotExist) {
-			return "", "", "", ErrZhihuNoZSECK
+			return nil, ErrZhihuNoZSECK
 		} else {
-			return "", "", "", err
+			return nil, err
 		}
 	}
 	if zse_ck == "" {
-		return "", "", "", ErrZhihuNoZSECK
+		return nil, ErrZhihuNoZSECK
 	}
 	logger.Info("Get __zse_ck cookie successfully", zap.String("__zse_ck", zse_ck))
 
-	return d_c0, z_c0, zse_ck, nil
+	cookie.DC0 = d_c0
+	cookie.ZC0 = z_c0
+	cookie.ZseCk = zse_ck
+
+	return cookie, nil
 }
