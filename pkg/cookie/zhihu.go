@@ -3,6 +3,7 @@ package cookie
 import (
 	"errors"
 
+	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"go.uber.org/zap"
 )
@@ -10,7 +11,7 @@ import (
 var (
 	ErrZhihuNoDC0   = errors.New("no d_c0 cookie")
 	ErrZhihuNoZC0   = errors.New("no z_c0 cookie")
-	ErrZhihuNoZSECK = errors.New("no zse_ck cookie")
+	ErrZhihuNoZSECK = errors.New("no __zse_ck cookie")
 )
 
 func GetZhihuCookies(cs CookieIface, logger *zap.Logger) (cookie *request.Cookie, err error) {
@@ -59,4 +60,23 @@ func GetZhihuCookies(cs CookieIface, logger *zap.Logger) (cookie *request.Cookie
 	cookie.ZseCk = zse_ck
 
 	return cookie, nil
+}
+
+func HandleZhihuCookiesErr(err error, notifier notify.Notifier, logger *zap.Logger) (otherErr error) {
+	switch {
+	case errors.Is(err, ErrZhihuNoDC0):
+		logger.Error("There is no d_c0 cookie, stop")
+		notify.NoticeWithLogger(notifier, "Need to provide zhihu d_c0 cookie", "", logger)
+		return nil
+	case errors.Is(err, ErrZhihuNoZSECK):
+		logger.Error("There is no __zse_ck cookie, stop")
+		notify.NoticeWithLogger(notifier, "Need to provide zhihu zse_ck cookie", "", logger)
+		return nil
+	case errors.Is(err, ErrZhihuNoZC0):
+		logger.Error("There is no z_c0 cookie, stop")
+		notify.NoticeWithLogger(notifier, "Need to provide zhihu z_c0 cookie", "", logger)
+		return nil
+	default:
+		return err
+	}
 }

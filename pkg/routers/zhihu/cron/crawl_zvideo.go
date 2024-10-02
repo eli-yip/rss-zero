@@ -1,7 +1,6 @@
 package cron
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/rs/xid"
@@ -24,21 +23,10 @@ func BuildZvideoCrawlFunc(user string, db *gorm.DB, notifier notify.Notifier, cs
 
 		requestService, parser, err := initZhihuZvideoServices(db, cs, logger)
 		if err != nil {
-			switch {
-			case errors.Is(err, cookie.ErrZhihuNoDC0):
-				logger.Error("There is no d_c0 cookie, stop")
-				notify.NoticeWithLogger(notifier, "Need to provide zhihu d_c0 cookie", "", logger)
-				return
-			case errors.Is(err, cookie.ErrZhihuNoZSECK):
-				logger.Error("There is no zse_ck cookie, stop")
-				notify.NoticeWithLogger(notifier, "Need to provide zhihu zse_ck cookie", "", logger)
-				return
-			case errors.Is(err, cookie.ErrZhihuNoZC0):
-				logger.Error("There is no z_c0 cookie, stop")
-				notify.NoticeWithLogger(notifier, "Need to provide zhihu z_c0 cookie", "", logger)
-				return
+			otherErr := cookie.HandleZhihuCookiesErr(err, notifier, logger)
+			if otherErr != nil {
+				logger.Error("Failed to init zvideo services", zap.Error(otherErr))
 			}
-			logger.Error("Failed to init zhihu services", zap.Error(err))
 			return
 		}
 
