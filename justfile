@@ -37,7 +37,7 @@ dtag +tags:
     git push origin --delete "${tag}"
   done
 
-ltag:
+@ltag:
   git tag | rg -v "v" | sort -r | xargs -n 5 | less
 
 test:
