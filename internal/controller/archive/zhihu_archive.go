@@ -10,15 +10,11 @@ import (
 )
 
 func (h *Controller) HandleZhihuAnswer(link string) (html string, err error) {
-	answerID, err := ExtractAnswerID(link)
+	zhihuAnswer, err := ExtractAnswerID(link)
 	if err != nil {
 		return "", fmt.Errorf("failed to extract answer id: %w", err)
 	}
-
-	answerIDint, err := strconv.Atoi(answerID)
-	if err != nil {
-		return "", fmt.Errorf("failed to convert answer id to int: %w", err)
-	}
+	answerIDint := zhihuAnswer.answerID
 
 	answer, err := h.zhihuDBService.GetAnswer(answerIDint)
 	if err != nil {
@@ -138,17 +134,30 @@ func (h *Controller) HandleZhihuPin(link string) (html string, err error) {
 	return html, nil
 }
 
-func ExtractAnswerID(link string) (string, error) {
+type zhihuAnswer struct{ questionID, answerID int }
+
+func ExtractAnswerID(link string) (*zhihuAnswer, error) {
 	parsedURL, err := url.Parse(link)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	re := regexp.MustCompile(`^/question/\d+/answer/(\d+)`)
+	re := regexp.MustCompile(`^/question/(\d+)/answer/(\d+)`)
 	matches := re.FindStringSubmatch(parsedURL.Path)
-	if len(matches) == 2 {
-		return matches[1], nil
+	if len(matches) == 3 {
+		questionID, err := strconv.Atoi(matches[1])
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert question id to int: %w", err)
+		}
+		answerID, err := strconv.Atoi(matches[2])
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert answer id to int: %w", err)
+		}
+		return &zhihuAnswer{
+			questionID: questionID,
+			answerID:   answerID,
+		}, nil
 	}
-	return "", fmt.Errorf("no match found")
+	return nil, fmt.Errorf("no match found")
 }
 
 func ExtractArticleID(link string) (string, error) {

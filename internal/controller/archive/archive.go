@@ -10,8 +10,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/utils"
+	"github.com/eli-yip/rss-zero/pkg/render"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
@@ -99,18 +101,25 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 func (h *Controller) History(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
+	requestID := c.Response().Header().Get(echo.HeaderXRequestID)
+
 	u := c.Param("url")
 	u, err = url.PathUnescape(u)
 	if err != nil {
 		logger.Error("Failed to unescape url", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Failed to unescape url: " + err.Error()})
+		return c.HTML(http.StatusBadRequest, renderErrorPage(err, requestID))
 	}
 	logger.Info("Get history url", zap.String("url", u))
+
+	params := c.QueryParams()
+	if len(params) > 0 {
+		return c.Redirect(http.StatusFound, render.BuildArchiveLink(config.C.Settings.ServerURL, u))
+	}
 
 	html, err := h.handleRequestArchiveLink(u)
 	if err != nil {
 		logger.Error("Failed to handle zhihu link", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to handle link: " + err.Error()})
+		return c.HTML(http.StatusBadRequest, renderErrorPage(err, requestID))
 	}
 	return c.HTML(http.StatusOK, html)
 }
@@ -128,5 +137,48 @@ func (h *Controller) handleRequestArchiveLink(link string) (html string, err err
 	case regexp.MustCompile(`t\.zsxq\.com/\w+`).MatchString(link):
 		return h.HandleZsxqShareLink(link)
 	}
-	return "", nil
+	return "", fmt.Errorf("unknown link: %s", link)
+}
+
+func renderErrorPage(err error, requestID string) string {
+	tmpl := `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive History Error</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .error-box {
+            width: 600px;
+            height: 150px;
+            background-color: #a1afc9;
+            color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+						flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-box">
+        <h2>%s</h2>
+				<p><pre><code>%s</code></pre></p>
+    </div>
+</body>
+</html>`
+	return fmt.Sprintf(tmpl, err.Error(), requestID)
 }
