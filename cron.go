@@ -80,18 +80,18 @@ func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookie
 	}
 
 	for _, job := range runningJobs {
-		definition, err := cronDBService.GetDefinition(job.TaskType)
+		def, err := cronDBService.GetDefinition(job.TaskType)
 		if err != nil {
 			return fmt.Errorf("failed to get cron task definition: %w", err)
 		}
 
-		switch definition.Type {
+		switch def.Type {
 		case cronDB.TypeZsxq:
-			crawlFunc := cron.GenerateRealCrawlFunc(zsxqCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, cookieService, db, notifier))
+			crawlFunc := cron.GenerateRealCrawlFunc(zsxqCron.Crawl(job.ID, def.ID, def.Include, def.Exclude, job.Detail, redisService, cookieService, db, notifier))
 			go crawlFunc()
 			logger.Info("Start zsxq running job", zap.String("job_id", job.ID))
 		case cronDB.TypeZhihu:
-			crawlFunc := cron.GenerateRealCrawlFunc(zhihuCron.Crawl(job.ID, definition.ID, &zhihuCron.FilterConfig{Include: definition.Include, Exclude: definition.Exclude, LastCrawl: job.Detail}, redisService, cookieService, db, notifier))
+			crawlFunc := cron.GenerateRealCrawlFunc(zhihuCron.Crawl(job.ID, def.ID, &zhihuCron.FilterConfig{Include: def.Include, Exclude: def.Exclude, LastCrawl: job.Detail}, &zhihuCron.Service{RedisService: redisService, CookieService: cookieService, Notifier: notifier, DB: db}))
 			go crawlFunc()
 			logger.Info("Start zhihu running job", zap.String("job_id", job.ID))
 		case cronDB.TypeXiaobot:
@@ -104,7 +104,7 @@ func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookie
 				return fmt.Errorf("failed to stop github running job: %w", err)
 			}
 		default:
-			return fmt.Errorf("unknown cron job type %d", definition.Type)
+			return fmt.Errorf("unknown cron job type %d", def.Type)
 		}
 	}
 	return nil
@@ -133,7 +133,7 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		case cronDB.TypeZhihu:
-			crawlFunc = zhihuCron.Crawl("", def.ID, &zhihuCron.FilterConfig{Include: def.Include, Exclude: def.Exclude, LastCrawl: ""}, redisService, cookieService, db, notifier)
+			crawlFunc = zhihuCron.Crawl("", def.ID, &zhihuCron.FilterConfig{Include: def.Include, Exclude: def.Exclude, LastCrawl: ""}, &zhihuCron.Service{RedisService: redisService, CookieService: cookieService, Notifier: notifier, DB: db})
 			if jobID, err = cronService.AddCrawlJob("zhihu_crawl", def.CronExpr, crawlFunc); err != nil {
 				return nil, fmt.Errorf("failed to add zhihu cron job: %w", err)
 			}

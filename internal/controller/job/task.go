@@ -69,7 +69,7 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 	var crawlFunc CrawlFunc
 	switch taskType {
 	case cronDB.TypeZsxq:
-		crawlFunc = zsxqCron.Crawl("", taskID, include, exclude, "", h.redisService, h.cookie, h.db, h.notifier)
+		crawlFunc = zsxqCron.Crawl("", taskID, include, exclude, "", h.redisService, h.cookieService, h.db, h.notifier)
 		if jobID, err = h.cronService.AddCrawlJob("zsxq_crawl", cronExpr, crawlFunc); err != nil {
 			return "", fmt.Errorf("failed to add crawl job: %w", err)
 		}
@@ -77,7 +77,7 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
 		}
 	case cronDB.TypeZhihu:
-		crawlFunc = zhihuCron.Crawl("", taskID, &zhihuCron.FilterConfig{Include: include, Exclude: exclude, LastCrawl: ""}, h.redisService, h.cookie, h.db, h.notifier)
+		crawlFunc = zhihuCron.Crawl("", taskID, &zhihuCron.FilterConfig{Include: include, Exclude: exclude, LastCrawl: ""}, &zhihuCron.Service{RedisService: h.redisService, CookieService: h.cookieService, Notifier: h.notifier, DB: h.db})
 		if jobID, err = h.cronService.AddCrawlJob("zhihu_crawl", cronExpr, crawlFunc); err != nil {
 			return "", fmt.Errorf("failed to add crawl job: %w", err)
 		}
@@ -85,7 +85,7 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
 		}
 	case cronDB.TypeXiaobot:
-		crawlFunc = xiaobotCron.BuildCronCrawlFunc(h.redisService, h.cookie, h.db, h.notifier)
+		crawlFunc = xiaobotCron.BuildCronCrawlFunc(h.redisService, h.cookieService, h.db, h.notifier)
 		if jobID, err = h.cronService.AddCrawlJob("xiaobot_crawl", cronExpr, crawlFunc); err != nil {
 			return "", fmt.Errorf("failed to add crawl job: %w", err)
 		}
@@ -93,7 +93,7 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
 		}
 	case cronDB.TypeGitHub:
-		crawlFunc = githubCron.Crawl(h.redisService, h.cookie, h.db, h.notifier)
+		crawlFunc = githubCron.Crawl(h.redisService, h.cookieService, h.db, h.notifier)
 		if jobID, err = h.cronService.AddCrawlJob("github_crawl", cronExpr, crawlFunc); err != nil {
 			return "", fmt.Errorf("failed to add crawl job: %w", err)
 		}

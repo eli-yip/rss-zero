@@ -32,7 +32,14 @@ type FilterConfig struct {
 	LastCrawl        string
 }
 
-func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+type Service struct {
+	RedisService  redis.Redis
+	CookieService cookie.CookieIface
+	Notifier      notify.Notifier
+	DB            *gorm.DB
+}
+
+func Crawl(cronIDInDB, taskID string, fc *FilterConfig, srv *Service) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		var cronID = getCronID(cronIDInDB)
 
@@ -41,7 +48,7 @@ func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis
 		var err error
 		var errCount int = 0
 
-		cronDBService := cronDB.NewDBService(db)
+		cronDBService := cronDB.NewDBService(srv.DB)
 		var job *cronDB.CronJob
 		if job, err = setupJob(cronIDInDB, taskID, cronID, cronDBService, logger); err != nil {
 			return
@@ -50,7 +57,7 @@ func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis
 
 		defer func() {
 			if errCount > 0 || err != nil {
-				notify.NoticeWithLogger(notifier, "Failed to crawl zhihu content", cronID, logger)
+				notify.NoticeWithLogger(srv.Notifier, "Failed to crawl zhihu content", cronID, logger)
 				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
 					logger.Error("Failed to update cron job status", zap.Error(err))
 				}
@@ -71,9 +78,9 @@ func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis
 			logger.Info("Zhihu cron job finished.")
 		}()
 
-		dbService, requestService, parser, err := initZhihuServices(db, cookieService, logger)
+		dbService, requestService, parser, err := initZhihuServices(srv.DB, srv.CookieService, logger)
 		if err != nil {
-			otherErr := cookie.HandleZhihuCookiesErr(err, notifier, logger)
+			otherErr := cookie.HandleZhihuCookiesErr(err, srv.Notifier, logger)
 			if otherErr != nil {
 				logger.Error("Failed to init zhihu services", zap.Error(err))
 			}
@@ -123,7 +130,7 @@ func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
 						if shouldReturn {
 							return
 						}
@@ -139,7 +146,7 @@ func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
 						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
 						if shouldReturn {
 							return
 						}
@@ -171,7 +178,7 @@ func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
 						if shouldReturn {
 							return
 						}
@@ -187,7 +194,7 @@ func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
 						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
 						if shouldReturn {
 							return
 						}
@@ -219,7 +226,7 @@ func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
 						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
 						if shouldReturn {
 							return
 						}
@@ -235,7 +242,7 @@ func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
 						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
 						if shouldReturn {
 							return
 						}
@@ -253,7 +260,7 @@ func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis
 				logger.Info("Generate rss content and save to redis successfully")
 			}
 
-			if err = redisService.Set(path, content, redis.RSSDefaultTTL); err != nil {
+			if err = srv.RedisService.Set(path, content, redis.RSSDefaultTTL); err != nil {
 				errCount++
 				logger.Error("Failed to save rss content to redis", zap.Error(err))
 			}
