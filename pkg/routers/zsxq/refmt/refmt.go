@@ -221,6 +221,7 @@ func (s *RefmtService) formatTopic(topic *zsxqDB.Topic, errCh chan errMessage) {
 		AuthorID: topic.AuthorID,
 		Title:    topic.Title,
 		Text:     string(textBytes),
+		Digested: topic.Digested,
 		Raw:      topic.Raw,
 	}); err != nil {
 		logger.Error("failed to update topic", zap.Error(err))
