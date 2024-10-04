@@ -39,7 +39,7 @@ type Service struct {
 	DB            *gorm.DB
 }
 
-func Crawl(cronIDInDB, taskID string, fc *FilterConfig, srv *Service) func(chan cron.CronJobInfo) {
+func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Service) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		var cronID = getCronID(cronIDInDB)
 

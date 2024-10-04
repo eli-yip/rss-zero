@@ -77,7 +77,7 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
 		}
 	case cronDB.TypeZhihu:
-		crawlFunc = zhihuCron.Crawl("", taskID, &zhihuCron.FilterConfig{Include: include, Exclude: exclude, LastCrawl: ""}, &zhihuCron.Service{RedisService: h.redisService, CookieService: h.cookieService, Notifier: h.notifier, DB: h.db})
+		crawlFunc = zhihuCron.BuildZhihuCrawlFunc("", taskID, &zhihuCron.FilterConfig{Include: include, Exclude: exclude, LastCrawl: ""}, &zhihuCron.Service{RedisService: h.redisService, CookieService: h.cookieService, Notifier: h.notifier, DB: h.db})
 		if jobID, err = h.cronService.AddCrawlJob("zhihu_crawl", cronExpr, crawlFunc); err != nil {
 			return "", fmt.Errorf("failed to add crawl job: %w", err)
 		}
