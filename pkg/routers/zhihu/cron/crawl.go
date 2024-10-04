@@ -29,14 +29,7 @@ import (
 
 func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
-		var cronJobInfo cron.CronJobInfo
-
-		var cronID string
-		if cronIDInDB == "" {
-			cronID = xid.New().String()
-		} else {
-			cronID = cronIDInDB
-		}
+		var cronID = getCronID(cronIDInDB)
 
 		logger := log.DefaultLogger.With(zap.String("cron_id", cronID))
 
@@ -47,33 +40,27 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 		jobIDInDB, err := cronDBService.CheckRunningJob(taskID)
 		if err != nil {
 			logger.Error("Failed to check job", zap.Error(err), zap.String("task_type", taskID))
-			cronJobInfo.Err = fmt.Errorf("failed to check job: %w", err)
-			cronJobInfoChan <- cronJobInfo
+			cronJobInfoChan <- cron.CronJobInfo{Err: err}
 			return
 		}
-		logger.Info("Check job according to task type successfully", zap.String("task_type", taskID))
+		logger.Info("Check job by task type successfully", zap.String("task_type", taskID))
 
-		// If there is another job running and this job is a new job(rawCronID is empty), skip this job
-		if jobIDInDB != "" && cronIDInDB == "" {
+		if hasDuplicateJob(jobIDInDB, cronIDInDB) {
 			logger.Info("There is another job running, skip this", zap.String("job_id", jobIDInDB))
-			cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", jobIDInDB)
-			cronJobInfoChan <- cronJobInfo
+			cronJobInfoChan <- cron.CronJobInfo{Err: fmt.Errorf("there is another job running, skip this: %s", jobIDInDB)}
 			return
 		}
 
-		// if raw cron id is empty, this is a new job, add it to db
-		if jobIDInDB == "" && cronIDInDB == "" {
+		if isNewJob(jobIDInDB, cronIDInDB) {
 			logger.Info("New job, start to add it to db")
 			var job *cronDB.CronJob
 			if job, err = cronDBService.AddJob(cronID, taskID); err != nil {
 				logger.Error("Failed to add job", zap.Error(err))
-				cronJobInfo.Err = fmt.Errorf("failed to add job: %w", err)
-				cronJobInfoChan <- cronJobInfo
+				cronJobInfoChan <- cron.CronJobInfo{Err: fmt.Errorf("failed to add job: %w", err)}
 				return
 			}
+			cronJobInfoChan <- cron.CronJobInfo{Job: job}
 			logger.Info("Add job to db successfully", zap.Any("job", job))
-			cronJobInfo.Job = job
-			cronJobInfoChan <- cronJobInfo
 		}
 
 		defer func() {
@@ -96,6 +83,7 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 			if err = cronDBService.UpdateStatus(cronID, cronDB.StatusFinished); err != nil {
 				logger.Error("Failed to update cron job status", zap.Error(err))
 			}
+			logger.Info("Zhihu cron job finished.")
 		}()
 
 		dbService, requestService, parser, err := initZhihuServices(db, cookieService, logger)
@@ -107,18 +95,10 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 			return
 		}
 
-		// Check last crawl sub existance
-		if lastCrawl != "" {
-			logger.Info("Last crawl sub id is set", zap.String("id", lastCrawl))
-			exist, err := dbService.CheckSubByID(lastCrawl)
-			if err != nil {
-				logger.Error("Failed to check sub by id", zap.String("id", lastCrawl), zap.Error(err))
-				return
-			}
-			if !exist {
-				logger.Error("Last crawl sub not found", zap.String("sub_id", lastCrawl))
-				lastCrawl = ""
-			}
+		lastCrawl, err = getLastCrawl(lastCrawl, dbService)
+		if err != nil {
+			logger.Error("Failed to get last crawl sub", zap.Error(err))
+			return
 		}
 
 		var subs []zhihuDB.Sub
@@ -359,3 +339,35 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 func removeZSECKCookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuZSECK) }
 
 func removeZC0Cookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuZC0) }
+
+func getCronID(cronIDInDB string) string {
+	if cronIDInDB == "" {
+		return xid.New().String()
+	}
+	return cronIDInDB
+}
+
+func hasDuplicateJob(jobIDInDB string, cronIDinDB string) bool {
+	// If there is another job running and this job is a new job(rawCronID is empty), skip this job
+	return jobIDInDB != "" && cronIDinDB == ""
+}
+
+func isNewJob(jobIDInDB string, cronIDInDB string) bool {
+	// if raw cron id is empty, this is a new job, add it to db
+	return jobIDInDB == "" && cronIDInDB == ""
+}
+
+func getLastCrawl(lastCrawl string, dbService zhihuDB.DB) (string, error) {
+	if lastCrawl == "" {
+		return "", nil
+	}
+
+	exist, err := dbService.CheckSubByID(lastCrawl)
+	if err != nil {
+		return "", fmt.Errorf("failed to check sub by id: %w", err)
+	}
+	if !exist {
+		return "", nil
+	}
+	return lastCrawl, nil
+}
