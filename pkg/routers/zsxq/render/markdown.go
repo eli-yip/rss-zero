@@ -181,7 +181,7 @@ func (m *MarkdownRenderService) generateFilePartText(files []models.File) (strin
 		}
 
 		text := fmt.Sprintf("第%d个文件：[%s](%s)", i+1, file.Name,
-			fmt.Sprintf("%s/%s", object.StorageProvider[0], url.QueryEscape(object.ObjectKey)))
+			fmt.Sprintf("%s/%s", object.StorageProvider[0], url.PathEscape(object.ObjectKey)))
 
 		filePart = render.TrimRightSpace(md.Join(filePart, text))
 	}
