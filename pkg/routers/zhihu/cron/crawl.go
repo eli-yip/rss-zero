@@ -27,7 +27,12 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+type FilterConfig struct {
+	Include, Exclude []string
+	LastCrawl        string
+}
+
+func Crawl(cronIDInDB, taskID string, fc *FilterConfig, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		var cronID = getCronID(cronIDInDB)
 
@@ -75,7 +80,7 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 			return
 		}
 
-		lastCrawl, err = getLastCrawl(lastCrawl, dbService)
+		lastCrawl, err := getLastCrawl(fc.LastCrawl, dbService)
 		if err != nil {
 			logger.Error("Failed to get last crawl sub", zap.Error(err))
 			return
@@ -88,7 +93,7 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 		}
 		logger.Info("Get zhihu subs from db successfully", zap.Int("count", len(subs)))
 
-		filteredSubs := FilterSubs(include, exclude, SubsToSlice(subs))
+		filteredSubs := FilterSubs(fc.Include, fc.Exclude, SubsToSlice(subs))
 		subs = SliceToSubs(filteredSubs, subs)
 		logger.Info("Filter subs need to crawl successfully", zap.Int("count", len(subs)))
 
