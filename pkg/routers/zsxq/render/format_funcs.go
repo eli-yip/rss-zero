@@ -2,6 +2,7 @@ package render
 
 import (
 	"bufio"
+	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -17,7 +18,31 @@ func getFormatFuncs() []formatFunc {
 		removeSpaces,
 		processMention,
 		replacePercentEncodedChars,
+		escapeLinkPath,
 	}
+}
+
+func escapeLinkPath(input string) (string, error) {
+	re := regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
+
+	escapedMarkdown := re.ReplaceAllStringFunc(input, func(match string) string {
+		parts := re.FindStringSubmatch(match)
+		if len(parts) < 3 {
+			return match
+		}
+
+		text := parts[1]
+		link := parts[2]
+
+		parsedURL, err := url.Parse(link)
+		if err != nil {
+			return match
+		}
+
+		return fmt.Sprintf("[%s](%s)", text, parsedURL.String())
+	})
+
+	return escapedMarkdown, nil
 }
 
 // replaceBookMarkup replace book info

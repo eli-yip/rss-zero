@@ -11,6 +11,21 @@ type testCase struct {
 	expect string
 }
 
+func TestMain(t *testing.T) {
+	testText := []testCase{
+		{`34234243[test text](https://rss-zero.com/123456)`, `34234243[test text](https://rss-zero.com/123456)`},
+		{`34234243[test text](https://rss-zero.com/1234 56)`, `34234243[test text](https://rss-zero.com/1234%2056)`},
+		{`34234243[test text](https://rss-zero.com/123456)123[test text](https://rss-zero.com/1234 56)`, `34234243[test text](https://rss-zero.com/123456)123[test text](https://rss-zero.com/1234%2056)`},
+	}
+
+	assert := assert.New(t)
+	for _, tc := range testText {
+		output, err := escapeLinkPath(tc.input)
+		assert.Nil(err)
+		assert.Equal(tc.expect, output)
+	}
+}
+
 func TestFormatTags(t *testing.T) {
 	testText := []testCase{
 		{`今天的话题是<e type="hashtag" hid="1234567890" title="%23%E4%BB%8A%E6%97%A5%E8%AF%9D%E9%A2%98%23" />，我们还会讨论<e type="hashtag" hid="2345678901" title="%23%E6%8A%80%E6%9C%AF%E5%88%9B%E6%96%B0%23" />`, `今天的话题是\#今日话题，我们还会讨论\#技术创新`},
