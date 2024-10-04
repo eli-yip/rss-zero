@@ -37,31 +37,11 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 		var errCount int = 0
 
 		cronDBService := cronDB.NewDBService(db)
-		jobIDInDB, err := cronDBService.CheckRunningJob(taskID)
-		if err != nil {
-			logger.Error("Failed to check job", zap.Error(err), zap.String("task_type", taskID))
-			cronJobInfoChan <- cron.CronJobInfo{Err: err}
+		var job *cronDB.CronJob
+		if job, err = setupJob(cronIDInDB, taskID, cronID, cronDBService, logger); err != nil {
 			return
 		}
-		logger.Info("Check job by task type successfully", zap.String("task_type", taskID))
-
-		if hasDuplicateJob(jobIDInDB, cronIDInDB) {
-			logger.Info("There is another job running, skip this", zap.String("job_id", jobIDInDB))
-			cronJobInfoChan <- cron.CronJobInfo{Err: fmt.Errorf("there is another job running, skip this: %s", jobIDInDB)}
-			return
-		}
-
-		if isNewJob(jobIDInDB, cronIDInDB) {
-			logger.Info("New job, start to add it to db")
-			var job *cronDB.CronJob
-			if job, err = cronDBService.AddJob(cronID, taskID); err != nil {
-				logger.Error("Failed to add job", zap.Error(err))
-				cronJobInfoChan <- cron.CronJobInfo{Err: fmt.Errorf("failed to add job: %w", err)}
-				return
-			}
-			cronJobInfoChan <- cron.CronJobInfo{Job: job}
-			logger.Info("Add job to db successfully", zap.Any("job", job))
-		}
+		cronJobInfoChan <- cron.CronJobInfo{Job: job}
 
 		defer func() {
 			if errCount > 0 || err != nil {
@@ -370,4 +350,31 @@ func getLastCrawl(lastCrawl string, dbService zhihuDB.DB) (string, error) {
 		return "", nil
 	}
 	return lastCrawl, nil
+}
+
+// setupJob will determine whether a job should be executed and added to db and
+func setupJob(cronIDInDB, taskID, cronID string, cronDBService cronDB.DB, logger *zap.Logger) (job *cronDB.CronJob, err error) {
+	jobIDInDB, err := cronDBService.CheckRunningJob(taskID)
+	if err != nil {
+		logger.Error("Failed to check job", zap.Error(err), zap.String("task_type", taskID))
+		return nil, err
+	}
+	logger.Info("Check job by task type successfully", zap.String("task_type", taskID))
+
+	if hasDuplicateJob(jobIDInDB, cronIDInDB) {
+		logger.Info("There is another job running, skip this", zap.String("job_id", jobIDInDB))
+		return nil, fmt.Errorf("there is another job running, skip this: %s", jobIDInDB)
+	}
+
+	if isNewJob(jobIDInDB, cronIDInDB) {
+		logger.Info("New job, start to add it to db")
+		if job, err = cronDBService.AddJob(cronID, taskID); err != nil {
+			logger.Error("Failed to add job", zap.Error(err))
+			return nil, fmt.Errorf("failed to add job: %w", err)
+		}
+		logger.Info("Add job to db successfully", zap.Any("job", job))
+		return job, nil
+	}
+
+	return nil, fmt.Errorf("failed to setup new job")
 }
