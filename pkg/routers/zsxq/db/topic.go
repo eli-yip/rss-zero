@@ -9,16 +9,15 @@ import (
 )
 
 type Topic struct {
-	ID        int       `gorm:"column:id;primary_key"`
-	Time      time.Time `gorm:"column:time"`
-	GroupID   int       `gorm:"column:group_id"`
-	Type      string    `gorm:"column:type;type:text"`
-	Digested  bool      `gorm:"column:digested;type:bool"`
-	AuthorID  int       `gorm:"column:author_id"`
-	ShareLink string    `gorm:"column:share_link;type:text"`
-	Title     *string   `gorm:"column:title;type:text"`
-	Text      string    `gorm:"column:text;type:text"`
-	Raw       []byte    `gorm:"column:raw;type:bytea"`
+	ID       int       `gorm:"column:id;primary_key"`
+	Time     time.Time `gorm:"column:time"`
+	GroupID  int       `gorm:"column:group_id"`
+	Type     string    `gorm:"column:type;type:text"`
+	Digested bool      `gorm:"column:digested;type:bool"`
+	AuthorID int       `gorm:"column:author_id"`
+	Title    *string   `gorm:"column:title;type:text"`
+	Text     string    `gorm:"column:text;type:text"`
+	Raw      []byte    `gorm:"column:raw;type:bytea"`
 }
 
 func (t *Topic) TableName() string { return "zsxq_topic" }
@@ -40,8 +39,6 @@ type DBTopic interface {
 	FetchNTopics(n int, opt Options) (ts []Topic, err error)
 	// Get topic by id from zsxq_topic table
 	GetTopicByID(id int) (t Topic, err error)
-	// Get topic id by share link from zsxq_topic table
-	GetTopicIDByShareLink(shareLink string) (id int, err error)
 	// Random select n topics from zsxq_topic table
 	RandomSelect(userID, n int, digest bool) (topics []Topic, err error)
 	// GetTopicForMigrate
@@ -139,17 +136,6 @@ func (s *ZsxqDBService) FetchNTopics(n int, opt Options) (ts []Topic, err error)
 	}
 
 	return ts, nil
-}
-
-func (s *ZsxqDBService) GetTopicIDByShareLink(shareLink string) (int, error) {
-	var topic Topic
-	if err := s.db.Where("share_link = ?", shareLink).First(&topic).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return 0, nil
-		}
-		return 0, err
-	}
-	return topic.ID, nil
 }
 
 func (s *ZsxqDBService) RandomSelect(userID, n int, digest bool) (topics []Topic, err error) {

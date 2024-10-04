@@ -51,7 +51,6 @@ func GenerateZSXQ(groupID int, zsxqDBService zsxqDB.DB, logger *zap.Logger) (pat
 			GroupID:    topic.GroupID,
 			Title:      topic.Title,
 			AuthorName: authorName,
-			ShareLink:  topic.ShareLink,
 			CreateTime: topic.Time,
 			Text:       topic.Text,
 		})

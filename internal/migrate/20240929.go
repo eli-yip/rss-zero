@@ -45,16 +45,15 @@ func MigrateDB20240929(db *gorm.DB, logger *zap.Logger) {
 		}
 
 		if err := zsxqDBService.SaveTopic(&zsxqDB.Topic{
-			ID:        topic.ID,
-			Time:      topic.Time,
-			GroupID:   topic.GroupID,
-			Type:      topic.Type,
-			Digested:  topic.Digested,
-			AuthorID:  topic.AuthorID,
-			ShareLink: topic.ShareLink,
-			Title:     &title,
-			Text:      topic.Text,
-			Raw:       topic.Raw,
+			ID:       topic.ID,
+			Time:     topic.Time,
+			GroupID:  topic.GroupID,
+			Type:     topic.Type,
+			Digested: topic.Digested,
+			AuthorID: topic.AuthorID,
+			Title:    &title,
+			Text:     topic.Text,
+			Raw:      topic.Raw,
 		}); err != nil {
 			logger.Error("Failed to save topic", zap.Error(err))
 			return

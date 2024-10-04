@@ -38,14 +38,14 @@ func (r *RSSRenderService) RenderRSS(ts []RSSTopic) (output string, err error) {
 
 	rssFeed := &feeds.Feed{
 		Title:   ts[0].GroupName,
-		Link:    &feeds.Link{Href: fmt.Sprintf("https://wx.zsxq.com/dweb2/index/group/%d", ts[0].GroupID)},
+		Link:    &feeds.Link{Href: fmt.Sprintf("https://wx.zsxq.com/group/%d", ts[0].GroupID)},
 		Created: time.Now(),
 		Updated: ts[0].CreateTime,
 	}
 
 	for _, t := range ts {
 		var buffer bytes.Buffer
-		webLink := fmt.Sprintf("https://wx.zsxq.com/dweb2/index/topic_detail/%d", t.TopicID)
+		webLink := BuildLink(t.GroupID, t.TopicID)
 		text := render.AppendOriginLink(t.Text, webLink)
 		if err := r.HTMLRender.Convert([]byte(text), &buffer); err != nil {
 			return "", err

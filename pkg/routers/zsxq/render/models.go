@@ -10,17 +10,17 @@ import (
 //
 // Not every field is used in every render method.
 //
-// e.g.: Time, Digested, ShareLink, Title, Text is only used
+// e.g.: Time, Digested, Title, Text is only used
 // in ToFullText method.
 type Topic struct {
 	ID         int // Used for id trace
+	GroupID    int
 	Time       time.Time
 	Type       string
 	Digested   bool
 	Talk       *models.Talk
 	Question   *models.Question
 	Answer     *models.Answer
-	ShareLink  string
 	Title      *string
 	Text       string
 	AuthorName string
@@ -32,7 +32,6 @@ type RSSTopic struct {
 	GroupID    int
 	Title      *string
 	AuthorName string
-	ShareLink  string
 	CreateTime time.Time
 	Text       string
 }

@@ -94,13 +94,13 @@ func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
 		for i, topic := range topics {
 			fullText, err := s.mr.FullText(
 				&render.Topic{
-					ID:        topic.ID,
-					Title:     topic.Title,
-					Type:      topic.Type,
-					Digested:  topic.Digested,
-					Time:      topic.Time,
-					ShareLink: topic.ShareLink,
-					Text:      topic.Text,
+					ID:       topic.ID,
+					GroupID:  topic.GroupID,
+					Title:    topic.Title,
+					Type:     topic.Type,
+					Digested: topic.Digested,
+					Time:     topic.Time,
+					Text:     topic.Text,
 				},
 			)
 			if err != nil {

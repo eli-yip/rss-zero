@@ -198,6 +198,7 @@ func (s *RefmtService) formatTopic(topic *zsxqDB.Topic, errCh chan errMessage) {
 	// render topic
 	textBytes, err := s.render.Text(&render.Topic{
 		ID:         topic.ID,
+		GroupID:    topic.GroupID,
 		Type:       result.Topic.Type,
 		Talk:       result.Topic.Talk,
 		Question:   result.Topic.Question,
@@ -213,15 +214,14 @@ func (s *RefmtService) formatTopic(topic *zsxqDB.Topic, errCh chan errMessage) {
 
 	// update topic
 	if err := s.db.SaveTopic(&zsxqDB.Topic{
-		ID:        topic.ID,
-		Time:      topic.Time,
-		GroupID:   topic.GroupID,
-		Type:      topic.Type,
-		AuthorID:  topic.AuthorID,
-		ShareLink: topic.ShareLink,
-		Title:     topic.Title,
-		Text:      string(textBytes),
-		Raw:       topic.Raw,
+		ID:       topic.ID,
+		Time:     topic.Time,
+		GroupID:  topic.GroupID,
+		Type:     topic.Type,
+		AuthorID: topic.AuthorID,
+		Title:    topic.Title,
+		Text:     string(textBytes),
+		Raw:      topic.Raw,
 	}); err != nil {
 		logger.Error("failed to update topic", zap.Error(err))
 		errCh <- errMessage{topicID: topic.ID, err: err}

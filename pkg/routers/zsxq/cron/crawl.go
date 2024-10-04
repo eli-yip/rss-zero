@@ -332,7 +332,6 @@ func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string,
 			GroupID:    topic.GroupID,
 			Title:      topic.Title,
 			AuthorName: authorName,
-			ShareLink:  topic.ShareLink,
 			CreateTime: topic.Time,
 			Text:       topic.Text,
 		})

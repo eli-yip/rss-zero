@@ -9,7 +9,7 @@ import (
 func TestGetWebLink(t *testing.T) {
 	assert := assert.New(t)
 	link := "https://t.zsxq.com/6WBoJ"
-	webLink, err := getWebLink(link)
+	webLink, err := getZsxqRealLink(link)
 	assert.Nil(err)
 	assert.Equal("https://wx.zsxq.com/dweb2/index/topic_detail/2855145852245441", webLink)
 }

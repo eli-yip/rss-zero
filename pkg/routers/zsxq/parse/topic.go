@@ -59,6 +59,7 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 	// Render topic to markdown text
 	if topic.Text, err = s.render.Text(&render.Topic{
 		ID:         topic.Topic.TopicID,
+		GroupID:    topic.Topic.Group.GroupID,
 		Type:       topic.Topic.Type,
 		Talk:       topic.Topic.Talk,
 		Question:   topic.Topic.Question,
@@ -68,13 +69,6 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 		return "", fmt.Errorf("failed to render topic to markdown text: %w", err)
 	}
 	logger.Info("Render topic to markdown text successfully")
-
-	// Generate share link
-	topic.ShareLink, err = s.shareLink(topic.Topic.TopicID, logger)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate share link: %w", err)
-	}
-	logger.Info("Generate share link successfully", zap.String("share_link", topic.ShareLink))
 
 	if topic.Topic.Title == nil {
 		title, err := s.ai.Conclude(topic.Text)
@@ -86,16 +80,15 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 
 	// Save topic to database
 	if err = s.db.SaveTopic(&db.Topic{
-		ID:        topic.Topic.TopicID,
-		Time:      createTimeInTime,
-		GroupID:   topic.Topic.Group.GroupID,
-		Type:      topic.Topic.Type,
-		Digested:  topic.Topic.Digested,
-		AuthorID:  topic.AuthorID,
-		ShareLink: topic.ShareLink,
-		Title:     topic.Topic.Title,
-		Text:      topic.Text,
-		Raw:       topic.Raw,
+		ID:       topic.Topic.TopicID,
+		Time:     createTimeInTime,
+		GroupID:  topic.Topic.Group.GroupID,
+		Type:     topic.Topic.Type,
+		Digested: topic.Topic.Digested,
+		AuthorID: topic.AuthorID,
+		Title:    topic.Topic.Title,
+		Text:     topic.Text,
+		Raw:      topic.Raw,
 	}); err != nil {
 		return "", fmt.Errorf("failed to save topic info to database: %w", err)
 	}

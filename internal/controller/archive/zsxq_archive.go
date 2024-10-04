@@ -1,19 +1,24 @@
 package archive
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
 	zsxqRender "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
-	"gorm.io/gorm"
 )
 
 func (h *Controller) HandleZsxqWebTopic(link string) (html string, err error) {
+	// Supported link format:
 	// https://wx.zsxq.com/dweb2/index/topic_detail/2855145852245441
-	topicID := strings.TrimPrefix(link, "https://wx.zsxq.com/dweb2/index/topic_detail/")
+	// https://wx.zsxq.com/group/28855218411241/topic/2855488118555511
+	topicID, found := extractTopicIDFromLink(link)
+	if !found {
+		return "", fmt.Errorf("unsupported link format: %s", link)
+	}
+
 	idInt, err := strconv.Atoi(topicID)
 	if err != nil {
 		return "", fmt.Errorf("failed to convert topic id to int: %w", err)
@@ -25,14 +30,15 @@ func (h *Controller) HandleZsxqWebTopic(link string) (html string, err error) {
 	}
 
 	topicToRender := &zsxqRender.Topic{
-		ID:        idInt,
-		Title:     topic.Title,
-		Type:      topic.Type,
-		Digested:  topic.Digested,
-		Time:      topic.Time,
-		ShareLink: topic.ShareLink,
-		Text:      topic.Text,
+		ID:       idInt,
+		GroupID:  topic.GroupID,
+		Title:    topic.Title,
+		Type:     topic.Type,
+		Digested: topic.Digested,
+		Time:     topic.Time,
+		Text:     topic.Text,
 	}
+
 	fullTextMd, err := h.zsxqFullTextRenderService.FullText(topicToRender)
 	if err != nil {
 		return "", fmt.Errorf("failed to render full text: %w", err)
@@ -45,23 +51,30 @@ func (h *Controller) HandleZsxqWebTopic(link string) (html string, err error) {
 	return html, nil
 }
 
+func extractTopicIDFromLink(link string) (topicID string, found bool) {
+	if strings.HasPrefix(link, "https://wx.zsxq.com/dweb2/index/topic_detail/") {
+		return strings.TrimPrefix(link, "https://wx.zsxq.com/dweb2/index/topic_detail/"), true
+	}
+
+	re := regexp.MustCompile(`https://wx.zsxq.com/group/\d+/topic/(\d+)`)
+	matches := re.FindStringSubmatch(link)
+	if len(matches) == 2 {
+		return matches[1], true
+	}
+	return "", false
+}
+
 func (h *Controller) HandleZsxqShareLink(link string) (html string, err error) {
-	topic, err := h.zsxqDBService.GetTopicIDByShareLink(link)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return "", fmt.Errorf("failed to get topic id by share link: %w", err)
-	} else if errors.Is(err, gorm.ErrRecordNotFound) {
-		link, err = getWebLink(link)
-		if err != nil {
-			return "", fmt.Errorf("failed to get web link: %w", err)
-		}
-	} else {
-		link = fmt.Sprintf("https://wx.zsxq.com/mweb/views/topicdetail/topicdetail.html?topic_id=%d", topic)
+	link, err = getZsxqRealLink(link)
+	if err != nil {
+		return "", fmt.Errorf("failed to get web link: %w", err)
 	}
 
 	return h.HandleZsxqWebTopic(link)
 }
 
-func getWebLink(link string) (string, error) {
+// getZsxqRealLink get the real link of zsxq share link
+func getZsxqRealLink(link string) (string, error) {
 	req, err := http.NewRequest(http.MethodGet, link, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
@@ -83,6 +96,8 @@ func getWebLink(link string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get location: %w", err)
 	}
+
+	// Though zsxq has changed its web link, but share link 302 location is still like below
 	// location https://wx.zsxq.com/mweb/views/topicdetail/topicdetail.html?topic_id=2855145852245441&inviter_id=815528414188822&inviter_sid=b48m2w8mk1&keyword=6WBoJ
 	params := location.Query()
 	topicID := params.Get("topic_id")

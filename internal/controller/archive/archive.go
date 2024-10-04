@@ -134,6 +134,8 @@ func (h *Controller) handleRequestArchiveLink(link string) (html string, err err
 		return h.HandleZhihuPin(link)
 	case regexp.MustCompile(`/topic_detail/\d+`).MatchString(link):
 		return h.HandleZsxqWebTopic(link)
+	case regexp.MustCompile(`/group/\d+/topic/\d+`).MatchString(link):
+		return h.HandleZsxqWebTopic(link)
 	case regexp.MustCompile(`t\.zsxq\.com/\w+`).MatchString(link):
 		return h.HandleZsxqShareLink(link)
 	}

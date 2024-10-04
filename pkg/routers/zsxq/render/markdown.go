@@ -44,10 +44,14 @@ func NewMarkdownRenderService(dbService zsxqDB.DB) MarkdownRenderer {
 	return s
 }
 
+func BuildLink(groupID, topicID int) string {
+	return fmt.Sprintf("https://wx.zsxq.com/group/%d/topic/%d", groupID, topicID)
+}
+
 func (m *MarkdownRenderService) FullText(t *Topic) (text string, err error) {
 	titlePart := render.TrimRightSpace(md.H1(BuildTitle(t)))
 	timePart := fmt.Sprintf("时间：%s", zsxqTime.FmtForRead(t.Time))
-	linkPart := render.TrimRightSpace(fmt.Sprintf("链接：[%s](%s)", t.ShareLink, t.ShareLink))
+	linkPart := render.TrimRightSpace(fmt.Sprintf("链接：[%s](%s)", BuildLink(t.GroupID, t.ID), BuildLink(t.GroupID, t.ID)))
 	text = md.Join(titlePart, t.Text, timePart, linkPart)
 	return m.mdFmt.FormatStr(text)
 }
