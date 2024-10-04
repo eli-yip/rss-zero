@@ -9,26 +9,26 @@ import (
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
 
-func (h *Controller) HandleZhihuAnswer(link string) (html string, err error) {
+func (h *Controller) HandleZhihuAnswer(link string) (result *archiveResult, err error) {
 	zhihuAnswer, err := ExtractAnswerID(link)
 	if err != nil {
-		return "", fmt.Errorf("failed to extract answer id: %w", err)
+		return nil, fmt.Errorf("failed to extract answer id: %w", err)
 	}
 	answerIDint := zhihuAnswer.answerID
 
 	answer, err := h.zhihuDBService.GetAnswer(answerIDint)
 	if err != nil {
-		return "", fmt.Errorf("failed to get answer from db: %w", err)
+		return nil, fmt.Errorf("failed to get answer from db: %w", err)
 	}
 
 	question, err := h.zhihuDBService.GetQuestion(answer.QuestionID)
 	if err != nil {
-		return "", fmt.Errorf("failed to get question from db: %w", err)
+		return nil, fmt.Errorf("failed to get question from db: %w", err)
 	}
 
 	authorName, err := h.zhihuDBService.GetAuthorName(answer.AuthorID)
 	if err != nil {
-		return "", fmt.Errorf("failed to get author name: %w", err)
+		return nil, fmt.Errorf("failed to get author name: %w", err)
 	}
 
 	fullText, err := h.zhihuFullTextRenderService.Answer(&zhihuRender.Answer{
@@ -44,36 +44,36 @@ func (h *Controller) HandleZhihuAnswer(link string) (html string, err error) {
 		},
 	}, zhihuRender.WithAuthorName(authorName))
 	if err != nil {
-		return "", fmt.Errorf("failed to render full text: %w", err)
+		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
 
-	html, err = h.htmlRender.Render(question.Title, fullText)
+	html, err := h.htmlRender.Render(question.Title, fullText)
 	if err != nil {
-		return "", fmt.Errorf("failed to render html: %w", err)
+		return nil, fmt.Errorf("failed to render html: %w", err)
 	}
 
-	return html, nil
+	return &archiveResult{html: html}, nil
 }
 
-func (h *Controller) HandleZhihuArticle(link string) (html string, err error) {
+func (h *Controller) HandleZhihuArticle(link string) (result *archiveResult, err error) {
 	articleID, err := ExtractArticleID(link)
 	if err != nil {
-		return "", fmt.Errorf("failed to extract article id: %w", err)
+		return nil, fmt.Errorf("failed to extract article id: %w", err)
 	}
 
 	articleIDint, err := strconv.Atoi(articleID)
 	if err != nil {
-		return "", fmt.Errorf("failed to convert article id to int: %w", err)
+		return nil, fmt.Errorf("failed to convert article id to int: %w", err)
 	}
 
 	article, err := h.zhihuDBService.GetArticle(articleIDint)
 	if err != nil {
-		return "", fmt.Errorf("failed to get article from db: %w", err)
+		return nil, fmt.Errorf("failed to get article from db: %w", err)
 	}
 
 	authorName, err := h.zhihuDBService.GetAuthorName(article.AuthorID)
 	if err != nil {
-		return "", fmt.Errorf("failed to get author name: %w", err)
+		return nil, fmt.Errorf("failed to get author name: %w", err)
 	}
 
 	fullText, err := h.zhihuFullTextRenderService.Article(&zhihuRender.Article{
@@ -85,35 +85,35 @@ func (h *Controller) HandleZhihuArticle(link string) (html string, err error) {
 		},
 	}, zhihuRender.WithAuthorName(authorName))
 	if err != nil {
-		return "", fmt.Errorf("failed to render full text: %w", err)
+		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
 
-	html, err = h.htmlRender.Render(article.Title, fullText)
+	html, err := h.htmlRender.Render(article.Title, fullText)
 	if err != nil {
-		return "", fmt.Errorf("failed to render html: %w", err)
+		return nil, fmt.Errorf("failed to render html: %w", err)
 	}
-	return html, nil
+	return &archiveResult{html: html}, nil
 }
 
-func (h *Controller) HandleZhihuPin(link string) (html string, err error) {
+func (h *Controller) HandleZhihuPin(link string) (result *archiveResult, err error) {
 	pinID, err := ExtractPinID(link)
 	if err != nil {
-		return "", fmt.Errorf("failed to extract pin id: %w", err)
+		return nil, fmt.Errorf("failed to extract pin id: %w", err)
 	}
 
 	pinIDint, err := strconv.Atoi(pinID)
 	if err != nil {
-		return "", fmt.Errorf("failed to convert pin id to int: %w", err)
+		return nil, fmt.Errorf("failed to convert pin id to int: %w", err)
 	}
 
 	pin, err := h.zhihuDBService.GetPin(pinIDint)
 	if err != nil {
-		return "", fmt.Errorf("failed to get pin from db: %w", err)
+		return nil, fmt.Errorf("failed to get pin from db: %w", err)
 	}
 
 	authorName, err := h.zhihuDBService.GetAuthorName(pin.AuthorID)
 	if err != nil {
-		return "", fmt.Errorf("failed to get author name: %w", err)
+		return nil, fmt.Errorf("failed to get author name: %w", err)
 	}
 
 	fullText, err := h.zhihuFullTextRenderService.Pin(&zhihuRender.Pin{
@@ -124,14 +124,14 @@ func (h *Controller) HandleZhihuPin(link string) (html string, err error) {
 			Text:     pin.Text,
 		}}, zhihuRender.WithAuthorName(authorName))
 	if err != nil {
-		return "", fmt.Errorf("failed to render full text: %w", err)
+		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
 
-	html, err = h.htmlRender.Render(pin.Title, fullText)
+	html, err := h.htmlRender.Render(pin.Title, fullText)
 	if err != nil {
-		return "", fmt.Errorf("failed to render html: %w", err)
+		return nil, fmt.Errorf("failed to render html: %w", err)
 	}
-	return html, nil
+	return &archiveResult{html: html}, nil
 }
 
 type zhihuAnswer struct{ questionID, answerID int }

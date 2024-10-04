@@ -98,6 +98,10 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 	}
 }
 
+type archiveResult struct {
+	html, redirectTo string
+}
+
 func (h *Controller) History(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
@@ -116,15 +120,18 @@ func (h *Controller) History(c echo.Context) (err error) {
 		return c.Redirect(http.StatusFound, render.BuildArchiveLink(config.C.Settings.ServerURL, u))
 	}
 
-	html, err := h.handleRequestArchiveLink(u)
+	result, err := h.handleRequestArchiveLink(u)
 	if err != nil {
 		logger.Error("Failed to handle zhihu link", zap.Error(err))
 		return c.HTML(http.StatusBadRequest, renderErrorPage(err, requestID))
 	}
-	return c.HTML(http.StatusOK, html)
+	if result.redirectTo != "" {
+		return c.Redirect(http.StatusFound, result.redirectTo)
+	}
+	return c.HTML(http.StatusOK, result.html)
 }
 
-func (h *Controller) handleRequestArchiveLink(link string) (html string, err error) {
+func (h *Controller) handleRequestArchiveLink(link string) (result *archiveResult, err error) {
 	switch {
 	case regexp.MustCompile(`/question/\d+/answer/\d+`).MatchString(link):
 		return h.HandleZhihuAnswer(link)
@@ -139,7 +146,7 @@ func (h *Controller) handleRequestArchiveLink(link string) (html string, err err
 	case regexp.MustCompile(`t\.zsxq\.com/\w+`).MatchString(link):
 		return h.HandleZsxqShareLink(link)
 	}
-	return "", fmt.Errorf("unknown link: %s", link)
+	return nil, fmt.Errorf("unknown link: %s", link)
 }
 
 func renderErrorPage(err error, requestID string) string {

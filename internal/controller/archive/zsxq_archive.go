@@ -7,26 +7,32 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/pkg/render"
 	zsxqRender "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 )
 
-func (h *Controller) HandleZsxqWebTopic(link string) (html string, err error) {
+func (h *Controller) HandleZsxqWebTopic(link string) (result *archiveResult, err error) {
 	// Supported link format:
 	// https://wx.zsxq.com/dweb2/index/topic_detail/2855145852245441
 	// https://wx.zsxq.com/group/28855218411241/topic/2855488118555511
 	topicID, found := extractTopicIDFromLink(link)
 	if !found {
-		return "", fmt.Errorf("unsupported link format: %s", link)
+		return nil, fmt.Errorf("unsupported link format: %s", link)
 	}
 
 	idInt, err := strconv.Atoi(topicID)
 	if err != nil {
-		return "", fmt.Errorf("failed to convert topic id to int: %w", err)
+		return nil, fmt.Errorf("failed to convert topic id to int: %w", err)
 	}
 
 	topic, err := h.zsxqDBService.GetTopicByID(idInt)
 	if err != nil {
-		return "", fmt.Errorf("failed to get topic by id: %w", err)
+		return nil, fmt.Errorf("failed to get topic by id: %w", err)
+	}
+
+	if isOldStyleZsxqLink(link) {
+		return &archiveResult{redirectTo: render.BuildArchiveLink(config.C.Settings.ServerURL, zsxqRender.BuildLink(topic.GroupID, topic.ID))}, nil
 	}
 
 	topicToRender := &zsxqRender.Topic{
@@ -41,14 +47,18 @@ func (h *Controller) HandleZsxqWebTopic(link string) (html string, err error) {
 
 	fullTextMd, err := h.zsxqFullTextRenderService.FullText(topicToRender)
 	if err != nil {
-		return "", fmt.Errorf("failed to render full text: %w", err)
+		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
 
-	html, err = h.htmlRender.Render(zsxqRender.BuildTitle(topicToRender), fullTextMd)
+	html, err := h.htmlRender.Render(zsxqRender.BuildTitle(topicToRender), fullTextMd)
 	if err != nil {
-		return "", fmt.Errorf("failed to render html: %w", err)
+		return nil, fmt.Errorf("failed to render html: %w", err)
 	}
-	return html, nil
+	return &archiveResult{html: html}, nil
+}
+
+func isOldStyleZsxqLink(link string) bool {
+	return strings.HasPrefix(link, "https://wx.zsxq.com/dweb2/index/topic_detail/")
 }
 
 func extractTopicIDFromLink(link string) (topicID string, found bool) {
@@ -64,10 +74,10 @@ func extractTopicIDFromLink(link string) (topicID string, found bool) {
 	return "", false
 }
 
-func (h *Controller) HandleZsxqShareLink(link string) (html string, err error) {
+func (h *Controller) HandleZsxqShareLink(link string) (result *archiveResult, err error) {
 	link, err = getZsxqRealLink(link)
 	if err != nil {
-		return "", fmt.Errorf("failed to get web link: %w", err)
+		return nil, fmt.Errorf("failed to get web link: %w", err)
 	}
 
 	return h.HandleZsxqWebTopic(link)
