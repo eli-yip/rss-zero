@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"strconv"
 
 	"github.com/eli-yip/rss-zero/internal/md"
@@ -77,11 +78,11 @@ func (m *MarkdownRenderService) Text(t *Topic) (text string, err error) {
 	switch t.Type {
 	case "talk":
 		if err = m.renderTalk(t.Talk, t.AuthorName, &buffer); err != nil {
-			return "", fmt.Errorf("fail to render talk: %w", err)
+			return "", fmt.Errorf("failed to render talk: %w", err)
 		}
 	case "q&a":
 		if err = m.renderQA(t.Question, t.Answer, t.AuthorName, &buffer); err != nil {
-			return "", fmt.Errorf("fail to render q&a: %w", err)
+			return "", fmt.Errorf("failed to render q&a: %w", err)
 		}
 	default:
 		return "", fmt.Errorf("unknow type: %s", t.Type)
@@ -173,14 +174,14 @@ func (m *MarkdownRenderService) generateFilePartText(files []models.File) (strin
 	for i, file := range files {
 		object, err := m.db.GetObjectInfo(file.FileID)
 		if err != nil {
-			return "", fmt.Errorf("fail to get object %d info from database: %w", file.FileID, err)
+			return "", fmt.Errorf("failed to get object %d info from database: %w", file.FileID, err)
 		}
 		if object.StorageProvider == nil {
 			return "", fmt.Errorf("no storage provider in object %d info", file.FileID)
 		}
 
 		text := fmt.Sprintf("第%d个文件：[%s](%s)", i+1, file.Name,
-			fmt.Sprintf("%s/%s", object.StorageProvider[0], object.ObjectKey))
+			fmt.Sprintf("%s/%s", object.StorageProvider[0], url.QueryEscape(object.ObjectKey)))
 
 		filePart = render.TrimRightSpace(md.Join(filePart, text))
 	}
@@ -198,7 +199,7 @@ func (m *MarkdownRenderService) generateImagePartText(images []models.Image) (st
 	for i, image := range images {
 		object, err := m.db.GetObjectInfo(image.ImageID)
 		if err != nil || object.StorageProvider == nil {
-			return "", fmt.Errorf("fail to get object %d info from database: %w", image.ImageID, err)
+			return "", fmt.Errorf("failed to get object %d info from database: %w", image.ImageID, err)
 		}
 		if object.StorageProvider == nil {
 			return "", fmt.Errorf("no storage provider in object %d info", image.ImageID)
