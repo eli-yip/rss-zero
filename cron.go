@@ -91,7 +91,7 @@ func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookie
 			go crawlFunc()
 			logger.Info("Start zsxq running job", zap.String("job_id", job.ID))
 		case cronDB.TypeZhihu:
-			crawlFunc := cron.GenerateRealCrawlFunc(zhihuCron.BuildZhihuCrawlFunc(job.ID, def.ID, &zhihuCron.FilterConfig{Include: def.Include, Exclude: def.Exclude, LastCrawl: job.Detail}, &zhihuCron.Service{RedisService: redisService, CookieService: cookieService, Notifier: notifier, DB: db}))
+			crawlFunc := cron.GenerateRealCrawlFunc(zhihuCron.BuildZhihuCrawlFunc(job.ID, def.ID, &zhihuCron.FilterConfig{Include: def.Include, Exclude: def.Exclude, LastCrawl: job.Detail}, &zhihuCron.BaseService{RedisService: redisService, CookieService: cookieService, Notifier: notifier, DB: db}))
 			go crawlFunc()
 			logger.Info("Start zhihu running job", zap.String("job_id", job.ID))
 		case cronDB.TypeXiaobot:
@@ -133,7 +133,7 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		case cronDB.TypeZhihu:
-			crawlFunc = zhihuCron.BuildZhihuCrawlFunc("", def.ID, &zhihuCron.FilterConfig{Include: def.Include, Exclude: def.Exclude, LastCrawl: ""}, &zhihuCron.Service{RedisService: redisService, CookieService: cookieService, Notifier: notifier, DB: db})
+			crawlFunc = zhihuCron.BuildZhihuCrawlFunc("", def.ID, &zhihuCron.FilterConfig{Include: def.Include, Exclude: def.Exclude, LastCrawl: ""}, &zhihuCron.BaseService{RedisService: redisService, CookieService: cookieService, Notifier: notifier, DB: db})
 			if jobID, err = cronService.AddCrawlJob("zhihu_crawl", def.CronExpr, crawlFunc); err != nil {
 				return nil, fmt.Errorf("failed to add zhihu cron job: %w", err)
 			}

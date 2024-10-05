@@ -27,30 +27,51 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
+// A FilterConfig is the configuration for filtering subs.
 type FilterConfig struct {
 	Include, Exclude []string
 	LastCrawl        string
 }
 
-type Service struct {
+// A BaseService is services that are need for building a zhihu crawl function.
+type BaseService struct {
 	RedisService  redis.Redis
 	CookieService cookie.CookieIface
 	Notifier      notify.Notifier
 	DB            *gorm.DB
 }
 
-func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Service) func(chan cron.CronJobInfo) {
+// A crawlService is services that are need for crawling zhihu content.
+type crawlService struct {
+	dbService      zhihuDB.DB
+	requestService request.Requester
+	parseService   parse.Parser
+}
+
+func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *BaseService) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		var cronID = getCronID(cronIDInDB)
 
 		logger := log.DefaultLogger.With(zap.String("cron_id", cronID))
 
-		var err error
-		var errCount int = 0
+		var (
+			errCh    = make(chan error, 5)
+			err      error
+			errCount int = 0
+		)
+
+		go func() {
+			for err := range errCh {
+				if err != nil {
+					errCount++
+				}
+			}
+		}()
 
 		cronDBService := cronDB.NewDBService(srv.DB)
 		var job *cronDB.CronJob
 		if job, err = setupJob(cronIDInDB, taskID, cronID, cronDBService, logger); err != nil {
+			cronJobInfoChan <- cron.CronJobInfo{Err: err}
 			return
 		}
 		cronJobInfoChan <- cron.CronJobInfo{Job: job}
@@ -58,27 +79,21 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 		defer func() {
 			if errCount > 0 || err != nil {
 				notify.NoticeWithLogger(srv.Notifier, "Failed to crawl zhihu content", cronID, logger)
-				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
-					logger.Error("Failed to update cron job status", zap.Error(err))
-				}
+				cron.UpdateCronJobStatus(cronDBService, cronID, cronDB.StatusError, logger)
 				return
 			}
 
 			if err := recover(); err != nil {
 				logger.Error("CrawlZhihu() panic", zap.Any("err", err))
-				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
-					logger.Error("Failed to update cron job status", zap.Any("err", err))
-				}
+				cron.UpdateCronJobStatus(cronDBService, cronID, cronDB.StatusError, logger)
 				return
 			}
 
-			if err = cronDBService.UpdateStatus(cronID, cronDB.StatusFinished); err != nil {
-				logger.Error("Failed to update cron job status", zap.Error(err))
-			}
+			cron.UpdateCronJobStatus(cronDBService, cronID, cronDB.StatusFinished, logger)
 			logger.Info("Zhihu cron job finished.")
 		}()
 
-		dbService, requestService, parser, err := initZhihuServices(srv.DB, srv.CookieService, logger)
+		cSrv, err := initServices(srv.DB, srv.CookieService, logger)
 		if err != nil {
 			otherErr := cookie.HandleZhihuCookiesErr(err, srv.Notifier, logger)
 			if otherErr != nil {
@@ -87,27 +102,18 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 			return
 		}
 
-		lastCrawl, err := getLastCrawl(fc.LastCrawl, dbService)
+		lastCrawl, err := getLastCrawled(fc.LastCrawl, cSrv.dbService)
 		if err != nil {
 			logger.Error("Failed to get last crawl sub", zap.Error(err))
 			return
 		}
 
-		var subs []zhihuDB.Sub
-		if subs, err = dbService.GetSubs(); err != nil {
-			logger.Error("Failed to get zhihu subs", zap.Error(err))
+		subs, err := getCrawlSubs(cSrv.dbService, fc, lastCrawl, logger)
+		if err != nil {
 			return
 		}
-		logger.Info("Get zhihu subs from db successfully", zap.Int("count", len(subs)))
 
-		filteredSubs := FilterSubs(fc.Include, fc.Exclude, SubsToSlice(subs))
-		subs = SliceToSubs(filteredSubs, subs)
-		logger.Info("Filter subs need to crawl successfully", zap.Int("count", len(subs)))
-
-		subs = CutSubs(subs, lastCrawl)
-		logger.Info("Subs need to crawl", zap.Int("count", len(subs)))
-
-		var path, content string
+		var redisCachePath, redisCacheRSSContent string
 		for _, sub := range subs {
 			ts := common.ZhihuTypeToString(sub.Type) // type in string
 			logger.Info("Start to crawl zhihu sub", zap.String("author_id", sub.AuthorID), zap.String("type", ts))
@@ -117,8 +123,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 			case "answer":
 				// get answers from db to check if there is any answer for this sub
 				var answers []zhihuDB.Answer
-				if answers, err = dbService.GetLatestNAnswer(1, sub.AuthorID); err != nil {
-					errCount++
+				if answers, err = cSrv.dbService.GetLatestNAnswer(1, sub.AuthorID); err != nil {
+					errCh <- err
 					logger.Error("Failed to get latest answer from database", zap.Error(err))
 					continue
 				}
@@ -128,10 +134,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 					// set target time to long long ago, as one time mode is enabled, this will not cause endless crawl
 					// enable one time mode because we do not know latest time in db(no answer found in db), and we do not want crawl all answers(this will cost too much time)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
-						if shouldReturn {
+					if err = crawl.CrawlAnswer(sub.AuthorID, cSrv.requestService, cSrv.parseService, cron.LongLongAgo, 0, true, logger); err != nil {
+						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
 							return
 						}
 						logger.Error("Failed to crawl answer", zap.Error(err))
@@ -144,10 +148,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 					// set target time to the latest answer's create time in db
 					// disable one time mode, as we know when to stop(latest answer's create time)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
-						if shouldReturn {
+					if err = crawl.CrawlAnswer(sub.AuthorID, cSrv.requestService, cSrv.parseService, latestTimeInDB, 0, false, logger); err != nil {
+						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
 							return
 						}
 						logger.Error("Failed to crawl answer", zap.Error(err))
@@ -156,8 +158,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 				}
 				logger.Info("Crawl answer successfully")
 
-				if path, content, err = rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, latestTimeInDB, dbService, logger); err != nil {
-					errCount++
+				if redisCachePath, redisCacheRSSContent, err = rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, latestTimeInDB, cSrv.dbService, logger); err != nil {
+					errCh <- err
 					logger.Error("Failed to generate zhihu rss content", zap.Error(err))
 					continue
 				}
@@ -165,8 +167,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 			case "article":
 				// get articles from db to check if there is any article for this sub
 				var articles []zhihuDB.Article
-				if articles, err = dbService.GetLatestNArticle(1, sub.AuthorID); err != nil {
-					errCount++
+				if articles, err = cSrv.dbService.GetLatestNArticle(1, sub.AuthorID); err != nil {
+					errCh <- err
 					logger.Error("Failed to get latest article from database", zap.Error(err))
 					continue
 				}
@@ -176,10 +178,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 					// set target time to long long ago, as one time mode is enabled, this will not cause endless crawl
 					// enable one time mode because we do not know latest time in db(no article found in db)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
-						if shouldReturn {
+					if err = crawl.CrawlArticle(sub.AuthorID, cSrv.requestService, cSrv.parseService, cron.LongLongAgo, 0, true, logger); err != nil {
+						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
 							return
 						}
 						logger.Error("Failed to crawl article", zap.Error(err))
@@ -192,10 +192,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 					// set target time to the latest article's create time in db
 					// disable one time mode, as we know when to stop(latest article's create time)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
-						if shouldReturn {
+					if err = crawl.CrawlArticle(sub.AuthorID, cSrv.requestService, cSrv.parseService, latestTimeInDB, 0, false, logger); err != nil {
+						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
 							return
 						}
 						logger.Error("Failed to crawl article", zap.Error(err))
@@ -204,8 +202,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 				}
 				logger.Info("Crawl article successfully")
 
-				if path, content, err = rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, latestTimeInDB, dbService, logger); err != nil {
-					errCount++
+				if redisCachePath, redisCacheRSSContent, err = rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, latestTimeInDB, cSrv.dbService, logger); err != nil {
+					errCh <- err
 					logger.Error("Failed to generate rss content", zap.Error(err))
 					continue
 				}
@@ -213,8 +211,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 			case "pin":
 				// get pins from db to check if there is any pin for this sub
 				var pins []zhihuDB.Pin
-				if pins, err = dbService.GetLatestNPin(1, sub.AuthorID); err != nil {
-					errCount++
+				if pins, err = cSrv.dbService.GetLatestNPin(1, sub.AuthorID); err != nil {
+					errCh <- err
 					logger.Error("Failed to get latest pin from database", zap.Error(err))
 					continue
 				}
@@ -224,10 +222,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 					// set target time to long long ago, as one time mode is enabled, this will not cause bugs
 					// enable one time mode as we do not know latest time in db(no pin found in db)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
-						if shouldReturn {
+					if err = crawl.CrawlPin(sub.AuthorID, cSrv.requestService, cSrv.parseService, cron.LongLongAgo, 0, true, logger); err != nil {
+						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
 							return
 						}
 						logger.Error("Failed to crawl pin", zap.Error(err))
@@ -240,10 +236,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 					// set target time to the latest pin's create time in db
 					// disable one time mode, as we know when to stop(latest pin's create time)
 					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, srv.CookieService, srv.Notifier, logger)
-						if shouldReturn {
+					if err = crawl.CrawlPin(sub.AuthorID, cSrv.requestService, cSrv.parseService, latestTimeInDB, 0, false, logger); err != nil {
+						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
 							return
 						}
 						logger.Error("Failed to crawl pin", zap.Error(err))
@@ -252,33 +246,37 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *Servi
 				}
 				logger.Info("Crawl pin successfully")
 
-				if path, content, err = rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, latestTimeInDB, dbService, logger); err != nil {
-					errCount++
+				if redisCachePath, redisCacheRSSContent, err = rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, latestTimeInDB, cSrv.dbService, logger); err != nil {
+					errCh <- err
 					logger.Error("Failed to generate rss content", zap.Error(err))
 					continue
 				}
 				logger.Info("Generate rss content and save to redis successfully")
 			}
 
-			if err = srv.RedisService.Set(path, content, redis.RSSDefaultTTL); err != nil {
-				errCount++
-				logger.Error("Failed to save rss content to redis", zap.Error(err))
-			}
-			logger.Info("Save to redis successfully")
-
-			if err = cronDBService.RecordDetail(cronID, sub.ID); err != nil {
-				logger.Error("Failed to record job detail", zap.String("sub_id", sub.ID), zap.Error(err))
-				errCount++
-				return
-			}
-			logger.Info("Record job detail successfully", zap.String("sub_id", sub.ID))
+			cacheRSS(srv.RedisService, redisCachePath, redisCacheRSSContent, errCh, logger)
+			recordJobDetail(cronID, sub.ID, cronDBService, logger)
 		}
 	}
 }
 
-func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
-	var err error
+func getCrawlSubs(dbService zhihuDB.DB, fc *FilterConfig, lastCrawl string, logger *zap.Logger) (subs []zhihuDB.Sub, err error) {
+	if subs, err = dbService.GetSubs(); err != nil {
+		logger.Error("Failed to get zhihu subs", zap.Error(err))
+		return nil, err
+	}
+	logger.Info("Get zhihu subs from db successfully", zap.Int("count", len(subs)))
 
+	filteredSubs := FilterSubs(fc.Include, fc.Exclude, SubsToSlice(subs))
+	subs = SliceToSubs(filteredSubs, subs)
+	logger.Info("Filter subs need to crawl successfully", zap.Int("count", len(subs)))
+
+	subs = CutSubs(subs, lastCrawl)
+	logger.Info("Subs need to crawl", zap.Int("count", len(subs)))
+	return subs, nil
+}
+
+func initServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (cSrv *crawlService, err error) {
 	var (
 		dbService      zhihuDB.DB
 		requestService request.Requester
@@ -293,19 +291,19 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 
 	zhihuCookies, err := cookie.GetZhihuCookies(cs, logger)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fail to get cookies: %w", err)
+		return nil, fmt.Errorf("fail to get cookies: %w", err)
 	}
 	logger.Info("Get zhihu cookies successfully", zap.Any("cookie", zhihuCookies))
 
 	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
 	requestService, err = request.NewRequestService(logger, dbService, notifier, zhihuCookies)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fail to init request service: %w", err)
+		return nil, fmt.Errorf("fail to init request service: %w", err)
 	}
 
 	fileService, err = file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fail to init file service: %w", err)
+		return nil, fmt.Errorf("fail to init file service: %w", err)
 	}
 
 	htmlToMarkdown = renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
@@ -322,16 +320,17 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 		parse.WithFile(fileService),
 		parse.WithDB(dbService))
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fail to init zhihu parser: %w", err)
+		return nil, fmt.Errorf("fail to init zhihu parser: %w", err)
 	}
 
-	return dbService, requestService, parser, nil
+	return &crawlService{dbService: dbService, requestService: requestService, parseService: parser}, nil
 }
 
 func removeZSECKCookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuZSECK) }
 
 func removeZC0Cookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuZC0) }
 
+// getCronID returns a cron id for the job.
 func getCronID(cronIDInDB string) string {
 	if cronIDInDB == "" {
 		return xid.New().String()
@@ -339,17 +338,19 @@ func getCronID(cronIDInDB string) string {
 	return cronIDInDB
 }
 
+// hasDuplicateJob checks whether there is another running job with the same task type.
 func hasDuplicateJob(jobIDInDB string, cronIDinDB string) bool {
-	// If there is another job running and this job is a new job(rawCronID is empty), skip this job
 	return jobIDInDB != "" && cronIDinDB == ""
 }
 
+// isNewJob checks whether this is a new job.
 func isNewJob(jobIDInDB string, cronIDInDB string) bool {
 	// if raw cron id is empty, this is a new job, add it to db
 	return jobIDInDB == "" && cronIDInDB == ""
 }
 
-func getLastCrawl(lastCrawl string, dbService zhihuDB.DB) (string, error) {
+// getLastCrawled returns the last crawled sub id.
+func getLastCrawled(lastCrawl string, dbService zhihuDB.DB) (string, error) {
 	if lastCrawl == "" {
 		return "", nil
 	}
@@ -364,7 +365,7 @@ func getLastCrawl(lastCrawl string, dbService zhihuDB.DB) (string, error) {
 	return lastCrawl, nil
 }
 
-// setupJob will determine whether a job should be executed and added to db and
+// setupJob will determine whether a job should be executed and added to db.
 func setupJob(cronIDInDB, taskID, cronID string, cronDBService cronDB.DB, logger *zap.Logger) (job *cronDB.CronJob, err error) {
 	jobIDInDB, err := cronDBService.CheckRunningJob(taskID)
 	if err != nil {
@@ -389,4 +390,20 @@ func setupJob(cronIDInDB, taskID, cronID string, cronDBService cronDB.DB, logger
 	}
 
 	return nil, fmt.Errorf("failed to setup new job")
+}
+
+func cacheRSS(redisService redis.Redis, path, rssContent string, errChn chan error, logger *zap.Logger) {
+	if err := redisService.Set(path, rssContent, redis.RSSDefaultTTL); err != nil {
+		errChn <- err
+		logger.Error("Failed to save rss content to redis", zap.Error(err))
+	}
+	logger.Info("Save to redis successfully")
+}
+
+func recordJobDetail(cronID, subID string, dbService cronDB.DB, logger *zap.Logger) {
+	if err := dbService.RecordDetail(cronID, subID); err != nil {
+		logger.Error("Failed to record job detail", zap.String("sub_id", subID), zap.Error(err))
+		return
+	}
+	logger.Info("Record job detail successfully", zap.String("sub_id", subID))
 }

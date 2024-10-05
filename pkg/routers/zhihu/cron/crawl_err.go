@@ -10,10 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
-// handleErr handles the error returned by crawlXXX functions.
+// handleCrawlErr handles the error returned by crawlXXX functions.
 //
 // If error is from request service, then handle it and return true.
-func handleErr(err error, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (shouldReturn bool) {
+func handleCrawlErr(err error, errCh chan error, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (shouldReturn bool) {
+	errCh <- err
 	switch {
 	case errors.Is(err, request.ErrNeedZC0):
 		if err = removeZC0Cookie(cookieService); err != nil {
