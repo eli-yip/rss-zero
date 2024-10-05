@@ -102,13 +102,13 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *BaseS
 			return
 		}
 
-		lastCrawl, err := getLastCrawled(fc.LastCrawl, cSrv.dbService)
+		fc.LastCrawl, err = getLastCrawled(fc.LastCrawl, cSrv.dbService)
 		if err != nil {
 			logger.Error("Failed to get last crawl sub", zap.Error(err))
 			return
 		}
 
-		subs, err := getCrawlSubs(cSrv.dbService, fc, lastCrawl, logger)
+		subs, err := getCrawlSubs(cSrv.dbService, fc, logger)
 		if err != nil {
 			return
 		}
@@ -260,7 +260,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *BaseS
 	}
 }
 
-func getCrawlSubs(dbService zhihuDB.DB, fc *FilterConfig, lastCrawl string, logger *zap.Logger) (subs []zhihuDB.Sub, err error) {
+// getCrawlSubs returns subscriptions that need to be crawled.
+func getCrawlSubs(dbService zhihuDB.DB, fc *FilterConfig, logger *zap.Logger) (subs []zhihuDB.Sub, err error) {
 	if subs, err = dbService.GetSubs(); err != nil {
 		logger.Error("Failed to get zhihu subs", zap.Error(err))
 		return nil, err
@@ -271,7 +272,7 @@ func getCrawlSubs(dbService zhihuDB.DB, fc *FilterConfig, lastCrawl string, logg
 	subs = SliceToSubs(filteredSubs, subs)
 	logger.Info("Filter subs need to crawl successfully", zap.Int("count", len(subs)))
 
-	subs = CutSubs(subs, lastCrawl)
+	subs = CutSubs(subs, fc.LastCrawl)
 	logger.Info("Subs need to crawl", zap.Int("count", len(subs)))
 	return subs, nil
 }
