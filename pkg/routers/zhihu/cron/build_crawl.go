@@ -46,12 +46,15 @@ type crawlService struct {
 	dbService      zhihuDB.DB
 	requestService request.Requester
 	parseService   parse.Parser
+	cookieService  cookie.CookieIface
+	notifier       notify.Notifier
 }
+
+type rssCache struct{ path, rssContent string }
 
 func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *BaseService) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		var cronID = getCronID(cronIDInDB)
-
 		logger := log.DefaultLogger.With(zap.String("cron_id", cronID))
 
 		var (
@@ -60,13 +63,8 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *BaseS
 			errCount int = 0
 		)
 
-		go func() {
-			for err := range errCh {
-				if err != nil {
-					errCount++
-				}
-			}
-		}()
+		defer close(errCh)
+		go countErr(errCh, &errCount)
 
 		cronDBService := cronDB.NewDBService(srv.DB)
 		var job *cronDB.CronJob
@@ -113,151 +111,197 @@ func BuildZhihuCrawlFunc(cronIDInDB, taskID string, fc *FilterConfig, srv *BaseS
 			return
 		}
 
-		var redisCachePath, redisCacheRSSContent string
 		for _, sub := range subs {
-			ts := common.ZhihuTypeToString(sub.Type) // type in string
-			logger.Info("Start to crawl zhihu sub", zap.String("author_id", sub.AuthorID), zap.String("type", ts))
+			var cache *rssCache
+			var shouldReturn bool
 
-			latestTimeInDB := time.Time{}
-			switch ts {
-			case "answer":
-				// get answers from db to check if there is any answer for this sub
-				var answers []zhihuDB.Answer
-				if answers, err = cSrv.dbService.GetLatestNAnswer(1, sub.AuthorID); err != nil {
-					errCh <- err
-					logger.Error("Failed to get latest answer from database", zap.Error(err))
-					continue
-				}
-
-				if len(answers) == 0 {
-					logger.Info("Found no answer in db, start to crawl answer in one time mode")
-					// set target time to long long ago, as one time mode is enabled, this will not cause endless crawl
-					// enable one time mode because we do not know latest time in db(no answer found in db), and we do not want crawl all answers(this will cost too much time)
-					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlAnswer(sub.AuthorID, cSrv.requestService, cSrv.parseService, cron.LongLongAgo, 0, true, logger); err != nil {
-						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
-							return
-						}
-						logger.Error("Failed to crawl answer", zap.Error(err))
-						continue
-					}
-				} else {
-					latestTimeInDB = answers[0].CreateAt
-					logger.Info("Found answers in db, start to crawl article in normal mode",
-						zap.Time("latest_answer's_create_time", latestTimeInDB))
-					// set target time to the latest answer's create time in db
-					// disable one time mode, as we know when to stop(latest answer's create time)
-					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlAnswer(sub.AuthorID, cSrv.requestService, cSrv.parseService, latestTimeInDB, 0, false, logger); err != nil {
-						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
-							return
-						}
-						logger.Error("Failed to crawl answer", zap.Error(err))
-						continue
-					}
-				}
-				logger.Info("Crawl answer successfully")
-
-				if redisCachePath, redisCacheRSSContent, err = rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, latestTimeInDB, cSrv.dbService, logger); err != nil {
-					errCh <- err
-					logger.Error("Failed to generate zhihu rss content", zap.Error(err))
-					continue
-				}
-				logger.Info("Generate rss content successfully")
-			case "article":
-				// get articles from db to check if there is any article for this sub
-				var articles []zhihuDB.Article
-				if articles, err = cSrv.dbService.GetLatestNArticle(1, sub.AuthorID); err != nil {
-					errCh <- err
-					logger.Error("Failed to get latest article from database", zap.Error(err))
-					continue
-				}
-
-				if len(articles) == 0 {
-					logger.Info("Found no article in db, start to crawl article in one time mode")
-					// set target time to long long ago, as one time mode is enabled, this will not cause endless crawl
-					// enable one time mode because we do not know latest time in db(no article found in db)
-					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlArticle(sub.AuthorID, cSrv.requestService, cSrv.parseService, cron.LongLongAgo, 0, true, logger); err != nil {
-						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
-							return
-						}
-						logger.Error("Failed to crawl article", zap.Error(err))
-						continue
-					}
-				} else {
-					latestTimeInDB = articles[0].CreateAt
-					logger.Info("Found article in db, start to crawl article in normal mode",
-						zap.Time("latest_article's_create_time", latestTimeInDB))
-					// set target time to the latest article's create time in db
-					// disable one time mode, as we know when to stop(latest article's create time)
-					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlArticle(sub.AuthorID, cSrv.requestService, cSrv.parseService, latestTimeInDB, 0, false, logger); err != nil {
-						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
-							return
-						}
-						logger.Error("Failed to crawl article", zap.Error(err))
-						continue
-					}
-				}
-				logger.Info("Crawl article successfully")
-
-				if redisCachePath, redisCacheRSSContent, err = rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, latestTimeInDB, cSrv.dbService, logger); err != nil {
-					errCh <- err
-					logger.Error("Failed to generate rss content", zap.Error(err))
-					continue
-				}
-				logger.Info("Generate rss content successfully")
-			case "pin":
-				// get pins from db to check if there is any pin for this sub
-				var pins []zhihuDB.Pin
-				if pins, err = cSrv.dbService.GetLatestNPin(1, sub.AuthorID); err != nil {
-					errCh <- err
-					logger.Error("Failed to get latest pin from database", zap.Error(err))
-					continue
-				}
-
-				if len(pins) == 0 {
-					logger.Info("Foundno pin in db, start to crawl pin in one time mode")
-					// set target time to long long ago, as one time mode is enabled, this will not cause bugs
-					// enable one time mode as we do not know latest time in db(no pin found in db)
-					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlPin(sub.AuthorID, cSrv.requestService, cSrv.parseService, cron.LongLongAgo, 0, true, logger); err != nil {
-						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
-							return
-						}
-						logger.Error("Failed to crawl pin", zap.Error(err))
-						continue
-					}
-				} else {
-					latestTimeInDB = pins[0].CreateAt
-					logger.Info("Found pin in db, start to crawl pin in normal mode",
-						zap.Time("latest_pin's_create_time", latestTimeInDB))
-					// set target time to the latest pin's create time in db
-					// disable one time mode, as we know when to stop(latest pin's create time)
-					// set offset to 0 to disable backtrack mode
-					if err = crawl.CrawlPin(sub.AuthorID, cSrv.requestService, cSrv.parseService, latestTimeInDB, 0, false, logger); err != nil {
-						if handleCrawlErr(err, errCh, srv.CookieService, srv.Notifier, logger) {
-							return
-						}
-						logger.Error("Failed to crawl pin", zap.Error(err))
-						continue
-					}
-				}
-				logger.Info("Crawl pin successfully")
-
-				if redisCachePath, redisCacheRSSContent, err = rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, latestTimeInDB, cSrv.dbService, logger); err != nil {
-					errCh <- err
-					logger.Error("Failed to generate rss content", zap.Error(err))
-					continue
-				}
-				logger.Info("Generate rss content and save to redis successfully")
+			if cache, shouldReturn = crawlSub(cSrv, sub, errCh, logger); shouldReturn {
+				return
+			}
+			if cache == nil {
+				continue
 			}
 
-			cacheRSS(srv.RedisService, redisCachePath, redisCacheRSSContent, errCh, logger)
+			cacheRSS(srv.RedisService, cache, errCh, logger)
 			recordJobDetail(cronID, sub.ID, cronDBService, logger)
 		}
 	}
+}
+
+func countErr(errCh chan error, count *int) {
+	for err := range errCh {
+		if err != nil {
+			*count++
+		}
+	}
+}
+
+func crawlSub(cSrv *crawlService, sub zhihuDB.Sub, errCh chan error, logger *zap.Logger) (cache *rssCache, shouldReturn bool) {
+	type crawlFunc func(*crawlService, zhihuDB.Sub, chan error, *zap.Logger) (*rssCache, bool)
+	crawlFuncMap := map[string]crawlFunc{
+		"answer":  crawlAnswer,
+		"article": crawlArticle,
+		"pin":     crawlPin,
+	}
+
+	ts := common.ZhihuTypeToString(sub.Type) // type in string
+	logger.Info("Start to crawl zhihu sub", zap.String("author_id", sub.AuthorID), zap.String("type", ts))
+
+	if crawlFunc, ok := crawlFuncMap[ts]; ok {
+		return crawlFunc(cSrv, sub, errCh, logger)
+	} else {
+		logger.Error("Unknown zhihu type", zap.String("type", ts))
+		return nil, false
+	}
+}
+
+func crawlAnswer(cSrv *crawlService, sub zhihuDB.Sub, errCh chan error, logger *zap.Logger) (cache *rssCache, shouldReturn bool) {
+	var err error
+	var latestTimeInDB time.Time
+	// get answers from db to check if there is any answer for this sub
+	var answers []zhihuDB.Answer
+	if answers, err = cSrv.dbService.GetLatestNAnswer(1, sub.AuthorID); err != nil {
+		errCh <- err
+		logger.Error("Failed to get latest answer from database", zap.Error(err))
+		return nil, false
+	}
+
+	if len(answers) == 0 {
+		logger.Info("Found no answer in db, start to crawl answer in one time mode")
+		// set target time to long long ago, as one time mode is enabled, this will not cause endless crawl
+		// enable one time mode because we do not know latest time in db(no answer found in db), and we do not want crawl all answers(this will cost too much time)
+		// set offset to 0 to disable backtrack mode
+		if err = crawl.CrawlAnswer(sub.AuthorID, cSrv.requestService, cSrv.parseService, cron.LongLongAgo, 0, true, logger); err != nil {
+			if handleCrawlErr(err, errCh, cSrv.cookieService, cSrv.notifier, logger) {
+				return nil, true
+			}
+			logger.Error("Failed to crawl answer", zap.Error(err))
+			return nil, false
+		}
+	} else {
+		latestTimeInDB = answers[0].CreateAt
+		logger.Info("Found answers in db, start to crawl article in normal mode",
+			zap.Time("latest_answer's_create_time", latestTimeInDB))
+		// set target time to the latest answer's create time in db
+		// disable one time mode, as we know when to stop(latest answer's create time)
+		// set offset to 0 to disable backtrack mode
+		if err = crawl.CrawlAnswer(sub.AuthorID, cSrv.requestService, cSrv.parseService, latestTimeInDB, 0, false, logger); err != nil {
+			if handleCrawlErr(err, errCh, cSrv.cookieService, cSrv.notifier, logger) {
+				return nil, true
+			}
+			logger.Error("Failed to crawl answer", zap.Error(err))
+			return nil, false
+		}
+	}
+	logger.Info("Crawl answer successfully")
+
+	cache = &rssCache{}
+	if cache.path, cache.rssContent, err = rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, latestTimeInDB, cSrv.dbService, logger); err != nil {
+		errCh <- err
+		logger.Error("Failed to generate zhihu rss content", zap.Error(err))
+		return nil, false
+	}
+	logger.Info("Generate rss content successfully")
+	return cache, false
+}
+
+func crawlArticle(cSrv *crawlService, sub zhihuDB.Sub, errCh chan error, logger *zap.Logger) (cache *rssCache, shouldReturn bool) {
+	var err error
+	var latestTimeInDB time.Time
+	// get articles from db to check if there is any article for this sub
+	var articles []zhihuDB.Article
+	if articles, err = cSrv.dbService.GetLatestNArticle(1, sub.AuthorID); err != nil {
+		errCh <- err
+		logger.Error("Failed to get latest article from database", zap.Error(err))
+		return nil, false
+	}
+
+	if len(articles) == 0 {
+		logger.Info("Found no article in db, start to crawl article in one time mode")
+		// set target time to long long ago, as one time mode is enabled, this will not cause endless crawl
+		// enable one time mode because we do not know latest time in db(no article found in db)
+		// set offset to 0 to disable backtrack mode
+		if err = crawl.CrawlArticle(sub.AuthorID, cSrv.requestService, cSrv.parseService, cron.LongLongAgo, 0, true, logger); err != nil {
+			if handleCrawlErr(err, errCh, cSrv.cookieService, cSrv.notifier, logger) {
+				return nil, true
+			}
+			logger.Error("Failed to crawl article", zap.Error(err))
+			return nil, false
+		}
+	} else {
+		latestTimeInDB = articles[0].CreateAt
+		logger.Info("Found article in db, start to crawl article in normal mode",
+			zap.Time("latest_article's_create_time", latestTimeInDB))
+		// set target time to the latest article's create time in db
+		// disable one time mode, as we know when to stop(latest article's create time)
+		// set offset to 0 to disable backtrack mode
+		if err = crawl.CrawlArticle(sub.AuthorID, cSrv.requestService, cSrv.parseService, latestTimeInDB, 0, false, logger); err != nil {
+			if handleCrawlErr(err, errCh, cSrv.cookieService, cSrv.notifier, logger) {
+				return nil, true
+			}
+			logger.Error("Failed to crawl article", zap.Error(err))
+			return nil, false
+		}
+	}
+	logger.Info("Crawl article successfully")
+
+	cache = &rssCache{}
+	if cache.path, cache.rssContent, err = rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, latestTimeInDB, cSrv.dbService, logger); err != nil {
+		errCh <- err
+		logger.Error("Failed to generate rss content", zap.Error(err))
+		return nil, false
+	}
+	logger.Info("Generate rss content successfully")
+	return cache, false
+}
+
+func crawlPin(cSrv *crawlService, sub zhihuDB.Sub, errCh chan error, logger *zap.Logger) (cache *rssCache, shouldReturn bool) {
+	var err error
+	var latestTimeInDB time.Time
+	// get pins from db to check if there is any pin for this sub
+	var pins []zhihuDB.Pin
+	if pins, err = cSrv.dbService.GetLatestNPin(1, sub.AuthorID); err != nil {
+		errCh <- err
+		logger.Error("Failed to get latest pin from database", zap.Error(err))
+		return nil, false
+	}
+
+	if len(pins) == 0 {
+		logger.Info("Foundno pin in db, start to crawl pin in one time mode")
+		// set target time to long long ago, as one time mode is enabled, this will not cause bugs
+		// enable one time mode as we do not know latest time in db(no pin found in db)
+		// set offset to 0 to disable backtrack mode
+		if err = crawl.CrawlPin(sub.AuthorID, cSrv.requestService, cSrv.parseService, cron.LongLongAgo, 0, true, logger); err != nil {
+			if handleCrawlErr(err, errCh, cSrv.cookieService, cSrv.notifier, logger) {
+				return nil, true
+			}
+			logger.Error("Failed to crawl pin", zap.Error(err))
+			return nil, false
+		}
+	} else {
+		latestTimeInDB = pins[0].CreateAt
+		logger.Info("Found pin in db, start to crawl pin in normal mode",
+			zap.Time("latest_pin's_create_time", latestTimeInDB))
+		// set target time to the latest pin's create time in db
+		// disable one time mode, as we know when to stop(latest pin's create time)
+		// set offset to 0 to disable backtrack mode
+		if err = crawl.CrawlPin(sub.AuthorID, cSrv.requestService, cSrv.parseService, latestTimeInDB, 0, false, logger); err != nil {
+			if handleCrawlErr(err, errCh, cSrv.cookieService, cSrv.notifier, logger) {
+				return nil, true
+			}
+			logger.Error("Failed to crawl pin", zap.Error(err))
+			return nil, false
+		}
+	}
+
+	cache = &rssCache{}
+	if cache.path, cache.rssContent, err = rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, latestTimeInDB, cSrv.dbService, logger); err != nil {
+		errCh <- err
+		logger.Error("Failed to generate rss content", zap.Error(err))
+		return nil, false
+	}
+	logger.Info("Generate rss content and save to redis successfully")
+	return cache, false
 }
 
 // getCrawlSubs returns subscriptions that need to be crawled.
@@ -324,7 +368,7 @@ func initServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (cSrv 
 		return nil, fmt.Errorf("fail to init zhihu parser: %w", err)
 	}
 
-	return &crawlService{dbService: dbService, requestService: requestService, parseService: parser}, nil
+	return &crawlService{dbService: dbService, requestService: requestService, parseService: parser, cookieService: cs, notifier: notifier}, nil
 }
 
 func removeZSECKCookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuZSECK) }
@@ -393,8 +437,8 @@ func setupJob(cronIDInDB, taskID, cronID string, cronDBService cronDB.DB, logger
 	return nil, fmt.Errorf("failed to setup new job")
 }
 
-func cacheRSS(redisService redis.Redis, path, rssContent string, errChn chan error, logger *zap.Logger) {
-	if err := redisService.Set(path, rssContent, redis.RSSDefaultTTL); err != nil {
+func cacheRSS(redisService redis.Redis, cache *rssCache, errChn chan error, logger *zap.Logger) {
+	if err := redisService.Set(cache.path, cache.rssContent, redis.RSSDefaultTTL); err != nil {
 		errChn <- err
 		logger.Error("Failed to save rss content to redis", zap.Error(err))
 	}
