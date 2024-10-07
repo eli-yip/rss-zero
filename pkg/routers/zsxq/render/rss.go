@@ -60,7 +60,7 @@ func (r *RSSRenderService) RenderRSS(ts []RSSTopic) (output string, err error) {
 			}(),
 			Link:        &feeds.Link{Href: render.BuildArchiveLink(config.C.Settings.ServerURL, webLink)},
 			Author:      &feeds.Author{Name: t.AuthorName},
-			Id:          strconv.Itoa(t.TopicID),
+			Id:          getID(t.FakeID, t.TopicID),
 			Description: render.ExtractExcerpt(t.Text),
 			Created:     t.CreateTime,
 			Updated:     t.CreateTime,
@@ -71,4 +71,12 @@ func (r *RSSRenderService) RenderRSS(ts []RSSTopic) (output string, err error) {
 	}
 
 	return rssFeed.ToAtom()
+}
+
+// getID returns the id of this rss item.
+func getID(fakeID *string, topicID int) string {
+	if fakeID != nil {
+		return *fakeID
+	}
+	return strconv.Itoa(topicID)
 }

@@ -27,6 +27,9 @@ type Topic struct {
 }
 
 type RSSTopic struct {
+	// Used for zsxq random select rss, as Reeder 5 will use id as item id.
+	// We have to use a fake id to make sure the id is unique.
+	FakeID     *string
 	TopicID    int
 	GroupName  string
 	GroupID    int
