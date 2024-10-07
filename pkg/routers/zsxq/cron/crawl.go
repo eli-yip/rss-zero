@@ -45,7 +45,7 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 		var errCount int = 0
 
 		cronDBService := cronDB.NewDBService(db)
-		jobIDInDB, err := cronDBService.CheckRunningJob(taskID)
+		jobInDB, err := cronDBService.CheckRunningJob(taskID)
 		if err != nil {
 			logger.Error("Failed to check job", zap.Error(err), zap.String("task_id", taskID))
 			cronJobInfo.Err = fmt.Errorf("failed to check job: %w", err)
@@ -55,14 +55,14 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 		logger.Info("Check job according to task type successfully", zap.String("task_type", taskID))
 
 		// If there is another job running and this job is a new job(rawCronID is empty), skip this job.
-		if jobIDInDB != "" && cronIDInDB == "" {
+		if jobInDB.ID != "" && cronIDInDB == "" {
 			logger.Info("There is another job running, skip this", zap.String("task_type", taskID))
-			cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", jobIDInDB)
+			cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", jobInDB.ID)
 			cronJobInfoChan <- cronJobInfo
 			return
 		}
 
-		if jobIDInDB == "" && cronIDInDB == "" {
+		if jobInDB.ID == "" && cronIDInDB == "" {
 			logger.Info("New job, start to add it to db")
 			var job *cronDB.CronJob
 			if job, err = cronDBService.AddJob(cronID, taskID); err != nil {

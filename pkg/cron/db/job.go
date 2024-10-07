@@ -30,7 +30,7 @@ const (
 type CronJobIface interface {
 	AddJob(jobID, taskType string) (job *CronJob, err error)
 	StopJob(jobID string) (err error)
-	CheckRunningJob(taskType string) (jobID string, err error)
+	CheckRunningJob(taskType string) (job *CronJob, err error)
 	FindRunningJob() ([]*CronJob, error)
 	FindErrorJob() ([]*CronJob, error)
 	UpdateStatus(jobID string, status int) (err error)
@@ -49,16 +49,16 @@ func (ds *DBService) AddJob(jobID, taskType string) (job *CronJob, err error) {
 	return job, err
 }
 
-func (ds *DBService) CheckRunningJob(taskType string) (jobID string, err error) {
-	var job CronJob
+func (ds *DBService) CheckRunningJob(taskType string) (job *CronJob, err error) {
+	job = &CronJob{}
 	err = ds.Where("task_type = ? AND status = ?", taskType, StatusRunning).First(&job).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", nil
+			return nil, nil
 		}
-		return "", err
+		return nil, err
 	}
-	return job.ID, nil
+	return job, nil
 }
 
 func (ds *DBService) FindRunningJob() (jobs []*CronJob, err error) {

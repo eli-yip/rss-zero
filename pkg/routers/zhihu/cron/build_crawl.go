@@ -412,19 +412,19 @@ func getLastCrawled(lastCrawl string, dbService zhihuDB.DB) (string, error) {
 
 // setupJob will determine whether a job should be executed and added to db.
 func setupJob(cronIDInDB, taskID, cronID string, cronDBService cronDB.DB, logger *zap.Logger) (job *cronDB.CronJob, err error) {
-	jobIDInDB, err := cronDBService.CheckRunningJob(taskID)
+	jobInDB, err := cronDBService.CheckRunningJob(taskID)
 	if err != nil {
 		logger.Error("Failed to check job", zap.Error(err), zap.String("task_type", taskID))
 		return nil, err
 	}
 	logger.Info("Check job by task type successfully", zap.String("task_type", taskID))
 
-	if hasDuplicateJob(jobIDInDB, cronIDInDB) {
-		logger.Info("There is another job running, skip this", zap.String("job_id", jobIDInDB))
-		return nil, fmt.Errorf("there is another job running, skip this: %s", jobIDInDB)
+	if hasDuplicateJob(jobInDB.ID, cronIDInDB) {
+		logger.Info("There is another job running, skip this", zap.String("job_id", jobInDB.ID))
+		return nil, fmt.Errorf("there is another job running, skip this: %s", jobInDB.ID)
 	}
 
-	if isNewJob(jobIDInDB, cronIDInDB) {
+	if isNewJob(jobInDB.ID, cronIDInDB) {
 		logger.Info("New job, start to add it to db")
 		if job, err = cronDBService.AddJob(cronID, taskID); err != nil {
 			logger.Error("Failed to add job", zap.Error(err))
@@ -434,7 +434,7 @@ func setupJob(cronIDInDB, taskID, cronID string, cronDBService cronDB.DB, logger
 		return job, nil
 	}
 
-	return nil, fmt.Errorf("failed to setup new job")
+	return job, nil
 }
 
 func cacheRSS(redisService redis.Redis, cache *rssCache, errChn chan error, logger *zap.Logger) {
