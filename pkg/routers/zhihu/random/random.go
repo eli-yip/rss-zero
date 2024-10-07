@@ -14,12 +14,12 @@ import (
 // GenerateRandomCanglimoAnswerRSS generate rss atom text from random selected answers from canglimo in zhihu.
 func GenerateRandomCanglimoAnswerRSS(zhihuDBService db.DB, logger *zap.Logger) (rssContent string, err error) {
 	const (
-		answersCountToSelect = 5
-		authorID             = `canglimo`
-		authorName           = `墨苍离`
+		answerCountToSelect = 1
+		authorID            = `canglimo`
+		authorName          = `墨苍离`
 	)
 
-	answers, err := zhihuDBService.RandomSelect(answersCountToSelect, authorID)
+	answers, err := zhihuDBService.RandomSelect(answerCountToSelect, authorID)
 	if err != nil {
 		logger.Error("Failed to random select topics", zap.Error(err))
 		return "", err

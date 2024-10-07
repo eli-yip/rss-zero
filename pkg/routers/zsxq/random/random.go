@@ -14,7 +14,7 @@ import (
 // GenerateRandomCanglimoDigestRss generate rss atom text from random selected digests from canglimo in zsxq.
 func GenerateRandomCanglimoDigestRss(gormDB *gorm.DB, logger *zap.Logger) (rssContent string, err error) {
 	const (
-		topicCountToSelect = 5
+		topicCountToSelect = 1
 		authorID           = 48512854525288
 		authorName         = `墨苍离`
 		groupName          = `苍离的博弈与成长`
