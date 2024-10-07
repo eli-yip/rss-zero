@@ -122,7 +122,7 @@ func (h *Controller) History(c echo.Context) (err error) {
 
 	result, err := h.handleRequestArchiveLink(u)
 	if err != nil {
-		logger.Error("Failed to handle zhihu link", zap.Error(err))
+		logger.Error("Failed to get webarchive", zap.Error(err))
 		return c.HTML(http.StatusBadRequest, renderErrorPage(err, requestID))
 	}
 	if result.redirectTo != "" {
@@ -155,6 +155,24 @@ func renderErrorPage(err error, requestID string) string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<!-- Standard favicon -->
+		<link rel="icon" href="https://oss.darkeli.com/rss/favicon/favicon.ico" type="image/x-icon">
+
+		<!-- 16x16 icon -->
+		<link rel="icon" href="https://oss.darkeli.com/rss/favicon/favicon-16x16.png" sizes="16x16" type="image/png">
+
+		<!-- 32x32 icon -->
+		<link rel="icon" href="https://oss.darkeli.com/rss/favicon/favicon-32x32.png" sizes="32x32" type="image/png">
+
+		<!-- Android Chrome icon -->
+		<link rel="icon" href="https://oss.darkeli.com/rss/favicon/android-chrome-192x192.png" sizes="192x192" type="image/png">
+		<link rel="icon" href="https://oss.darkeli.com/rss/favicon/android-chrome-512x512.png" sizes="512x512" type="image/png">
+
+		<!-- Apple Touch icon for iOS -->
+		<link rel="apple-touch-icon" href="https://oss.darkeli.com/rss/favicon/apple-touch-icon.png">
+
+		<!-- Web App Manifest -->
+		<link rel="manifest" href="https://oss.darkeli.com/rss/favicon/site.webmanifest">
     <title>Archive History Error</title>
     <style>
         body {
