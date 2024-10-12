@@ -67,7 +67,7 @@ func NewRequestService(cookieService cookie.CookieIface, token string, logger *z
 
 func (r *RequestService) Limit(u string) (data []byte, err error) {
 	logger := r.logger.With(zap.String("url", u))
-	logger.Info("Start requesting url with limiter")
+	logger.Info("Start to request url with limiter")
 
 	for i := 0; i < r.maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
@@ -75,13 +75,13 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 
 		var req *http.Request
 		if req, err = r.setAPIReq(u); err != nil {
-			logger.Error("Failed newing a request", zap.Error(err))
+			logger.Error("Failed to create a request", zap.Error(err))
 			continue
 		}
 
 		var resp *http.Response
 		if resp, err = r.client.Do(req); err != nil {
-			logger.Error("Failed request url", zap.Error(err))
+			logger.Error("Failed to request url", zap.Error(err))
 			continue
 		}
 		defer resp.Body.Close()
@@ -94,13 +94,13 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 
 		var bytes []byte
 		if bytes, err = io.ReadAll(resp.Body); err != nil {
-			logger.Error("Failed reading response body", zap.Error(err))
+			logger.Error("Failed to read response body", zap.Error(err))
 			continue
 		}
 
 		var apiResp baseResp
 		if err = json.Unmarshal(bytes, &apiResp); err != nil {
-			logger.Error("Failed unmarshaling response bytes", zap.Error(err))
+			logger.Error("Failed to unmarshal response bytes", zap.Error(err))
 			continue
 		}
 
@@ -110,13 +110,13 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 
 		var okResp okResp
 		if err = json.Unmarshal(bytes, &okResp); err != nil {
-			logger.Error("Failed unmarshaling response bytes", zap.Error(err))
+			logger.Error("Failed to unmarshal response bytes", zap.Error(err))
 			return nil, err
 		}
 		return okResp.Data, nil
 	}
 
-	logger.Error("Failed getting xiaobot response", zap.Error(err))
+	logger.Error("Failed to get xiaobot response", zap.Error(err))
 	return nil, err
 }
 

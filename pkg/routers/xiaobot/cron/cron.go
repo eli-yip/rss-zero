@@ -37,7 +37,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 				notify.NoticeWithLogger(notifier, "Failed to crawl xiaobot content", cronID, logger)
 			}
 			if err := recover(); err != nil {
-				logger.Error("xiaobot crawl function panic", zap.Any("err", err))
+				logger.Error("Xiaobot crawl function panic", zap.Any("err", err))
 			}
 		}()
 
@@ -45,9 +45,9 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 		if token, err = cookieService.Get(cookie.CookieTypeXiaobotAccessToken); err != nil {
 			if errors.Is(err, cookie.ErrKeyNotExist) {
 				notify.NoticeWithLogger(notifier, "No token for xiaobot", "", logger)
-				logger.Error("xiaobot token not found in cookie")
+				logger.Error("Xiaobot token not found in cookie")
 			} else {
-				logger.Error("failed to get xiaobot token from cookie", zap.Error(err))
+				logger.Error("Failed to get xiaobot token from cookie", zap.Error(err))
 			}
 			return
 		}
@@ -68,7 +68,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 
 		var papers []xiaobotDB.Paper
 		if papers, err = xiaobotDBService.GetPapers(); err != nil {
-			logger.Error("Failed to  get xiaobot paper subs from database", zap.Error(err))
+			logger.Error("Failed to get xiaobot paper subs from database", zap.Error(err))
 			return
 		}
 		logger.Info("Get xiaobot papers subs from database")
@@ -85,7 +85,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 
 			if err = crawl.Crawl(paper.ID, xiaobotRequestService, xiaobotParser, latestPostTimeInDB, 0, true, logger); err != nil {
 				errCount++
-				logger.Error("Failed crawling xiaobot paper", zap.Error(err))
+				logger.Error("Failed to crawl xiaobot paper", zap.Error(err))
 				continue
 			}
 			logger.Info("Crawl xiaobot paper successfully")
@@ -93,17 +93,17 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 			var path, content string
 			if path, content, err = rss.GenerateXiaobot(paper.ID, xiaobotDBService, logger); err != nil {
 				errCount++
-				logger.Error("Failed generating rss for xiaobot paper", zap.Error(err))
+				logger.Error("Failed to generate rss for xiaobot paper", zap.Error(err))
 				continue
 			}
 			logger.Info("Generate rss for xiaobot paper successfully")
 
 			if err = r.Set(path, content, redis.RSSDefaultTTL); err != nil {
 				errCount++
-				logger.Error("Failed setting rss to redis", zap.Error(err))
+				logger.Error("Failed to cache xiaobot rss", zap.Error(err))
 				continue
 			}
-			logger.Info("Set rss content to redis")
+			logger.Info("Cache xiaobot rss successfully")
 		}
 	}
 }

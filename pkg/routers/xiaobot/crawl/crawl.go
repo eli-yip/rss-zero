@@ -26,13 +26,13 @@ func Crawl(paperID string, request request.Requester, parser parse.Parser,
 	for {
 		data, err := request.Limit(next)
 		if err != nil {
-			logger.Error("Failed requesting xiaobot api", zap.Error(err))
+			logger.Error("Failed to request xiaobot api", zap.Error(err))
 			return err
 		}
 
 		posts, err := parser.SplitPaper(data)
 		if err != nil {
-			logger.Error("Failed splitting paper", zap.Error(err))
+			logger.Error("Failed to split xiaobot paper", zap.Error(err))
 			return err
 		}
 
@@ -41,7 +41,7 @@ func Crawl(paperID string, request request.Requester, parser parse.Parser,
 
 			t, err := parser.ParseTime(post.CreateAt)
 			if err != nil {
-				logger.Error("Failed parsing time", zap.Error(err))
+				logger.Error("Failed to parse xiaobot time", zap.Error(err))
 				return err
 			}
 
@@ -52,14 +52,14 @@ func Crawl(paperID string, request request.Requester, parser parse.Parser,
 
 			postBytes, err := json.Marshal(post)
 			if err != nil {
-				logger.Error("Failed marshalling post", zap.Error(err))
+				logger.Error("Failed to marshal post", zap.Error(err))
 				return err
 			}
 			logger.Info("Marshal post successfully")
 
 			_, err = parser.ParsePaperPost(postBytes, paperID)
 			if err != nil {
-				logger.Error("Failed parsing paper post", zap.Error(err))
+				logger.Error("Failed to parse paper post", zap.Error(err))
 				return err
 			}
 			logger.Info("Parse paper post successfully")
