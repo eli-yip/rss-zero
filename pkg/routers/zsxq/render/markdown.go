@@ -45,6 +45,7 @@ func NewMarkdownRenderService(dbService zsxqDB.DB) MarkdownRenderer {
 	return s
 }
 
+// BuildLink builds official link for a zsxq topic.
 func BuildLink(groupID, topicID int) string {
 	return fmt.Sprintf("https://wx.zsxq.com/group/%d/topic/%d", groupID, topicID)
 }

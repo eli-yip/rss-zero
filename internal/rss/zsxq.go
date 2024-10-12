@@ -36,7 +36,7 @@ func GenerateZSXQ(groupID int, zsxqDBService zsxqDB.DB, logger *zap.Logger) (pat
 	}
 	logger.Info("Got zsxq group name from database", zap.String("group name", groupName))
 
-	var rssTopics []render.RSSTopic
+	var rssTopics []render.RSSItem
 	for _, topic := range topics {
 		var authorName string
 		if authorName, err = zsxqDBService.GetAuthorName(topic.AuthorID); err != nil {
@@ -45,7 +45,7 @@ func GenerateZSXQ(groupID int, zsxqDBService zsxqDB.DB, logger *zap.Logger) (pat
 		}
 		logger.Info("Got author name from database", zap.String("author name", authorName))
 
-		rssTopics = append(rssTopics, render.RSSTopic{
+		rssTopics = append(rssTopics, render.RSSItem{
 			TopicID:    topic.ID,
 			GroupName:  groupName,
 			GroupID:    topic.GroupID,

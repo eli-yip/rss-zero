@@ -269,7 +269,7 @@ func crawlGroup(groupID int, requestService request.Requester, parseService pars
 		return fmt.Errorf("failed to get group %d name from database: %w", groupID, err)
 	}
 
-	var rssTopics []render.RSSTopic
+	var rssTopics []render.RSSItem
 	if rssTopics, err = buildRSSTopic(topics, dbService, groupName, logger); err != nil {
 		return fmt.Errorf("failed to build rss topics: %w", err)
 	}
@@ -312,7 +312,7 @@ func fetchTopics(groupID int, latestTopicTimeInDB time.Time, dbService zsxqDB.DB
 }
 
 // buildRSSTopic returns rss topics slice for render service
-func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string, logger *zap.Logger) (rssTopics []render.RSSTopic, err error) {
+func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string, logger *zap.Logger) (rssTopics []render.RSSItem, err error) {
 	for _, topic := range topics {
 		logger := logger.With(zap.Int("topic_id", topic.ID))
 
@@ -326,7 +326,7 @@ func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string,
 			return nil, fmt.Errorf("fail to get author %d name from database: %w", topic.AuthorID, err)
 		}
 
-		rssTopics = append(rssTopics, render.RSSTopic{
+		rssTopics = append(rssTopics, render.RSSItem{
 			TopicID:    topic.ID,
 			GroupName:  groupName,
 			GroupID:    topic.GroupID,
@@ -340,7 +340,7 @@ func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string,
 	return rssTopics, nil
 }
 
-func renderAndSaveRSSContent(groupID int, rssTopics []render.RSSTopic, rssRenderService render.RSSRenderer, redisService redis.Redis) (err error) {
+func renderAndSaveRSSContent(groupID int, rssTopics []render.RSSItem, rssRenderService render.RSSRenderer, redisService redis.Redis) (err error) {
 	var rssContent string
 	if rssContent, err = rssRenderService.RenderRSS(rssTopics); err != nil {
 		return fmt.Errorf("fail to render rss content: %w", err)

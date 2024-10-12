@@ -16,58 +16,58 @@ import (
 )
 
 type RSSRenderer interface {
-	// RenderRSS render render.topics to rss feed
-	RenderRSS([]RSSTopic) (string, error)
+	RenderRSS([]RSSItem) (rssContent string, err error)
 }
 
-type RSSRenderService struct{ HTMLRender goldmark.Markdown }
+type RSSRenderService struct{ hTMLRender goldmark.Markdown }
 
 func NewRSSRenderService() RSSRenderer {
-	return &RSSRenderService{HTMLRender: goldmark.New(
-		goldmark.WithExtensions(extension.GFM,
-			extension.NewCJK(extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksCSS3Draft))),
-	)}
+	return &RSSRenderService{
+		hTMLRender: goldmark.New(
+			goldmark.WithExtensions(
+				extension.GFM,
+				extension.NewCJK(extension.WithEastAsianLineBreaks(extension.EastAsianLineBreaksCSS3Draft)),
+			),
+		)}
 }
 
 var ErrNoTopic = errors.New("no topics")
 
-func (r *RSSRenderService) RenderRSS(ts []RSSTopic) (output string, err error) {
-	if len(ts) == 0 {
+func (r *RSSRenderService) RenderRSS(items []RSSItem) (output string, err error) {
+	if len(items) == 0 {
 		return "", ErrNoTopic
 	}
 
 	rssFeed := &feeds.Feed{
-		Title:   ts[0].GroupName,
-		Link:    &feeds.Link{Href: fmt.Sprintf("https://wx.zsxq.com/group/%d", ts[0].GroupID)},
+		Title:   items[0].GroupName,
+		Link:    &feeds.Link{Href: buildGroupLink(items[0].GroupID)},
 		Created: time.Now(),
-		Updated: ts[0].CreateTime,
+		Updated: items[0].CreateTime,
 	}
 
-	for _, t := range ts {
+	for _, item := range items {
 		var buffer bytes.Buffer
-		webLink := BuildLink(t.GroupID, t.TopicID)
-		text := render.AppendOriginLink(t.Text, webLink)
-		if err := r.HTMLRender.Convert([]byte(text), &buffer); err != nil {
+		officialWebLink := BuildLink(item.GroupID, item.TopicID)
+		text := render.AppendOriginLink(item.Text, officialWebLink)
+		if err := r.hTMLRender.Convert([]byte(text), &buffer); err != nil {
 			return "", err
 		}
 
-		feedItem := feeds.Item{
+		rssFeed.Items = append(rssFeed.Items, &feeds.Item{
 			Title: func() string {
-				if t.Title != nil {
-					return *t.Title
+				if item.Title != nil {
+					return *item.Title
 				}
-				return strconv.Itoa(t.TopicID)
+				return strconv.Itoa(item.TopicID)
 			}(),
-			Link:        &feeds.Link{Href: render.BuildArchiveLink(config.C.Settings.ServerURL, webLink)},
-			Author:      &feeds.Author{Name: t.AuthorName},
-			Id:          getID(t.FakeID, t.TopicID),
-			Description: render.ExtractExcerpt(t.Text),
-			Created:     t.CreateTime,
-			Updated:     t.CreateTime,
+			Link:        &feeds.Link{Href: render.BuildArchiveLink(config.C.Settings.ServerURL, officialWebLink)},
+			Author:      &feeds.Author{Name: item.AuthorName},
+			Id:          getID(item.FakeID, item.TopicID),
+			Description: render.ExtractExcerpt(item.Text),
+			Created:     item.CreateTime,
+			Updated:     item.CreateTime,
 			Content:     buffer.String(),
-		}
-
-		rssFeed.Items = append(rssFeed.Items, &feedItem)
+		})
 	}
 
 	return rssFeed.ToAtom()
@@ -80,3 +80,5 @@ func getID(fakeID *string, topicID int) string {
 	}
 	return strconv.Itoa(topicID)
 }
+
+func buildGroupLink(groupID int) string { return fmt.Sprintf("https://wx.zsxq.com/group/%d", groupID) }

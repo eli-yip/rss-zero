@@ -31,9 +31,9 @@ func GenerateRandomCanglimoDigestRss(gormDB *gorm.DB, logger *zap.Logger) (rssCo
 
 	rssRender := render.NewRSSRenderService()
 
-	rssItemToRender := make([]render.RSSTopic, 0, len(topics))
+	rssItemToRender := make([]render.RSSItem, 0, len(topics))
 	for _, topic := range topics {
-		rssItemToRender = append(rssItemToRender, render.RSSTopic{
+		rssItemToRender = append(rssItemToRender, render.RSSItem{
 			FakeID:     GetPtr(xid.New().String()),
 			TopicID:    topic.ID,
 			GroupName:  groupName,
