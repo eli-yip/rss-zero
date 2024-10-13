@@ -80,7 +80,7 @@ text
 	assert := assert.New(t)
 
 	zsxqDB := &mockZsxqDBService{}
-	exportService := NewExportService(zsxqDB, render.NewMarkdownRenderService(zsxqDB))
+	exportService := NewExportService(zsxqDB, render.NewFullTextRenderService())
 
 	var buf bytes.Buffer
 	for _, v := range testCases {
@@ -119,7 +119,7 @@ func TestExportOptionError(t *testing.T) {
 	assert := assert.New(t)
 
 	zsxqDB := &mockZsxqDBService{}
-	exportService := NewExportService(zsxqDB, render.NewMarkdownRenderService(zsxqDB))
+	exportService := NewExportService(zsxqDB, render.NewFullTextRenderService())
 
 	for _, v := range testCases {
 		var buf bytes.Buffer

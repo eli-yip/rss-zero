@@ -45,9 +45,7 @@ func escapeLinkPath(input string) (string, error) {
 	return escapedMarkdown, nil
 }
 
-// replaceBookMarkup replace book info
-//
-// more info: format_funcs_test.go
+// replaceBookMarkup convert book markup to markdown
 func replaceBookMarkUp(input string) (string, error) {
 	const bookMarkUpPattern = `(?i)<e type="web" href="(https?://|https?%3A%2F%2F)[^"]*" title="([^"]+)" style="book" />`
 	re := regexp.MustCompile(bookMarkUpPattern)

@@ -12,7 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/render"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
-	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
+	
 )
 
 type MarkdownRenderer interface {
@@ -21,10 +21,6 @@ type MarkdownRenderer interface {
 	Text(*Topic) (string, error)
 	// Article converts a article html to markdown
 	Article([]byte) (string, error)
-	// FullText converts a topic to markdown full text, which include everything
-	//
-	// The result can be used to generate a pdf file
-	FullText(*Topic) (string, error)
 }
 
 type MarkdownRenderService struct {
@@ -50,13 +46,6 @@ func BuildLink(groupID, topicID int) string {
 	return fmt.Sprintf("https://wx.zsxq.com/group/%d/topic/%d", groupID, topicID)
 }
 
-func (m *MarkdownRenderService) FullText(t *Topic) (text string, err error) {
-	titlePart := render.TrimRightSpace(md.H1(BuildTitle(t)))
-	timePart := fmt.Sprintf("时间：%s", zsxqTime.FmtForRead(t.Time))
-	linkPart := render.TrimRightSpace(fmt.Sprintf("链接：[%s](%s)", BuildLink(t.GroupID, t.ID), BuildLink(t.GroupID, t.ID)))
-	text = md.Join(titlePart, t.Text, timePart, linkPart)
-	return m.mdFmt.FormatStr(text)
-}
 
 func BuildTitle(t *Topic) string {
 	titlePart := func() string {

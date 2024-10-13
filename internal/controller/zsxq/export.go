@@ -56,8 +56,8 @@ func (h *Controoler) Export(c echo.Context) (err error) {
 	logger.Info("Parsed zsxq export option", zap.Any("options", options))
 
 	zsxqDBService := zsxqDB.NewDBService(h.db)
-	mdRender := render.NewMarkdownRenderService(zsxqDBService)
-	exportService := zsxqExport.NewExportService(zsxqDBService, mdRender)
+	fullTextRenderService := render.NewFullTextRenderService()
+	exportService := zsxqExport.NewExportService(zsxqDBService, fullTextRenderService)
 
 	fileName := exportService.FileName(options)
 	objectKey := fmt.Sprintf("export/zsxq/%s", fileName)

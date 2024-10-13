@@ -17,7 +17,7 @@ type Controller struct {
 	zhihuDBService             zhihuDB.DB
 	zhihuFullTextRenderService zhihuRender.FullTextRenderIface
 	zsxqDBService              zsxqDB.DB
-	zsxqFullTextRenderService  zsxqRender.MarkdownRenderer
+	zsxqFullTextRenderService  zsxqRender.FullTextRenderer
 
 	htmlRender render.HtmlRenderIface
 }
@@ -29,7 +29,7 @@ func NewController(db *gorm.DB) *Controller {
 		zhihuDBService:             zhihuDB.NewDBService(db),
 		zhihuFullTextRenderService: zhihuRender.NewFullTextRender(md.NewMarkdownFormatter()),
 		zsxqDBService:              zsxqDBService,
-		zsxqFullTextRenderService:  zsxqRender.NewMarkdownRenderService(zsxqDBService),
+		zsxqFullTextRenderService:  zsxqRender.NewFullTextRenderService(),
 
 		htmlRender: render.NewHtmlRenderService(),
 	}
