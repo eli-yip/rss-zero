@@ -15,7 +15,7 @@ type Topic struct {
 	Type     string    `gorm:"column:type;type:text"`
 	Digested bool      `gorm:"column:digested;type:bool"`
 	AuthorID int       `gorm:"column:author_id"`
-	Title    *string   `gorm:"column:title;type:text"`
+	Title    *string   `gorm:"column:title;type:text"` // Although title is not null in q&a and talk, it is null in some topics
 	Text     string    `gorm:"column:text;type:text"`
 	Raw      []byte    `gorm:"column:raw;type:bytea"`
 }
