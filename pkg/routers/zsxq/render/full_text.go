@@ -21,9 +21,9 @@ func NewFullTextRenderService() FullTextRenderer {
 
 func (m *FullTextRenderService) FullText(t *Topic) (text string, err error) {
 	title := render.TrimRightSpace(md.H1(BuildTitle(t)))
-	time := fmt.Sprintf("时间：%s", zsxqTime.FmtForRead(t.Time))
+	time := zsxqTime.FmtForRead(t.Time)
 	link := BuildLink(t.GroupID, t.ID)
-	linkText := render.TrimRightSpace(fmt.Sprintf("链接：[%s](%s)", link, link))
+	linkText := render.TrimRightSpace(fmt.Sprintf("[%s](%s)", link, link))
 	text = md.Join(title, t.Text, time, linkText)
 	return m.mdFmt.FormatStr(text)
 }
