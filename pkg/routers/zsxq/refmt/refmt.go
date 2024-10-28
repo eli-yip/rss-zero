@@ -143,7 +143,7 @@ func (s *RefmtService) getLatestTime(gid int) (time.Time, error) {
 // fetchTopic fetch topics from db
 func (s *RefmtService) fetchTopic(gid int, lastTime time.Time, limit int) (topics []zsxqDB.Topic, err error) {
 	if topics, err = s.db.FetchNTopicsBefore(gid, limit, lastTime); err != nil {
-		s.logger.Error("Failed fetching topics from db",
+		s.logger.Error("Failed to fetch topics from db",
 			zap.Error(err), zap.Int("group_id", gid),
 			zap.Time("start_time", lastTime), zap.Int("limit", limit))
 		return nil, err
@@ -240,14 +240,14 @@ func (s *RefmtService) formatArticle(result models.TopicParseResult, logger *zap
 
 		article, err := s.db.GetArticle(result.Topic.Talk.Article.ArticleID)
 		if err != nil {
-			logger.Error("Failed getting article from database", zap.Error(err))
+			logger.Error("Failed to get article from database", zap.Error(err))
 			errCh <- errMessage{topicID: result.TopicID, err: err}
 			return err
 		}
 
 		textBytes, err := s.render.Article(article.Raw)
 		if err != nil {
-			logger.Error("Failed rendering article", zap.Error(err))
+			logger.Error("Failed to render article", zap.Error(err))
 			errCh <- errMessage{topicID: result.TopicID, err: err}
 			return err
 		}
@@ -259,7 +259,7 @@ func (s *RefmtService) formatArticle(result models.TopicParseResult, logger *zap
 			Text:  string(textBytes),
 			Raw:   article.Raw,
 		}); err != nil {
-			logger.Error("Failed saving article to db", zap.Error(err))
+			logger.Error("Failed to save article to db", zap.Error(err))
 			errCh <- errMessage{topicID: result.TopicID, err: err}
 			return err
 		}
@@ -274,7 +274,7 @@ func (s *RefmtService) validateRefmt(topicSet mapset.Set[int], gid int) error {
 	// get all topic ids in db
 	idInDB, err := s.db.GetAllTopicIDs(gid)
 	if err != nil {
-		s.logger.Error("Failed getting all topics id in db",
+		s.logger.Error("Failed to get all topics id in db",
 			zap.Error(err), zap.Int("group_id", gid))
 		return err
 	}

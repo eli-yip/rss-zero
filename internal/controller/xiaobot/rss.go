@@ -30,15 +30,15 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 			logger.Error("Error return rss", zap.String("paper id", paperID), zap.Error(err))
 			return c.String(http.StatusBadRequest, "paper does not exist in xiaobot")
 		}
-		logger.Error("Failed checking paper", zap.Error(err))
+		logger.Error("Failed to check paper", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "failed to check paper")
 	}
 	logger.Info("Checked paper")
 
 	rss, err := h.getRSS(fmt.Sprintf(redis.XiaobotRSSPath, paperID), logger)
 	if err != nil {
-		logger.Error("Failed getting rss from redis", zap.Error(err))
-		return c.String(http.StatusInternalServerError, "Failed getting rss from redis")
+		logger.Error("Failed to get rss content from redis", zap.Error(err))
+		return c.String(http.StatusInternalServerError, "Failed to get rss content from redis")
 	}
 	logger.Info("Retrieved rss from redis")
 

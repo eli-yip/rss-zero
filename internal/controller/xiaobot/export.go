@@ -131,7 +131,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 			case uploadErr = <-uploadErrCh:
 				if uploadErr != nil {
 					logger.Error("Failed to save file stream", zap.Error(uploadErr))
-					notify.NoticeWithLogger(h.notifier, "Failed saving file", uploadErr.Error(), logger)
+					notify.NoticeWithLogger(h.notifier, "Failed to save file", uploadErr.Error(), logger)
 				} else {
 					logger.Info("Save file stream success")
 				}

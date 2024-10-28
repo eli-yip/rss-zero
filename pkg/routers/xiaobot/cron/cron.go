@@ -125,7 +125,7 @@ func initXiaobotServices(db *gorm.DB, logger *zap.Logger, cs cookie.CookieIface,
 
 func getXiaobotPaperLatestTime(xiaobotDBService xiaobotDB.DB, paper *xiaobotDB.Paper, logger *zap.Logger) (latestPostTimeInDB time.Time, err error) {
 	if latestPostTimeInDB, err = xiaobotDBService.GetLatestTime(paper.ID); err != nil {
-		logger.Error("Failed getting latest time from database", zap.Error(err))
+		logger.Error("Failed to get latest time from database", zap.Error(err))
 		return time.Time{}, err
 	}
 

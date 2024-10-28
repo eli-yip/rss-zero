@@ -17,7 +17,7 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 	rss, err := h.getRSS(logger)
 	if err != nil {
 		logger.Error("Failed to get rss from redis", zap.Error(err))
-		return c.String(http.StatusInternalServerError, "Failed getting rss from redis")
+		return c.String(http.StatusInternalServerError, "Failed to get rss content from redis")
 	}
 	logger.Info("retrieved rss from redis")
 

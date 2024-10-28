@@ -40,7 +40,7 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 			logger.Error("Error return rss", zap.String("user", user), zap.String("repo", repo), zap.Error(err))
 			return c.String(http.StatusBadRequest, "repo not found")
 		}
-		logger.Error("Failed checking repo", zap.Error(err))
+		logger.Error("Failed to GitHub repo", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "failed to check repo")
 	}
 	logger.Info("Check repo successfully")

@@ -131,19 +131,19 @@ func (r *RequestService) validateAPIResp(code int, bytes []byte, logger *zap.Log
 	case codeNeedSignIn:
 		badMessage, err := r.getErrorMessage(bytes)
 		if err != nil {
-			logger.Error("Failed getting error message", zap.Error(err))
+			logger.Error("Failed to get error message", zap.Error(err))
 			return err
 		}
 		logger.Error("Need sign in", zap.String("message", badMessage))
 		if err := r.cookieService.Del(cookie.CookieTypeXiaobotAccessToken); err != nil {
-			logger.Error("Failed deleting xiaobot token", zap.Error(err))
+			logger.Error("Failed to delete xiaobot token", zap.Error(err))
 		}
-		logger.Info("Deleted xiaobot token")
+		logger.Info("Deleted xiaobot token successfully")
 		return ErrNeedLogin
 	case codeBadRequest:
 		badMessage, err := r.getErrorMessage(bytes)
 		if err != nil {
-			logger.Error("Failed getting error message", zap.Error(err))
+			logger.Error("Failed to get error message", zap.Error(err))
 			return err
 		}
 		logger.Error("Bad request", zap.String("message", badMessage))
@@ -151,7 +151,7 @@ func (r *RequestService) validateAPIResp(code int, bytes []byte, logger *zap.Log
 	case codeSignError:
 		badMessage, err := r.getErrorMessage(bytes)
 		if err != nil {
-			logger.Error("Failed getting error message", zap.Error(err))
+			logger.Error("Failed to get error message", zap.Error(err))
 			return err
 		}
 		logger.Error("Sign error", zap.String("message", badMessage))
