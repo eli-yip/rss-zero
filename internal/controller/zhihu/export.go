@@ -12,8 +12,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/controller/common"
 	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/md"
@@ -171,7 +171,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	}()
 
 	return c.JSON(http.StatusOK, &common.ApiResp{
-		Message: "start to expor zhihu content, you'll be notified when it's done",
+		Message: "start to export zhihu content, you'll be notified when it's done",
 		Data: &ZhihuExportResp{
 			FileName: filename,
 			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
