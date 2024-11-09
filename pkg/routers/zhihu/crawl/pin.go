@@ -65,17 +65,17 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 				continue
 			}
 
-			if !time.Unix(pin.CreateAt, 0).After(targetTime) {
-				logger.Info("Reached target time reached, break")
-				return nil
-			}
-
 			if _, err = parser.ParsePin(pinRawList[i], logger); err != nil {
 				logger.Error("Failed to parse pin", zap.Error(err))
 				return fmt.Errorf("failed to parse pin: %w", err)
 			}
 
 			logger.Info("Parse pin successfully")
+		}
+
+		if !time.Unix(pinExcerptList[len(pinExcerptList)-1].CreateAt, 0).After(targetTime) {
+			logger.Info("Reached target time, break")
+			return nil
 		}
 
 		if paging.IsEnd {

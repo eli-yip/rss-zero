@@ -53,7 +53,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 		logger.Info("Parse article list successfully", zap.Int("index", index), zap.String("next", next))
 
 		if index != 0 && paging.Totals != lastArticleCount {
-			logger.Error("Found new article, break ", zap.Int("new_article_count", paging.Totals-lastArticleCount))
+			logger.Error("Found new article, break", zap.Int("new_article_count", paging.Totals-lastArticleCount))
 			return fmt.Errorf("found new article")
 		}
 		lastArticleCount = paging.Totals
@@ -63,16 +63,16 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 		for i, article := range articleExcerptList {
 			logger := logger.With(zap.Int("article_id", article.ID))
 
-			if !time.Unix(article.CreateAt, 0).After(targetTime) {
-				logger.Info("Reach target time, break")
-				return nil
-			}
-
 			if _, err = parser.ParseArticle(articleList[i], logger); err != nil {
 				logger.Error("Failed to parse article", zap.Error(err))
 				return fmt.Errorf("failed to parse article: %w", err)
 			}
 			logger.Info("Parse article successfully")
+		}
+
+		if !time.Unix(articleExcerptList[len(articleExcerptList)-1].CreateAt, 0).After(targetTime) {
+			logger.Info("Reach target time, break")
+			return nil
 		}
 
 		if paging.IsEnd {

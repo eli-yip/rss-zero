@@ -64,16 +64,16 @@ func CrawlAnswer(user string, rs request.Requester, parser parse.Parser,
 		for i, answer := range answerExcerptList {
 			logger := logger.With(zap.Int("ans_id", answer.ID))
 
-			if !time.Unix(answer.CreateAt, 0).After(targetTime) {
-				logger.Info("Reach target time, break")
-				return nil
-			}
-
 			if _, err = parser.ParseAnswer(answerList[i], user, logger); err != nil {
 				logger.Error("Failed to parse answer", zap.Error(err))
 				return fmt.Errorf("failed to parse answer: %w", err)
 			}
 			logger.Info("Parse answer successfully")
+		}
+
+		if !time.Unix(answerExcerptList[len(answerExcerptList)-1].CreateAt, 0).After(targetTime) {
+			logger.Info("Reach target time, break")
+			return nil
 		}
 
 		if paging.IsEnd {

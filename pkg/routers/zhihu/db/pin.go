@@ -10,6 +10,7 @@ type Pin struct {
 	ID       int       `gorm:"column:id;type:int;primary_key"`
 	AuthorID string    `gorm:"column:author_id;type:string"`
 	CreateAt time.Time `gorm:"column:create_at;type:timestamptz"`
+	UpdateAt time.Time `gorm:"column:update_at;type:timestamptz"`
 	Title    string    `gorm:"column:title;type:text"`
 	Text     string    `gorm:"column:text;type:text"`
 	Raw      []byte    `gorm:"column:raw;type:bytea"`

@@ -5,6 +5,7 @@ import "encoding/json"
 type Pin struct {
 	ID        string            `json:"id"`
 	CreateAt  int64             `json:"created"`
+	UpdateAt  int64             `json:"updated"`
 	Author    Author            `json:"author"`
 	Content   []json.RawMessage `json:"content"`
 	OriginPin *Pin              `json:"origin_pin"`

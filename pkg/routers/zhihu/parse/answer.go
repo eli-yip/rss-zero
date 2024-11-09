@@ -2,10 +2,12 @@ package parse
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/common"
@@ -46,6 +48,24 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 	}
 	logger.Info("Unmarshal answer successfully")
 
+	answerInDB, exist, err := checkAnswerExist(answer.ID, p.db)
+	if err != nil {
+		return emptyString, fmt.Errorf("failed to check answer exist: %w", err)
+	}
+	if exist {
+		if answerInDB.UpdateAt.IsZero() {
+			logger.Info("Answer already exist, updated_at is zero, skip this answer")
+			return answerInDB.Text, nil
+		}
+		answerUpdateAt := time.Unix(answer.UpdateAt, 0)
+		if answerUpdateAt.After(answerInDB.UpdateAt) {
+			logger.Info("Answer already exist, updated_at is newer, update this answer")
+		} else {
+			logger.Info("Answer already exist, updated_at is older, skip this answer")
+			return answerInDB.Text, nil
+		}
+	}
+
 	text, err = p.parseHTML(answer.HTML, answer.ID, common.TypeZhihuAnswer, logger)
 	if err != nil {
 		return emptyString, fmt.Errorf("failed to parse html content: %w", err)
@@ -72,6 +92,7 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 		QuestionID: answer.Question.ID,
 		AuthorID:   authorID,
 		CreateAt:   time.Unix(answer.CreateAt, 0),
+		UpdateAt:   time.Unix(answer.UpdateAt, 0),
 		Text:       formattedText,
 		Raw:        content, // NOTE: see db.Answer.Raw comment
 		Status:     db.AnswerStatusCompleted,
@@ -82,4 +103,15 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 	logger.Info("Save answer info to db successfully")
 
 	return formattedText, nil
+}
+
+func checkAnswerExist(answerID int, db db.DB) (answer *db.Answer, exist bool, err error) {
+	answer, err = db.GetAnswer(answerID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, fmt.Errorf("failed to get answer from db: %w", err)
+	}
+	return answer, true, nil
 }

@@ -2,12 +2,14 @@ package parse
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
+	"gorm.io/gorm"
 
 	"go.uber.org/zap"
 )
@@ -47,6 +49,24 @@ func (p *ParseService) ParseArticle(content []byte, logger *zap.Logger) (text st
 	}
 	logger.Info("Unmarshal article successfully")
 
+	articleInDB, exist, err := checkArticleExist(article.ID, p.db)
+	if err != nil {
+		return emptyString, fmt.Errorf("failed to check article exist: %w", err)
+	}
+	if exist {
+		if articleInDB.UpdateAt.IsZero() {
+			logger.Info("Article already exist, updated_at is zero, skip this article")
+			return articleInDB.Text, nil
+		}
+		articleUpdateAt := time.Unix(article.UpdateAt, 0)
+		if articleUpdateAt.After(articleInDB.UpdateAt) {
+			logger.Info("Article already exist, but updated_at is newer, re-parse it")
+		} else {
+			logger.Info("Article already exist, skip")
+			return articleInDB.Text, nil
+		}
+	}
+
 	text, err = p.parseHTML(article.HTML, article.ID, common.TypeZhihuArticle, logger)
 	if err != nil {
 		return emptyString, fmt.Errorf("failed to parse html content: %w", err)
@@ -73,6 +93,7 @@ func (p *ParseService) ParseArticle(content []byte, logger *zap.Logger) (text st
 		Text:     formattedText,
 		AuthorID: article.Author.ID,
 		CreateAt: time.Unix(article.CreateAt, 0),
+		UpdateAt: time.Unix(article.UpdateAt, 0),
 		Raw:      content,
 	}); err != nil {
 		return emptyString, fmt.Errorf("failed to save article to db: %w", err)
@@ -80,4 +101,15 @@ func (p *ParseService) ParseArticle(content []byte, logger *zap.Logger) (text st
 	logger.Info("Save article info to db successfully")
 
 	return formattedText, nil
+}
+
+func checkArticleExist(articleID int, db db.DB) (article *db.Article, exist bool, err error) {
+	article, err = db.GetArticle(articleID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, fmt.Errorf("failed to get article from db: %w", err)
+	}
+	return article, true, nil
 }

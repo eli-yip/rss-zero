@@ -47,6 +47,7 @@ type Answer struct {
 	QuestionID int       `gorm:"column:question_id;type:int"`
 	AuthorID   string    `gorm:"column:author_id;type:text"`
 	CreateAt   time.Time `gorm:"column:create_at;type:timestamptz"`
+	UpdateAt   time.Time `gorm:"column:update_at;type:timestamptz"`
 	Text       string    `gorm:"column:text;type:text"`
 	// NOTE: raw can be standard apiModel.Answer,
 	// or raw from zhihu api,
