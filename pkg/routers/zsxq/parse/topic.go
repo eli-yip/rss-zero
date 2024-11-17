@@ -3,6 +3,7 @@ package parse
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -70,7 +71,9 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 	}
 	logger.Info("Render topic to markdown text successfully")
 
-	if topic.Topic.Title == nil {
+	if topic.Topic.Title == nil ||
+		// Zsxq API will return a excerpt with suffix "..." as title if there is no title
+		strings.HasSuffix(*topic.Topic.Title, "...") {
 		title, err := s.ai.Conclude(topic.Text)
 		if err != nil {
 			return "", fmt.Errorf("failed to conclude title: %w", err)
