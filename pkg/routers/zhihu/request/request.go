@@ -209,7 +209,7 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 				logger.Error("Failed to unmarshal 401 error", zap.Error(err))
 				continue
 			}
-			if errResp.Error.Code == 100 && errResp.Error.Name == zC0ErrMsg {
+			if errResp.Error.Code == 100 && errResp.Error.Message == zC0ErrMsg {
 				logger.Error("Invalid z_c0 cookie", zap.String("resp_body", string(body)))
 				return nil, ErrInvalidZC0
 			}
