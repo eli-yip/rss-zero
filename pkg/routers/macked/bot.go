@@ -2,6 +2,7 @@ package macked
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -14,7 +15,7 @@ type BotIface interface {
 type Bot struct{ *bot.Bot }
 
 func NewBot(token string) (BotIface, error) {
-	b, err := bot.New(token)
+	b, err := bot.New(token, bot.WithCheckInitTimeout(30*time.Second))
 	if err != nil {
 		return nil, err
 	}
