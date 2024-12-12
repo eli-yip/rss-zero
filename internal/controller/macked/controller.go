@@ -10,17 +10,15 @@ import (
 
 type Controller struct {
 	redis  redis.Redis
-	tg     macked.BotIface
 	db     macked.DB
 	taskCh chan common.Task
 	logger *zap.Logger
 }
 
-func NewController(redis redis.Redis, tg macked.BotIface, db macked.DB,
+func NewController(redis redis.Redis, db macked.DB,
 	logger *zap.Logger) *Controller {
 	h := &Controller{
 		redis:  redis,
-		tg:     tg,
 		db:     db,
 		taskCh: make(chan common.Task, 100),
 		logger: logger,

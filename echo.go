@@ -31,7 +31,7 @@ import (
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
-func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, tg macked.BotIface, notifier notify.Notifier,
+func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier,
 	definitionToFunc jobController.DefinitionToFunc,
 	cronService *cron.CronService, logger *zap.Logger,
 ) (e *echo.Echo) {
@@ -69,7 +69,7 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 	archiveHandler := archiveController.NewController(db)
 	githubDBService := githubDB.NewDBService(db)
 	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)
-	mackedController := mackedController.NewController(redisService, tg, macked.NewDBService(db), logger)
+	mackedController := mackedController.NewController(redisService, macked.NewDBService(db), logger)
 
 	migrateHandler := migrateController.NewController(logger, db)
 
