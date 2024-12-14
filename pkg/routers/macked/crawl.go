@@ -2,6 +2,7 @@ package macked
 
 import (
 	"fmt"
+	"slices"
 	"sync"
 
 	"go.uber.org/zap"
@@ -58,32 +59,32 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 		return nil
 	}
 
-	// 	slices.Reverse(unreadPosts) // Reverse unread posts because we want to notify in tg channel from old to latest
-	// 	var count int = 0
-	// 	go func() {
-	// 		for _, p := range unreadPosts {
-	// 			if count >= 10 {
-	// 				logger.Info("Reach telegram bot limit, sleep 30 seconds")
-	// 				time.Sleep(30 * time.Second)
-	// 				count = 0
-	// 			}
+	slices.Reverse(unreadPosts) // Reverse unread posts because we want to notify in tg channel from old to latest
+	// var count int = 0
+	go func() {
+		for _, p := range unreadPosts {
+			// if count >= 10 {
+			// 	logger.Info("Reach telegram bot limit, sleep 30 seconds")
+			// 	time.Sleep(30 * time.Second)
+			// 	count = 0
+			// }
 
-	// 			if err = db.SaveTime(p.Modified); err != nil {
-	// 				logger.Error("Failed to save post time to db", zap.Error(err))
-	// 				return
-	// 			}
+			if err = db.SaveTime(p.Modified); err != nil {
+				logger.Error("Failed to save post time to db", zap.Error(err))
+				return
+			}
 
-	// 			text := fmt.Sprintf(`%s
-	// %s`, p.Title, p.Link)
+			// 			text := fmt.Sprintf(`%s
+			// %s`, p.Title, p.Link)
 
-	// 			if err = bot.SendText(config.C.Telegram.MackedChatID, text); err != nil {
-	// 				logger.Error("Failed to send message to telegram", zap.Error(err))
-	// 				return
-	// 			}
+			// 			if err = bot.SendText(config.C.Telegram.MackedChatID, text); err != nil {
+			// 				logger.Error("Failed to send message to telegram", zap.Error(err))
+			// 				return
+			// 			}
 
-	// 			count++
-	// 		}
-	// 	}()
+			// count++
+		}
+	}()
 
 	return nil
 }
