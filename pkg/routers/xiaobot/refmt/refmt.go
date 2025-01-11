@@ -56,7 +56,7 @@ func (s *ReformatService) Reformat(paperID string) {
 	var latestTime time.Time
 	latestTime, err = s.db.GetLatestTime(paperID)
 	if err != nil {
-		s.l.Error("fail to get latest time in db", zap.Error(err))
+		s.l.Error("failed to get latest time in db", zap.Error(err))
 		return
 	}
 	if latestTime.IsZero() {
@@ -80,7 +80,7 @@ func (s *ReformatService) Reformat(paperID string) {
 
 		var posts []db.Post
 		if posts, err = s.db.FetchNPostBefore(config.DefaultFetchCount, paperID, latestTime); err != nil {
-			s.l.Info("fail to fetch paper from db", zap.String("paper_id", paperID),
+			s.l.Info("failed to fetch paper from db", zap.String("paper_id", paperID),
 				zap.Error(err), zap.Time("end_time", latestTime))
 		}
 		if len(posts) == 0 {
@@ -106,25 +106,25 @@ func (s *ReformatService) Reformat(paperID string) {
 
 				var post apiModels.PaperPost
 				if err := json.Unmarshal(p.Raw, &post); err != nil {
-					logger.Error("fail to parse paper", zap.Error(err))
+					logger.Error("failed to parse paper", zap.Error(err))
 					return
 				}
 
 				textBytes, err := s.htmlConvert.Convert([]byte(post.HTML))
 				if err != nil {
-					logger.Error("fail to convert html", zap.Error(err))
+					logger.Error("failed to convert html", zap.Error(err))
 					return
 				}
 
 				text, err := s.mdfmt.FormatStr(string(textBytes))
 				if err != nil {
-					logger.Error("fail to format markdown", zap.Error(err))
+					logger.Error("failed to format markdown", zap.Error(err))
 					return
 				}
 
 				t, err := s.ParseTime(post.CreateAt)
 				if err != nil {
-					logger.Error("fail to parse time", zap.Error(err))
+					logger.Error("failed to parse time", zap.Error(err))
 					return
 				}
 
@@ -136,7 +136,7 @@ func (s *ReformatService) Reformat(paperID string) {
 					Text:     text,
 					Raw:      p.Raw,
 				}); err != nil {
-					logger.Error("fail to save paper", zap.Error(err))
+					logger.Error("failed to save paper", zap.Error(err))
 					return
 				}
 				s.l.Info("save paper to db successfully")

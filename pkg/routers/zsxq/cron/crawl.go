@@ -285,7 +285,7 @@ func crawlGroup(groupID int, requestService request.Requester, parseService pars
 // returns unix 0 in case that no topics in database.
 func getTargetTime(groupID int, dbService zsxqDB.DB) (targetTime time.Time, err error) {
 	if targetTime, err = dbService.GetLatestTopicTime(groupID); err != nil {
-		return time.Time{}, fmt.Errorf("fail to get latest topic time from database: %w", err)
+		return time.Time{}, fmt.Errorf("failed to get latest topic time from database: %w", err)
 	}
 	if targetTime.IsZero() {
 		targetTime = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -298,13 +298,13 @@ func getTargetTime(groupID int, dbService zsxqDB.DB) (targetTime time.Time, err 
 func fetchTopics(groupID int, latestTopicTimeInDB time.Time, dbService zsxqDB.DB) (topics []zsxqDB.Topic, err error) {
 	fetchCount := config.DefaultFetchCount
 	if topics, err = dbService.GetLatestNTopics(groupID, fetchCount); err != nil {
-		return nil, fmt.Errorf("fail to get latest %d topic from database: %w", fetchCount, err)
+		return nil, fmt.Errorf("failed to get latest %d topic from database: %w", fetchCount, err)
 	}
 
 	for topics[len(topics)-1].Time.After(latestTopicTimeInDB) && len(topics) == fetchCount {
 		fetchCount += 10
 		if topics, err = dbService.GetLatestNTopics(groupID, fetchCount); err != nil {
-			return nil, fmt.Errorf("fail to get latest %d topic from database: %w", fetchCount, err)
+			return nil, fmt.Errorf("failed to get latest %d topic from database: %w", fetchCount, err)
 		}
 	}
 
@@ -323,7 +323,7 @@ func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string,
 
 		var authorName string
 		if authorName, err = dbService.GetAuthorName(topic.AuthorID); err != nil {
-			return nil, fmt.Errorf("fail to get author %d name from database: %w", topic.AuthorID, err)
+			return nil, fmt.Errorf("failed to get author %d name from database: %w", topic.AuthorID, err)
 		}
 
 		rssTopics = append(rssTopics, render.RSSItem{
@@ -343,11 +343,11 @@ func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string,
 func renderAndSaveRSSContent(groupID int, rssTopics []render.RSSItem, rssRenderService render.RSSRenderer, redisService redis.Redis) (err error) {
 	var rssContent string
 	if rssContent, err = rssRenderService.RenderRSS(rssTopics); err != nil {
-		return fmt.Errorf("fail to render rss content: %w", err)
+		return fmt.Errorf("failed to render rss content: %w", err)
 	}
 
 	if err = redisService.Set(fmt.Sprintf(redis.ZsxqRSSPath, strconv.Itoa(groupID)), rssContent, redis.RSSDefaultTTL); err != nil {
-		return fmt.Errorf("fail to save rss content to cache: %w", err)
+		return fmt.Errorf("failed to save rss content to cache: %w", err)
 	}
 
 	return nil

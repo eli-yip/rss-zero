@@ -321,19 +321,19 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 
 	zhihuCookies, err := cookie.GetZhihuCookies(cs, logger)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fail to get cookies: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to get cookies: %w", err)
 	}
 	logger.Info("Get zhihu cookies successfully", zap.Any("cookie", zhihuCookies))
 
 	notifier := notify.NewBarkNotifier(config.C.Bark.URL)
 	requestService, err = request.NewRequestService(logger, dbService, notifier, zhihuCookies)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fail to init request service: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to init request service: %w", err)
 	}
 
 	fileService, err = file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fail to init file service: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to init file service: %w", err)
 	}
 
 	htmlToMarkdown = renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
@@ -350,7 +350,7 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 		parse.WithFile(fileService),
 		parse.WithDB(dbService))
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("fail to init zhihu parser: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to init zhihu parser: %w", err)
 	}
 
 	return dbService, requestService, parser, nil

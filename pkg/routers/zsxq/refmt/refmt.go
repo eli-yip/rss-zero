@@ -39,7 +39,7 @@ func NewRefmtService(logger *zap.Logger, db zsxqDB.DB,
 }
 
 var (
-	errGetLatestTopicTime = errors.New("fail to get latest topic time in db")
+	errGetLatestTopicTime = errors.New("failed to get latest topic time in db")
 	errNoTopic            = errors.New("no topic in db")
 )
 
@@ -126,7 +126,7 @@ func (s *RefmtService) Reformat(gid int) {
 func (s *RefmtService) getLatestTime(gid int) (time.Time, error) {
 	lastTime, err := s.db.GetLatestTopicTime(gid)
 	if err != nil {
-		s.logger.Error("fail to get latest topic time in db", zap.Error(err))
+		s.logger.Error("failed to get latest topic time in db", zap.Error(err))
 		return time.Time{}, errGetLatestTopicTime
 	}
 

@@ -247,7 +247,7 @@ func (r *RequestService) NoLimitStream(u string, logger *zap.Logger) (resp *http
 
 func NoLimitStream(client *http.Client, u string, maxRetry int, logger *zap.Logger) (resp *http.Response, err error) {
 	logger = logger.With(zap.String("url", u))
-	logger.Info("request without limit for stream")
+	logger.Info("start to request without limit for stream")
 
 	for i := 0; i < maxRetry; i++ {
 		logger := logger.With(zap.Int("index", i))
@@ -255,13 +255,13 @@ func NoLimitStream(client *http.Client, u string, maxRetry int, logger *zap.Logg
 		var req *http.Request
 		req, err = setReq(u)
 		if err != nil {
-			logger.Error("fail to new a request", zap.Error(err))
+			logger.Error("failed to new a request", zap.Error(err))
 			continue
 		}
 
 		resp, err = client.Do(req)
 		if err != nil {
-			logger.Error("fail to request url", zap.Error(err))
+			logger.Error("failed to request url", zap.Error(err))
 			continue
 		}
 		// do not defer resp body close here because we will save it to minio
@@ -276,7 +276,7 @@ func NoLimitStream(client *http.Client, u string, maxRetry int, logger *zap.Logg
 		return resp, nil
 	}
 
-	logger.Error("fail to get zhihu no limit stream", zap.Error(err))
+	logger.Error("failed to get zhihu no limit stream", zap.Error(err))
 	return nil, err
 }
 

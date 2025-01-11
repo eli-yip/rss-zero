@@ -40,7 +40,7 @@ func FilterGroupIDs(include, exclude []string, all []int) (result []int, err err
 	for id := range resultSet.Iter() {
 		idInt, err := strconv.Atoi(id)
 		if err != nil {
-			return nil, fmt.Errorf("fail to convert id %s to int: %w", id, err)
+			return nil, fmt.Errorf("failed to convert id %s to int: %w", id, err)
 		}
 		result = append(result, idInt)
 	}

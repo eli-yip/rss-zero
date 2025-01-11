@@ -23,7 +23,7 @@ func (s *RefmtService) refmtAnswer(authorID string) (err error) {
 	var latestTime time.Time
 	latestTime, err = s.db.GetLatestAnswerTime(authorID)
 	if err != nil {
-		s.logger.Error("fail to get latest answer time in db", zap.Error(err))
+		s.logger.Error("failed to get latest answer time in db", zap.Error(err))
 		return err
 	}
 	if latestTime.IsZero() {
@@ -44,7 +44,7 @@ func (s *RefmtService) refmtAnswer(authorID string) (err error) {
 		var answers []db.Answer
 		// fetch answer before latestTime
 		if answers, err = s.db.FetchNAnswersBeforeTime(config.DefaultFetchCount, latestTime, authorID); err != nil {
-			s.logger.Info("fail to fetch answer from db", zap.String("author_id", authorID),
+			s.logger.Info("failed to fetch answer from db", zap.String("author_id", authorID),
 				zap.Error(err), zap.Time("end_time", latestTime))
 		}
 		if len(answers) == 0 {
@@ -71,25 +71,25 @@ func (s *RefmtService) refmtAnswer(authorID string) (err error) {
 
 				var answer apiModels.Answer
 				if err := json.Unmarshal(a.Raw, &answer); err != nil {
-					logger.Error("fail to unmarshal answer", zap.Error(err))
+					logger.Error("failed to unmarshal answer", zap.Error(err))
 					return
 				}
 
 				textBytes, err := s.htmlConvert.Convert([]byte(answer.HTML))
 				if err != nil {
-					logger.Error("fail to convert html to markdown", zap.Error(err))
+					logger.Error("failed to convert html to markdown", zap.Error(err))
 					return
 				}
 
 				text, err := s.ParseImages(string(textBytes), a.ID, common.TypeZhihuAnswer, logger)
 				if err != nil {
-					logger.Error("fail to replace image links", zap.Error(err))
+					logger.Error("failed to replace image links", zap.Error(err))
 					return
 				}
 
 				formattedText, err := s.mdfmt.FormatStr(text)
 				if err != nil {
-					logger.Error("fail to format markdown content", zap.Error(err))
+					logger.Error("failed to format markdown content", zap.Error(err))
 					return
 				}
 
@@ -102,7 +102,7 @@ func (s *RefmtService) refmtAnswer(authorID string) (err error) {
 					Raw:        a.Raw,
 					WordCount:  md.Count(text),
 				}); err != nil {
-					logger.Error("fail to save answer to db", zap.Error(err))
+					logger.Error("failed to save answer to db", zap.Error(err))
 					return
 				}
 				logger.Info("save answer to db successfully")

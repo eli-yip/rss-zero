@@ -21,7 +21,7 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 	var latestTime time.Time
 	latestTime, err = s.db.GetLatestArticleTime(authorID)
 	if err != nil {
-		s.logger.Error("fail to get latest article time in db", zap.Error(err))
+		s.logger.Error("failed to get latest article time in db", zap.Error(err))
 		return err
 	}
 	if latestTime.IsZero() {
@@ -41,7 +41,7 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 
 		var articles []db.Article
 		if articles, err = s.db.FetchNArticlesBeforeTime(config.DefaultFetchCount, latestTime, authorID); err != nil {
-			s.logger.Info("fail to fetch article from db",
+			s.logger.Info("failed to fetch article from db",
 				zap.Error(err), zap.String("author_id", authorID),
 				zap.Time("end_time", latestTime), zap.Int("limit", config.DefaultFetchCount))
 		}
@@ -68,25 +68,25 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 
 				var article apiModels.Article
 				if err := json.Unmarshal(a.Raw, &article); err != nil {
-					logger.Error("fail to unmarshal article", zap.Error(err))
+					logger.Error("failed to unmarshal article", zap.Error(err))
 					return
 				}
 
 				textBytes, err := s.htmlConvert.Convert([]byte(article.HTML))
 				if err != nil {
-					logger.Error("fail to convert html to markdown", zap.Error(err))
+					logger.Error("failed to convert html to markdown", zap.Error(err))
 					return
 				}
 
 				text, err := s.ParseImages(string(textBytes), a.ID, common.TypeZhihuArticle, logger)
 				if err != nil {
-					logger.Error("fail to replace image links", zap.Error(err))
+					logger.Error("failed to replace image links", zap.Error(err))
 					return
 				}
 
 				formattedText, err := s.mdfmt.FormatStr(text)
 				if err != nil {
-					logger.Error("fail to format markdown content", zap.Error(err))
+					logger.Error("failed to format markdown content", zap.Error(err))
 					return
 				}
 
@@ -98,7 +98,7 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 					Text:     formattedText,
 					Raw:      a.Raw,
 				}); err != nil {
-					logger.Error("fail to save article to db", zap.Error(err))
+					logger.Error("failed to save article to db", zap.Error(err))
 					return
 				}
 

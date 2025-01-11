@@ -34,7 +34,7 @@ func newMdFormatter() goldmark.Markdown {
 func (m *MarkdownFormatter) FormatStr(src string) (string, error) {
 	var buf bytes.Buffer
 	if err := m.formatter.Convert([]byte(src), &buf); err != nil {
-		return "", fmt.Errorf("fail to format text: %w", err)
+		return "", fmt.Errorf("failed to format text: %w", err)
 	}
 
 	return buf.String(), nil

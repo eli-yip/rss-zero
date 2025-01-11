@@ -24,7 +24,7 @@ func (s *RefmtService) refmtPin(authorID string) (err error) {
 	var latestTime time.Time
 	latestTime, err = s.db.GetLatestPinTime(authorID)
 	if err != nil {
-		s.logger.Error("fail to get latest pin time in db", zap.Error(err))
+		s.logger.Error("failed to get latest pin time in db", zap.Error(err))
 		return err
 	}
 	if latestTime.IsZero() {
@@ -45,7 +45,7 @@ func (s *RefmtService) refmtPin(authorID string) (err error) {
 
 		var pins []db.Pin
 		if pins, err = s.db.FetchNPinsBeforeTime(config.DefaultFetchCount, latestTime, authorID); err != nil {
-			s.logger.Info("fail to fetch pin from db",
+			s.logger.Info("failed to fetch pin from db",
 				zap.Error(err), zap.String("author_id", authorID),
 				zap.Time("end_time", latestTime), zap.Int("limit", config.DefaultFetchCount))
 		}
@@ -72,19 +72,19 @@ func (s *RefmtService) refmtPin(authorID string) (err error) {
 
 				var pin apiModels.Pin
 				if err = json.Unmarshal(p.Raw, &pin); err != nil {
-					logger.Error("fail to unmarshal pin", zap.Error(err))
+					logger.Error("failed to unmarshal pin", zap.Error(err))
 					return
 				}
 
 				text, err := s.parsePinContent(pin.Content, logger)
 				if err != nil {
-					logger.Error("fail to parse pin content", zap.Error(err))
+					logger.Error("failed to parse pin content", zap.Error(err))
 					return
 				}
 
 				formattedText, err := s.mdfmt.FormatStr(text)
 				if err != nil {
-					logger.Error("fail to format markdown text", zap.Error(err))
+					logger.Error("failed to format markdown text", zap.Error(err))
 					return
 				}
 
@@ -95,7 +95,7 @@ func (s *RefmtService) refmtPin(authorID string) (err error) {
 					Text:     formattedText,
 					Raw:      p.Raw,
 				}); err != nil {
-					logger.Error("fail to save pin to db", zap.Error(err))
+					logger.Error("failed to save pin to db", zap.Error(err))
 					return
 				}
 
@@ -148,7 +148,7 @@ func (s *RefmtService) parsePinContent(content []json.RawMessage, logger *zap.Lo
 			picID := parse.URLToID(imageContent.OriginalURL)
 			object, err := s.db.GetObjectInfo(picID)
 			if err != nil {
-				logger.Error("fail to get object info from db",
+				logger.Error("failed to get object info from db",
 					zap.Error(err), zap.Int("pic_id", picID))
 				return "", err
 			}

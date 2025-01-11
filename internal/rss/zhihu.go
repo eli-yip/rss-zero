@@ -52,15 +52,15 @@ func generateZhihuRSS(contentType int, authorID, authorName string, latestTimeIn
 	switch contentType {
 	case common.TypeZhihuAnswer:
 		if output, err = generateZhihuAnswer(authorID, authorName, latestTimeInDB, render, zhihuDBService, logger); err != nil {
-			return emptyString, fmt.Errorf("fail to generate zhihu answer rss content: %w", err)
+			return emptyString, fmt.Errorf("failed to generate zhihu answer rss content: %w", err)
 		}
 	case common.TypeZhihuArticle:
 		if output, err = generateZhihuArticle(authorID, authorName, latestTimeInDB, render, zhihuDBService, logger); err != nil {
-			return emptyString, fmt.Errorf("fail to generate zhihu article rss content: %w", err)
+			return emptyString, fmt.Errorf("failed to generate zhihu article rss content: %w", err)
 		}
 	case common.TypeZhihuPin:
 		if output, err = generateZhihuPin(authorID, authorName, latestTimeInDB, render, zhihuDBService, logger); err != nil {
-			return emptyString, fmt.Errorf("fail to generate zhihu pin rss content: %w", err)
+			return emptyString, fmt.Errorf("failed to generate zhihu pin rss content: %w", err)
 		}
 	default:
 		return emptyString, errUnknownZhihuType

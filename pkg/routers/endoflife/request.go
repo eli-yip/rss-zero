@@ -22,19 +22,19 @@ func GetReleaseCycles(product string) (cycles []cycle, err error) {
 
 	resp, err := http.Get(fmt.Sprintf("https://endoflife.date/api/%s.json", product))
 	if err != nil {
-		return nil, fmt.Errorf("fail to get latest release API response: %w", err)
+		return nil, fmt.Errorf("failed to get latest release API response: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fail to get latest release API response, bad status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("failed to get latest release API response, bad status code: %d", resp.StatusCode)
 	}
 
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("fail to read latest release API response into bytes: %w", err)
+		return nil, fmt.Errorf("failed to read latest release API response into bytes: %w", err)
 	}
 
 	if err = json.Unmarshal(bytes, &cycles); err != nil {
-		return nil, fmt.Errorf("fail to unmarshal latest release API response: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal latest release API response: %w", err)
 	}
 
 	if len(cycles) == 0 {

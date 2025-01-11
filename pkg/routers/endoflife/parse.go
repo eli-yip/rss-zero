@@ -27,7 +27,7 @@ func ParseCycles(cycles []cycle) (versionInfoList []versionInfo, err error) {
 
 	cycles, err = filterCycles(cycles)
 	if err != nil {
-		return nil, fmt.Errorf("fail to filter cycles: %w", err)
+		return nil, fmt.Errorf("failed to filter cycles: %w", err)
 	}
 
 	versionInfoList = make([]versionInfo, 0, len(cycles))
@@ -35,12 +35,12 @@ func ParseCycles(cycles []cycle) (versionInfoList []versionInfo, err error) {
 	for _, c := range cycles {
 		v, err := versionStringToVersion(c.Latest)
 		if err != nil {
-			return nil, fmt.Errorf("fail to parse version: %w", err)
+			return nil, fmt.Errorf("failed to parse version: %w", err)
 		}
 
 		t, err := time.Parse("2006-01-02", c.LatestReleaseDate)
 		if err != nil {
-			return nil, fmt.Errorf("fail to parse release date: %w", err)
+			return nil, fmt.Errorf("failed to parse release date: %w", err)
 		}
 
 		versionInfoList = append(versionInfoList, versionInfo{
@@ -66,7 +66,7 @@ func getLatestVersion(cycles []cycle) (version string, err error) {
 func filterCycles(cycles []cycle) (filteredCycles []cycle, err error) {
 	latestVersion, err := getLatestVersion(cycles)
 	if err != nil {
-		return nil, fmt.Errorf("fail to get latest version: %w", err)
+		return nil, fmt.Errorf("failed to get latest version: %w", err)
 	}
 
 	for _, c := range cycles {
@@ -115,9 +115,9 @@ func versionStringToVersion(versionString string) (v version, err error) {
 	}
 
 	if err != nil {
-		return version{}, fmt.Errorf("fail to parse version string: %w", err)
+		return version{}, fmt.Errorf("failed to parse version string: %w", err)
 	}
-	return version{}, fmt.Errorf("fail to parse version string: %s", versionString)
+	return version{}, fmt.Errorf("failed to parse version string: %s", versionString)
 }
 
 func versionToVersionString(version version) string {

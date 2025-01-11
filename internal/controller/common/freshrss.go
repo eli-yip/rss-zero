@@ -10,7 +10,7 @@ import (
 func GenerateFreshRSSFeed(freshRSSURL, feedLink string) (feedURL string, err error) {
 	parsedURL, err := url.Parse(freshRSSURL)
 	if err != nil {
-		return "", fmt.Errorf("fail to parse url: %s", freshRSSURL)
+		return "", fmt.Errorf("failed to parse url: %s", freshRSSURL)
 	}
 	parsedURL.Path = path.Join(parsedURL.Path, "i") + "/"
 

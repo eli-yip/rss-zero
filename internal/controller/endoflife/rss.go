@@ -22,7 +22,7 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 
 	rss, err := h.getRSS(fmt.Sprintf(redis.EndOfLifePath, productName), l)
 	if err != nil {
-		l.Error("fail to get rss from redis", zap.Error(err))
+		l.Error("failed to get rss from redis", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "Failed to getrss from redis")
 	}
 	l.Info("retrieved rss from redis")

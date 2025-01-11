@@ -28,14 +28,14 @@ func (p *ParseService) ParsePinList(content []byte, index int, logger *zap.Logge
 
 	pinList := apiModels.PinList{}
 	if err = json.Unmarshal(content, &pinList); err != nil {
-		return apiModels.Paging{}, nil, nil, fmt.Errorf("fail to unmarshal content data in to pin list: %w", err)
+		return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal content data in to pin list: %w", err)
 	}
 	logger.Info("Unmarshal pin list successfully")
 
 	for _, rawMessage := range pinList.Data {
 		pin := apiModels.Pin{}
 		if err = json.Unmarshal(rawMessage, &pin); err != nil {
-			return apiModels.Paging{}, nil, nil, fmt.Errorf("fail to unmarshal data in to pin: %w", err)
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal data in to pin: %w", err)
 		}
 		pinsExcerpt = append(pinsExcerpt, pin)
 	}
@@ -47,17 +47,17 @@ func (p *ParseService) ParsePinList(content []byte, index int, logger *zap.Logge
 func (p *ParseService) ParsePin(content []byte, logger *zap.Logger) (text string, err error) {
 	pin := apiModels.Pin{}
 	if err = json.Unmarshal(content, &pin); err != nil {
-		return emptyString, fmt.Errorf("fail to unmarshal content data in to pin: %w", err)
+		return emptyString, fmt.Errorf("failed to unmarshal content data in to pin: %w", err)
 	}
 	pinID, err := strconv.Atoi(pin.ID)
 	if err != nil {
-		return emptyString, fmt.Errorf("fail to convert pin id to int: %w", err)
+		return emptyString, fmt.Errorf("failed to convert pin id to int: %w", err)
 	}
 	logger.Info("Unmarshal pin successfully")
 
 	pinInDB, exist, err := checkPinExist(pinID, p.db)
 	if err != nil {
-		return emptyString, fmt.Errorf("fail to check pin exist: %w", err)
+		return emptyString, fmt.Errorf("failed to check pin exist: %w", err)
 	}
 	if exist {
 		if pinInDB.UpdateAt.IsZero() {
@@ -75,7 +75,7 @@ func (p *ParseService) ParsePin(content []byte, logger *zap.Logger) (text string
 
 	text, err = p.parseAndSavePin(&pin, content, pinID, logger)
 	if err != nil {
-		return "", fmt.Errorf("fail to parse and save pin: %w", err)
+		return "", fmt.Errorf("failed to parse and save pin: %w", err)
 	}
 	logger.Info("Parse and save pin successfully")
 
@@ -149,7 +149,7 @@ func (p *ParseService) parseAndSavePin(pin *apiModels.Pin, content []byte, pinID
 		Text:     formattedText,
 		Raw:      content,
 	}); err != nil {
-		return "", fmt.Errorf("fail to save pin info to db: %w", err)
+		return "", fmt.Errorf("failed to save pin info to db: %w", err)
 	}
 	logger.Info("Save pin to db successfully")
 
@@ -213,7 +213,7 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 				URL:             imageContent.OriginalURL,
 				StorageProvider: []string{p.file.AssetsDomain()},
 			}); err != nil {
-				return emptyString, emptyString, fmt.Errorf("fail to save object info to db: %w", err)
+				return emptyString, emptyString, fmt.Errorf("failed to save object info to db: %w", err)
 			}
 			logger.Info("Save object info to db successfully")
 

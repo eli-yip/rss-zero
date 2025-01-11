@@ -53,12 +53,12 @@ func initZhihuZvideoServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Log
 
 	zhihuCookies, err := cookie.GetZhihuCookies(cs, logger)
 	if err != nil {
-		return nil, nil, fmt.Errorf("fail to get cookies: %w", err)
+		return nil, nil, fmt.Errorf("failed to get cookies: %w", err)
 	}
 
 	requestService, err = request.NewRequestService(logger, dbService, notifier, zhihuCookies, request.WithLimiter(request.NewLimiter()))
 	if err != nil {
-		return nil, nil, fmt.Errorf("fail to init request service: %w", err)
+		return nil, nil, fmt.Errorf("failed to init request service: %w", err)
 	}
 
 	parser = parse.NewZvideoParseService(dbService)
