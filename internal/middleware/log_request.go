@@ -19,7 +19,10 @@ func LogRequest(logger *zap.Logger) echo.MiddlewareFunc {
 			req := c.Request()
 			method := req.Method
 			path := req.URL.Path
-			ip := c.RealIP()
+			ip := c.Request().Header.Get(`Cf-Connecting-Ip`)
+			if ip == "" {
+				ip = c.RealIP()
+			}
 			requestID := c.Response().Header().Get(echo.HeaderXRequestID)
 			message := "Received request"
 			logger.Info(message,
