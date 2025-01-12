@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/rand/v2"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/rs/xid"
@@ -118,7 +119,11 @@ type Error401 struct {
 	} `json:"error"`
 }
 
-const zC0ErrMsg = `ERR_TICKET_NOT_EXIST`
+// z_c0 error messages in 401 response
+var zC0ErrMsgs = []string{
+	`ERR_TICKET_NOT_EXIST`,
+	`ERR_PARSE_LOGIN_TICKET`,
+}
 
 type EncryptReq struct {
 	RequestID string `json:"request_id"`
@@ -183,6 +188,7 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			logger.Info("Get zhihu raw data successfully")
 			return body, nil
 		case http.StatusForbidden:
+			logger.Error("Get 403 error", zap.String("resp_body", string(body)))
 			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
 				logger.Error("Failed to increase failed count", zap.Error(err))
 			}
@@ -192,7 +198,6 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 				logger.Error("Failed to unmarshal 403 error", zap.Error(err))
 				continue
 			}
-			logger.Error("Get 403 error", zap.String("resp_body", string(body)))
 			if e403.Error.NeedLogin {
 				logger.Error("Need login according to 403 error")
 				if err = r.dbService.MarkUnavailable(es.ID); err != nil {
@@ -204,24 +209,26 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 				return nil, ErrForbidden
 			}
 		case http.StatusUnauthorized:
+			logger.Error("Get 401 error", zap.String("resp_body", string(body)))
 			var errResp Error401
 			if err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&errResp); err != nil {
 				logger.Error("Failed to unmarshal 401 error", zap.Error(err))
 				continue
 			}
-			if errResp.Error.Code == 100 && errResp.Error.Message == zC0ErrMsg {
-				logger.Error("Invalid z_c0 cookie", zap.String("resp_body", string(body)))
+			if errResp.Error.Code == 100 && slices.Contains(zC0ErrMsgs, errResp.Error.Message) {
+				logger.Error("Invalid z_c0 cookie")
 				return nil, ErrInvalidZC0
 			}
-			logger.Error("Invalid __zse_ck cookie", zap.String("resp_body", string(body)))
+			logger.Error("Invalid __zse_ck cookie")
 			return nil, ErrInvalidZSECK
 		case http.StatusNotFound:
+			logger.Error("Get 404 error")
 			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
 				logger.Error("Failed to increase failed count", zap.Error(err))
 			}
-			logger.Error("Get 404 error")
 			return nil, ErrUnreachable
 		case http.StatusNotImplemented:
+			logger.Error("Get 501 error", zap.String("resp_body", string(body)))
 			if err = r.dbService.IncreaseFailedCount(es.ID); err != nil {
 				logger.Error("Failed to increase failed count", zap.Error(err))
 			}
