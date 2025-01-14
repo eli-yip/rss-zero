@@ -15,17 +15,17 @@ import (
 )
 
 func (h *Controller) RSS(c echo.Context) (err error) {
-	l := common.ExtractLogger(c)
+	logger := common.ExtractLogger(c)
 
 	productName := c.Get("feed_id").(string)
-	l.Info("retrieved endoflife rss request", zap.String("product", productName))
+	logger.Info("retrieved endoflife rss request", zap.String("product", productName))
 
-	rss, err := h.getRSS(fmt.Sprintf(redis.EndOfLifePath, productName), l)
+	rss, err := h.getRSS(fmt.Sprintf(redis.EndOfLifePath, productName), logger)
 	if err != nil {
-		l.Error("failed to get rss from redis", zap.Error(err))
+		logger.Error("failed to get rss from redis", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "Failed to getrss from redis")
 	}
-	l.Info("retrieved rss from redis")
+	logger.Info("retrieved rss from redis")
 
 	return c.String(http.StatusOK, rss)
 }
