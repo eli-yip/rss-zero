@@ -25,14 +25,19 @@ func ParseCycles(cycles []cycle) (versionInfoList []versionInfo, err error) {
 		return nil, fmt.Errorf("found no cycles")
 	}
 
-	cycles, err = filterCycles(cycles)
+	filterdCycles, err := filterCycles(cycles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to filter cycles: %w", err)
 	}
 
-	versionInfoList = make([]versionInfo, 0, len(cycles))
+	// If no cycles are found, use the first cycle
+	if len(filterdCycles) == 0 {
+		filterdCycles = cycles[:1]
+	}
 
-	for _, c := range cycles {
+	versionInfoList = make([]versionInfo, 0, len(filterdCycles))
+
+	for _, c := range filterdCycles {
 		v, err := versionStringToVersion(c.Latest)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse version: %w", err)
@@ -89,9 +94,9 @@ func checkEOL(eol any) bool {
 		return eolBool
 	}
 
-	if eolStr, ok := eol.(string); ok {
-		if eolStr != "" {
-			eolTime, err := parseTime(eolStr)
+	if eolTimeStr, ok := eol.(string); ok {
+		if eolTimeStr != "" {
+			eolTime, err := parseTime(eolTimeStr)
 			if err != nil {
 				return false
 			}
