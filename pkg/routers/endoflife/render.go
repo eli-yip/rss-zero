@@ -33,10 +33,6 @@ func (r *RSSRenderService) title(str string) string {
 }
 
 func (r *RSSRenderService) RenderRSS(product string, versionInfoList []versionInfo) (content string, err error) {
-	if len(versionInfoList) == 0 {
-		return "", fmt.Errorf("no version info in the list")
-	}
-
 	rssFeed := &feeds.Feed{
 		Title:   r.title(fmt.Sprintf("%s Release", product)),
 		Link:    &feeds.Link{Href: fmt.Sprintf("https://endoflife.date/%s", product)},
