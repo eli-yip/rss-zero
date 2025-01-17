@@ -56,7 +56,6 @@ func CrawlZvideo(user string, rs request.Requester, parser parse.ZvideoParser, n
 
 	for _, z := range zvideoListNeedDownload {
 		taskID := xid.New().String()
-		notify.NoticeWithLogger(notifier, z.Filename, fmt.Sprintf("URL: %s, TaskID: %s", z.Url, taskID), logger)
 
 		logger.Info("Send download request", zap.String("task_id", taskID), zap.String("filename", z.Filename), zap.String("url", z.Url))
 		if err = sendDownloadRequest(taskID, z.Filename, z.Url); err != nil {
