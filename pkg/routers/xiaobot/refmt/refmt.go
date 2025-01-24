@@ -20,7 +20,7 @@ import (
 var longLongAgo = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 
 type ReformatService struct {
-	l           *zap.Logger
+	logger      *zap.Logger
 	db          db.DB
 	htmlConvert renderIface.HTMLToMarkdown
 	mdfmt       *md.MarkdownFormatter
@@ -33,7 +33,7 @@ func NewReformatService(logger *zap.Logger, db db.DB,
 	p parse.Parser, notifier notify.Notifier,
 	mdfmt *md.MarkdownFormatter) ReformatService {
 	return ReformatService{
-		l:           logger,
+		logger:      logger,
 		db:          db,
 		htmlConvert: htmlConvert,
 		mdfmt:       mdfmt,
@@ -47,24 +47,24 @@ func (s *ReformatService) Reformat(paperID string) {
 
 	defer func() {
 		if err != nil {
-			notify.NoticeWithLogger(s.notifier, "Xiaobot Reformat", "reformat failed", s.l)
+			notify.NoticeWithLogger(s.notifier, "Xiaobot Reformat", "reformat failed", s.logger)
 			return
 		}
-		notify.NoticeWithLogger(s.notifier, "Xiaobot Reformat", "reformat success", s.l)
+		notify.NoticeWithLogger(s.notifier, "Xiaobot Reformat", "reformat success", s.logger)
 	}()
 
 	var latestTime time.Time
 	latestTime, err = s.db.GetLatestTime(paperID)
 	if err != nil {
-		s.l.Error("failed to get latest time in db", zap.Error(err))
+		s.logger.Error("failed to get latest time in db", zap.Error(err))
 		return
 	}
 	if latestTime.IsZero() {
-		s.l.Info("no paper in db, finish formatting")
+		s.logger.Info("no paper in db, finish formatting")
 		return
 	}
 	latestTime = latestTime.Add(time.Second)
-	s.l.Info("get latest time in db", zap.Time("latest_time", latestTime))
+	s.logger.Info("get latest time in db", zap.Time("latest_time", latestTime))
 
 	var (
 		wg    sync.WaitGroup
@@ -74,20 +74,20 @@ func (s *ReformatService) Reformat(paperID string) {
 
 	for {
 		if latestTime.Before(longLongAgo) {
-			s.l.Info("latest time long long ago, break")
+			s.logger.Info("latest time long long ago, break")
 			break
 		}
 
 		var posts []db.Post
 		if posts, err = s.db.FetchNPostBefore(config.DefaultFetchCount, paperID, latestTime); err != nil {
-			s.l.Info("failed to fetch paper from db", zap.String("paper_id", paperID),
+			s.logger.Info("failed to fetch paper from db", zap.String("paper_id", paperID),
 				zap.Error(err), zap.Time("end_time", latestTime))
 		}
 		if len(posts) == 0 {
-			s.l.Info("there no more paper, break")
+			s.logger.Info("there no more paper, break")
 			break
 		}
-		s.l.Info("fetch paper from db successfully",
+		s.logger.Info("fetch paper from db successfully",
 			zap.Int("count", len(posts)),
 			zap.Time("end_time", latestTime))
 
@@ -101,7 +101,7 @@ func (s *ReformatService) Reformat(paperID string) {
 				defer wg.Done()
 
 				atomic.AddInt64(&count, 1)
-				logger := s.l.With(zap.String("post_id", p.ID))
+				logger := s.logger.With(zap.String("post_id", p.ID))
 				logger.Info("start to format paper")
 
 				var post apiModels.PaperPost
@@ -139,12 +139,12 @@ func (s *ReformatService) Reformat(paperID string) {
 					logger.Error("failed to save paper", zap.Error(err))
 					return
 				}
-				s.l.Info("save paper to db successfully")
+				s.logger.Info("save paper to db successfully")
 			}(i, &posts[i])
 		}
 	}
 
 	wg.Wait()
 
-	s.l.Info("format paper successfully")
+	s.logger.Info("format paper successfully")
 }

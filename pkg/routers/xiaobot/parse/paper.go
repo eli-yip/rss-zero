@@ -51,11 +51,11 @@ func (p *ParseService) ParsePaperPost(data []byte, paperID string) (text string,
 	}
 	p.logger.Info("Unmarshal data to post")
 
-	l := p.logger.With(zap.String("id", post.ID), zap.String("uuid", post.ID))
+	logger := p.logger.With(zap.String("id", post.ID), zap.String("uuid", post.ID))
 
 	// when the paper is a description, we don't need to parse it
 	if post.IsDescription == 1 {
-		l.Info("Skip parsing description post")
+		logger.Info("Skip parsing description post")
 		return "", nil
 	}
 
@@ -63,13 +63,13 @@ func (p *ParseService) ParsePaperPost(data []byte, paperID string) (text string,
 	if err != nil {
 		return "", err
 	}
-	l.Info("Convert HTML to markdown")
+	logger.Info("Convert HTML to markdown")
 
 	text, err = p.FormatStr(string(textBytes))
 	if err != nil {
 		return "", err
 	}
-	l.Info("Format markdown")
+	logger.Info("Format markdown")
 
 	t, err := p.ParseTime(post.CreateAt)
 	if err != nil {
@@ -86,7 +86,7 @@ func (p *ParseService) ParsePaperPost(data []byte, paperID string) (text string,
 	}); err != nil {
 		return "", err
 	}
-	l.Info("Save post to db")
+	logger.Info("Save post to db")
 
 	return text, nil
 }
