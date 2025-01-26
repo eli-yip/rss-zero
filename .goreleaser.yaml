@@ -33,7 +33,7 @@ dockers:
       - "--build-arg=VERSION={{ .Tag }}"
 
 archives:
-  - format: tar.gz
+  - formats: [ 'tar.gz' ]
 
 release:
   draft: true
