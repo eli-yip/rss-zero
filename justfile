@@ -24,11 +24,8 @@ fpush:
 conclude:
   git diff --stat @{0.day.ago.midnight} | sort -k3nr
 
-tag:
-  #!/usr/bin/env bash
-  tag_name=$(date +"%Y%m%d.%H%M")
-  git tag ${tag_name}
-  echo "Created tag: ${tag_name}"
+tag tag_name:
+  git tag {{tag_name}}
 
 dtag +tags:
   #!/usr/bin/env bash
@@ -38,7 +35,7 @@ dtag +tags:
   done
 
 @ltag:
-  git tag | rg -v "v" | sort -r | xargs -n 5 | less
+  git tag --list --sort -v:refname -n
 
 test:
   go test -v {{invocation_directory()}}
