@@ -39,6 +39,7 @@ type TomlConfig struct {
 	} `toml:"settings"`
 	Minio  MinioConfig `toml:"minio"`
 	Openai struct {
+		Model   string `toml:"model"`
 		APIKey  string `toml:"api_key"`
 		BaseURL string `toml:"base_url"`
 	} `toml:"openai"`

@@ -12,6 +12,7 @@ bucket = ''
 assets_prefix = ''
 
 [openai]
+model = ''
 api_key = ''
 base_url = ''
 

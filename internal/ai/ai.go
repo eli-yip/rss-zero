@@ -7,9 +7,6 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
-// It should be changed as openai updates their models.
-const gptModel = "deepseek-chat"
-
 // whisperModel is the whisper model used for speech to text.
 //
 // It should be changed as openai updates their models.

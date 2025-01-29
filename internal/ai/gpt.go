@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	openai "github.com/sashabaranov/go-openai"
+
+	"github.com/eli-yip/rss-zero/config"
 )
 
 func (a *AIService) Polish(text string) (result string, err error) {
@@ -22,7 +24,7 @@ func (a *AIService) Conclude(text string) (result string, err error) {
 // askGPT will ask model to generate a reply based on the prompt.
 func (a *AIService) askGPT(prompt string) (reply string, err error) {
 	req := openai.ChatCompletionRequest{
-		Model: gptModel,
+		Model: config.C.Openai.Model,
 		Messages: []openai.ChatCompletionMessage{
 			{Role: openai.ChatMessageRoleUser,
 				Content: prompt}},
