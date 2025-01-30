@@ -146,6 +146,8 @@ func registerJob(apiGroup *echo.Group, jobHandler *jobController.Controller) {
 	deleteTaskApi.Name = "Delete task route"
 	listTaskApi := jobApi.GET("/task/list", jobHandler.ListTask)
 	listTaskApi.Name = "List task route"
+	runNowApi := jobApi.POST("/run/:job", jobHandler.RunJobByName)
+	runNowApi.Name = "Run job now route"
 }
 
 // /api/v1/archive

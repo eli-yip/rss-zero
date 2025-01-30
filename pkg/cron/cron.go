@@ -63,6 +63,16 @@ func (c *CronService) RemoveCrawlJob(jobID string) (err error) {
 	return nil
 }
 
+func (c *CronService) RunJobNow(jobName string) (err error) {
+	for _, j := range c.s.Jobs() {
+		if j.Name() == jobName {
+			go func() { _ = j.RunNow() }()
+			return nil
+		}
+	}
+	return fmt.Errorf("job %s not found", jobName)
+}
+
 func GenerateRealCrawlFunc(crawlFunc func(chan CronJobInfo)) func() {
 	return func() {
 		emptyChan := make(chan CronJobInfo, 1)

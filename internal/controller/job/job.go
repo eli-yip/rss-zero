@@ -47,6 +47,18 @@ func (h *Controller) StartJob(c echo.Context) (err error) {
 	}
 }
 
+func (h *Controller) RunJobByName(c echo.Context) (err error) {
+	logger := common.ExtractLogger(c)
+
+	jobName := c.Param("job")
+
+	if err := h.cronService.RunJobNow(jobName); err != nil {
+		logger.Error("Failed to run job now", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, &ErrResp{Message: err.Error()})
+	}
+	return c.JSON(http.StatusOK, &Resp{Message: "job started"})
+}
+
 func (h *Controller) GetJobs(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
