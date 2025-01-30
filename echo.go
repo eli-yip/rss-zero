@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	echopprof "github.com/sevenNt/echo-pprof"
+	echopprof "github.com/eli-yip/echo-pprof"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 

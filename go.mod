@@ -8,6 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.1
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.7.0
+	github.com/eli-yip/echo-pprof v1.0.0
 	github.com/go-co-op/gocron/v2 v2.15.0
 	github.com/go-telegram/bot v1.13.3
 	github.com/google/uuid v1.6.0
@@ -19,7 +20,6 @@ require (
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/rs/xid v1.6.0
 	github.com/sashabaranov/go-openai v1.36.1
-	github.com/sevenNt/echo-pprof v0.1.1-0.20230131020615-4dd36891e14b
 	github.com/stretchr/testify v1.10.0
 	github.com/yuin/goldmark v1.7.8
 	go.uber.org/zap v1.27.0
