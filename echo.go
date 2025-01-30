@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echopprof "github.com/sevenNt/echo-pprof"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -101,6 +102,8 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 			zap.String("name", r.Name),
 			zap.String("path", r.Path))
 	}
+
+	echopprof.Wrap(e)
 
 	return e
 }
