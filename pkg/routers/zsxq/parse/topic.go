@@ -3,6 +3,7 @@ package parse
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"go.uber.org/zap"
@@ -26,7 +27,11 @@ func (s *ParseService) SplitTopics(respBytes []byte, logger *zap.Logger) (rawTop
 
 // ParseTopics parse the raw topics to topic parse result
 func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Logger) (text string, err error) {
-	if topic.TopicID == 2855142121821411 {
+	topicIDSkip := []int{
+		2855142121821411,
+		4848142822512458, // Cause ariticle markdown converter error
+	}
+	if slices.Contains(topicIDSkip, topic.Topic.TopicID) {
 		logger.Info("Skip crawling 2855142121821411, as it will cause database error")
 		return
 	}
