@@ -19,7 +19,7 @@ push:
   git push --tags
 
 fpush:
-  git push -u origin {{current_branch}} --force-with-lease
+  git push -u origin {{current_branch}} --force-with-lease --tags
 
 conclude:
   git diff --stat @{0.day.ago.midnight} | sort -k3nr
