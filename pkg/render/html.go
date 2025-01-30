@@ -2,17 +2,23 @@
 package render
 
 import (
+	"context"
+	"errors"
 	"strings"
+	"time"
 
 	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/JohannesKaufmann/html-to-markdown/plugin"
 	"github.com/PuerkitoBio/goquery"
 )
 
+const DefaultTimeout = 30 * time.Second
+
 // HTMLToMarkdown is a interface for converting HTML to Markdown text
 type HTMLToMarkdown interface {
 	// Convert convert HTML bytes to Markdown bytes
 	Convert([]byte) ([]byte, error)
+	ConvertWithTimeout([]byte, time.Duration) ([]byte, error)
 }
 
 type HTMLToMarkdownService struct{ *md.Converter }
@@ -40,6 +46,30 @@ func NewHTMLToMarkdownService(rules ...ConvertRule) HTMLToMarkdown {
 
 func (h *HTMLToMarkdownService) Convert(content []byte) ([]byte, error) {
 	return h.ConvertBytes(content)
+}
+
+func (h *HTMLToMarkdownService) ConvertWithTimeout(content []byte, second time.Duration) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), second)
+	defer cancel()
+
+	type result struct {
+		content []byte
+		err     error
+	}
+
+	resultCh := make(chan result, 1)
+
+	go func() {
+		content, err := h.ConvertBytes(content)
+		resultCh <- result{content, err}
+	}()
+
+	select {
+	case res := <-resultCh:
+		return res.content, res.err
+	case <-ctx.Done():
+		return nil, errors.New("timeout")
+	}
 }
 
 type ConvertRule struct {

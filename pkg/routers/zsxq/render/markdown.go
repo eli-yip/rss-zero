@@ -12,7 +12,6 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/render"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
-	
 )
 
 type MarkdownRenderer interface {
@@ -45,7 +44,6 @@ func NewMarkdownRenderService(dbService zsxqDB.DB) MarkdownRenderer {
 func BuildLink(groupID, topicID int) string {
 	return fmt.Sprintf("https://wx.zsxq.com/group/%d/topic/%d", groupID, topicID)
 }
-
 
 func BuildTitle(t *Topic) string {
 	titlePart := func() string {
@@ -99,7 +97,7 @@ func (m *MarkdownRenderService) formatTopicText(text string) (output string, err
 }
 
 func (m *MarkdownRenderService) Article(article []byte) (text string, err error) {
-	bytes, err := m.htmlToMarkdown.Convert(article)
+	bytes, err := m.htmlToMarkdown.ConvertWithTimeout(article, render.DefaultTimeout)
 	if err != nil {
 		return "", err
 	}
