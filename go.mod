@@ -8,7 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.1
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.7.0
-	github.com/eli-yip/echo-pprof v1.0.0
+	github.com/eli-yip/echo-pprof v1.0.1
 	github.com/go-co-op/gocron/v2 v2.15.0
 	github.com/go-telegram/bot v1.13.3
 	github.com/google/uuid v1.6.0
