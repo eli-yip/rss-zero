@@ -13,6 +13,14 @@ update:
 run:
   go run . --config=config.toml
 
+[working-directory: 'webapp']
+format:
+  npx prettier --write .
+
+[working-directory: 'webapp']
+frontend:
+  npm run dev
+
 commit:
   git add -A
   git commit -v
