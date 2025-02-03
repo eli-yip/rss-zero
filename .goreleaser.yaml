@@ -1,13 +1,10 @@
 version: 2
 
-before:
-  hooks:
-    - go mod tidy
-
 builds:
   - env:
       - CGO_ENABLED=0
       - GOPROXY=https://goproxy.cn,direct
+    dir: ./server
     ldflags:
       - -w -s -X "github.com/eli-yip/rss-zero/internal/version.Version={{ .Tag }}"
     goos: [darwin, linux]
@@ -33,7 +30,7 @@ dockers:
       - "--build-arg=VERSION={{ .Tag }}"
 
 archives:
-  - formats: [ 'tar.gz' ]
+  - formats: ["tar.gz"]
 
 release:
   draft: true

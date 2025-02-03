@@ -1,12 +1,15 @@
 current_branch := shell("git branch --show-current")
 
+[working-directory: 'server']
 lint:
   golangci-lint run -v --timeout 5m
 
+[working-directory: 'server']
 update:
   go get -u ./...
   go mod tidy
 
+[working-directory: 'server']
 run:
   go run . --config=config.toml
 

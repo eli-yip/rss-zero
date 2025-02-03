@@ -14,9 +14,12 @@ jobs:
         with:
           go-version: stable
           token: ${{ secrets.GH_TOKEN }}
+          cache-dependency-path: |
+            server/go.sum
       - name: use mirror
         run: go env -w GOPROXY=https://goproxy.cn,direct
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+          working-directory: server
