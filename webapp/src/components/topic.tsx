@@ -1,7 +1,7 @@
 import { Card, CardBody } from "@heroui/react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import "github-markdown-css/github-markdown.css";
+import "@/styles/github-markdown.css";
 
 interface TopicProps {
   content: string;
@@ -10,9 +10,9 @@ interface TopicProps {
 export function Topic({ content }: TopicProps) {
   return (
     <div>
-      <Card className="mb-4">
+      <Card disableAnimation className="mb-4 markdown-body">
         <CardBody>
-          <div className="markdown-body">
+          <div>
             <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
           </div>
         </CardBody>
