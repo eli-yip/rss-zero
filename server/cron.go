@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
+	"github.com/eli-yip/rss-zero/config"
 	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -40,35 +41,52 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 		return nil, nil, fmt.Errorf("failed to add job to cron service: %w", err)
 	}
 
-	jobID, err := cronService.AddJob("check_cookies", "0 0 * * *", checkCookies(cookieService, notifier, logger))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to add check cookies job: %w", err)
+	type jobDefinition struct {
+		name     string
+		schedule string
+		fn       func()
 	}
-	logger.Info("Add check cookies job successfully", zap.String("job_id", jobID))
 
-	jobID, err = cronService.AddJob("macked_crawl", "0 * * * *", macked.CrawlFunc(redisService, macked.NewDBService(db), logger))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to add macked job: %w", err)
+	jobs := []jobDefinition{
+		{
+			name:     "check_cookies",
+			schedule: "0 0 * * *",
+			fn:       checkCookies(cookieService, notifier, logger),
+		},
+		{
+			name:     "macked_crawl",
+			schedule: "0 * * * *",
+			fn:       macked.CrawlFunc(redisService, macked.NewDBService(db), logger),
+		},
+		{
+			name:     "canglimo_random_select",
+			schedule: "0 0 * * *",
+			fn:       zhihuCron.BuildRandomSelectCanglimoAnswerCronFunc(db, redisService),
+		},
+		{
+			name:     "canglimo_digest_random_select",
+			schedule: "0 0 * * *",
+			fn:       zsxqCron.BuildRandomSelectCanglimoDigestTopicFunc(db, redisService),
+		},
+		{
+			name:     "zvideo_crawl",
+			schedule: "0 0,3,6,9,12,15,18,21 * * *",
+			fn:       zhihuCron.BuildZvideoCrawlFunc("canglimo", db, notifier, cookieService),
+		},
 	}
-	logger.Info("Add check macked job successfully", zap.String("job_id", jobID))
 
-	jobID, err = cronService.AddJob("canglimo_random_select", "0 0 * * *", zhihuCron.BuildRandomSelectCanglimoAnswerCronFunc(db, redisService))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to add canglimo random select job: %w", err)
+	// If debug is true, add no jobs
+	if config.C.Settings.Debug {
+		jobs = []jobDefinition{}
 	}
-	logger.Info("Add canglimo random select job successfully", zap.String("job_id", jobID))
 
-	jobID, err = cronService.AddJob("canglimo_digest_random_select", "0 0 * * *", zsxqCron.BuildRandomSelectCanglimoDigestTopicFunc(db, redisService))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to add canglimo digest random select job: %w", err)
+	for _, job := range jobs {
+		jobID, err := cronService.AddJob(job.name, job.schedule, job.fn)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to add %s job: %w", job.name, err)
+		}
+		logger.Info(fmt.Sprintf("Add %s job successfully", job.name), zap.String("job_id", jobID))
 	}
-	logger.Info("Add canglimo digest random select job successfully", zap.String("job_id", jobID))
-
-	jobID, err = cronService.AddJob("zvideo_crawl", "0 0,3,6,9,12,15,18,21 * * *", zhihuCron.BuildZvideoCrawlFunc("canglimo", db, notifier, cookieService))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to add zvideo crawl job: %w", err)
-	}
-	logger.Info("Add zvideo crawl job successfully", zap.String("job_id", jobID))
 
 	return cronService, definitionToFunc, nil
 }
