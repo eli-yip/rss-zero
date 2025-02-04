@@ -12,8 +12,8 @@ export const siteConfig = {
       href: "/random",
     },
     {
-      label: "Pricing",
-      href: "/pricing",
+      label: "历史文章",
+      href: "/archive",
     },
     {
       label: "Blog",

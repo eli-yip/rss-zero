@@ -159,7 +159,7 @@ func registerJob(apiGroup *echo.Group, jobHandler *jobController.Controller) {
 // /api/v1/archive
 func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Controller) {
 	archiveApi := apiGroup.Group("/archive")
-	archivePickApi := archiveApi.GET("", archiveHandler.Archive)
+	archivePickApi := archiveApi.POST("", archiveHandler.Archive)
 	archivePickApi.Name = "Archive pick route"
 	archiveHistoryApi := archiveApi.GET("/:url", archiveHandler.History)
 	archiveHistoryApi.Name = "Archive route"
