@@ -4,9 +4,10 @@ import { Button } from "@heroui/react";
 import DefaultLayout from "@/layouts/default";
 import { Topics } from "@/components/topic";
 import { apiUrl } from "@/config/config";
+import { Topic } from "@/types/topic";
 
 export default function RandomPage() {
-  const [topics, setTopics] = useState<string[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(false);
 
   interface Request {
@@ -17,10 +18,6 @@ export default function RandomPage() {
   }
   interface Response {
     topics: Topic[];
-  }
-  interface Topic {
-    id: string;
-    text: string;
   }
 
   const fetchTopics = async () => {
@@ -42,9 +39,8 @@ export default function RandomPage() {
     });
 
     const data: Response = await response.json();
-    const contents = data.topics.map((topic) => topic.text);
 
-    setTopics(contents);
+    setTopics(data.topics);
     setLoading(false);
 
     window.scrollTo(0, 0);
@@ -70,7 +66,7 @@ export default function RandomPage() {
   return (
     <DefaultLayout>
       {button}
-      <Topics contents={topics} />
+      <Topics topics={topics} />
       {button}
     </DefaultLayout>
   );
