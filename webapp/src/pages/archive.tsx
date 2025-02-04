@@ -86,7 +86,7 @@ export default function ArchivePage() {
     const data: Response = await response.json();
 
     setTopics(data.topics);
-    setTotal(data.count);
+    setTotal(data.paging.total);
   };
 
   const handlePageChange = (page: number) => {
