@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@heroui/react";
 
+import { scrollToTop } from "@/utils/window";
+
 export function ScrollToTop() {
   const [show, setShow] = useState(false);
 
@@ -12,13 +14,6 @@ export function ScrollToTop() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
 
   return show ? (
     <Button
