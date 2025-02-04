@@ -142,7 +142,14 @@ function PaginationWrapper({ page, total, onChange }: PaginationWrapperProps) {
 
   return (
     <div className="fixed bottom-8 left-0 right-0 z-40 flex flex-col items-center justify-center gap-2">
-      <Pagination showControls page={page} total={total} onChange={onChange} />
+      <Pagination
+        isCompact
+        showControls
+        initialPage={page}
+        page={page}
+        total={total}
+        onChange={onChange}
+      />
       <div className="flex items-center gap-2">
         <Input
           className="w-20"
