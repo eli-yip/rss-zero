@@ -5,97 +5,59 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
-	"github.com/eli-yip/rss-zero/internal/utils"
 	"github.com/eli-yip/rss-zero/pkg/render"
-	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
+// POST /api/v1/archive
 func (h *Controller) Archive(c echo.Context) (err error) {
-	type (
-		Item struct {
-			Title    string `json:"title"`
-			Content  string `json:"content"`
-			Author   string `json:"author"`
-			Platform string `json:"platform"`
-			Type     string `json:"type"`
-			ID       string `json:"id"`
-			Time     int    `json:"time"`
-			Link     string `json:"link"`
-		}
-
-		Response struct {
-			Items []Item `json:"items"`
-		}
-
-		ErrResponse struct {
-			Message string `json:"message"`
-		}
-	)
-
 	logger := common.ExtractLogger(c)
 
-	contentType := c.QueryParam("content_type")
-	author := c.QueryParam("author")
-	limit := c.QueryParam("limit")
-	offset := c.QueryParam("offset")
-
-	zhihuDBService := zhihuDB.NewDBService(h.db)
-
-	switch contentType {
-	case "answer":
-		limitInt, err := strconv.Atoi(limit)
-		if err != nil {
-			logger.Error("Failed to convert limit to int", zap.String("limit", limit))
-			return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid limit"})
-		}
-		offsetInt, err := strconv.Atoi(offset)
-		if err != nil {
-			logger.Error("Failed to convert offset to int", zap.String("offset", offset))
-			return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid offset"})
-		}
-		answers, err := zhihuDBService.FetchAnswer(author, limitInt, offsetInt)
-		if err != nil {
-			logger.Error("Failed to fetch answer", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch answer"})
-		}
-
-		var items []Item
-		for _, answer := range answers {
-			question, err := zhihuDBService.GetQuestion(answer.QuestionID)
-			if err != nil {
-				logger.Error("Failed to get question", zap.Error(err))
-				return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to get question"})
-			}
-			items = append(items, Item{
-				Title:    question.Title,
-				Content:  answer.Text,
-				Author:   answer.AuthorID,
-				Platform: "zhihu",
-				Type:     "answer",
-				ID:       strconv.Itoa(answer.ID),
-				Link:     fmt.Sprintf("https://www.zhihu.com/question/%d/answer/%d", answer.QuestionID, answer.ID),
-				Time:     int(utils.TimeToUnix(answer.CreateAt)),
-			})
-		}
-
-		return c.JSON(http.StatusOK, Response{Items: items})
-	case "article":
-		fallthrough
-	case "pin":
-		fallthrough
-	case "all":
-		fallthrough
-	default:
-		logger.Info("Invalid content type", zap.String("content_type", contentType))
-		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid content type"})
+	var req ArchiveRequest
+	if err = c.Bind(&req); err != nil {
+		logger.Error("Failed to bind request", zap.Error(err))
+		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid request"})
 	}
+	logger.Info("Retrieved archive request successfully")
+
+	if req.Platform != PlatformZhihu ||
+		req.Author != "canglimo" ||
+		req.Type != "answer" {
+		logger.Error("Invalid request parameters", zap.Any("request", req))
+		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
+	}
+
+	offset := req.Count * (req.Page - 1)
+	answers, err := h.zhihuDBService.FetchAnswer(req.Author, req.Count, offset)
+	if err != nil {
+		logger.Error("Failed to fetch answer", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch answer"})
+	}
+
+	topics, err := buildTopics(answers, h.zhihuDBService)
+	if err != nil {
+		logger.Error("Failed to build topics", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to build topics"})
+	}
+
+	count, err := h.zhihuDBService.CountAnswer(req.Author)
+	if err != nil {
+		logger.Error("Failed to count answer", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to count answer"})
+	}
+
+	// calculate page counts (ceil)
+	totalPage := (count + req.Count - 1) / req.Count
+
+	return c.JSON(http.StatusOK, ArchiveResponse{
+		Count:        count,
+		Paging:       Paging{Total: totalPage, Current: req.Page},
+		ResponseBase: ResponseBase{Topics: topics}})
 }
 
 type archiveResult struct {

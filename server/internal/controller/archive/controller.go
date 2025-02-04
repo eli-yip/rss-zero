@@ -35,11 +35,18 @@ func NewController(db *gorm.DB) *Controller {
 	}
 }
 
-type RandomRequest struct {
+type RequestBase struct {
 	Platform string `json:"platform"`
 	Type     string `json:"type"`
 	Author   string `json:"author"`
 	Count    int    `json:"count"`
+}
+
+type RandomRequest struct{ RequestBase }
+
+type ArchiveRequest struct {
+	RequestBase
+	Page int `json:"page"`
 }
 
 type SelectRequest struct {
@@ -47,8 +54,19 @@ type SelectRequest struct {
 	IDs      []string `json:"ids"`
 }
 
-type Response struct {
+type ResponseBase struct {
 	Topics []Topic `json:"topics"`
+}
+
+type Paging struct {
+	Total   int `json:"total"`
+	Current int `json:"current"`
+}
+
+type ArchiveResponse struct {
+	Count  int    `json:"count"`
+	Paging Paging `json:"paging"`
+	ResponseBase
 }
 
 type ErrResponse struct {

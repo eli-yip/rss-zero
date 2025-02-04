@@ -7,7 +7,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
-	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
 // /api/v1/archive/random
@@ -28,14 +27,17 @@ func (h *Controller) Random(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
 	}
 
-	dbService := zhihuDB.NewDBService(h.db)
-	answers, err := dbService.RandomSelect(req.Count, req.Author)
+	answers, err := h.zhihuDBService.RandomSelect(req.Count, req.Author)
 	if err != nil {
 		logger.Error("Failed to select random answers", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to select random answers"})
 	}
 
-	topics, err := buildTopics(answers, dbService)
+	topics, err := buildTopics(answers, h.zhihuDBService)
+	if err != nil {
+		logger.Error("Failed to build topics", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to build topics"})
+	}
 
-	return c.JSON(http.StatusOK, &Response{Topics: topics})
+	return c.JSON(http.StatusOK, &ResponseBase{Topics: topics})
 }
