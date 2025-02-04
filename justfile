@@ -21,6 +21,14 @@ format:
 frontend:
   npm run dev
 
+[working-directory: 'webapp']
+lint-frontend:
+  npx eslint . --ext .js,.jsx,.ts,.tsx
+
+[working-directory: 'webapp']
+format-frontend:
+  npx prettier --write .
+
 commit:
   git add -A
   git commit -v

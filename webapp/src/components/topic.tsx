@@ -1,3 +1,5 @@
+import type { Topic } from "@/types/topic";
+
 import {
   Button,
   Card,
@@ -8,8 +10,8 @@ import {
 } from "@heroui/react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
 import "@/styles/github-markdown.css";
-import type { Topic } from "@/types/topic";
 
 interface TopicProps {
   topic: Topic;
@@ -47,7 +49,7 @@ interface PlatformLinkProps {
 
 export function PlatformLink({ platform, url }: PlatformLinkProps) {
   return (
-    <Link href={url} target="_blank" className="m-2">
+    <Link className="m-2" href={url} target="_blank">
       <Button>{platform}</Button>
     </Link>
   );

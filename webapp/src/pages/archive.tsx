@@ -1,10 +1,10 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Button, Input, Pagination } from "@heroui/react";
+import { useEffect, useState } from "react";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 import { apiUrl } from "@/config/config";
-import { useEffect, useState } from "react";
 import { Topic } from "@/types/topic";
 import { Topics } from "@/components/topic";
 import { ScrollToTop } from "@/components/scroll-to-top";
@@ -84,6 +84,7 @@ export default function ArchivePage() {
     });
 
     const data: Response = await response.json();
+
     setTopics(data.topics);
     setTotal(data.count);
   };
@@ -126,6 +127,7 @@ function PaginationWrapper({ page, total, onChange }: PaginationWrapperProps) {
 
   const handleJump = () => {
     const pageNum = parseInt(inputPage);
+
     if (!isNaN(pageNum) && pageNum > 0 && pageNum <= total) {
       onChange(pageNum);
       setInputPage("");
@@ -144,9 +146,9 @@ function PaginationWrapper({ page, total, onChange }: PaginationWrapperProps) {
       <div className="flex items-center gap-2">
         <Input
           className="w-20"
+          placeholder="页码"
           value={inputPage}
           onChange={(e) => setInputPage(e.target.value)}
-          placeholder="页码"
           onKeyDown={handleKeyPress}
         />
         <Button onPress={handleJump}>跳转</Button>
