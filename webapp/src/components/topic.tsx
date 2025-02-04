@@ -60,8 +60,8 @@ interface TopicsProps {
 export function Topics({ topics }: TopicsProps) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col">
-      {topics.map((topic, index) => (
-        <Topic key={index} topic={topic} />
+      {topics.map((topic) => (
+        <Topic key={topic.id} topic={topic} />
       ))}
     </div>
   );
