@@ -62,6 +62,7 @@ interface Paging {
 export default function ArchivePage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [total, setTotal] = useState<number>(0);
+  const [firstFetch, setFirstFetch] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
   const page = searchParams.get("page") || "1";
   const navigate = useNavigate();
@@ -87,6 +88,7 @@ export default function ArchivePage() {
 
     setTopics(data.topics);
     setTotal(data.paging.total);
+    setFirstFetch(true);
   };
 
   const handlePageChange = (page: number) => {
@@ -107,11 +109,13 @@ export default function ArchivePage() {
       </section>
       <Topics topics={topics} />
       <ScrollToTop />
-      <PaginationWrapper
-        page={parseInt(page)}
-        total={total}
-        onChange={handlePageChange}
-      />
+      {firstFetch && (
+        <PaginationWrapper
+          page={parseInt(page)}
+          total={total}
+          onChange={handlePageChange}
+        />
+      )}
     </DefaultLayout>
   );
 }
@@ -145,7 +149,6 @@ function PaginationWrapper({ page, total, onChange }: PaginationWrapperProps) {
       <Pagination
         isCompact
         showControls
-        initialPage={page}
         page={page}
         total={total}
         onChange={onChange}
