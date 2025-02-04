@@ -19,7 +19,7 @@ export function ScrollToTop() {
   return show ? (
     <Button
       isIconOnly
-      className="fixed bottom-8 right-8 z-50"
+      className="fixed bottom-2 right-4 z-50"
       onPress={scrollToTop}
     >
       ↑
