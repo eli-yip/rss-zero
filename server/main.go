@@ -48,6 +48,15 @@ func main() {
 	logger := log.NewZapLogger()
 	logger.Info("Init config from toml successfully", zap.Any("config", config.C))
 
+	// Add global recover
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Error("Panic", zap.Any("panic", r))
+			}
+		}()
+	}()
+
 	redisService, cookieService, db, bark, err := initService(logger)
 	if err != nil {
 		logger.Fatal("Failed to init service", zap.Error(err))
