@@ -19,9 +19,9 @@ export function Topic({ topic }: TopicProps) {
   return (
     <div>
       <Card disableAnimation className="markdown-body mb-4">
-        <CardHeader className="flex flex-row justify-between">
+        <CardHeader className="flex flex-col justify-between gap-2 sm:flex-row">
           <h3>{topic.title}</h3>
-          <div className="flex flex-row justify-end">
+          <div className="flex flex-row justify-start sm:justify-end">
             <PlatformLink platform="原文" url={topic.original_url} />
             <PlatformLink platform="存档" url={topic.archive_url} />
           </div>
@@ -31,7 +31,7 @@ export function Topic({ topic }: TopicProps) {
             <Markdown remarkPlugins={[remarkGfm]}>{topic.body}</Markdown>
           </div>
         </CardBody>
-        <CardFooter className="flex flex-row justify-between">
+        <CardFooter className="flex flex-col justify-between gap-2 sm:flex-row">
           <span>作者：{topic.author.nickname}</span>
           <span>创建时间：{new Date(topic.created_at).toLocaleString()}</span>
         </CardFooter>
