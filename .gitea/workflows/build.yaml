@@ -16,6 +16,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: webapp/package-lock.json
+      - name: use npm mirror
+        run: npm config set registry https://registry.npmmirror.com
+      - name: Build Frontend
+        working-directory: webapp
+        run: |
+          npm ci
+          npm run build
       # setup-go automatically cache go.mod and go.sum.
       # So we don't need use actions/cache to cache go dependencies.
       # more info: https://github.com/actions/setup-go#caching-dependency-files-and-build-outputs

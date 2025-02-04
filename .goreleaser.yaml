@@ -28,6 +28,8 @@ dockers:
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--build-arg=VERSION={{ .Tag }}"
+    extra_files:
+      - "webapp/dist"
 
 archives:
   - formats: ["tar.gz"]

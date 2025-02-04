@@ -55,6 +55,12 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 		}),
 		myMiddleware.LogRequest(logger),   // log request
 		myMiddleware.InjectLogger(logger), // inject logger to context
+		middleware.StaticWithConfig(middleware.StaticConfig{
+			Root:   "dist",
+			HTML5:  true,
+			Browse: false,
+			Index:  "index.html",
+		}),
 	)
 
 	zsxqHandler := zsxqController.NewZsxqController(redisService, cookieService, db, notifier, logger)
