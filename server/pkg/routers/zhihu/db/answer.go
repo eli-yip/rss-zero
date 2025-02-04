@@ -216,6 +216,8 @@ func (d *DBService) SelectByID(ids []int) (answers []Answer, err error) {
 type DBQuestion interface {
 	// GetQuestion get question info from zhihu_question table
 	GetQuestion(id int) (*Question, error)
+	// GetQuestions get questions info from zhihu_question table
+	GetQuestions(ids []int) ([]Question, error)
 	// Save question info to zhihu_question table
 	SaveQuestion(q *Question) error
 }
@@ -228,4 +230,12 @@ func (d *DBService) GetQuestion(id int) (*Question, error) {
 		return nil, err
 	}
 	return &q, nil
+}
+
+func (d *DBService) GetQuestions(ids []int) ([]Question, error) {
+	qs := make([]Question, 0, len(ids))
+	if err := d.Where("id in ?", ids).Find(&qs).Error; err != nil {
+		return nil, fmt.Errorf("failed to get questions: %w", err)
+	}
+	return qs, nil
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -41,17 +42,38 @@ func (h *Controller) Random(c echo.Context) (err error) {
 	}
 
 	topics := make([]Topic, 0, len(answers))
-	for _, answer := range answers {
-		question, err := dbService.GetQuestion(answer.QuestionID)
-		if err != nil {
-			logger.Error("Failed to get question", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to get question"})
-		}
 
-		authorName, err := dbService.GetAuthorName(answer.AuthorID)
-		if err != nil {
-			logger.Error("Failed to get author name", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to get author name"})
+	// Perf: Batch fetch questions
+	questionIDs := lo.UniqMap(answers, func(answer zhihuDB.Answer, _ int) int {
+		return answer.QuestionID
+	})
+	questions, err := dbService.GetQuestions(questionIDs)
+	if err != nil {
+		logger.Error("Failed to get questions", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to get questions"})
+	}
+	questionMap := lo.Associate(questions, func(question zhihuDB.Question) (int, zhihuDB.Question) {
+		return question.ID, question
+	})
+
+	// Perf: Cache author names
+	authorMap := make(map[string]string)
+	for _, answer := range answers {
+		if _, ok := authorMap[answer.AuthorID]; !ok {
+			authorName, err := dbService.GetAuthorName(answer.AuthorID)
+			if err != nil {
+				logger.Error("Failed to get author name", zap.Error(err))
+				return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to get author name"})
+			}
+			authorMap[answer.AuthorID] = authorName
+		}
+	}
+
+	for _, answer := range answers {
+		question, ok := questionMap[answer.QuestionID]
+		if !ok {
+			logger.Error("Question not found in question map", zap.Int("question_id", answer.QuestionID))
+			continue
 		}
 
 		topics = append(topics, Topic{
@@ -62,7 +84,7 @@ func (h *Controller) Random(c echo.Context) (err error) {
 			Title:       question.Title,
 			CreatedAt:   answer.CreateAt.Format(time.RFC3339),
 			Body:        answer.Text,
-			Author:      Author{ID: answer.AuthorID, Nickname: authorName},
+			Author:      Author{ID: answer.AuthorID, Nickname: authorMap[answer.AuthorID]},
 		})
 	}
 
