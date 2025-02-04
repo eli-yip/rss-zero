@@ -5,6 +5,7 @@ import DefaultLayout from "@/layouts/default";
 import { Topics } from "@/components/topic";
 import { apiUrl } from "@/config/config";
 import { Topic } from "@/types/topic";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 export default function RandomPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -43,7 +44,10 @@ export default function RandomPage() {
     setTopics(data.topics);
     setLoading(false);
 
-    window.scrollTo(0, 0);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   useEffect(() => {
@@ -67,6 +71,7 @@ export default function RandomPage() {
     <DefaultLayout>
       {button}
       <Topics topics={topics} />
+      <ScrollToTop />
       {button}
     </DefaultLayout>
   );
