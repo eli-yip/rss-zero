@@ -43,8 +43,16 @@ fpush:
 conclude:
   git diff --stat @{0.day.ago.midnight} | sort -k3nr
 
-tag tag_name:
-  git tag {{tag_name}}
+tpush: && push
+  #!/usr/bin/env bash
+  echo "Latest tags(3):"
+  just ltag | head -n 3
+  read -p "Input tag name: " tag_name
+  if [ -z "$tag_name" ]; then
+    echo "Empty tag is forbidden"
+    exit 1
+  fi
+  git tag "$tag_name"
 
 dtag +tags:
   #!/usr/bin/env bash
