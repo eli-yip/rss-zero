@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
+import { Button } from "@heroui/react";
 
-import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 import { Topics } from "@/components/topic";
 import { apiUrl } from "@/config/config";
 
-export default function DocsPage() {
+export default function RandomPage() {
   const [topics, setTopics] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   interface Request {
     author: string;
@@ -23,6 +24,8 @@ export default function DocsPage() {
   }
 
   const fetchTopics = async () => {
+    setLoading(true);
+
     const requestBody: Request = {
       platform: "zhihu",
       type: "answer",
@@ -42,20 +45,33 @@ export default function DocsPage() {
     const contents = data.topics.map((topic) => topic.text);
 
     setTopics(contents);
+    setLoading(false);
+
+    window.scrollTo(0, 0);
   };
 
   useEffect(() => {
     fetchTopics();
   }, []);
 
+  const button = (
+    <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
+      <Button
+        className="text-2xl font-bold"
+        isLoading={loading}
+        size="lg"
+        onPress={fetchTopics}
+      >
+        再来一打
+      </Button>
+    </section>
+  );
+
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-        <div className="inline-block max-w-lg text-center justify-center">
-          <h1 className={title()}>Docs</h1>
-        </div>
-      </section>
+      {button}
       <Topics contents={topics} />
+      {button}
     </DefaultLayout>
   );
 }
