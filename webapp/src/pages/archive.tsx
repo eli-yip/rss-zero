@@ -155,13 +155,16 @@ function PaginationWrapper({ page, total, onChange }: PaginationWrapperProps) {
       />
       <div className="flex items-center gap-2">
         <Input
-          className="w-20"
-          placeholder="页码"
+          className="w-10"
+          fullWidth={false}
+          placeholder=""
           value={inputPage}
           onChange={(e) => setInputPage(e.target.value)}
           onKeyDown={handleKeyPress}
         />
-        <Button onPress={handleJump}>跳转</Button>
+        <Button isIconOnly onPress={handleJump}>
+          Go
+        </Button>
       </div>
     </div>
   );

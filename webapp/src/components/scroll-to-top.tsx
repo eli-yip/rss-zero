@@ -18,7 +18,8 @@ export function ScrollToTop() {
 
   return show ? (
     <Button
-      className="fixed bottom-8 right-8 z-50 rounded-full shadow-lg"
+      isIconOnly
+      className="fixed bottom-8 right-8 z-50"
       onPress={scrollToTop}
     >
       ↑
