@@ -10,6 +10,7 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 export default function RandomPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(false);
+  const [firstFetch, setFirstFetch] = useState(true);
 
   interface Request {
     author: string;
@@ -48,6 +49,10 @@ export default function RandomPage() {
       top: 0,
       behavior: "smooth",
     });
+
+    if (firstFetch) {
+      setFirstFetch(false);
+    }
   };
 
   useEffect(() => {
@@ -72,7 +77,7 @@ export default function RandomPage() {
       {button}
       <Topics topics={topics} />
       <ScrollToTop />
-      {button}
+      {!firstFetch && button}
     </DefaultLayout>
   );
 }
