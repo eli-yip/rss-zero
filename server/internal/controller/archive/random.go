@@ -3,15 +3,19 @@ package archive
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
+	"github.com/eli-yip/rss-zero/pkg/render"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
+	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
 
+// /api/v1/archive/random
 func (h *Controller) Random(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
@@ -22,7 +26,7 @@ func (h *Controller) Random(c echo.Context) (err error) {
 	}
 	logger.Info("Retrieved pick request successfully")
 
-	if req.Platform != "zhihu" ||
+	if req.Platform != PlatformZhihu ||
 		req.Author != "canglimo" ||
 		req.Type != "answer" {
 		logger.Error("Invalid request parameters", zap.Any("request", req))
@@ -36,8 +40,6 @@ func (h *Controller) Random(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to select random answers"})
 	}
 
-	textRender := render.NewMattermostTextRender()
-
 	topics := make([]Topic, 0, len(answers))
 	for _, answer := range answers {
 		question, err := dbService.GetQuestion(answer.QuestionID)
@@ -46,26 +48,21 @@ func (h *Controller) Random(c echo.Context) (err error) {
 			return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to get question"})
 		}
 
-		text, err := textRender.Answer(&render.Answer{
-			Question: render.BaseContent{
-				ID:       question.ID,
-				CreateAt: question.CreateAt,
-				Text:     question.Title,
-			},
-			Answer: render.BaseContent{
-				ID:       answer.ID,
-				CreateAt: answer.CreateAt,
-				Text:     answer.Text,
-			},
-		})
+		authorName, err := dbService.GetAuthorName(answer.AuthorID)
 		if err != nil {
-			logger.Error("Failed to render answer text", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to render answer text"})
+			logger.Error("Failed to get author name", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to get author name"})
 		}
 
 		topics = append(topics, Topic{
-			ID:   strconv.Itoa(answer.ID),
-			Text: text,
+			ID:          strconv.Itoa(answer.ID),
+			OriginalURL: zhihuRender.GenerateAnswerLink(question.ID, answer.ID),
+			ArchiveURL:  render.BuildArchiveLink(config.C.Settings.ServerURL, zhihuRender.GenerateAnswerLink(question.ID, answer.ID)),
+			Platform:    PlatformZhihu,
+			Title:       question.Title,
+			CreatedAt:   answer.CreateAt.Format(time.RFC3339),
+			Body:        answer.Text,
+			Author:      Author{ID: answer.AuthorID, Nickname: authorName},
 		})
 	}
 

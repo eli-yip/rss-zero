@@ -55,7 +55,22 @@ type ErrResponse struct {
 	Message string `json:"message"`
 }
 
-type Topic struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
+type Author struct {
+	ID       string `json:"id"`
+	Nickname string `json:"nickname"`
 }
+
+type Topic struct {
+	ID          string `json:"id"`
+	OriginalURL string `json:"original_url"`
+	ArchiveURL  string `json:"archive_url"`
+	Platform    string `json:"platform"`
+	Title       string `json:"title"`
+	CreatedAt   string `json:"created_at"`
+	Body        string `json:"body"`
+	Author      Author `json:"author"`
+}
+
+const (
+	PlatformZhihu = "zhihu"
+)

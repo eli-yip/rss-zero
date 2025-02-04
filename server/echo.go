@@ -4,9 +4,9 @@ import (
 	"net"
 	"net/http"
 
+	echopprof "github.com/eli-yip/echo-pprof"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	echopprof "github.com/eli-yip/echo-pprof"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -159,8 +159,8 @@ func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Con
 	archiveHistoryApi.Name = "Archive route"
 	randomPickApi := archiveApi.POST("/random", archiveHandler.Random)
 	randomPickApi.Name = "Random pick route"
-	selectPickApi := archiveApi.POST("/select", archiveHandler.Select)
-	selectPickApi.Name = "Select pick route"
+	// selectPickApi := archiveApi.POST("/select", archiveHandler.Select)
+	// selectPickApi.Name = "Select pick route"
 }
 
 // /api/v1/export

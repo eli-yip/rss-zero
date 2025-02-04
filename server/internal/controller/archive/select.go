@@ -1,81 +1,72 @@
 package archive
 
-import (
-	"net/http"
-	"strconv"
+// Disable this feature for now
+//
+// /api/v1/archive/select
+// func (h *Controller) Select(c echo.Context) (err error) {
+// 	logger := common.ExtractLogger(c)
 
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
+// 	var req SelectRequest
+// 	if err = c.Bind(&req); err != nil {
+// 		logger.Error("Failed to bind request", zap.Error(err))
+// 		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
+// 	}
+// 	logger.Info("Retrieved pick request successfully")
 
-	"github.com/eli-yip/rss-zero/internal/controller/common"
-	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
-)
+// 	if req.Platform != "zhihu" {
+// 		logger.Error("Invalid request parameters", zap.Any("request", req))
+// 		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
+// 	}
 
-func (h *Controller) Select(c echo.Context) (err error) {
-	logger := common.ExtractLogger(c)
+// 	dbService := zhihuDB.NewDBService(h.db)
+// 	ids := make([]int, 0, len(req.IDs))
+// 	for _, id := range req.IDs {
+// 		i, err := strconv.Atoi(id)
+// 		if err != nil {
+// 			logger.Error("Failed to convert id to int", zap.Error(err))
+// 			return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
+// 		}
+// 		ids = append(ids, i)
+// 	}
 
-	var req SelectRequest
-	if err = c.Bind(&req); err != nil {
-		logger.Error("Failed to bind request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
-	}
-	logger.Info("Retrieved pick request successfully")
+// 	answers, err := dbService.SelectByID(ids)
+// 	if err != nil {
+// 		logger.Error("Failed to select random answers", zap.Error(err))
+// 		return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to select random answers"})
+// 	}
 
-	if req.Platform != "zhihu" {
-		logger.Error("Invalid request parameters", zap.Any("request", req))
-		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
-	}
+// 	textRender := render.NewMattermostTextRender()
 
-	dbService := zhihuDB.NewDBService(h.db)
-	ids := make([]int, 0, len(req.IDs))
-	for _, id := range req.IDs {
-		i, err := strconv.Atoi(id)
-		if err != nil {
-			logger.Error("Failed to convert id to int", zap.Error(err))
-			return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
-		}
-		ids = append(ids, i)
-	}
+// 	topics := make([]Topic, 0, len(answers))
+// 	for _, answer := range answers {
+// 		question, err := dbService.GetQuestion(answer.QuestionID)
+// 		if err != nil {
+// 			logger.Error("Failed to get question", zap.Error(err))
+// 			return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to get question"})
+// 		}
 
-	answers, err := dbService.SelectByID(ids)
-	if err != nil {
-		logger.Error("Failed to select random answers", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to select random answers"})
-	}
+// 		text, err := textRender.Answer(&render.Answer{
+// 			Question: render.BaseContent{
+// 				ID:       question.ID,
+// 				CreateAt: question.CreateAt,
+// 				Text:     question.Title,
+// 			},
+// 			Answer: render.BaseContent{
+// 				ID:       answer.ID,
+// 				CreateAt: answer.CreateAt,
+// 				Text:     answer.Text,
+// 			},
+// 		})
+// 		if err != nil {
+// 			logger.Error("Failed to render answer text", zap.Error(err))
+// 			return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to render answer text"})
+// 		}
 
-	textRender := render.NewMattermostTextRender()
+// 		topics = append(topics, Topic{
+// 			ID:   strconv.Itoa(answer.ID),
+// 			Text: text,
+// 		})
+// 	}
 
-	topics := make([]Topic, 0, len(answers))
-	for _, answer := range answers {
-		question, err := dbService.GetQuestion(answer.QuestionID)
-		if err != nil {
-			logger.Error("Failed to get question", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to get question"})
-		}
-
-		text, err := textRender.Answer(&render.Answer{
-			Question: render.BaseContent{
-				ID:       question.ID,
-				CreateAt: question.CreateAt,
-				Text:     question.Title,
-			},
-			Answer: render.BaseContent{
-				ID:       answer.ID,
-				CreateAt: answer.CreateAt,
-				Text:     answer.Text,
-			},
-		})
-		if err != nil {
-			logger.Error("Failed to render answer text", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to render answer text"})
-		}
-
-		topics = append(topics, Topic{
-			ID:   strconv.Itoa(answer.ID),
-			Text: text,
-		})
-	}
-
-	return c.JSON(http.StatusOK, &Response{Topics: topics})
-}
+// 	return c.JSON(http.StatusOK, &Response{Topics: topics})
+// }
