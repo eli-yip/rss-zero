@@ -52,7 +52,7 @@ func main() {
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				logger.Error("Panic", zap.Any("panic", r))
+				logger.Fatal("Panic", zap.Any("panic", r))
 			}
 		}()
 	}()
