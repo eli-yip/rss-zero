@@ -18,6 +18,12 @@ interface TopicProps {
 }
 
 export function Topic({ topic }: TopicProps) {
+  let archiveUrl = topic.archive_url;
+
+  if (window.location.hostname == "mo.darkeli.com") {
+    archiveUrl = archiveUrl.replace("rss-zero", "mo");
+  }
+
   return (
     <div>
       <Card disableAnimation className="markdown-body mb-4">
@@ -25,10 +31,7 @@ export function Topic({ topic }: TopicProps) {
           <h3>{topic.title}</h3>
           <div className="flex flex-row justify-start sm:justify-end">
             <PlatformLink platform="原文" url={topic.original_url} />
-            <PlatformLink
-              platform="存档"
-              url={topic.archive_url.replace("rss-zero", "mo")}
-            />
+            <PlatformLink platform="存档" url={archiveUrl} />
           </div>
         </CardHeader>
         <CardBody>
