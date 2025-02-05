@@ -17,12 +17,10 @@ export function ScrollToTop() {
   }, []);
 
   return show ? (
-    <Button
-      isIconOnly
-      className="fixed bottom-2 right-4 z-50"
-      onPress={scrollToTop}
-    >
-      ↑
-    </Button>
+    <div className="fixed bottom-2 right-2 z-50">
+      <Button isIconOnly className="rounded-full" onPress={scrollToTop}>
+        ↑
+      </Button>
+    </div>
   ) : null;
 }
