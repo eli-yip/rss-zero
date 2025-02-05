@@ -27,7 +27,7 @@ export function Topic({ topic }: TopicProps) {
             <PlatformLink platform="原文" url={topic.original_url} />
             <PlatformLink
               platform="存档"
-              url={topic.archive_url.replace("/rss-zero", "mo")}
+              url={topic.archive_url.replace("rss-zero", "mo")}
             />
           </div>
         </CardHeader>
