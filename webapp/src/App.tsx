@@ -3,7 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import IndexPage from "@/pages/index";
 import RandomPage from "@/pages/random";
 import ArchivePage from "@/pages/archive";
-import BlogPage from "@/pages/blog";
+import BlogPage from "@/pages/statistics";
 import AboutPage from "@/pages/about";
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
       <Route element={<IndexPage />} path="/" />
       <Route element={<RandomPage />} path="/random" />
       <Route element={<ArchivePage />} path="/archive" />
-      <Route element={<BlogPage />} path="/blog" />
+      <Route element={<BlogPage />} path="/statistics" />
       <Route element={<AboutPage />} path="/about" />
     </Routes>
   );

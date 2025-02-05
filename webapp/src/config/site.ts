@@ -16,8 +16,8 @@ export const siteConfig = {
       href: "/archive",
     },
     {
-      label: "Blog",
-      href: "/blog",
+      label: "数据",
+      href: "/statistics",
     },
     {
       label: "About",
