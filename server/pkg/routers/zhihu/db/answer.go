@@ -28,6 +28,9 @@ type DBAnswer interface {
 	GetAnswer(id int) (*Answer, error)
 	CountAnswer(userID string) (int, error)
 	FetchNAnswersBeforeTime(n int, t time.Time, userID string) ([]Answer, error)
+	// RandomSelect select n random answers from zhihu_answer table
+	//
+	// Answers are created after 2023-01-01, and the word count is between 300 and 1200.
 	RandomSelect(n int, userID string) ([]Answer, error)
 	SelectByID(ids []int) ([]Answer, error)
 }
@@ -178,6 +181,13 @@ func (d *DBService) UpdateAnswerStatus(id int, status int) error {
 }
 
 func (d *DBService) RandomSelect(n int, userID string) (answers []Answer, err error) {
+	/**
+	 * Note: The following code is not efficient, but it is simple:
+	 * 1. Get all answer ids of the user.
+	 * 2. Shuffle the answer ids.
+	 * 3. Select the first n answer ids.
+	 */
+
 	answers = make([]Answer, 0, n)
 
 	answerIDs := make([]int, 0, n)
