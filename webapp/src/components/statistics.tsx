@@ -34,7 +34,7 @@ export function Statistics({ loading, statistics }: StatisticsProps) {
   };
 
   return (
-    <div>
+    <div className="max-w-full">
       <ActivityCalendar
         blockSize={16}
         colorScheme={state.theme}
