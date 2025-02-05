@@ -1,7 +1,10 @@
 current_branch := shell("git branch --show-current")
 
+# Lint the backend and frontend code
+lint: lint-backend lint-frontend
+
 [working-directory: 'server']
-lint:
+lint-backend:
   golangci-lint run -v --timeout 5m
 
 [working-directory: 'server']
@@ -10,7 +13,7 @@ update:
   go mod tidy
 
 [working-directory: 'server']
-run:
+backend:
   go run . --config=config.toml
 
 [working-directory: 'webapp']
