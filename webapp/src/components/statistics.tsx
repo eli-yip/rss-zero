@@ -1,11 +1,15 @@
 import { ActivityCalendar, Activity } from "react-activity-calendar";
 
+import { useTheme } from "@/context/theme-context";
+
 interface StatisticsProps {
   statistics: Record<string, number>;
   loading: boolean;
 }
 
 export function Statistics({ loading, statistics }: StatisticsProps) {
+  const { state } = useTheme();
+
   const calLevel = (count: number): number => {
     if (count > 0 && count < 3) {
       return 1;
@@ -31,6 +35,7 @@ export function Statistics({ loading, statistics }: StatisticsProps) {
   return (
     <div>
       <ActivityCalendar
+        colorScheme={state.theme}
         data={buildData()}
         loading={loading}
         theme={{

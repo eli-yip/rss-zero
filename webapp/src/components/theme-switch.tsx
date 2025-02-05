@@ -3,7 +3,7 @@ import { VisuallyHidden } from "@react-aria/visually-hidden";
 import { SwitchProps, useSwitch } from "@heroui/switch";
 import clsx from "clsx";
 
-import { useTheme } from "@/hooks/use-theme";
+import { useTheme } from "@/context/theme-context";
 import { SunFilledIcon, MoonFilledIcon } from "@/components/icons";
 
 export interface ThemeSwitchProps {
@@ -17,9 +17,11 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
 }) => {
   const [isMounted, setIsMounted] = useState(false);
 
-  const { theme, toggleTheme } = useTheme();
+  const { state, dispatch } = useTheme();
 
-  const onChange = toggleTheme;
+  const onChange = () => {
+    dispatch({ type: "TOGGLE" });
+  };
 
   const {
     Component,
@@ -29,7 +31,7 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
     getInputProps,
     getWrapperProps,
   } = useSwitch({
-    isSelected: theme === "light",
+    isSelected: state.theme === "light",
     onChange,
   });
 
