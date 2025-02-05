@@ -1,7 +1,4 @@
-import { Button } from "@heroui/button";
-import { Kbd } from "@heroui/kbd";
 import { Link } from "@heroui/link";
-import { Input } from "@heroui/input";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -17,38 +14,10 @@ import { useLocation } from "react-router-dom";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import {
-  TwitterIcon,
-  GithubIcon,
-  DiscordIcon,
-  HeartFilledIcon,
-  SearchIcon,
-} from "@/components/icons";
 import { Logo } from "@/components/icons";
 
 export const Navbar = () => {
   const pathname = useLocation().pathname;
-
-  const searchInput = (
-    <Input
-      aria-label="Search"
-      classNames={{
-        inputWrapper: "bg-default-100",
-        input: "text-sm",
-      }}
-      endContent={
-        <Kbd className="hidden lg:inline-block" keys={["command"]}>
-          K
-        </Kbd>
-      }
-      labelPlacement="outside"
-      placeholder="Search..."
-      startContent={
-        <SearchIcon className="pointer-events-none flex-shrink-0 text-base text-default-400" />
-      }
-      type="search"
-    />
-  );
 
   return (
     <HeroUINavbar shouldHideOnScroll maxWidth="xl" position="sticky">
@@ -63,7 +32,7 @@ export const Navbar = () => {
             <p className="font-bold text-inherit">ACME</p>
           </Link>
         </NavbarBrand>
-        <div className="ml-2 hidden justify-start gap-4 lg:flex">
+        <div className="ml-2 hidden justify-start gap-4 sm:flex">
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href} isActive={pathname === item.href}>
               <Link
@@ -86,42 +55,16 @@ export const Navbar = () => {
         justify="end"
       >
         <NavbarItem className="hidden gap-2 sm:flex">
-          <Link isExternal href={siteConfig.links.twitter} title="Twitter">
-            <TwitterIcon className="text-default-500" />
-          </Link>
-          <Link isExternal href={siteConfig.links.discord} title="Discord">
-            <DiscordIcon className="text-default-500" />
-          </Link>
-          <Link isExternal href={siteConfig.links.github} title="GitHub">
-            <GithubIcon className="text-default-500" />
-          </Link>
           <ThemeSwitch />
-        </NavbarItem>
-        <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
-        <NavbarItem className="hidden md:flex">
-          <Button
-            isExternal
-            as={Link}
-            className="bg-default-100 text-sm font-normal text-default-600"
-            href={siteConfig.links.sponsor}
-            startContent={<HeartFilledIcon className="text-danger" />}
-            variant="flat"
-          >
-            Sponsor
-          </Button>
         </NavbarItem>
       </NavbarContent>
 
       <NavbarContent className="basis-1 pl-4 sm:hidden" justify="end">
-        <Link isExternal href={siteConfig.links.github}>
-          <GithubIcon className="text-default-500" />
-        </Link>
         <ThemeSwitch />
         <NavbarMenuToggle />
       </NavbarContent>
 
       <NavbarMenu>
-        {searchInput}
         <div className="mx-4 mt-2 flex flex-col gap-2">
           {siteConfig.navItems.map((item, index) => (
             <NavbarMenuItem
