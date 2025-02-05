@@ -1,4 +1,5 @@
 import { ActivityCalendar, Activity } from "react-activity-calendar";
+import { Tooltip } from "@heroui/react";
 
 import { useTheme } from "@/context/theme-context";
 
@@ -35,9 +36,19 @@ export function Statistics({ loading, statistics }: StatisticsProps) {
   return (
     <div>
       <ActivityCalendar
+        blockSize={16}
         colorScheme={state.theme}
         data={buildData()}
         loading={loading}
+        renderBlock={(block, activity) => (
+          <Tooltip
+            closeDelay={100}
+            content={`${activity.date} 写下 ${activity.count} 篇文章`}
+            offset={15}
+          >
+            {block}
+          </Tooltip>
+        )}
         theme={{
           light: ["hsl(0, 0%, 92%)", "rebeccapurple"],
           dark: ["hsl(0, 0%, 22%)", "hsl(225,92%,77%)"],
