@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@heroui/react";
+import { FaArrowUp } from "react-icons/fa";
 
 import { scrollToTop } from "@/utils/window";
 
@@ -19,7 +20,7 @@ export function ScrollToTop() {
   return show ? (
     <div className="fixed bottom-2 right-2 z-50">
       <Button isIconOnly className="rounded-full" onPress={scrollToTop}>
-        ↑
+        <FaArrowUp />
       </Button>
     </div>
   ) : null;

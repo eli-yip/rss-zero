@@ -1,5 +1,4 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Button, Input, Pagination } from "@heroui/react";
 import { useEffect, useState } from "react";
 
 import { title } from "@/components/primitives";
@@ -9,6 +8,7 @@ import { Topic } from "@/types/topic";
 import { Topics } from "@/components/topic";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { scrollToTop } from "@/utils/window";
+import PaginationWrapper from "@/components/pagination";
 
 interface Request {
   /**
@@ -117,55 +117,5 @@ export default function ArchivePage() {
         />
       )}
     </DefaultLayout>
-  );
-}
-
-interface PaginationWrapperProps {
-  page: number;
-  total: number;
-  onChange: (page: number) => void;
-}
-
-function PaginationWrapper({ page, total, onChange }: PaginationWrapperProps) {
-  const [inputPage, setInputPage] = useState<string>("");
-
-  const handleJump = () => {
-    const pageNum = parseInt(inputPage);
-
-    if (!isNaN(pageNum) && pageNum > 0 && pageNum <= total) {
-      onChange(pageNum);
-      setInputPage("");
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleJump();
-    }
-  };
-
-  return (
-    <div className="fixed bottom-2 left-0 right-0 z-40 flex flex-col items-center justify-center gap-2">
-      <Pagination
-        isCompact
-        showControls
-        page={page}
-        total={total}
-        onChange={onChange}
-      />
-      <div className="flex items-center gap-2">
-        <Input
-          className="w-10"
-          fullWidth={false}
-          placeholder=""
-          value={inputPage}
-          onChange={(e) => setInputPage(e.target.value)}
-          onKeyDown={handleKeyPress}
-        />
-        <Button isIconOnly onPress={handleJump}>
-          Go
-        </Button>
-      </div>
-    </div>
   );
 }
