@@ -1,4 +1,5 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -14,11 +15,16 @@ export default function ArchivePage() {
   const page = parseInt(pageStr);
   const navigate = useNavigate();
   const { topics, total, loading } = useArchiveTopics(page);
+  const [firstFetch, setFirstFetch] = useState(true);
 
   const handlePageChange = (page: number) => {
     navigate(`/archive?page=${page}`);
     scrollToTop();
   };
+
+  useEffect(() => {
+    setFirstFetch(false);
+  }, []);
 
   return (
     <DefaultLayout>
@@ -31,7 +37,7 @@ export default function ArchivePage() {
       {!loading && <Topics topics={topics} />}
 
       <ScrollToTop />
-      {!loading && (
+      {!firstFetch && (
         <PaginationWrapper
           page={page}
           total={total}
