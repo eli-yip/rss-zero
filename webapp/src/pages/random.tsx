@@ -1,64 +1,12 @@
-import { useEffect, useState } from "react";
 import { Button } from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default";
 import { Topics } from "@/components/topic";
-import { apiUrl } from "@/config/config";
-import { Topic } from "@/types/topic";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { useRandomTopics } from "@/hooks/use-random-topics";
 
 export default function RandomPage() {
-  const [topics, setTopics] = useState<Topic[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [firstFetch, setFirstFetch] = useState(true);
-
-  interface Request {
-    author: string;
-    count: number;
-    platform: string;
-    type: string;
-  }
-  interface Response {
-    topics: Topic[];
-  }
-
-  const fetchTopics = async () => {
-    setLoading(true);
-
-    const requestBody: Request = {
-      platform: "zhihu",
-      type: "answer",
-      author: "canglimo",
-      count: 10,
-    };
-
-    const response = await fetch(`${apiUrl}/archive/random`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    const data: Response = await response.json();
-
-    setTopics(data.topics);
-    setLoading(false);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-
-    if (firstFetch) {
-      setFirstFetch(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTopics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { topics, loading, firstFetch, fetchTopics } = useRandomTopics();
 
   const button = (
     <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
