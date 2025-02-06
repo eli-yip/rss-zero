@@ -3,7 +3,11 @@ import { useState, useEffect } from "react";
 import { fetchArchiveTopics, ArchiveResponse } from "@/api/archive";
 import { Topic } from "@/types/topic";
 
-export function useArchiveTopics(page: number) {
+export function useArchiveTopics(
+  page: number,
+  startDate: string = "",
+  endDate: string = "",
+) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [firstFetchDone, setFirstFetchDone] = useState<boolean>(false);
@@ -15,7 +19,11 @@ export function useArchiveTopics(page: number) {
       setLoading(true);
       setError(null);
       try {
-        const data: ArchiveResponse = await fetchArchiveTopics(page);
+        const data: ArchiveResponse = await fetchArchiveTopics(
+          page,
+          startDate,
+          endDate,
+        );
 
         setTopics(data.topics);
         setTotal(data.paging.total);
@@ -27,7 +35,7 @@ export function useArchiveTopics(page: number) {
       }
     }
     getTopics();
-  }, [page]);
+  }, [page, startDate, endDate]);
 
   return { topics, total, firstFetchDone, loading, error };
 }

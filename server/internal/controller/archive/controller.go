@@ -46,7 +46,9 @@ type RandomRequest struct{ RequestBase }
 
 type ArchiveRequest struct {
 	RequestBase
-	Page int `json:"page"`
+	Page      int    `json:"page"`
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
 }
 
 type SelectRequest struct {

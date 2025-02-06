@@ -23,6 +23,14 @@ export interface ArchiveRequest {
    * 类型
    */
   type: string;
+  /**
+   * 开始日期
+   */
+  start_date: string;
+  /**
+   * 结束日期
+   */
+  end_date: string;
 }
 
 // 定义分页信息类型
@@ -53,6 +61,8 @@ export interface ArchiveResponse {
 // 请求接口函数
 export async function fetchArchiveTopics(
   page: number,
+  start_date: string = "",
+  end_date: string = "",
 ): Promise<ArchiveResponse> {
   const requestBody: ArchiveRequest = {
     platform: "zhihu",
@@ -60,6 +70,8 @@ export async function fetchArchiveTopics(
     count: 10,
     page: page,
     author: "canglimo",
+    start_date: start_date,
+    end_date: end_date,
   };
 
   const response = await fetch(`${apiUrl}/archive`, {

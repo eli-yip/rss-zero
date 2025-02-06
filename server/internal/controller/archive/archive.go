@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
+	"github.com/eli-yip/rss-zero/pkg/cron"
 	"github.com/eli-yip/rss-zero/pkg/render"
 )
 
@@ -32,8 +34,20 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
 	}
 
+	var startDate, endDate time.Time
+	startDate, err = parseTime(req.StartDate, cron.LongLongAgo)
+	if err != nil {
+		logger.Error("Failed to parse start date", zap.Error(err), zap.String("start_date", req.StartDate))
+		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid start date"})
+	}
+	endDate, err = parseTime(req.EndDate, time.Now().In(config.C.BJT))
+	if err != nil {
+		logger.Error("Failed to parse end date", zap.Error(err), zap.String("end_date", req.EndDate))
+		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid end date"})
+	}
+
 	offset := req.Count * (req.Page - 1)
-	answers, err := h.zhihuDBService.FetchAnswer(req.Author, req.Count, offset)
+	answers, err := h.zhihuDBService.FetchAnswerWithDateRange(req.Author, req.Count, offset, startDate, endDate)
 	if err != nil {
 		logger.Error("Failed to fetch answer", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch answer"})
@@ -45,7 +59,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to build topics"})
 	}
 
-	count, err := h.zhihuDBService.CountAnswer(req.Author)
+	count, err := h.zhihuDBService.CountAnswerWithDateRange(req.Author, startDate, endDate)
 	if err != nil {
 		logger.Error("Failed to count answer", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to count answer"})
@@ -58,6 +72,13 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 		Count:        count,
 		Paging:       Paging{Total: totalPage, Current: req.Page},
 		ResponseBase: ResponseBase{Topics: topics}})
+}
+
+func parseTime(timeStr string, defaultT time.Time) (t time.Time, err error) {
+	if timeStr == "" {
+		return defaultT, nil
+	}
+	return time.ParseInLocation("2006-01-02", timeStr, config.C.BJT)
 }
 
 type archiveResult struct {

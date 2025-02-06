@@ -1,4 +1,6 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { DatePicker, DateValue } from "@heroui/react";
+import { parseDate } from "@internationalized/date";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -9,15 +11,46 @@ import PaginationWrapper from "@/components/pagination";
 import { useArchiveTopics } from "@/hooks/use-archive-topics";
 
 export default function ArchivePage() {
+  const navigate = useNavigate();
+
   const [searchParams] = useSearchParams();
   const pageStr = searchParams.get("page") || "1";
   const page = parseInt(pageStr);
-  const navigate = useNavigate();
-  const { topics, total, firstFetchDone, loading } = useArchiveTopics(page);
+  const startDate = searchParams.get("startDate") || "";
+  const endDate = searchParams.get("endDate") || "";
+  const { topics, total, firstFetchDone, loading } = useArchiveTopics(
+    page,
+    startDate,
+    endDate,
+  );
 
   const handlePageChange = (page: number) => {
-    navigate(`/archive?page=${page}`);
+    const params = new URLSearchParams(searchParams);
+
+    params.set("page", page.toString());
+    navigate(`/archive?${params.toString()}`);
     scrollToTop();
+  };
+
+  const updateDateParam = (param: string, value: DateValue | null) => {
+    const dateValue = value ? value.toString() : "";
+    const params = new URLSearchParams(searchParams);
+
+    params.set("page", "1");
+
+    if (dateValue) params.set(param, dateValue);
+    else params.delete(param);
+
+    navigate(`/archive?${params.toString()}`);
+    scrollToTop();
+  };
+
+  const handleStartDateChange = (value: DateValue | null) => {
+    updateDateParam("startDate", value);
+  };
+
+  const handleEndDateChange = (value: DateValue | null) => {
+    updateDateParam("endDate", value);
   };
 
   return (
@@ -28,7 +61,22 @@ export default function ArchivePage() {
         </div>
       </section>
 
-      {!loading && <Topics topics={topics} />}
+      <div className="flex flex-col sm:flex-row w-full max-w-xs mx-auto my-4 gap-4">
+        <DatePicker
+          showMonthAndYearPickers
+          label="开始时间"
+          value={startDate ? parseDate(startDate) : null}
+          onChange={handleStartDateChange}
+        />
+        <DatePicker
+          showMonthAndYearPickers
+          label="截止时间"
+          value={endDate ? parseDate(endDate) : null}
+          onChange={handleEndDateChange}
+        />
+      </div>
+
+      {!loading && topics && <Topics topics={topics} />}
 
       <ScrollToTop />
       {/**

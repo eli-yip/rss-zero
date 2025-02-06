@@ -18,6 +18,7 @@ type DBAnswer interface {
 	// then return the answers for text generating.
 	FetchNAnswer(int, FetchAnswerOption) ([]Answer, error)
 	FetchAnswer(author string, limit, offset int) ([]Answer, error)
+	FetchAnswerWithDateRange(author string, limit, offset int, startTime, endTime time.Time) ([]Answer, error)
 	// UpdateAnswerStatus update answer status in zhihu_answer table
 	UpdateAnswerStatus(id int, status int) error
 	// GetLatestAnswerTime get the latest answer time from zhihu_answer table
@@ -27,6 +28,7 @@ type DBAnswer interface {
 	// GetAnswer get answer info from zhihu_answer table
 	GetAnswer(id int) (*Answer, error)
 	CountAnswer(userID string) (int, error)
+	CountAnswerWithDateRange(userID string, startTime, endTime time.Time) (int, error)
 	FetchNAnswersBeforeTime(n int, t time.Time, userID string) ([]Answer, error)
 	// RandomSelect select n random answers from zhihu_answer table
 	//
@@ -109,6 +111,14 @@ func (d *DBService) CountAnswer(userID string) (int, error) {
 	return int(count), nil
 }
 
+func (d *DBService) CountAnswerWithDateRange(userID string, startTime, endTime time.Time) (int, error) {
+	var count int64
+	if err := d.Model(&Answer{}).Where("author_id = ?", userID).Where("create_at >= ?", startTime).Where("create_at <= ?", endTime).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+
 func (d *DBService) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, err error) {
 	as = make([]Answer, 0, n)
 
@@ -144,6 +154,14 @@ func (d *DBService) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, er
 func (d *DBService) FetchAnswer(author string, limit, offset int) ([]Answer, error) {
 	as := make([]Answer, 0, limit)
 	if err := d.Where("author_id = ?", author).Order("create_at desc").Limit(limit).Offset(offset).Find(&as).Error; err != nil {
+		return nil, err
+	}
+	return as, nil
+}
+
+func (d *DBService) FetchAnswerWithDateRange(author string, limit, offset int, startTime, endTime time.Time) ([]Answer, error) {
+	as := make([]Answer, 0, limit)
+	if err := d.Where("author_id = ?", author).Where("create_at >= ?", startTime).Where("create_at <= ?", endTime).Order("create_at desc").Limit(limit).Offset(offset).Find(&as).Error; err != nil {
 		return nil, err
 	}
 	return as, nil
