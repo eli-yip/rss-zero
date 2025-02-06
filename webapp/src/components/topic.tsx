@@ -10,6 +10,8 @@ import {
 } from "@heroui/react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { FaArchive } from "react-icons/fa";
+import { AiOutlineZhihu } from "react-icons/ai";
 
 import "@/styles/github-markdown.css";
 
@@ -27,9 +29,9 @@ export function Topic({ topic }: TopicProps) {
   return (
     <div>
       <Card disableAnimation className="markdown-body mb-4">
-        <CardHeader className="flex flex-col justify-between gap-2 sm:flex-row">
+        <CardHeader className="flex justify-between gap-1">
           <h3>{topic.title}</h3>
-          <div className="flex flex-row justify-start sm:justify-end">
+          <div className="flex flex-row justify-start sm:justify-end gap-1">
             <PlatformLink platform="原文" url={topic.original_url} />
             <PlatformLink platform="存档" url={archiveUrl} />
           </div>
@@ -54,9 +56,20 @@ interface PlatformLinkProps {
 }
 
 export function PlatformLink({ platform, url }: PlatformLinkProps) {
+  const icon = (platform: string) => {
+    switch (platform) {
+      case "原文":
+        return <AiOutlineZhihu />;
+      case "存档":
+        return <FaArchive />;
+    }
+  };
+
   return (
-    <Link className="m-2" href={url} target="_blank">
-      <Button>{platform}</Button>
+    <Link href={url} target="_blank">
+      <Button isIconOnly size="sm">
+        {icon(platform)}
+      </Button>
     </Link>
   );
 }
