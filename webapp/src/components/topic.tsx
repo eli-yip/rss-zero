@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardBody,
   CardFooter,
-  Link,
+  ButtonGroup,
 } from "@heroui/react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -31,9 +31,11 @@ export function Topic({ topic }: TopicProps) {
       <Card disableAnimation className="markdown-body mb-4">
         <CardHeader className="flex justify-between gap-1">
           <h3>{topic.title}</h3>
-          <div className="flex flex-row justify-start sm:justify-end gap-1">
-            <PlatformLink platform="原文" url={topic.original_url} />
-            <PlatformLink platform="存档" url={archiveUrl} />
+          <div className="flex flex-row justify-start sm:justify-end">
+            <ButtonGroup>
+              <PlatformLink platform="原文" url={topic.original_url} />
+              <PlatformLink platform="存档" url={archiveUrl} />
+            </ButtonGroup>
           </div>
         </CardHeader>
         <CardBody>
@@ -66,11 +68,9 @@ export function PlatformLink({ platform, url }: PlatformLinkProps) {
   };
 
   return (
-    <Link href={url} target="_blank">
-      <Button isIconOnly size="sm">
-        {icon(platform)}
-      </Button>
-    </Link>
+    <Button isIconOnly size="sm" onPress={() => window.open(url, "_blank")}>
+      {icon(platform)}
+    </Button>
   );
 }
 
