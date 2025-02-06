@@ -26,7 +26,7 @@ frontend:
 
 [working-directory: 'webapp']
 lint-frontend:
-  npx eslint . --ext .js,.jsx,.ts,.tsx
+  npx eslint .
 
 [working-directory: 'webapp']
 format-frontend:
