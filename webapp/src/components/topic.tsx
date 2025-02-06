@@ -10,7 +10,7 @@ import {
 } from "@heroui/react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { FaArchive } from "react-icons/fa";
+import { FaArchive, FaCopy } from "react-icons/fa";
 import { AiOutlineZhihu } from "react-icons/ai";
 
 import "@/styles/github-markdown.css";
@@ -35,6 +35,17 @@ export function Topic({ topic }: TopicProps) {
             <ButtonGroup>
               <PlatformLink platform="原文" url={topic.original_url} />
               <PlatformLink platform="存档" url={archiveUrl} />
+              <Button
+                isIconOnly
+                size="sm"
+                onPress={() =>
+                  navigator.clipboard.writeText(
+                    "# " + topic.title + "\n\n" + topic.body,
+                  )
+                }
+              >
+                <FaCopy />
+              </Button>
             </ButtonGroup>
           </div>
         </CardHeader>
