@@ -24,7 +24,7 @@ export default function PaginationWrapper({
       <div className="sm:hidden">
         <Button
           isIconOnly
-          className="fixed bottom-2 left-2 z-50 rounded-full"
+          className="fixed bottom-4 left-4 z-50 rounded-full"
           onPress={() => setMobilePaginationVisible(!mobilePaginationVisible)}
         >
           {mobilePaginationVisible ? <FaEye /> : <FaEyeSlash />}
@@ -59,7 +59,7 @@ function PaginationWithJumper({
   };
 
   return (
-    <div className="fixed bottom-2 left-0 right-0 z-40 flex flex-col items-center justify-center gap-2">
+    <div className="fixed bottom-4 left-0 right-0 z-40 flex flex-col items-center justify-center gap-4">
       <Pagination
         isCompact
         showControls

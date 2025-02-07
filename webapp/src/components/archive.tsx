@@ -33,7 +33,7 @@ export function Archive({
   );
 
   return (
-    <>
+    <div className="mb-16">
       {!loading && topics && <Topics topics={topics} />}
       <ScrollToTop />
       {/**
@@ -52,6 +52,6 @@ export function Archive({
           onChange={handlePageChange}
         />
       )}
-    </>
+    </div>
   );
 }
