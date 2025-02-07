@@ -161,7 +161,7 @@ func (d *DBService) FetchAnswer(author string, limit, offset int) ([]Answer, err
 
 func (d *DBService) FetchAnswerWithDateRange(author string, limit, offset int, startTime, endTime time.Time) ([]Answer, error) {
 	as := make([]Answer, 0, limit)
-	if err := d.Where("author_id = ?", author).Where("create_at >= ?", startTime).Where("create_at <= ?", endTime).Order("create_at desc").Limit(limit).Offset(offset).Find(&as).Error; err != nil {
+	if err := d.Where("author_id = ?", author).Where("create_at >= ?", startTime).Where("create_at < ?", endTime).Order("create_at desc").Limit(limit).Offset(offset).Find(&as).Error; err != nil {
 		return nil, err
 	}
 	return as, nil

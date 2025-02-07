@@ -12,7 +12,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
-	"github.com/eli-yip/rss-zero/pkg/cron"
+	utils "github.com/eli-yip/rss-zero/internal/utils"
 	"github.com/eli-yip/rss-zero/pkg/render"
 )
 
@@ -35,12 +35,12 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 	}
 
 	var startDate, endDate time.Time
-	startDate, err = parseTime(req.StartDate, cron.LongLongAgo)
+	startDate, err = utils.ParseStartTime(req.StartDate)
 	if err != nil {
 		logger.Error("Failed to parse start date", zap.Error(err), zap.String("start_date", req.StartDate))
 		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid start date"})
 	}
-	endDate, err = parseTime(req.EndDate, time.Now().In(config.C.BJT))
+	endDate, err = utils.ParseEndTime(req.EndDate)
 	if err != nil {
 		logger.Error("Failed to parse end date", zap.Error(err), zap.String("end_date", req.EndDate))
 		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid end date"})
@@ -72,13 +72,6 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 		Count:        count,
 		Paging:       Paging{Total: totalPage, Current: req.Page},
 		ResponseBase: ResponseBase{Topics: topics}})
-}
-
-func parseTime(timeStr string, defaultT time.Time) (t time.Time, err error) {
-	if timeStr == "" {
-		return defaultT, nil
-	}
-	return time.ParseInLocation("2006-01-02", timeStr, config.C.BJT)
 }
 
 type archiveResult struct {

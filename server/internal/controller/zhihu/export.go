@@ -14,10 +14,10 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
-	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
+	utils "github.com/eli-yip/rss-zero/internal/utils"
 	zhihuExport "github.com/eli-yip/rss-zero/pkg/routers/zhihu/export"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
@@ -206,12 +206,12 @@ func (h *Controller) parseOption(req ZhihuExportReq) (opts zhihuExport.Option, e
 		return &t
 	}()
 
-	opts.StartTime, err = exportTime.ParseStartTime(req.StartTime)
+	opts.StartTime, err = utils.ParseStartTime(utils.NilToEmpty(req.StartTime))
 	if err != nil {
 		return opts, errors.Join(err, errors.New("parse start time error"))
 	}
 
-	opts.EndTime, err = exportTime.ParseEndTime(req.EndTime)
+	opts.EndTime, err = utils.ParseEndTime(utils.NilToEmpty(req.EndTime))
 	if err != nil {
 		return opts, errors.Join(err, errors.New("parse end time error"))
 	}

@@ -14,9 +14,9 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
-	exportTime "github.com/eli-yip/rss-zero/internal/export"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/notify"
+	utils "github.com/eli-yip/rss-zero/internal/utils"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	zsxqExport "github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
@@ -182,12 +182,12 @@ func (h *Controoler) parseOption(req *ZxsqExportReq) (zsxqExport.Option, error) 
 		opts.Type = req.Type
 	}
 
-	opts.StartTime, err = exportTime.ParseStartTime(req.StartTime)
+	opts.StartTime, err = utils.ParseStartTime(utils.NilToEmpty(req.StartTime))
 	if err != nil {
 		return zsxqExport.Option{}, errors.Join(err, errors.New("parse start time error"))
 	}
 
-	opts.EndTime, err = exportTime.ParseEndTime(req.EndTime)
+	opts.EndTime, err = utils.ParseEndTime(utils.NilToEmpty(req.EndTime))
 	if err != nil {
 		return zsxqExport.Option{}, errors.Join(err, errors.New("parse end time error"))
 	}
