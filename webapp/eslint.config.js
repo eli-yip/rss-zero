@@ -94,7 +94,7 @@ export default tseslint.config(
       ],
 
       "import/order": [
-        "warn",
+        "error",
         {
           groups: [
             "type",
@@ -107,13 +107,11 @@ export default tseslint.config(
             "index",
           ],
           "newlines-between": "always",
-          pathGroups: [
-            {
-              pattern: "~/**",
-              group: "external",
-              position: "after",
-            },
-          ],
+          "named": true,
+          "alphabetize": {
+            order: "asc",
+            caseInsensitive: true,
+          },
         },
       ],
     },

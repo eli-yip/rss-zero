@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-import { title } from "@/components/primitives";
-import DefaultLayout from "@/layouts/default";
-import { Statistics } from "@/components/statistics";
 import { fetchStatistics } from "@/api/statistics";
+import { title } from "@/components/primitives";
+import { Statistics } from "@/components/statistics";
+import DefaultLayout from "@/layouts/default";
 
 export default function DocsPage() {
   const [statistics, setStatistics] = useState<Record<string, number>>({});

@@ -1,6 +1,6 @@
-import { useReducer, ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useReducer } from "react";
 
-import { ThemeContext, ThemeProps, themeReducer, Theme } from "./theme-context";
+import { Theme, ThemeContext, ThemeProps, themeReducer } from "./theme-context";
 
 interface ThemeProviderProps {
   children: ReactNode;

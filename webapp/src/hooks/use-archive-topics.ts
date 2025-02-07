@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-import { fetchArchiveTopics, ArchiveResponse } from "@/api/archive";
+import { ArchiveResponse, fetchArchiveTopics } from "@/api/archive";
 import { Topic } from "@/types/topic";
 
 export function useArchiveTopics(

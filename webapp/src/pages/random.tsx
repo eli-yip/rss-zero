@@ -1,9 +1,9 @@
 import { Button } from "@heroui/react";
 
-import DefaultLayout from "@/layouts/default";
-import { Topics } from "@/components/topic";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { Topics } from "@/components/topic";
 import { useRandomTopics } from "@/hooks/use-random-topics";
+import DefaultLayout from "@/layouts/default";
 
 export default function RandomPage() {
   const { topics, loading, firstFetch, fetchTopics } = useRandomTopics();

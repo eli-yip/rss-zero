@@ -1,14 +1,14 @@
-import { useSearchParams, useNavigate } from "react-router-dom";
 import { DatePicker, DateValue } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-import { title } from "@/components/primitives";
-import DefaultLayout from "@/layouts/default";
-import { Topics } from "@/components/topic";
-import { ScrollToTop } from "@/components/scroll-to-top";
-import { scrollToTop } from "@/utils/window";
 import PaginationWrapper from "@/components/pagination";
+import { title } from "@/components/primitives";
+import { ScrollToTop } from "@/components/scroll-to-top";
+import { Topics } from "@/components/topic";
 import { useArchiveTopics } from "@/hooks/use-archive-topics";
+import DefaultLayout from "@/layouts/default";
+import { scrollToTop } from "@/utils/window";
 
 export default function ArchivePage() {
   const navigate = useNavigate();
@@ -61,7 +61,7 @@ export default function ArchivePage() {
         </div>
       </section>
 
-      <div className="flex flex-col sm:flex-row w-full max-w-xs mx-auto my-4 gap-4">
+      <div className="mx-auto my-4 flex w-full max-w-xs flex-col gap-4 sm:flex-row">
         <DatePicker
           showMonthAndYearPickers
           label="开始时间"

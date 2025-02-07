@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Button, Input, Pagination } from "@heroui/react";
+import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 interface PaginationWrapperProps {
@@ -59,7 +59,7 @@ function PaginationWithJumper({
   };
 
   return (
-    <div className="flex flex-col fixed bottom-2 left-0 right-0 z-40 items-center justify-center gap-2">
+    <div className="fixed bottom-2 left-0 right-0 z-40 flex flex-col items-center justify-center gap-2">
       <Pagination
         isCompact
         showControls

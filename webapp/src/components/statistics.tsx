@@ -1,5 +1,5 @@
-import { ActivityCalendar, Activity } from "react-activity-calendar";
 import { Tooltip } from "@heroui/react";
+import { Activity, ActivityCalendar } from "react-activity-calendar";
 
 import { useTheme } from "@/context/theme-context";
 

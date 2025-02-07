@@ -2,16 +2,16 @@ import type { Topic } from "@/types/topic";
 
 import {
   Button,
+  ButtonGroup,
   Card,
-  CardHeader,
   CardBody,
   CardFooter,
-  ButtonGroup,
+  CardHeader,
 } from "@heroui/react";
+import { AiOutlineZhihu } from "react-icons/ai";
+import { FaArchive, FaCopy } from "react-icons/fa";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { FaArchive, FaCopy } from "react-icons/fa";
-import { AiOutlineZhihu } from "react-icons/ai";
 
 import "@/styles/github-markdown.css";
 

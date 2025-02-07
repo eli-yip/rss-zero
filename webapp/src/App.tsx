@@ -1,10 +1,10 @@
 import { Route, Routes } from "react-router-dom";
 
+import AboutPage from "@/pages/about";
+import ArchivePage from "@/pages/archive";
 import IndexPage from "@/pages/index";
 import RandomPage from "@/pages/random";
-import ArchivePage from "@/pages/archive";
 import BlogPage from "@/pages/statistics";
-import AboutPage from "@/pages/about";
 
 function App() {
   return (

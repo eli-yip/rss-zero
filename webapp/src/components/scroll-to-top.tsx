@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { Button } from "@heroui/react";
+import { useEffect, useState } from "react";
 import { FaArrowUp } from "react-icons/fa";
 
 import { scrollToTop } from "@/utils/window";
