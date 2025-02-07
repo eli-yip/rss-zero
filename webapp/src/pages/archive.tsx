@@ -1,6 +1,6 @@
 import { DatePicker, DateValue } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 import { Archive } from "@/components/archive";
 import { title } from "@/components/primitives";
@@ -9,8 +9,6 @@ import DefaultLayout from "@/layouts/default";
 import { scrollToTop } from "@/utils/window";
 
 export default function ArchivePage() {
-  const navigate = useNavigate();
-
   const [searchParams, setSearchParams] = useSearchParams();
   const pageStr = searchParams.get("page") || "1";
   const page = parseInt(pageStr);
@@ -31,7 +29,7 @@ export default function ArchivePage() {
     if (dateValue) params.set(param, dateValue);
     else params.delete(param);
 
-    navigate(`/archive?${params.toString()}`);
+    setSearchParams(params);
     scrollToTop();
   };
 
