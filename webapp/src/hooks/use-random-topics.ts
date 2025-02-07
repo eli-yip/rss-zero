@@ -1,55 +1,32 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { apiUrl } from "@/config/config";
+import { fetchRandomTopics, RandomResponse } from "@/api/random";
 import { Topic } from "@/types/topic";
-
-interface Request {
-  author: string;
-  count: number;
-  platform: string;
-  type: string;
-}
-
-interface Response {
-  topics: Topic[];
-}
 
 export function useRandomTopics() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(false);
-  const [firstFetch, setFirstFetch] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [firstFetchDone, setFirstFetchDone] = useState(true);
 
-  const fetchTopics = useCallback(async () => {
+  async function getTopics() {
     setLoading(true);
-
-    const requestBody: Request = {
-      platform: "zhihu",
-      type: "answer",
-      author: "canglimo",
-      count: 10,
-    };
-
+    setError(null);
     try {
-      const response = await fetch(`${apiUrl}/archive/random`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
+      const response: RandomResponse = await fetchRandomTopics();
 
-      const data: Response = await response.json();
-
-      setTopics(data.topics);
+      setTopics(response.topics);
+    } catch (e) {
+      setError(`加载数据失败${e}`);
     } finally {
       setLoading(false);
-      setFirstFetch(false);
+      setFirstFetchDone(true);
     }
-  }, []);
+  }
 
   useEffect(() => {
-    fetchTopics();
-  }, [fetchTopics]);
+    getTopics();
+  }, []);
 
-  return { topics, loading, firstFetch, fetchTopics };
+  return { topics, loading, error, firstFetch: firstFetchDone, getTopics };
 }

@@ -6,7 +6,7 @@ import { useRandomTopics } from "@/hooks/use-random-topics";
 import DefaultLayout from "@/layouts/default";
 
 export default function RandomPage() {
-  const { topics, loading, firstFetch, fetchTopics } = useRandomTopics();
+  const { topics, loading, firstFetch, getTopics } = useRandomTopics();
 
   const button = (
     <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
@@ -14,7 +14,7 @@ export default function RandomPage() {
         className="text-2xl font-bold"
         isLoading={loading}
         size="lg"
-        onPress={fetchTopics}
+        onPress={getTopics}
       >
         再来一打
       </Button>
