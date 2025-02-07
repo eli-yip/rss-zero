@@ -52,6 +52,7 @@ export function Statistics({ loading, statistics }: StatisticsProps) {
               setSearchParams(new URLSearchParams({ date: activity.date }));
             },
           }}
+          labels={{ totalCount: "过去一年写下 {{count}} 篇文章" }}
           loading={loading}
           renderBlock={(block, activity) => (
             <Tooltip
