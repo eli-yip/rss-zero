@@ -2,10 +2,8 @@ import { DatePicker, DateValue } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import PaginationWrapper from "@/components/pagination";
+import { Archive } from "@/components/archive";
 import { title } from "@/components/primitives";
-import { ScrollToTop } from "@/components/scroll-to-top";
-import { Topics } from "@/components/topic";
 import { useArchiveTopics } from "@/hooks/use-archive-topics";
 import DefaultLayout from "@/layouts/default";
 import { scrollToTop } from "@/utils/window";
@@ -13,7 +11,7 @@ import { scrollToTop } from "@/utils/window";
 export default function ArchivePage() {
   const navigate = useNavigate();
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const pageStr = searchParams.get("page") || "1";
   const page = parseInt(pageStr);
   const startDate = searchParams.get("startDate") || "";
@@ -23,14 +21,6 @@ export default function ArchivePage() {
     startDate,
     endDate,
   );
-
-  const handlePageChange = (page: number) => {
-    const params = new URLSearchParams(searchParams);
-
-    params.set("page", page.toString());
-    navigate(`/archive?${params.toString()}`);
-    scrollToTop();
-  };
 
   const updateDateParam = (param: string, value: DateValue | null) => {
     const dateValue = value ? value.toString() : "";
@@ -76,25 +66,14 @@ export default function ArchivePage() {
         />
       </div>
 
-      {!loading && topics && <Topics topics={topics} />}
-
-      <ScrollToTop />
-      {/**
-       * Note: Why we need to check firstFetchDone here?
-       * HeroUI Pagination componet will not highlight current page in case that
-       * the total page is 0, no matter whether the total page is updated or not.
-       * So we need to make sure that the total page is updated before rendering.
-       * Besides, we want to show the pagination component when changing pages.
-       * So only when browser is fetching data for the first time,
-       * we don't show the pagination component.
-       */}
-      {firstFetchDone && (
-        <PaginationWrapper
-          page={page}
-          total={total}
-          onChange={handlePageChange}
-        />
-      )}
+      <Archive
+        firstFetchDone={firstFetchDone}
+        loading={loading}
+        page={page}
+        setSearchParams={setSearchParams}
+        topics={topics}
+        total={total}
+      />
     </DefaultLayout>
   );
 }
