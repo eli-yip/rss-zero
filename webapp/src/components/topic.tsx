@@ -8,8 +8,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@heroui/react";
-import { AiOutlineZhihu } from "react-icons/ai";
-import { FaArchive, FaCopy } from "react-icons/fa";
+import { FaArchive, FaCopy, FaSave, FaZhihu } from "react-icons/fa";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -46,6 +45,13 @@ export function Topic({ topic }: TopicProps) {
               >
                 <FaCopy />
               </Button>
+              <Button
+                isIconOnly
+                size="sm"
+                onPress={() => navigator.clipboard.writeText(archiveUrl)}
+              >
+                <FaSave />
+              </Button>
             </ButtonGroup>
           </div>
         </CardHeader>
@@ -72,7 +78,7 @@ export function PlatformLink({ platform, url }: PlatformLinkProps) {
   const icon = (platform: string) => {
     switch (platform) {
       case "原文":
-        return <AiOutlineZhihu />;
+        return <FaZhihu />;
       case "存档":
         return <FaArchive />;
     }
