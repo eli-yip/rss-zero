@@ -10,6 +10,7 @@ import (
 type DBZvideo interface {
 	SaveZvideoInfo(zvideo *Zvideo) (err error)
 	GetLatestZvideo() (zvideo *Zvideo, err error)
+	GetZvideos() (zvideos []Zvideo, err error)
 }
 
 // A Zvideo represents a video row in the zhihu_zvideos table.
@@ -37,4 +38,9 @@ func (d DBService) GetLatestZvideo() (zvideo *Zvideo, err error) {
 		return nil, nil
 	}
 	return zvideo, err
+}
+
+func (d DBService) GetZvideos() (zvideos []Zvideo, err error) {
+	err = d.Order("published_at DESC").Find(&zvideos).Error
+	return zvideos, err
 }

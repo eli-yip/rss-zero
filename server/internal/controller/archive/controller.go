@@ -91,6 +91,17 @@ type Topic struct {
 	Author      Author `json:"author"`
 }
 
+type ZvideoResponse struct {
+	Zvideos []Zvideo `json:"zvideos"`
+}
+
+type Zvideo struct {
+	ID          string `json:"id"`
+	Url         string `json:"url"`
+	Title       string `json:"title"`
+	PublishedAt string `json:"published_at"`
+}
+
 const (
 	PlatformZhihu = "zhihu"
 )

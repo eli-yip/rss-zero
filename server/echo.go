@@ -167,6 +167,8 @@ func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Con
 	archiveHistoryApi.Name = "Archive route"
 	randomPickApi := archiveApi.POST("/random", archiveHandler.Random)
 	randomPickApi.Name = "Random pick route"
+	zvideoListApi := archiveApi.GET("/zvideo", archiveHandler.ZvideoList)
+	zvideoListApi.Name = "Zvideo list route"
 	// selectPickApi := archiveApi.POST("/select", archiveHandler.Select)
 	// selectPickApi.Name = "Select pick route"
 }
