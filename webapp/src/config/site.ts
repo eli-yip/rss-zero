@@ -16,12 +16,12 @@ export const siteConfig = {
       href: "/archive",
     },
     {
-      label: "数据",
+      label: "文章数据",
       href: "/statistics",
     },
     {
-      label: "About",
-      href: "/about",
+      label: "直播回放",
+      href: "/zvideo",
     },
   ],
   links: {

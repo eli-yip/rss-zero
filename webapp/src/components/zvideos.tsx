@@ -1,0 +1,26 @@
+import { Card, CardBody, Link } from "@heroui/react";
+
+import { Zvideo } from "@/types/zvideo";
+
+interface ZvideosProps {
+  zvideos: Zvideo[];
+}
+
+export function Zvideos({ zvideos }: ZvideosProps) {
+  return (
+    <div className="w-full max-w-xl">
+      {zvideos.map((zvideo) => (
+        <Card key={zvideo.id} className="mb-4">
+          <CardBody>
+            <div className="flex justify-between gap-4">
+              <p>{zvideo.published_at}</p>
+              <Link isExternal showAnchorIcon href={zvideo.url} target="_blank">
+                {zvideo.title}
+              </Link>
+            </div>
+          </CardBody>
+        </Card>
+      ))}
+    </div>
+  );
+}

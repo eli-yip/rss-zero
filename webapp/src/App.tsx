@@ -6,6 +6,8 @@ import IndexPage from "@/pages/index";
 import RandomPage from "@/pages/random";
 import BlogPage from "@/pages/statistics";
 
+import ZvideoPage from "./pages/zvideo";
+
 function App() {
   return (
     <Routes>
@@ -13,6 +15,7 @@ function App() {
       <Route element={<RandomPage />} path="/random" />
       <Route element={<ArchivePage />} path="/archive" />
       <Route element={<BlogPage />} path="/statistics" />
+      <Route element={<ZvideoPage />} path="/zvideo" />
       <Route element={<AboutPage />} path="/about" />
     </Routes>
   );

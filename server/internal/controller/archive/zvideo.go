@@ -26,7 +26,7 @@ func (h *Controller) ZvideoList(c echo.Context) (err error) {
 		Zvideos: lo.Map(zvideos, func(z db.Zvideo, _ int) Zvideo {
 			return Zvideo{
 				ID:          z.ID,
-				Url:         fmt.Sprintf("https://www.zhihu.com/zvideos/%s", z.ID),
+				Url:         fmt.Sprintf("https://www.zhihu.com/zvideo/%s", z.ID),
 				Title:       z.Filename[6:],
 				PublishedAt: z.PublishedAt.Format("2006-01-02"),
 			}
