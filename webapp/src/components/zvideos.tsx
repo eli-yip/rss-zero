@@ -8,7 +8,7 @@ interface ZvideosProps {
 
 export function Zvideos({ zvideos }: ZvideosProps) {
   return (
-    <div className="w-full max-w-xl">
+    <div className="w-full max-w-3xl sm:grid sm:grid-cols-2">
       {zvideos.map((zvideo) => (
         <Card key={zvideo.id} className="mb-4">
           <CardBody>
