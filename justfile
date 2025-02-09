@@ -3,12 +3,14 @@ current_branch := shell("git branch --show-current")
 # Lint the backend and frontend code
 lint: lint-backend lint-frontend
 
+update: update-backend update-frontend
+
 [working-directory: 'server']
 lint-backend:
   golangci-lint run -v --timeout 5m
 
 [working-directory: 'server']
-update:
+update-backend:
   go get -u ./...
   go mod tidy
 
@@ -23,6 +25,10 @@ format:
 [working-directory: 'webapp']
 frontend:
   npm run dev
+
+[working-directory: 'webapp']
+update-frontend:
+  npm outdated; npm update
 
 [working-directory: 'webapp']
 lint-frontend:
