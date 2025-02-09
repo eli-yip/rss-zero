@@ -54,7 +54,13 @@ func (z *ZvideoParseService) ParseZvideoList(content []byte, logger *zap.Logger)
 	}
 	logger.Info("Unmarshal zvideo list successfully", zap.Int("count", len(zvideos.Data)))
 
-	for _, zvideo := range zvideos.Data {
+	for _, zr := range zvideos.Data {
+		var zvideo apiModels.Zvideo
+		if err = json.Unmarshal(zr, &zvideo); err != nil {
+			logger.Error("Failed to decode zvideo", zap.Error(err))
+			return nil, err
+		}
+
 		zvideoPublishedAt := parseUnixTime(zvideo.PublishedAt)
 		if !zvideoPublishedAt.After(latestZvideoPublishedAtinDB) ||
 			zvideoPublishedAt.Before(time.Date(2024, 9, 30, 0, 0, 0, 0, config.C.BJT)) {
@@ -97,6 +103,7 @@ func (z *ZvideoParseService) ParseZvideoList(content []byte, logger *zap.Logger)
 			ID:          zvideo.ID,
 			PublishedAt: zvideoPublishedAt,
 			Filename:    filename,
+			Raw:         zr,
 		}); err != nil {
 			logger.Error("Failed to save zvideo to db", zap.Error(err))
 			return nil, fmt.Errorf("failed to save zvideo info to db: %w", err)

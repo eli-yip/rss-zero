@@ -23,6 +23,7 @@ type Zvideo struct {
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 	DeletedAt   gorm.DeletedAt
+	Raw         []byte `gorm:"column:raw;type:bytea"`
 }
 
 func (*Zvideo) TableName() string { return "zhihu_zvideos" }

@@ -1,9 +1,11 @@
 package apiModels
 
+import "encoding/json"
+
 type (
 	ZvideoList struct {
-		Paging Paging   `json:"paging"`
-		Data   []Zvideo `json:"data"`
+		Paging Paging            `json:"paging"`
+		Data   []json.RawMessage `json:"data"`
 	}
 
 	Zvideo struct {
