@@ -8,9 +8,9 @@ interface ZvideosProps {
 
 export function Zvideos({ zvideos }: ZvideosProps) {
   return (
-    <div className="w-full max-w-3xl sm:grid sm:grid-cols-2">
+    <div className="w-full max-w-3xl gap-4 sm:grid sm:grid-cols-2">
       {zvideos.map((zvideo) => (
-        <Card key={zvideo.id} className="mb-4">
+        <Card key={zvideo.id} className="mb-4 sm:mb-0">
           <CardBody>
             <div className="flex justify-between gap-4">
               <p>{zvideo.published_at}</p>
