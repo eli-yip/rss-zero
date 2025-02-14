@@ -16,10 +16,12 @@ import (
 	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
 	mackedController "github.com/eli-yip/rss-zero/internal/controller/macked"
 	migrateController "github.com/eli-yip/rss-zero/internal/controller/migrate"
+	parseHandler "github.com/eli-yip/rss-zero/internal/controller/parse"
 	rsshubController "github.com/eli-yip/rss-zero/internal/controller/rsshub"
 	xiaobotController "github.com/eli-yip/rss-zero/internal/controller/xiaobot"
 	zhihuController "github.com/eli-yip/rss-zero/internal/controller/zhihu"
 	zsxqController "github.com/eli-yip/rss-zero/internal/controller/zsxq"
+	"github.com/eli-yip/rss-zero/internal/file"
 	myMiddleware "github.com/eli-yip/rss-zero/internal/middleware"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -32,9 +34,14 @@ import (
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 )
 
-func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier,
+func setupEcho(redisService redis.Redis,
+	cookieService cookie.CookieIface,
+	db *gorm.DB,
+	notifier notify.Notifier,
+	fileService file.File,
 	definitionToFunc jobController.DefinitionToFunc,
-	cronService *cron.CronService, logger *zap.Logger,
+	cronService *cron.CronService,
+	logger *zap.Logger,
 ) (e *echo.Echo) {
 	e = echo.New()
 	e.HideBanner = true
@@ -77,11 +84,10 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 	githubDBService := githubDB.NewDBService(db)
 	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)
 	mackedController := mackedController.NewController(redisService, macked.NewDBService(db), logger)
-
+	parseHandler := parseHandler.NewHandler(db, cookieService, fileService, notifier)
 	migrateHandler := migrateController.NewController(logger, db)
 
 	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mackedController)
-
 	// /api/v1
 	apiGroup := e.Group("/api/v1")
 	registerFeed(apiGroup, zhihuHandler, githubController)
@@ -94,6 +100,7 @@ func setupEcho(redisService redis.Redis, cookieService cookie.CookieIface, db *g
 	registerJob(apiGroup, jobHandler)
 	registerSub(apiGroup, zhihuHandler, githubController, xiaobotHandler)
 	registerMigrate(apiGroup, migrateHandler)
+	registerParse(apiGroup, parseHandler)
 
 	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
@@ -326,4 +333,10 @@ func registerMigrate(apiGroup *echo.Group, migrateHandler *migrateController.Con
 	migrateMinioApi.Name = "Migrate minio files route 20240905"
 	migrate20240929Api := migrateApi.POST("/20240929", migrateHandler.Migrate20240929)
 	migrate20240929Api.Name = "Migrate db 20240929 route"
+}
+
+func registerParse(apiGroup *echo.Group, parseHandler *parseHandler.Handler) {
+	parseApi := apiGroup.Group("/parse")
+	parseZhihuAnswerApi := parseApi.POST("/zhihu/answer", parseHandler.ParseZhihuAnswer)
+	parseZhihuAnswerApi.Name = "Parse zhihu answer route"
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
 	"github.com/eli-yip/rss-zero/internal/db"
+	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/migrate"
 	"github.com/eli-yip/rss-zero/internal/notify"
@@ -80,7 +81,12 @@ func main() {
 	}
 	logger.Info("Init cron service and jobs successfully")
 
-	e := setupEcho(redisService, cookieService, db, bark, definitionToFunc, cronService, logger)
+	fileService, err := file.NewFileServiceMinio(config.C.Minio, logger)
+	if err != nil {
+		logger.Fatal("Failed to init file service", zap.Error(err))
+	}
+
+	e := setupEcho(redisService, cookieService, db, bark, fileService, definitionToFunc, cronService, logger)
 	logger.Info("Init echo server successfully")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
