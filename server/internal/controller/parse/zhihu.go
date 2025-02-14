@@ -7,12 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
-	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
-	renderIface "github.com/eli-yip/rss-zero/pkg/render"
-	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
@@ -47,7 +43,7 @@ func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, Response{Message: "failed to init request service"})
 	}
 	imageParser := parse.NewOnlineImageParser(requestService, h.fileService, h.zhihuDbService)
-	zhihuParseService, err := initParser(h.aiService, logger, imageParser, h.zhihuHtmlToMarkdown, requestService, h.fileService, h.zhihuDbService)
+	zhihuParseService, err := parse.InitParser(h.aiService, logger, imageParser, h.zhihuHtmlToMarkdown, requestService, h.fileService, h.zhihuDbService)
 	if err != nil {
 		logger.Error("failed to init zhihu parse service", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, Response{Message: "failed to init zhihu parse service"})
@@ -73,16 +69,4 @@ func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 	}()
 
 	return c.JSON(http.StatusOK, Response{Message: "start to parse answers"})
-}
-
-func initParser(aiService ai.AI, logger *zap.Logger, imageParser parse.Imager, htmlToMarkdown renderIface.HTMLToMarkdown, requestService request.Requester, fileService file.File, dbService zhihuDB.DB) (parse.Parser, error) {
-	return parse.NewParseService(
-		parse.WithAI(aiService),
-		parse.WithLogger(logger),
-		parse.WithImager(imageParser),
-		parse.WithHTMLToMarkdownConverter(htmlToMarkdown),
-		parse.WithRequester(requestService),
-		parse.WithFile(fileService),
-		parse.WithDB(dbService),
-	)
 }

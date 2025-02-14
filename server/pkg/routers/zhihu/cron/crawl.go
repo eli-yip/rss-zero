@@ -342,24 +342,12 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 
 	aiService = ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
 
-	parser, err = initParser(aiService, logger, imageParser, htmlToMarkdown, requestService, fileService, dbService)
+	parser, err = parse.InitParser(aiService, logger, imageParser, htmlToMarkdown, requestService, fileService, dbService)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to init zhihu parser: %w", err)
 	}
 
 	return dbService, requestService, parser, nil
-}
-
-func initParser(aiService ai.AI, logger *zap.Logger, imageParser parse.Imager, htmlToMarkdown renderIface.HTMLToMarkdown, requestService request.Requester, fileService file.File, dbService zhihuDB.DB) (parse.Parser, error) {
-	return parse.NewParseService(
-		parse.WithAI(aiService),
-		parse.WithLogger(logger),
-		parse.WithImager(imageParser),
-		parse.WithHTMLToMarkdownConverter(htmlToMarkdown),
-		parse.WithRequester(requestService),
-		parse.WithFile(fileService),
-		parse.WithDB(dbService),
-	)
 }
 
 func removeZSECKCookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuZSECK) }

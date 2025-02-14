@@ -72,6 +72,18 @@ func NewParseService(options ...Option) (Parser, error) {
 	return s, nil
 }
 
+func InitParser(aiService ai.AI, logger *zap.Logger, imageParser Imager, htmlToMarkdown renderIface.HTMLToMarkdown, requestService request.Requester, fileService file.File, dbService db.DB) (Parser, error) {
+	return NewParseService(
+		WithAI(aiService),
+		WithLogger(logger),
+		WithImager(imageParser),
+		WithHTMLToMarkdownConverter(htmlToMarkdown),
+		WithRequester(requestService),
+		WithFile(fileService),
+		WithDB(dbService),
+	)
+}
+
 func WithHTMLToMarkdownConverter(c renderIface.HTMLToMarkdown) Option {
 	return func(s *ParseService) { s.htmlToMarkdown = c }
 }
