@@ -11,7 +11,6 @@ import (
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
-	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"go.uber.org/zap"
 )
 
@@ -24,12 +23,10 @@ type Parser interface {
 
 type ParseService struct {
 	htmlToMarkdown renderIface.HTMLToMarkdown
-	request        request.Requester
 	file           file.File
 	db             db.DB
 	ai             ai.AI
-	// logger         *zap.Logger // TODO: Remove logger from ParseService
-	mdfmt *md.MarkdownFormatter
+	mdfmt          *md.MarkdownFormatter
 	Imager
 }
 
@@ -52,10 +49,6 @@ func NewParseService(options ...Option) (Parser, error) {
 		s.htmlToMarkdown = renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
 	}
 
-	if s.Imager == nil {
-		s.Imager = NewOnlineImageParser(s.request, s.file, s.db)
-	}
-
 	if s.ai == nil {
 		s.ai = ai.NewAIService("", "")
 	}
@@ -67,12 +60,11 @@ func NewParseService(options ...Option) (Parser, error) {
 	return s, nil
 }
 
-func InitParser(aiService ai.AI, imageParser Imager, htmlToMarkdown renderIface.HTMLToMarkdown, requestService request.Requester, fileService file.File, dbService db.DB) (Parser, error) {
+func InitParser(aiService ai.AI, imageParser Imager, htmlToMarkdown renderIface.HTMLToMarkdown, fileService file.File, dbService db.DB) (Parser, error) {
 	return NewParseService(
 		WithAI(aiService),
 		WithImager(imageParser),
 		WithHTMLToMarkdownConverter(htmlToMarkdown),
-		WithRequester(requestService),
 		WithFile(fileService),
 		WithDB(dbService),
 	)
@@ -80,10 +72,6 @@ func InitParser(aiService ai.AI, imageParser Imager, htmlToMarkdown renderIface.
 
 func WithHTMLToMarkdownConverter(c renderIface.HTMLToMarkdown) Option {
 	return func(s *ParseService) { s.htmlToMarkdown = c }
-}
-
-func WithRequester(r request.Requester) Option {
-	return func(s *ParseService) { s.request = r }
 }
 
 func WithFile(f file.File) Option {

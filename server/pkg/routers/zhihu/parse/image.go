@@ -1,7 +1,9 @@
 package parse
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -15,6 +17,7 @@ type Imager interface {
 	// 	- id: content id, like zhihu answer id
 	//  - t: content type, see more in github.com/eli-yip/rss-zero/pkg/common.type.go
 	ParseImages(text string, id, t int, logger *zap.Logger) (result string, err error)
+	GetImageStream(url string, logger *zap.Logger) (resp *http.Response, err error)
 }
 
 // Online image parser will download images from websites,
@@ -67,6 +70,10 @@ func (p *OnlineImageParser) ParseImages(text string, id int, t int, logger *zap.
 	return text, nil
 }
 
+func (p *OnlineImageParser) GetImageStream(url string, logger *zap.Logger) (resp *http.Response, err error) {
+	return p.request.NoLimitStream(url, logger)
+}
+
 // Offline image parser will get image info directly from database,
 // and replace image links among text with local url.
 type OfflineImageParser struct{ db db.DB }
@@ -87,4 +94,8 @@ func (p *OfflineImageParser) ParseImages(text string, id int, t int, logger *zap
 		text = replaceImageLink(text, object.ObjectKey, imageLink, objectURL)
 	}
 	return text, nil
+}
+
+func (p *OfflineImageParser) GetImageStream(url string, logger *zap.Logger) (resp *http.Response, err error) {
+	return nil, errors.New("not implemented")
 }

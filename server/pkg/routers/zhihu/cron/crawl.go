@@ -342,7 +342,7 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 
 	aiService = ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
 
-	parser, err = parse.InitParser(aiService, imageParser, htmlToMarkdown, requestService, fileService, dbService)
+	parser, err = parse.InitParser(aiService, imageParser, htmlToMarkdown, fileService, dbService)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to init zhihu parser: %w", err)
 	}
