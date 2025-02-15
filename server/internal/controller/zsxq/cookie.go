@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -24,8 +25,18 @@ type (
 	}
 
 	CookieResp struct {
-		AccessToken *Cookie `json:"access_token,omitempty"`
+		AccessToken *Cookie      `json:"access_token,omitempty"`
+		RequestID   string       `json:"request_id,omitempty"`
+		Status      CookieStatus `json:"status"`
 	}
+
+	CookieStatus string
+)
+
+const (
+	CookieStatusSuccess CookieStatus = "success"
+	CookieStatusPending CookieStatus = "pending"
+	CookieStatusFailed  CookieStatus = "failed"
 )
 
 func (h *Controoler) UpdateCookie(c echo.Context) (err error) {
@@ -66,20 +77,44 @@ func (h *Controoler) UpdateCookie(c echo.Context) (err error) {
 
 		accessToken := cookie.ExtractCookieValue(req.AccessToken.Value, "access_token")
 		requestService := request.NewRequestService(accessToken, logger)
-		if _, err = requestService.Limit(config.C.TestURL.Zsxq, logger); err != nil {
-			logger.Error("Failed to validate zsxq access token", zap.String("cookie", req.AccessToken.Value), zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid cookie"})
-		}
-		logger.Info("Validated zsxq access token")
 
-		if err = h.cookie.Set(cookie.CookieTypeZsxqAccessToken, accessToken, ttl); err != nil {
-			logger.Error("Error updating zsxq cookie", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+		ctx, cancel := context.WithTimeout(c.Request().Context(), 10*time.Second)
+		defer cancel()
+
+		done := make(chan error, 1)
+		requestID := c.Response().Header().Get(echo.HeaderXRequestID)
+
+		go func() {
+			_, err := requestService.Limit(config.C.TestURL.Zsxq, logger)
+			if err != nil {
+				logger.Error("Failed to validate zsxq access token",
+					zap.String("cookie", req.AccessToken.Value),
+					zap.Error(err))
+			} else {
+				if err = h.cookie.Set(cookie.CookieTypeZsxqAccessToken, accessToken, ttl); err != nil {
+					logger.Error("Error updating zsxq cookie",
+						zap.Error(err))
+				} else {
+					logger.Info("Update zsxq cookie successfully")
+				}
+			}
+			done <- err
+		}()
+
+		select {
+		case err := <-done:
+			if err != nil {
+				respData.Status = CookieStatusFailed
+			} else {
+				respData.Status = CookieStatusSuccess
+			}
+		case <-ctx.Done():
+			respData.RequestID = requestID
+			respData.Status = CookieStatusPending
 		}
-		logger.Info("Updated zsxq cookie")
 
 		respData.AccessToken.Value = req.AccessToken.Value
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "Update zsxq cookies successfully", Data: respData})
+	return c.JSON(http.StatusOK, &common.ApiResp{Data: respData})
 }
