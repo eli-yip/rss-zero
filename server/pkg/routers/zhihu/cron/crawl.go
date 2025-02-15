@@ -27,19 +27,25 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func BuildCrawlFunc(cronIDToResume, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
-	// If cronIDToResume is not empty, then resume the crawl from the breakpoint based on lastCrawl.
+type ResumeJobInfo struct {
+	JobID, LastCrawled string
+}
+
+func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclude []string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+	// If resumeJobID is not empty, then resume the crawl from the breakpoint based on lastCrawl.
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		var cronJobInfo cron.CronJobInfo
 
-		var cronID string
-		if cronIDToResume == "" {
-			cronID = xid.New().String()
+		var cronJobID string
+		if resumeJobInfo == nil {
+			cronJobID = xid.New().String()
 		} else {
-			cronID = cronIDToResume
+			cronJobID = resumeJobInfo.JobID
 		}
 
-		logger := log.DefaultLogger.With(zap.String("cron_id", cronID))
+		// TODO: use cron_job_id as logger's field
+		// wait for other crawl functions to be refactored
+		logger := log.DefaultLogger.With(zap.String("cron_id", cronJobID))
 
 		var err error
 		var errCount int = 0
@@ -65,7 +71,7 @@ func BuildCrawlFunc(cronIDToResume, taskID string, include, exclude []string, la
 
 		// If there is another job running and this job is a new job(cronIDToResume is empty), skip this job
 		// case 2
-		if runningJobID != "" && cronIDToResume == "" {
+		if runningJobID != "" && resumeJobInfo == nil {
 			logger.Info("There is another job running, skip this", zap.String("job_id", runningJobID))
 			cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", runningJobID)
 			cronJobInfoChan <- cronJobInfo
@@ -74,10 +80,10 @@ func BuildCrawlFunc(cronIDToResume, taskID string, include, exclude []string, la
 
 		// If there is no job running and this job is a new job(cronIDToResume is empty), add it to db
 		// case 4
-		if runningJobID == "" && cronIDToResume == "" {
+		if runningJobID == "" && resumeJobInfo == nil {
 			logger.Info("New job, start to add it to db")
 			var job *cronDB.CronJob
-			if job, err = cronDBService.AddJob(cronID, taskID); err != nil {
+			if job, err = cronDBService.AddJob(cronJobID, taskID); err != nil {
 				logger.Error("Failed to add job", zap.Error(err))
 				cronJobInfo.Err = fmt.Errorf("failed to add job: %w", err)
 				cronJobInfoChan <- cronJobInfo
@@ -91,8 +97,8 @@ func BuildCrawlFunc(cronIDToResume, taskID string, include, exclude []string, la
 
 		defer func() {
 			if errCount > 0 || err != nil {
-				notify.NoticeWithLogger(notifier, "Failed to crawl zhihu content", cronID, logger)
-				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
+				notify.NoticeWithLogger(notifier, "Failed to crawl zhihu content", cronJobID, logger)
+				if err = cronDBService.UpdateStatus(cronJobID, cronDB.StatusError); err != nil {
 					logger.Error("Failed to update cron job status", zap.Error(err))
 				}
 				return
@@ -100,13 +106,13 @@ func BuildCrawlFunc(cronIDToResume, taskID string, include, exclude []string, la
 
 			if err := recover(); err != nil {
 				logger.Error("CrawlZhihu() panic", zap.Any("err", err))
-				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
+				if err = cronDBService.UpdateStatus(cronJobID, cronDB.StatusError); err != nil {
 					logger.Error("Failed to update cron job status", zap.Any("err", err))
 				}
 				return
 			}
 
-			if err = cronDBService.UpdateStatus(cronID, cronDB.StatusFinished); err != nil {
+			if err = cronDBService.UpdateStatus(cronJobID, cronDB.StatusFinished); err != nil {
 				logger.Error("Failed to update cron job status", zap.Error(err))
 			}
 		}()
@@ -120,17 +126,20 @@ func BuildCrawlFunc(cronIDToResume, taskID string, include, exclude []string, la
 			return
 		}
 
+		var lastCrawled string
 		// Check last crawl sub existance
-		if lastCrawl != "" {
-			logger.Info("Last crawl sub id is set", zap.String("id", lastCrawl))
-			exist, err := dbService.CheckSubByID(lastCrawl)
+		if resumeJobInfo != nil && resumeJobInfo.LastCrawled != "" {
+			logger.Info("Resume job info has last crawled sub id", zap.String("id", resumeJobInfo.LastCrawled))
+			exist, err := dbService.CheckSubByID(resumeJobInfo.LastCrawled)
 			if err != nil {
-				logger.Error("Failed to check sub by id", zap.String("id", lastCrawl), zap.Error(err))
+				logger.Error("Failed to check sub by id", zap.String("id", resumeJobInfo.LastCrawled), zap.Error(err))
 				return
 			}
 			if !exist {
-				logger.Error("Last crawl sub not found", zap.String("sub_id", lastCrawl))
-				lastCrawl = ""
+				logger.Error("Last crawl sub not found", zap.String("sub_id", resumeJobInfo.LastCrawled))
+				lastCrawled = ""
+			} else {
+				lastCrawled = resumeJobInfo.LastCrawled
 			}
 		}
 
@@ -145,7 +154,7 @@ func BuildCrawlFunc(cronIDToResume, taskID string, include, exclude []string, la
 		subs = SliceToSubs(filteredSubs, subs)
 		logger.Info("Filter subs need to crawl successfully", zap.Int("count", len(subs)))
 
-		subs = CutSubs(subs, lastCrawl)
+		subs = CutSubs(subs, lastCrawled)
 		logger.Info("Subs need to crawl", zap.Int("count", len(subs)))
 
 		var path, content string
@@ -307,7 +316,7 @@ func BuildCrawlFunc(cronIDToResume, taskID string, include, exclude []string, la
 			}
 			logger.Info("Save to redis successfully")
 
-			if err = cronDBService.RecordDetail(cronID, sub.ID); err != nil {
+			if err = cronDBService.RecordDetail(cronJobID, sub.ID); err != nil {
 				logger.Error("Failed to record job detail", zap.String("sub_id", sub.ID), zap.Error(err))
 				errCount++
 				return

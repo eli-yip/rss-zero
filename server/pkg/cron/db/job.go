@@ -14,7 +14,9 @@ type CronJob struct {
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 	TaskType  string    `gorm:"column:task_type;type:string" json:"task_type"` // definition id
 	Status    int       `gorm:"column:status;type:int" json:"status"`
-	Detail    string    `gorm:"column:detail;type:string" json:"detail"`
+	// Detail usage notes:
+	// 1. For zhihu, it's the last crawled sub id raw string
+	Detail string `gorm:"column:detail;type:string" json:"detail"`
 }
 
 func (*CronJob) TableName() string { return "cron_jobs" }
