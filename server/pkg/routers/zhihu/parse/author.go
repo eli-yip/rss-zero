@@ -4,15 +4,16 @@ import (
 	"fmt"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	"go.uber.org/zap"
 )
 
 type AuthorParser interface {
 	// Parse result from api.zhihu.com/people/{url_token}
-	ParseAuthorName(apiResp []byte) (authorName string, err error)
+	ParseAuthorName(apiResp []byte, logger *zap.Logger) (authorName string, err error)
 }
 
-func (p *ParseService) ParseAuthorName(apiResp []byte) (authorName string, err error) {
-	_, answers, _, err := p.ParseAnswerList(apiResp, 0, p.logger)
+func (p *ParseService) ParseAuthorName(apiResp []byte, logger *zap.Logger) (authorName string, err error) {
+	_, answers, _, err := p.ParseAnswerList(apiResp, 0, logger)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse answer list: %w", err)
 	}

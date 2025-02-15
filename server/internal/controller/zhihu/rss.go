@@ -260,13 +260,13 @@ func (h *Controller) parseAuthorName(authorID string, logger *zap.Logger) (autho
 	}
 
 	var parser parse.AuthorParser
-	parser, err = parse.NewParseService(parse.WithDB(h.db), parse.WithLogger(logger))
+	parser, err = parse.NewParseService(parse.WithDB(h.db))
 	if err != nil {
 		return "", fmt.Errorf("failed to create parse service: %w", err)
 	}
 	logger.Info("Create parse service successfully")
 
-	authorName, err = parser.ParseAuthorName(bytes)
+	authorName, err = parser.ParseAuthorName(bytes, logger)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse author name: %w", err)
 	}

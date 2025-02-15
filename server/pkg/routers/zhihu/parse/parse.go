@@ -7,7 +7,6 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/file"
-	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/md"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -29,8 +28,8 @@ type ParseService struct {
 	file           file.File
 	db             db.DB
 	ai             ai.AI
-	logger         *zap.Logger // TODO: Remove logger from ParseService
-	mdfmt          *md.MarkdownFormatter
+	// logger         *zap.Logger // TODO: Remove logger from ParseService
+	mdfmt *md.MarkdownFormatter
 	Imager
 }
 
@@ -47,10 +46,6 @@ func NewParseService(options ...Option) (Parser, error) {
 
 	if s.db == nil {
 		return nil, fmt.Errorf("zhihu.DB is required")
-	}
-
-	if s.logger == nil {
-		s.logger = log.DefaultLogger
 	}
 
 	if s.htmlToMarkdown == nil {
@@ -72,10 +67,9 @@ func NewParseService(options ...Option) (Parser, error) {
 	return s, nil
 }
 
-func InitParser(aiService ai.AI, logger *zap.Logger, imageParser Imager, htmlToMarkdown renderIface.HTMLToMarkdown, requestService request.Requester, fileService file.File, dbService db.DB) (Parser, error) {
+func InitParser(aiService ai.AI, imageParser Imager, htmlToMarkdown renderIface.HTMLToMarkdown, requestService request.Requester, fileService file.File, dbService db.DB) (Parser, error) {
 	return NewParseService(
 		WithAI(aiService),
-		WithLogger(logger),
 		WithImager(imageParser),
 		WithHTMLToMarkdownConverter(htmlToMarkdown),
 		WithRequester(requestService),
@@ -102,10 +96,6 @@ func WithDB(d db.DB) Option {
 
 func WithAI(ai ai.AI) Option {
 	return func(s *ParseService) { s.ai = ai }
-}
-
-func WithLogger(l *zap.Logger) Option {
-	return func(s *ParseService) { s.logger = l }
 }
 
 func WithImager(i Imager) Option {
