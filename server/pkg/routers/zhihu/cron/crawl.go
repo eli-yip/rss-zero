@@ -27,15 +27,16 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func BuildCrawlFunc(cronIDToResume, taskID string, include, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+	// If cronIDToResume is not empty, then resume the crawl from the breakpoint based on lastCrawl.
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		var cronJobInfo cron.CronJobInfo
 
 		var cronID string
-		if cronIDInDB == "" {
+		if cronIDToResume == "" {
 			cronID = xid.New().String()
 		} else {
-			cronID = cronIDInDB
+			cronID = cronIDToResume
 		}
 
 		logger := log.DefaultLogger.With(zap.String("cron_id", cronID))
@@ -44,7 +45,7 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 		var errCount int = 0
 
 		cronDBService := cronDB.NewDBService(db)
-		jobIDInDB, err := cronDBService.CheckRunningJob(taskID)
+		runningJobID, err := cronDBService.CheckRunningJob(taskID)
 		if err != nil {
 			logger.Error("Failed to check job", zap.Error(err), zap.String("task_type", taskID))
 			cronJobInfo.Err = fmt.Errorf("failed to check job: %w", err)
@@ -53,16 +54,27 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 		}
 		logger.Info("Check job according to task type successfully", zap.String("task_type", taskID))
 
-		// If there is another job running and this job is a new job(rawCronID is empty), skip this job
-		if jobIDInDB != "" && cronIDInDB == "" {
-			logger.Info("There is another job running, skip this", zap.String("job_id", jobIDInDB))
-			cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", jobIDInDB)
+		// No matter if there is another job running, always resume the crawl.
+		//
+		// | jobIDInDB | cronIDToResume |        action		              | case |
+		// | --------- | -------------- | ----------------------------- | ---- |
+		// | not empty | not empty      | resume                        | 1    |
+		// | not empty | ""             | skip                          | 2    |
+		// | ""        | not empty      | resume(no need to add to db)  | 3    |
+		// | ""        | ""             | new job(add to db)            | 4    |
+
+		// If there is another job running and this job is a new job(cronIDToResume is empty), skip this job
+		// case 2
+		if runningJobID != "" && cronIDToResume == "" {
+			logger.Info("There is another job running, skip this", zap.String("job_id", runningJobID))
+			cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", runningJobID)
 			cronJobInfoChan <- cronJobInfo
 			return
 		}
 
-		// if raw cron id is empty, this is a new job, add it to db
-		if jobIDInDB == "" && cronIDInDB == "" {
+		// If there is no job running and this job is a new job(cronIDToResume is empty), add it to db
+		// case 4
+		if runningJobID == "" && cronIDToResume == "" {
 			logger.Info("New job, start to add it to db")
 			var job *cronDB.CronJob
 			if job, err = cronDBService.AddJob(cronID, taskID); err != nil {
@@ -75,6 +87,7 @@ func Crawl(cronIDInDB, taskID string, include, exclude []string, lastCrawl strin
 			cronJobInfo.Job = job
 			cronJobInfoChan <- cronJobInfo
 		}
+		// case 1, 3, 4
 
 		defer func() {
 			if errCount > 0 || err != nil {

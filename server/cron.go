@@ -109,7 +109,7 @@ func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookie
 			go crawlFunc()
 			logger.Info("Start zsxq running job", zap.String("job_id", job.ID))
 		case cronDB.TypeZhihu:
-			crawlFunc := cron.GenerateRealCrawlFunc(zhihuCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, cookieService, db, notifier))
+			crawlFunc := cron.GenerateRealCrawlFunc(zhihuCron.BuildCrawlFunc(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, cookieService, db, notifier))
 			go crawlFunc()
 			logger.Info("Start zhihu running job", zap.String("job_id", job.ID))
 		case cronDB.TypeXiaobot:
@@ -151,7 +151,7 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		case cronDB.TypeZhihu:
-			crawlFunc = zhihuCron.Crawl("", def.ID, def.Include, def.Exclude, "", redisService, cookieService, db, notifier)
+			crawlFunc = zhihuCron.BuildCrawlFunc("", def.ID, def.Include, def.Exclude, "", redisService, cookieService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("zhihu_crawl", def.CronExpr, crawlFunc); err != nil {
 				return nil, fmt.Errorf("failed to add zhihu cron job: %w", err)
 			}
