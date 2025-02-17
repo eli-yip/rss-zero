@@ -72,5 +72,5 @@ func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 		}
 	}()
 
-	return c.JSON(http.StatusOK, Response{Message: "start to parse answers"})
+	return c.JSON(http.StatusOK, Response{Message: "start to parse answers", TaskID: taskID})
 }
