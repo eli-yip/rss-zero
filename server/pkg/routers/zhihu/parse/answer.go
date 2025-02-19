@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"go.uber.org/zap"
@@ -33,7 +34,18 @@ func (p *ParseService) ParseAnswerList(content []byte, index int, logger *zap.Lo
 	for _, rawMessage := range answerList.Data {
 		answer := apiModels.Answer{}
 		if err = json.Unmarshal(rawMessage, &answer); err != nil {
-			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal answer: %w", err)
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal answer: %w, data: %s", err, string(rawMessage))
+		}
+
+		if f, ok := answer.RawID.(float64); ok {
+			answer.ID = int(f)
+		} else if s, ok := answer.RawID.(string); ok {
+			answer.ID, err = strconv.Atoi(s)
+			if err != nil {
+				return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert answer id from string to int: %w, id: %s", err, s)
+			}
+		} else {
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert answer id from any to int, data: %s", string(rawMessage))
 		}
 		answersExcerpt = append(answersExcerpt, answer)
 	}
