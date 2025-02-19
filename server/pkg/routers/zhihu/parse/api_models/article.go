@@ -3,7 +3,8 @@ package apiModels
 import "encoding/json"
 
 type Article struct {
-	ID       int    `json:"id"`
+	ID       int    `json:"-"`
+	RawID    any    `json:"id"` // zhihu now returns both string and int
 	CreateAt int64  `json:"created"`
 	UpdateAt int64  `json:"updated"`
 	Author   Author `json:"author"`

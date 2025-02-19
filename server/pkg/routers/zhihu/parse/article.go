@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/common"
@@ -35,6 +36,18 @@ func (p *ParseService) ParseArticleList(apiResp []byte, index int, logger *zap.L
 		if err = json.Unmarshal(rawMessage, &article); err != nil {
 			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal article: %w, data: %s", err, string(rawMessage))
 		}
+
+		if f, ok := article.RawID.(float64); ok {
+			article.ID = int(f)
+		} else if s, ok := article.RawID.(string); ok {
+			article.ID, err = strconv.Atoi(s)
+			if err != nil {
+				return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert article id from string to int: %w, id: %s", err, s)
+			}
+		} else {
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert article id from any to int, data: %s", string(rawMessage))
+		}
+
 		articlesExcerpt = append(articlesExcerpt, article)
 	}
 
