@@ -31,7 +31,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	crawlID := xid.New().String()
 	logger = logger.With(zap.String("crawl_id", crawlID))
-	logger.Info("Start to crawl zhihu answers", zap.String("user_url_token", user))
+	logger.Info("Start to crawl zhihu articles", zap.String("user_url_token", user))
 
 	next := GenerateArticleApiURL(user, offset)
 
