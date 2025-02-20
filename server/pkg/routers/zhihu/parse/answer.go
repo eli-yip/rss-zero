@@ -49,6 +49,20 @@ func (p *ParseService) ParseAnswerList(content []byte, index int, logger *zap.Lo
 		} else {
 			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert answer id from any to int, data: %s", string(rawMessage))
 		}
+
+		if f, ok := answer.Question.RawID.(float64); ok {
+			answer.Question.ID = int(f)
+			logger.Warn("Question id is float64, may cause some issue", zap.Int("new_question_id", answer.Question.ID), zap.Float64("old_question_id", f))
+		} else if s, ok := answer.Question.RawID.(string); ok {
+			answer.Question.ID, err = strconv.Atoi(s)
+			logger.Warn("Question id is string, may cause some issue", zap.Int("new_question_id", answer.Question.ID), zap.String("old_question_id", s))
+			if err != nil {
+				return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert question id from string to int: %w, id: %s", err, s)
+			}
+		} else {
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert question id from any to int, data: %s", string(rawMessage))
+		}
+
 		answersExcerpt = append(answersExcerpt, answer)
 	}
 
