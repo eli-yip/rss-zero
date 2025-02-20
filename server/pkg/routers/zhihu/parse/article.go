@@ -40,17 +40,19 @@ func (p *ParseService) ParseArticleList(apiResp []byte, index int, logger *zap.L
 		if f, ok := article.RawID.(float64); ok {
 			article.ID = int(f)
 			logger.Warn("Article id is float64, may cause some issue", zap.Int("new_article_id", article.ID), zap.Float64("old_article_id", f))
+			return apiModels.Paging{}, nil, nil, errors.New("skip this sub")
 		} else if s, ok := article.RawID.(string); ok {
 			article.ID, err = strconv.Atoi(s)
 			logger.Warn("Article id is string, may cause some issue", zap.Int("new_article_id", article.ID), zap.String("old_article_id", s))
 			if err != nil {
 				return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert article id from string to int: %w, id: %s", err, s)
 			}
+			return apiModels.Paging{}, nil, nil, errors.New("skip this sub")
 		} else {
 			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert article id from any to int, data: %s", string(rawMessage))
 		}
 
-		articlesExcerpt = append(articlesExcerpt, article)
+		// articlesExcerpt = append(articlesExcerpt, article)
 	}
 
 	return articleList.Paging, articlesExcerpt, articleList.Data, nil

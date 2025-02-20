@@ -40,30 +40,32 @@ func (p *ParseService) ParseAnswerList(content []byte, index int, logger *zap.Lo
 		if f, ok := answer.RawID.(float64); ok {
 			answer.ID = int(f)
 			logger.Warn("Answer id is float64, may cause some issue", zap.Int("new_answer_id", answer.ID), zap.Float64("old_answer_id", f))
+			return apiModels.Paging{}, nil, nil, errors.New("skip this sub")
 		} else if s, ok := answer.RawID.(string); ok {
 			answer.ID, err = strconv.Atoi(s)
 			logger.Warn("Answer id is string, may cause some issue", zap.Int("new_answer_id", answer.ID), zap.String("old_answer_id", s))
 			if err != nil {
 				return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert answer id from string to int: %w, id: %s", err, s)
 			}
+			return apiModels.Paging{}, nil, nil, errors.New("skip this sub")
 		} else {
 			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert answer id from any to int, data: %s", string(rawMessage))
 		}
 
-		if f, ok := answer.Question.RawID.(float64); ok {
-			answer.Question.ID = int(f)
-			logger.Warn("Question id is float64, may cause some issue", zap.Int("new_question_id", answer.Question.ID), zap.Float64("old_question_id", f))
-		} else if s, ok := answer.Question.RawID.(string); ok {
-			answer.Question.ID, err = strconv.Atoi(s)
-			logger.Warn("Question id is string, may cause some issue", zap.Int("new_question_id", answer.Question.ID), zap.String("old_question_id", s))
-			if err != nil {
-				return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert question id from string to int: %w, id: %s", err, s)
-			}
-		} else {
-			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert question id from any to int, data: %s", string(rawMessage))
-		}
+		// if f, ok := answer.Question.RawID.(float64); ok {
+		// 	answer.Question.ID = int(f)
+		// 	logger.Warn("Question id is float64, may cause some issue", zap.Int("new_question_id", answer.Question.ID), zap.Float64("old_question_id", f))
+		// } else if s, ok := answer.Question.RawID.(string); ok {
+		// 	answer.Question.ID, err = strconv.Atoi(s)
+		// 	logger.Warn("Question id is string, may cause some issue", zap.Int("new_question_id", answer.Question.ID), zap.String("old_question_id", s))
+		// 	if err != nil {
+		// 		return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert question id from string to int: %w, id: %s", err, s)
+		// 	}
+		// } else {
+		// 	return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert question id from any to int, data: %s", string(rawMessage))
+		// }
 
-		answersExcerpt = append(answersExcerpt, answer)
+		// answersExcerpt = append(answersExcerpt, answer)
 	}
 
 	return answerList.Paging, answersExcerpt, answerList.Data, nil
