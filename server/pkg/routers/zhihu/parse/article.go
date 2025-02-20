@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/common"
@@ -37,23 +36,9 @@ func (p *ParseService) ParseArticleList(apiResp []byte, index int, logger *zap.L
 			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal article: %w, data: %s", err, string(rawMessage))
 		}
 
-		if f, ok := article.RawID.(float64); ok {
-			article.ID = int(f)
-			if article.ID < 1000 {
-				logger.Warn("Article id is float64, may cause some issue", zap.Int("new_article_id", article.ID), zap.Float64("old_article_id", f))
-				return apiModels.Paging{}, nil, nil, errors.New("skip this sub")
-			}
-		} else if s, ok := article.RawID.(string); ok {
-			article.ID, err = strconv.Atoi(s)
-			if err != nil {
-				return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert article id from string to int: %w, id: %s", err, s)
-			}
-			if article.ID < 1000 {
-				logger.Warn("Article id is string, may cause some issue", zap.Int("new_article_id", article.ID), zap.String("old_article_id", s))
-				return apiModels.Paging{}, nil, nil, errors.New("skip this sub")
-			}
-		} else {
-			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert article id from any to int, data: %s", string(rawMessage))
+		article.ID, err = anyToID(article.RawID)
+		if err != nil {
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert article id from any to int: %w, data: %s", err, string(rawMessage))
 		}
 
 		articlesExcerpt = append(articlesExcerpt, article)
@@ -69,6 +54,11 @@ func (p *ParseService) ParseArticle(content []byte, logger *zap.Logger) (text st
 		return emptyString, fmt.Errorf("failed to unmarshal article: %w", err)
 	}
 	logger.Info("Unmarshal article successfully")
+
+	article.ID, err = anyToID(article.RawID)
+	if err != nil {
+		return emptyString, fmt.Errorf("failed to convert article id from any to int: %w", err)
+	}
 
 	articleInDB, exist, err := checkArticleExist(article.ID, p.db)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"regexp"
+	"strconv"
 
 	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/file"
@@ -134,4 +135,27 @@ func (p *ParseService) parseHTML(html string, id int, t int, logger *zap.Logger)
 	}
 
 	return p.ParseImages(string(bytes), id, t, logger)
+}
+
+// anyToID converts zhihu id of type any to int
+func anyToID(rawID any) (int, error) {
+	switch rawID := rawID.(type) {
+	case float64:
+		id := int(rawID)
+		if id < 1000 {
+			return 0, fmt.Errorf("id is less than 1000: %d", id)
+		}
+		return id, nil
+	case string:
+		id, err := strconv.Atoi(rawID)
+		if err != nil {
+			return 0, fmt.Errorf("failed to convert id from string to int: %w", err)
+		}
+		if id < 1000 {
+			return 0, fmt.Errorf("id is less than 1000: %d", id)
+		}
+		return id, nil
+	default:
+		return 0, fmt.Errorf("failed to convert id from any to int: %v", rawID)
+	}
 }

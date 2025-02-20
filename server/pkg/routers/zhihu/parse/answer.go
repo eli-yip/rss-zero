@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"go.uber.org/zap"
@@ -37,42 +36,13 @@ func (p *ParseService) ParseAnswerList(content []byte, index int, logger *zap.Lo
 			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal answer: %w, data: %s", err, string(rawMessage))
 		}
 
-		if f, ok := answer.RawID.(float64); ok {
-			answer.ID = int(f)
-			if answer.ID < 1000 {
-				logger.Warn("Answer id is float64, may cause some issue", zap.Int("new_answer_id", answer.ID), zap.Float64("old_answer_id", f))
-				return apiModels.Paging{}, nil, nil, errors.New("skip this sub")
-			}
-		} else if s, ok := answer.RawID.(string); ok {
-			answer.ID, err = strconv.Atoi(s)
-			if err != nil {
-				return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert answer id from string to int: %w, id: %s", err, s)
-			}
-			if answer.ID < 1000 {
-				logger.Warn("Answer id is string, may cause some issue", zap.Int("new_answer_id", answer.ID), zap.String("old_answer_id", s))
-				return apiModels.Paging{}, nil, nil, errors.New("skip this sub")
-			}
-		} else {
-			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert answer id from any to int, data: %s", string(rawMessage))
+		answer.ID, err = anyToID(answer.RawID)
+		if err != nil {
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert answer id from any to int: %w, data: %s", err, string(rawMessage))
 		}
-
-		if f, ok := answer.Question.RawID.(float64); ok {
-			answer.Question.ID = int(f)
-			if answer.Question.ID < 1000 {
-				logger.Warn("Question id is float64, may cause some issue", zap.Int("new_question_id", answer.Question.ID), zap.Float64("old_question_id", f))
-				return apiModels.Paging{}, nil, nil, errors.New("skip this sub")
-			}
-		} else if s, ok := answer.Question.RawID.(string); ok {
-			answer.Question.ID, err = strconv.Atoi(s)
-			if err != nil {
-				return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert question id from string to int: %w, id: %s", err, s)
-			}
-			if answer.Question.ID < 1000 {
-				logger.Warn("Question id is string, may cause some issue", zap.Int("new_question_id", answer.Question.ID), zap.String("old_question_id", s))
-				return apiModels.Paging{}, nil, nil, errors.New("skip this sub")
-			}
-		} else {
-			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert question id from any to int, data: %s", string(rawMessage))
+		answer.Question.ID, err = anyToID(answer.Question.RawID)
+		if err != nil {
+			return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to convert question id from any to int: %w, data: %s", err, string(rawMessage))
 		}
 
 		answersExcerpt = append(answersExcerpt, answer)
@@ -87,6 +57,15 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 		return emptyString, fmt.Errorf("failed to unmarshal answer: %w", err)
 	}
 	logger.Info("Unmarshal answer successfully")
+
+	answer.ID, err = anyToID(answer.RawID)
+	if err != nil {
+		return emptyString, fmt.Errorf("failed to convert answer id from any to int: %w", err)
+	}
+	answer.Question.ID, err = anyToID(answer.Question.RawID)
+	if err != nil {
+		return emptyString, fmt.Errorf("failed to convert question id from any to int: %w", err)
+	}
 
 	answerInDB, exist, err := checkAnswerExist(answer.ID, p.db)
 	if err != nil {
