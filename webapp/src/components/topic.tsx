@@ -8,6 +8,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@heroui/react";
+import moment from "moment";
 import { FaArchive, FaCopy, FaSave, FaZhihu } from "react-icons/fa";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -60,9 +61,9 @@ export function Topic({ topic }: TopicProps) {
             <Markdown remarkPlugins={[remarkGfm]}>{topic.body}</Markdown>
           </div>
         </CardBody>
-        <CardFooter className="flex flex-col justify-between gap-2 sm:flex-row">
-          <span>作者：{topic.author.nickname}</span>
-          <span>创建时间：{new Date(topic.created_at).toLocaleString()}</span>
+        <CardFooter className="flex flex-col justify-between gap-2 font-bold sm:flex-row">
+          <span>{topic.author.nickname}</span>
+          <span>{moment(topic.created_at).format("YYYY年MM月DD日 HH:mm")}</span>
         </CardFooter>
       </Card>
     </div>
