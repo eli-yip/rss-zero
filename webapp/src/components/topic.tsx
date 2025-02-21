@@ -63,7 +63,7 @@ export function Topic({ topic }: TopicProps) {
         </CardBody>
         <CardFooter className="flex flex-col justify-between gap-2 font-bold sm:flex-row">
           <span>{topic.author.nickname}</span>
-          <span>{moment(topic.created_at).format("YYYY年MM月DD日 HH:mm")}</span>
+          <span>{moment(topic.created_at).format("YYYY年M月D日 HH:mm")}</span>
         </CardFooter>
       </Card>
     </div>

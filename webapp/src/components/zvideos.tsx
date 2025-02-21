@@ -11,7 +11,7 @@ export function Zvideos({ zvideos }: ZvideosProps) {
   const parseDate = (date: string): string => {
     const beijingDate = moment.tz(date, "Asia/Shanghai");
 
-    return beijingDate.format("YYYY年MM月DD日");
+    return beijingDate.format("YYYY年M月D日");
   };
 
   return (
