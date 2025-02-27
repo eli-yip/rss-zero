@@ -65,6 +65,7 @@ dtag +tags:
 @ltag:
   git tag --list --sort -v:refname -n
 
+[working-directory: 'server']
 test:
   go test -v {{invocation_directory()}}
 
