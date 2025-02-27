@@ -11,7 +11,7 @@ require (
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.7.0
 	github.com/eli-yip/echo-pprof v1.0.1
-	github.com/go-co-op/gocron/v2 v2.15.0
+	github.com/go-co-op/gocron/v2 v2.16.0
 	github.com/go-telegram/bot v1.14.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/feeds v1.2.0
@@ -19,10 +19,10 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/minio/minio-go/v7 v7.0.87
 	github.com/pelletier/go-toml/v2 v2.2.3
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.7.1
 	github.com/rs/xid v1.6.0
 	github.com/samber/lo v1.49.1
-	github.com/sashabaranov/go-openai v1.37.0
+	github.com/sashabaranov/go-openai v1.38.0
 	github.com/stretchr/testify v1.10.0
 	github.com/yuin/goldmark v1.7.8
 	go.uber.org/zap v1.27.0
@@ -49,7 +49,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -62,8 +62,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa // indirect
+	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
