@@ -23,6 +23,8 @@ COPY --from=builder /app/server .
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories && \
   apk add --no-cache -U tzdata
 
+RUN sed -i 's#https://mirrors.tuna.tsinghua.edu.cn/alpine#https://dl-cdn.alpinelinux.org/alpine#g' /etc/apk/repositories
+
 ENV TZ=Asia/Shanghai
 
 EXPOSE 8080
