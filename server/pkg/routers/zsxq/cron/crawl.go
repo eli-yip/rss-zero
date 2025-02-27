@@ -27,25 +27,29 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 )
 
-func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCrawl string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+type ResumeJobInfo struct {
+	JobID, LastCrawled string
+}
+
+func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []string, exclude []string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronJobInfo := cron.CronJobInfo{}
 
-		var cronID string
-		if cronIDInDB == "" {
-			cronID = xid.New().String()
+		var cronJobID string
+		if resumeJobInfo == nil {
+			cronJobID = xid.New().String()
 		} else {
-			cronID = cronIDInDB
+			cronJobID = resumeJobInfo.JobID
 		}
 
 		// Init services
-		logger := log.DefaultLogger.With(zap.String("cron_id", xid.New().String()))
+		logger := log.DefaultLogger.With(zap.String("cron_job_id", cronJobID))
 
 		var err error
 		var errCount int = 0
 
 		cronDBService := cronDB.NewDBService(db)
-		jobIDInDB, err := cronDBService.CheckRunningJob(taskID)
+		runningJobID, err := cronDBService.CheckRunningJob(taskID)
 		if err != nil {
 			logger.Error("Failed to check job", zap.Error(err), zap.String("task_id", taskID))
 			cronJobInfo.Err = fmt.Errorf("failed to check job: %w", err)
@@ -55,17 +59,17 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 		logger.Info("Check job according to task type successfully", zap.String("task_type", taskID))
 
 		// If there is another job running and this job is a new job(rawCronID is empty), skip this job.
-		if jobIDInDB != "" && cronIDInDB == "" {
+		if runningJobID != "" && resumeJobInfo == nil {
 			logger.Info("There is another job running, skip this", zap.String("task_type", taskID))
-			cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", jobIDInDB)
+			cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", runningJobID)
 			cronJobInfoChan <- cronJobInfo
 			return
 		}
 
-		if jobIDInDB == "" && cronIDInDB == "" {
+		if runningJobID == "" && resumeJobInfo == nil {
 			logger.Info("New job, start to add it to db")
 			var job *cronDB.CronJob
-			if job, err = cronDBService.AddJob(cronID, taskID); err != nil {
+			if job, err = cronDBService.AddJob(cronJobID, taskID); err != nil {
 				logger.Error("Failed to add job", zap.Error(err), zap.String("task_id", taskID))
 				cronJobInfo.Err = fmt.Errorf("failed to add job: %w", err)
 				cronJobInfoChan <- cronJobInfo
@@ -78,22 +82,22 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 
 		defer func() {
 			if errCount > 0 || err != nil {
-				notify.NoticeWithLogger(notifier, "Failed to crawl zsxq content", cronID, logger)
-				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
+				notify.NoticeWithLogger(notifier, "Failed to crawl zsxq content", cronJobID, logger)
+				if err = cronDBService.UpdateStatus(cronJobID, cronDB.StatusError); err != nil {
 					logger.Error("Failed to update cron job status", zap.Error(err))
 				}
 				return
 			}
 			if err := recover(); err != nil {
 				logger.Error("CrawlZsxq() panic", zap.Any("err", err))
-				if err = cronDBService.UpdateStatus(cronID, cronDB.StatusError); err != nil {
+				if err = cronDBService.UpdateStatus(cronJobID, cronDB.StatusError); err != nil {
 					logger.Error("Failed to update cron job status", zap.Any("err", err))
 				}
 				return
 			}
 
 			logger.Info("There is no error during zsxq crawl, set status to finished")
-			if err = cronDBService.UpdateStatus(cronID, cronDB.StatusFinished); err != nil {
+			if err = cronDBService.UpdateStatus(cronJobID, cronDB.StatusFinished); err != nil {
 				logger.Error("Failed to update cron job status", zap.Error(err))
 			}
 		}()
@@ -123,19 +127,19 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 		logger.Info("Get group IDs from db successfully", zap.Int("count", len(groupIDs)))
 
 		var lastCrawlInt int
-		if lastCrawl == "" {
+		if resumeJobInfo == nil {
 			lastCrawlInt = 0
 		} else {
-			lastCrawlInt, err = strconv.Atoi(lastCrawl)
+			lastCrawlInt, err = strconv.Atoi(resumeJobInfo.LastCrawled)
 			if err != nil {
-				logger.Error("Failed to convert lastCrawl to group id", zap.Error(err), zap.String("last_crawl", lastCrawl))
+				logger.Error("Failed to convert lastCrawl to group id", zap.Error(err), zap.String("last_crawl", resumeJobInfo.LastCrawled))
 				return
 			}
 		}
 
-		if lastCrawl != "" {
+		if resumeJobInfo.LastCrawled != "" {
 			if !slices.Contains(groupIDs, lastCrawlInt) {
-				logger.Error("Last crawl group id not in group ids", zap.String("last_crawl", lastCrawl))
+				logger.Error("Last crawl group id not in group ids", zap.String("last_crawl", resumeJobInfo.LastCrawled))
 				lastCrawlInt = 0
 			}
 		}
@@ -172,7 +176,7 @@ func Crawl(cronIDInDB, taskID string, include []string, exclude []string, lastCr
 				continue
 			}
 
-			if err = cronDBService.RecordDetail(cronID, strconv.Itoa(groupID)); err != nil {
+			if err = cronDBService.RecordDetail(cronJobID, strconv.Itoa(groupID)); err != nil {
 				logger.Error("Failed to record job detail", zap.Error(err), zap.Int("group_id", groupID))
 				errCount++
 				return

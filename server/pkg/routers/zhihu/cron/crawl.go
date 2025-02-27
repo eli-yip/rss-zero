@@ -43,9 +43,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 			cronJobID = resumeJobInfo.JobID
 		}
 
-		// TODO: use cron_job_id as logger's field
-		// wait for other crawl functions to be refactored
-		logger := log.DefaultLogger.With(zap.String("cron_id", cronJobID))
+		logger := log.DefaultLogger.With(zap.String("cron_job_id", cronJobID))
 
 		var err error
 		var errCount int = 0

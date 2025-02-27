@@ -23,17 +23,17 @@ import (
 
 func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
-		cronID := xid.New().String()
-		logger := log.DefaultLogger.With(zap.String("cron_id", cronID))
+		cronJobID := xid.New().String()
+		logger := log.DefaultLogger.With(zap.String("cron_job_id", cronJobID))
 
-		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: cronID}}
+		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: cronJobID}}
 
 		var err error
 		var errCount int = 0
 
 		defer func() {
 			if errCount > 0 {
-				notify.NoticeWithLogger(notifier, "Failed to crawl github content", cronID, logger)
+				notify.NoticeWithLogger(notifier, "Failed to crawl github content", cronJobID, logger)
 			}
 			if err := recover(); err != nil {
 				logger.Error("github release crawl function panic", zap.Any("err", err))

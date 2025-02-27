@@ -105,7 +105,7 @@ func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookie
 
 		switch definition.Type {
 		case cronDB.TypeZsxq:
-			crawlFunc := cron.GenerateRealCrawlFunc(zsxqCron.Crawl(job.ID, definition.ID, definition.Include, definition.Exclude, job.Detail, redisService, cookieService, db, notifier))
+			crawlFunc := cron.GenerateRealCrawlFunc(zsxqCron.BuildCrawlFunc(&zsxqCron.ResumeJobInfo{JobID: job.ID, LastCrawled: job.Detail}, definition.ID, definition.Include, definition.Exclude, redisService, cookieService, db, notifier))
 			go crawlFunc()
 			logger.Info("Start zsxq running job", zap.String("job_id", job.ID))
 		case cronDB.TypeZhihu:
@@ -142,7 +142,7 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 
 		switch def.Type {
 		case cronDB.TypeZsxq:
-			crawlFunc = zsxqCron.Crawl("", def.ID, def.Include, def.Exclude, "", redisService, cookieService, db, notifier)
+			crawlFunc = zsxqCron.BuildCrawlFunc(nil, def.ID, def.Include, def.Exclude, redisService, cookieService, db, notifier)
 			if jobID, err = cronService.AddCrawlJob("zsxq_crawl", def.CronExpr, crawlFunc); err != nil {
 				return nil, fmt.Errorf("failed to add zsxq cron job: %w", err)
 			}

@@ -69,7 +69,7 @@ func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, excl
 	var crawlFunc CrawlFunc
 	switch taskType {
 	case cronDB.TypeZsxq:
-		crawlFunc = zsxqCron.Crawl("", taskID, include, exclude, "", h.redisService, h.cookie, h.db, h.notifier)
+		crawlFunc = zsxqCron.BuildCrawlFunc(nil, taskID, include, exclude, h.redisService, h.cookie, h.db, h.notifier)
 		if jobID, err = h.cronService.AddCrawlJob("zsxq_crawl", cronExpr, crawlFunc); err != nil {
 			return "", fmt.Errorf("failed to add crawl job: %w", err)
 		}
