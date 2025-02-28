@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/controller/common"
 )
 
 // FeedResp represents the response structure for the feed data.
@@ -62,37 +62,34 @@ func (h *Controller) Feed(c echo.Context) error {
 	freshRSSAnswerFeed, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, internalAnswerFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss answer feed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 	}
 	freshRSSArticleFeed, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, internalArticleFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss article feed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 	}
 	freshRSSPinFeed, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, internalPinFeed)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss pin feed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{
-		Message: "success",
-		Data: FeedResp{
-			External: ExternalFeed{
-				AnswerFeed:  fmt.Sprintf(answerFeedLayout, config.C.Settings.ServerURL, authorID),
-				ArticleFeed: fmt.Sprintf(articleFeedLayout, config.C.Settings.ServerURL, authorID),
-				PinFeed:     fmt.Sprintf(pinFeedLayout, config.C.Settings.ServerURL, authorID),
-			},
-			Internal: InternalFeed{
-				AnswerFeed:  internalAnswerFeed,
-				ArticleFeed: internalArticleFeed,
-				PinFeed:     internalPinFeed,
-			},
-			FreshRSS: FreshRSSFeed{
-				AnswerFeed:  freshRSSAnswerFeed,
-				ArticleFeed: freshRSSArticleFeed,
-				PinFeed:     freshRSSPinFeed,
-			},
+	return c.JSON(http.StatusOK, common.WrapRespWithData("success", FeedResp{
+		External: ExternalFeed{
+			AnswerFeed:  fmt.Sprintf(answerFeedLayout, config.C.Settings.ServerURL, authorID),
+			ArticleFeed: fmt.Sprintf(articleFeedLayout, config.C.Settings.ServerURL, authorID),
+			PinFeed:     fmt.Sprintf(pinFeedLayout, config.C.Settings.ServerURL, authorID),
 		},
-	})
+		Internal: InternalFeed{
+			AnswerFeed:  internalAnswerFeed,
+			ArticleFeed: internalArticleFeed,
+			PinFeed:     internalPinFeed,
+		},
+		FreshRSS: FreshRSSFeed{
+			AnswerFeed:  freshRSSAnswerFeed,
+			ArticleFeed: freshRSSArticleFeed,
+			PinFeed:     freshRSSPinFeed,
+		},
+	}))
 }

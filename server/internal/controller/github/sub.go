@@ -23,7 +23,7 @@ func (h *Controller) GetSubs(c echo.Context) (err error) {
 	subs, err := h.db.GetSubs()
 	if err != nil {
 		logger.Error("Failed to get github sub list", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to get github sub list"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to get github sub list"))
 	}
 	logger.Info("Get zhihu sub list successfully", zap.Int("count", len(subs)))
 
@@ -48,7 +48,7 @@ func (h *Controller) GetSubs(c echo.Context) (err error) {
 	filteredSubs, err := filterSubs(subs, filterConfig)
 	if err != nil {
 		logger.Error("Failed to filter subs", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to filter subs"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to filter subs"))
 	}
 	logger.Info("Filter subs successfully", zap.Int("count", len(filteredSubs)))
 
@@ -72,7 +72,7 @@ func (h *Controller) GetSubs(c echo.Context) (err error) {
 		repo, err := h.db.GetRepoByID(sub.RepoID)
 		if err != nil {
 			logger.Error("Failed to get repo", zap.String("repo_id", sub.RepoID), zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to get repo info"})
+			return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to get repo info"))
 		}
 
 		resp = append(resp, SingleSubInfo{
@@ -132,9 +132,9 @@ func (h *Controller) ActivateSub(c echo.Context) (err error) {
 
 	if err = h.db.ActivateSub(id); err != nil {
 		logger.Error("Failed to activate github sub", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to activate github sub"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to activate github sub"))
 	}
-	return c.JSON(http.StatusOK, common.ApiResp{Message: "Success"})
+	return c.JSON(http.StatusOK, common.WrapResp("Success"))
 }
 
 func (h *Controller) DeleteSub(c echo.Context) (err error) {
@@ -145,7 +145,7 @@ func (h *Controller) DeleteSub(c echo.Context) (err error) {
 
 	if err = h.db.DeleteSub(id); err != nil {
 		logger.Error("Failed to delete github sub", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to delete github sub"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to delete github sub"))
 	}
-	return c.JSON(http.StatusOK, common.ApiResp{Message: "Success"})
+	return c.JSON(http.StatusOK, common.WrapResp("Success"))
 }

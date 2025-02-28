@@ -30,7 +30,7 @@ func (h *Controller) Feed(c echo.Context) (err error) {
 	userRepo := strings.Split(c.Param("user_repo"), "/")
 	if len(userRepo) != 2 {
 		logger.Error("Error getting user and repo", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	user, repo := userRepo[0], userRepo[1]
 
@@ -39,24 +39,24 @@ func (h *Controller) Feed(c echo.Context) (err error) {
 	externalFeedUrl, err := url.Parse(fmt.Sprintf(feedLayout, config.C.Settings.ServerURL, user, repo))
 	if err != nil {
 		logger.Error("Failed to parse external feed url", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 	}
 
 	internalFeedUrl, err := url.Parse(fmt.Sprintf(feedLayout, config.C.Settings.InternalServerURL, user, repo))
 	if err != nil {
 		logger.Error("Failed to parse internal feed url", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 	}
 
 	freshRSSFeed, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, internalFeedUrl.String())
 	if err != nil {
 		logger.Error("Failed to generate github fresh rss feed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 	}
 	freshRSSFeedUrl, err := url.Parse(freshRSSFeed)
 	if err != nil {
 		logger.Error("Failed to parse fresh rss feed url", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 	}
 
 	externalFeedPreUrl := *externalFeedUrl
@@ -68,7 +68,7 @@ func (h *Controller) Feed(c echo.Context) (err error) {
 	freshRSSFeedPre, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, internalFeedPreUrl.String())
 	if err != nil {
 		logger.Error("Failed to generate github fresh rss feed with pre", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, &Resp{

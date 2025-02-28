@@ -15,7 +15,7 @@ func (h *Controller) GetSubs(c echo.Context) (err error) {
 	subs, err := h.db.GetPapersIncludeDeleted()
 	if err != nil {
 		logger.Error("Failed to get xiaobot sub list", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to get xiaobot sub list"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to get xiaobot sub list"))
 	}
 	logger.Info("Get xiaobot sub list successfully", zap.Int("count", len(subs)))
 
@@ -49,11 +49,11 @@ func (h *Controller) ActivateSub(c echo.Context) (err error) {
 	err = h.db.ActivatePaper(subID)
 	if err != nil {
 		logger.Error("Failed to activate xiaobot sub", zap.String("sub_id", subID), zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to activate xiaobot sub"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to activate xiaobot sub"))
 	}
 	logger.Info("Activate xiaobot sub successfully", zap.String("sub_id", subID))
 
-	return c.JSON(http.StatusOK, common.ApiResp{Message: "Activate xiaobot sub successfully"})
+	return c.JSON(http.StatusOK, common.WrapResp("Activate xiaobot sub successfully"))
 }
 
 func (h *Controller) DeleteSub(c echo.Context) (err error) {
@@ -64,7 +64,7 @@ func (h *Controller) DeleteSub(c echo.Context) (err error) {
 
 	if err = h.db.DeletePaper(subID); err != nil {
 		logger.Error("Failed to delete xiaobot sub", zap.String("sub_id", subID), zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to delete xiaobot sub"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to delete xiaobot sub"))
 	}
-	return c.JSON(http.StatusOK, common.ApiResp{Message: "Delete xiaobot sub successfully"})
+	return c.JSON(http.StatusOK, common.WrapResp("Delete xiaobot sub successfully"))
 }

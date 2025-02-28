@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/controller/common"
 	zhihuHandler "github.com/eli-yip/rss-zero/internal/controller/zhihu"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -55,10 +56,7 @@ func (m *model) generateZhihuFeed(authorID string) (string, error) {
 	}
 
 	// Define response structure using the same types from feed.go
-	var result struct {
-		Message string                `json:"message"`
-		Data    zhihuHandler.FeedResp `json:"data"`
-	}
+	var result common.ApiResp[zhihuHandler.FeedResp]
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return "", fmt.Errorf("failed to decode response: %w", err)

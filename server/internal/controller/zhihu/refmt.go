@@ -29,7 +29,7 @@ func (h *Controller) Reformat(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		err = errors.Join(err, errors.New("read reformat request error"))
 		logger.Error("Error reformatting zhihu", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	logger.Info("Retieved zhihu reformat request", zap.String("author_id", req.AuthorID))
 
@@ -38,5 +38,5 @@ func (h *Controller) Reformat(c echo.Context) error {
 	refmtService := refmt.NewRefmtService(logger, h.db, htmlToMarkdown, imageParser, h.notifier, md.NewMarkdownFormatter())
 	go refmtService.ReFmt(req.AuthorID)
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "start to reformat zhihu content"})
+	return c.JSON(http.StatusOK, common.WrapResp("start to reformat zhihu content"))
 }

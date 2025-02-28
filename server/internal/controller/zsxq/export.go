@@ -43,7 +43,7 @@ func (h *Controoler) Export(c echo.Context) (err error) {
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(err, errors.New("invalid request"))
 		logger.Error("Error exporting zsxq", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	logger.Info("Retrieved zsxq export", zap.Int("group_id", req.GroupID))
 
@@ -51,7 +51,7 @@ func (h *Controoler) Export(c echo.Context) (err error) {
 	if err != nil {
 		err = errors.Join(err, errors.New("parse option error"))
 		logger.Error("Error exporting zsxq", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid export option"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid export option"))
 	}
 	logger.Info("Parsed zsxq export option", zap.Any("options", options))
 
@@ -158,13 +158,10 @@ func (h *Controoler) Export(c echo.Context) (err error) {
 		}
 	}()
 
-	return c.JSON(http.StatusOK, &common.ApiResp{
-		Message: "start to export zsxq content, you'll be notified when it's done",
-		Data: ZsxqExportResp{
-			FileName: fileName,
-			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
-		},
-	})
+	return c.JSON(http.StatusOK, common.WrapRespWithData("start to export zsxq content, you'll be notified when it's done", ZsxqExportResp{
+		FileName: fileName,
+		URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
+	}))
 }
 
 var errGroupIDEmpty = errors.New("group id is empty")

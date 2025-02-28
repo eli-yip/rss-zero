@@ -24,7 +24,7 @@ func (h *Controoler) Reformat(c echo.Context) (err error) {
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(err, errors.New("invalid request"))
 		logger.Error("Error reformat zsxq", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	logger.Info("Retrieved zsxq reformat group", zap.Int("group_id", req.GroupID))
 
@@ -35,7 +35,5 @@ func (h *Controoler) Reformat(c echo.Context) (err error) {
 	go refmtService.Reformat(req.GroupID)
 	logger.Info("Start to reformat zsxq")
 
-	return c.JSON(http.StatusOK, &common.ApiResp{
-		Message: "start to reformat zsxq content, you'll be notified when it's done",
-	})
+	return c.JSON(http.StatusOK, common.WrapResp("start to reformat zsxq content, you'll be notified when it's done"))
 }

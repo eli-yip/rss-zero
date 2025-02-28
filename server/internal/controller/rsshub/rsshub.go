@@ -28,23 +28,23 @@ func GenerateRSSHubFeed(c echo.Context) (err error) {
 	var req Req
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Error generating RSSHub feed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	logger.Info("Retrieved RSSHub feed request", zap.Any("req", req))
 
 	feedURL, err := generateRSSHubFeedURL(config.C.Utils.RsshubURL, req.FeedType, req.Username)
 	if err != nil {
 		logger.Error("Error generating RSSHub feed URL", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "internal server error"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("internal server error"))
 	}
 
 	freshRSSURL, err := common.GenerateFreshRSSFeed(config.C.Settings.FreshRssURL, feedURL)
 	if err != nil {
 		logger.Error("Error generating FreshRSS feed URL", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "internal server error"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("internal server error"))
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: Resp{FeedURL: feedURL, FreshRSS: freshRSSURL}})
+	return c.JSON(http.StatusOK, common.WrapRespWithData("success", Resp{FeedURL: feedURL, FreshRSS: freshRSSURL}))
 }
 
 // generateRSSHubFeedURL generates the RSSHub feed URL for the given feed type and username.

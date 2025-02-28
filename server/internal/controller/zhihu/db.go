@@ -23,12 +23,12 @@ func (h *Controller) Add(c echo.Context) (err error) {
 	var req AddRequest
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Failed to bind zhihu add request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 
 	if req.Slug == "" || req.URL == "" {
 		logger.Error("Invalid request", zap.Any("request", req))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "should provide slug and url"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("should provide slug and url"))
 	}
 
 	es := zhihuDB.EncryptionService{
@@ -43,14 +43,14 @@ func (h *Controller) Add(c echo.Context) (err error) {
 		if errors.Is(err, zhihuDB.ErrSlugExists) {
 			existService, err := h.db.GetServiceBySlug(req.Slug)
 			if err != nil || existService == nil {
-				return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to get service"})
+				return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to get service"))
 			}
-			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "slug exists", Data: struct{ Service zhihuDB.EncryptionService }{*existService}})
+			return c.JSON(http.StatusBadRequest, common.WrapRespWithData("slug exists", struct{ Service zhihuDB.EncryptionService }{*existService}))
 		}
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to save service"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to save service"))
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: struct{ Service zhihuDB.EncryptionService }{es}})
+	return c.JSON(http.StatusOK, common.WrapRespWithData("success", struct{ Service zhihuDB.EncryptionService }{es}))
 }
 
 type UpdateRequest struct {
@@ -65,18 +65,18 @@ func (h *Controller) Update(c echo.Context) (err error) {
 	var req UpdateRequest
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Failed to bind zhihu update request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 
 	if req.ID == "" {
 		logger.Error("Invalid request: missing ID", zap.Any("request", req))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "ID is required"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("ID is required"))
 	}
 
 	service, err := h.db.GetService(req.ID)
 	if err != nil {
 		logger.Error("Service not found", zap.Error(err))
-		return c.JSON(http.StatusNotFound, &common.ApiResp{Message: "service not found"})
+		return c.JSON(http.StatusNotFound, common.WrapResp("service not found"))
 	}
 
 	if req.Slug != nil {
@@ -91,14 +91,14 @@ func (h *Controller) Update(c echo.Context) (err error) {
 		if errors.Is(err, zhihuDB.ErrSlugExists) {
 			existService, err := h.db.GetServiceBySlug(*req.Slug)
 			if err != nil || existService == nil {
-				return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to get service"})
+				return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to get service"))
 			}
-			return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "slug exists", Data: struct{ Service zhihuDB.EncryptionService }{*existService}})
+			return c.JSON(http.StatusBadRequest, common.WrapRespWithData("slug exists", struct{ Service zhihuDB.EncryptionService }{*existService}))
 		}
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to update service"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to update service"))
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})
+	return c.JSON(http.StatusOK, common.WrapRespWithData("success", common.EmptyData{}))
 }
 
 func (h *Controller) Delete(c echo.Context) (err error) {
@@ -107,10 +107,10 @@ func (h *Controller) Delete(c echo.Context) (err error) {
 	id := c.Param("id")
 	if err = h.db.DeleteService(id); err != nil {
 		logger.Error("Failed to delete zhihu encryption service", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to delete service"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to delete service"))
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})
+	return c.JSON(http.StatusOK, common.WrapRespWithData("success", common.EmptyData{}))
 }
 
 func (h *Controller) List(c echo.Context) (err error) {
@@ -119,10 +119,10 @@ func (h *Controller) List(c echo.Context) (err error) {
 	services, err := h.db.GetServices()
 	if err != nil {
 		logger.Error("Failed to list zhihu encryption services", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to list services"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to list services"))
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success", Data: services})
+	return c.JSON(http.StatusOK, common.WrapRespWithData("success", services))
 }
 
 func (h *Controller) Activate(c echo.Context) (err error) {
@@ -131,8 +131,8 @@ func (h *Controller) Activate(c echo.Context) (err error) {
 	ID := c.Param("id")
 	if err = h.db.MarkAvailable(ID); err != nil {
 		logger.Error("Failed to activate zhihu encryption service", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to activate service"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to activate service"))
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "success"})
+	return c.JSON(http.StatusOK, common.WrapResp("success"))
 }

@@ -48,7 +48,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(err, errors.New("read export request error"))
 		logger.Error("Error exporting zhihu", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	logger.Info("Retrieved zhihu export request", zap.Any("req", req))
 
@@ -56,7 +56,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	if err != nil {
 		err = errors.Join(err, errors.New("parse zhihu export option error"))
 		logger.Error("Error parse zhihu export option", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid export option"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid export option"))
 	}
 	logger.Info("Parse export option success", zap.Any("options", options))
 
@@ -66,7 +66,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	var filename string
 	if filename, err = buildFilename(exportService, req.Single, &options); err != nil {
 		logger.Error("failed to build filename", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to build filename"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to build filename"))
 	}
 
 	objectKey := fmt.Sprintf("export/zhihu/%s", filename)
@@ -170,13 +170,12 @@ func (h *Controller) Export(c echo.Context) (err error) {
 		}
 	}()
 
-	return c.JSON(http.StatusOK, &common.ApiResp{
-		Message: "start to export zhihu content, you'll be notified when it's done",
-		Data: &ZhihuExportResp{
+	return c.JSON(http.StatusOK, common.WrapRespWithData(
+		"start to export zhihu content, you'll be notified when it's done",
+		ZhihuExportResp{
 			FileName: filename,
 			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
-		},
-	})
+		}))
 }
 
 // parseOption parses the ZhihuExportReq and returns the corresponding zhihuExport.Option.

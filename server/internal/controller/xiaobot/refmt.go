@@ -24,14 +24,14 @@ func (h *Controller) Reformat(c echo.Context) error {
 	var req XiaobotReformatReq
 	if err := c.Bind(&req); err != nil {
 		logger.Error("Error reformatting xiaobot", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	logger.Info("Retieved xiaobot reformat request", zap.String("paper_id", req.PaperID))
 
 	parser, err := parse.NewParseService(parse.WithLogger(logger), parse.WithDB(h.db))
 	if err != nil {
 		logger.Error("Failed to init xiaobot parse service", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "failed to init xiaobot parse service"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to init xiaobot parse service"))
 	}
 
 	htmlConverter := renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
@@ -40,5 +40,5 @@ func (h *Controller) Reformat(c echo.Context) error {
 
 	go reformatService.Reformat(req.PaperID)
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Message: "start to reformat xiaobot content"})
+	return c.JSON(http.StatusOK, common.WrapResp("start to reformat xiaobot content"))
 }

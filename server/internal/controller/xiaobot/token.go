@@ -28,20 +28,20 @@ func (h *Controller) UpdateToken(c echo.Context) (err error) {
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(errors.New("invalid request"), err)
 		logger.Error("Error updating xiaobot token", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	logger.Info("Retrieved xiaobot token", zap.String("token", req.Token))
 
 	r := request.NewRequestService(h.cookie, req.Token, logger)
 	if _, err = r.Limit(config.C.TestURL.Xiaobot); err != nil {
 		logger.Error("Failed to validate xiaobot token", zap.String("token", req.Token), zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: "invalid token"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("invalid token"))
 	}
 	logger.Info("Validated xiaobot token", zap.String("token", req.Token))
 
 	if err = h.cookie.Set(cookie.CookieTypeXiaobotAccessToken, req.Token, cookie.DefaultTTL); err != nil {
 		logger.Error("Error updating xiaobot token", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 	}
 	logger.Info("Updated xiaobot token", zap.String("token", req.Token))
 

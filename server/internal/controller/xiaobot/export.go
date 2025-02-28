@@ -14,10 +14,10 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
-	utils "github.com/eli-yip/rss-zero/internal/utils"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
+	utils "github.com/eli-yip/rss-zero/internal/utils"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 )
@@ -39,7 +39,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	var req XiaobotExportReq
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Error exporting xiaobot", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	logger.Info("Retrieved xiaobot export request", zap.Any("req", req))
 
@@ -47,7 +47,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	if err != nil {
 		err = errors.Join(err, errors.New("parse xiaobot export option error"))
 		logger.Error("Error parse xiaobot export option", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid export option"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid export option"))
 	}
 	logger.Info("Parse export option success", zap.Any("options", options))
 
@@ -152,13 +152,10 @@ func (h *Controller) Export(c echo.Context) (err error) {
 		}
 	}()
 
-	return c.JSON(http.StatusOK, &common.ApiResp{
-		Message: "start to export xiaobot content, you'll be notified when it's done",
-		Data: &XiaobotExportResp{
-			FileName: fileName,
-			URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
-		},
-	})
+	return c.JSON(http.StatusOK, common.WrapRespWithData("start to export xiaobot content, you'll be notified when it's done", XiaobotExportResp{
+		FileName: fileName,
+		URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
+	}))
 }
 
 func (h *Controller) parseOption(req XiaobotExportReq) (opts export.Option, err error) {

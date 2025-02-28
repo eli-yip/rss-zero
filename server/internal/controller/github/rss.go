@@ -24,7 +24,7 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 	userRepo := strings.Split(feed, "/")
 	if len(userRepo) != 2 {
 		logger.Error("Error getting user and repo, length not equal to 2", zap.String("feed", feed))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	user, repo := userRepo[0], userRepo[1]
 

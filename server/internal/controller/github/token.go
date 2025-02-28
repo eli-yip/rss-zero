@@ -29,20 +29,20 @@ func (h *Controller) UpdateToken(c echo.Context) (err error) {
 	var req Req
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Error updating token", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	logger.Info("Get token successfully", zap.String("token", req.Token))
 
 	// 2024-01-01
 	if req.ExpireAt == "" {
 		logger.Error("Error updating token", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 
 	t, err := time.Parse("2006-01-02", req.ExpireAt)
 	if err != nil {
 		logger.Error("Error updating token", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, config.C.BJT).Add(-24 * time.Hour)
 
@@ -50,7 +50,7 @@ func (h *Controller) UpdateToken(c echo.Context) (err error) {
 
 	if err = h.cookie.Set(cookie.CookieTypeGitHubAccessToken, req.Token, ttl); err != nil {
 		logger.Error("Error updating token", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, &common.ApiResp{Message: err.Error()})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, &Resp{

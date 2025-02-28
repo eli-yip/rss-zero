@@ -45,7 +45,7 @@ func (h *Controoler) UpdateCookie(c echo.Context) (err error) {
 	var req ZsxqSetCookieReq
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Failed to bind request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid request"})
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
 	}
 	logger.Info("Retrieved update zsxq cookies request successfully")
 
@@ -58,14 +58,14 @@ func (h *Controoler) UpdateCookie(c echo.Context) (err error) {
 			expireAt, err := cookie.ParseArcExpireAt(req.AccessToken.ExpireAt)
 			if err != nil {
 				logger.Error("Failed to parse expire_at", zap.Error(err))
-				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
+				return c.JSON(http.StatusBadRequest, common.WrapResp("invalid expire_at"))
 			}
 
 			ttl = time.Until(expireAt.Add(-1 * time.Hour))
 
 			if ttl < 0 {
 				logger.Error("Invalid expire_at", zap.String("expire_at", req.AccessToken.ExpireAt))
-				return c.JSON(http.StatusBadRequest, &common.ApiResp{Message: "invalid expire_at"})
+				return c.JSON(http.StatusBadRequest, common.WrapResp("invalid expire_at"))
 			}
 
 			respData.AccessToken.ExpireAt = expireAt.Format(time.RFC3339)
@@ -116,5 +116,5 @@ func (h *Controoler) UpdateCookie(c echo.Context) (err error) {
 		respData.AccessToken.Value = req.AccessToken.Value
 	}
 
-	return c.JSON(http.StatusOK, &common.ApiResp{Data: respData})
+	return c.JSON(http.StatusOK, common.WrapRespWithData("Update Zsxq Cookies successfully", respData))
 }

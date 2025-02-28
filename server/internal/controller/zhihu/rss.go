@@ -38,16 +38,16 @@ func (h *Controller) AnswerRSS(c echo.Context) (err error) {
 	if err = h.checkSub(common.TypeZhihuAnswer, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
 			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
-			return c.JSON(http.StatusBadRequest, serverCommon.ApiResp{Message: "Author does not exist in zhihu website"})
+			return c.JSON(http.StatusBadRequest, serverCommon.WrapResp("Author does not exist in zhihu website"))
 		}
 		logger.Error("Failed to check sub", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to check sub"})
+		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to check sub"))
 	}
 
 	rss, err := h.getRSS(fmt.Sprintf(redis.ZhihuAnswerPath, authorID), logger)
 	if err != nil {
 		logger.Error("Failed to get zhihu rss", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to get zhihu rss"})
+		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to get zhihu rss"))
 	}
 	logger.Info("Get rss from successfully")
 
@@ -67,16 +67,16 @@ func (h *Controller) ArticleRSS(c echo.Context) (err error) {
 	if err = h.checkSub(common.TypeZhihuArticle, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
 			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
-			return c.JSON(http.StatusBadRequest, serverCommon.ApiResp{Message: "Author does not exist in zhihu website"})
+			return c.JSON(http.StatusBadRequest, serverCommon.WrapResp("Author does not exist in zhihu website"))
 		}
 		logger.Error("Failed to check sub", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to check sub"})
+		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to check sub"))
 	}
 
 	rss, err := h.getRSS(fmt.Sprintf(redis.ZhihuArticlePath, authorID), logger)
 	if err != nil {
 		logger.Error("Failed to get zhihu rss", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to get zhihu rss"})
+		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to get zhihu rss"))
 	}
 	logger.Info("Get rss from successfully")
 
@@ -96,16 +96,16 @@ func (h *Controller) PinRSS(c echo.Context) (err error) {
 	if err = h.checkSub(common.TypeZhihuPin, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
 			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
-			return c.JSON(http.StatusBadRequest, serverCommon.ApiResp{Message: "Author does not exist in zhihu website"})
+			return c.JSON(http.StatusBadRequest, serverCommon.WrapResp("Author does not exist in zhihu website"))
 		}
 		logger.Error("Failed to check sub", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to check sub"})
+		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to check sub"))
 	}
 
 	rss, err := h.getRSS(fmt.Sprintf(redis.ZhihuPinPath, authorID), logger)
 	if err != nil {
 		logger.Error("Failed to get zhihu rss", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, serverCommon.ApiResp{Message: "Failed to get zhihu rss"})
+		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to get zhihu rss"))
 	}
 	logger.Info("Get rss from successfully")
 

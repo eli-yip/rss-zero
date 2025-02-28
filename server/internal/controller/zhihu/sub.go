@@ -26,7 +26,7 @@ func (h *Controller) GetSubs(c echo.Context) error {
 	subs, err := h.db.GetSubsIncludeDeleted()
 	if err != nil {
 		logger.Error("Failed to get zhihu sub list", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to get zhihu sub list"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to get zhihu sub list"))
 	}
 	logger.Info("Get zhihu sub list successfully", zap.Int("count", len(subs)))
 
@@ -52,7 +52,7 @@ func (h *Controller) GetSubs(c echo.Context) error {
 	filteredSubs, err := filterSubs(subs, filterConfig)
 	if err != nil {
 		logger.Error("Failed to filter subs", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to filter subs"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to filter subs"))
 	}
 	logger.Info("Filter subs successfully", zap.Int("count", len(filteredSubs)))
 
@@ -85,7 +85,7 @@ func (h *Controller) GetSubs(c echo.Context) error {
 			nickname, err = h.db.GetAuthorName(sub.AuthorID)
 			if err != nil {
 				logger.Error("Failed to get author name", zap.String("author_id", sub.AuthorID), zap.Error(err))
-				return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to get author name"})
+				return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to get author name"))
 			}
 			nicknameMap[sub.AuthorID] = nickname
 		}
@@ -171,9 +171,9 @@ func (h *Controller) ActivateSub(c echo.Context) (err error) {
 
 	if err = h.db.ActivateSub(id); err != nil {
 		logger.Error("Failed to activate zhihu sub", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to activate zhihu sub"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to activate zhihu sub"))
 	}
-	return c.JSON(http.StatusOK, common.ApiResp{Message: "Success"})
+	return c.JSON(http.StatusOK, common.WrapRespWithData("Success", common.EmptyData{}))
 }
 
 func (h *Controller) DeleteSub(c echo.Context) (err error) {
@@ -184,7 +184,7 @@ func (h *Controller) DeleteSub(c echo.Context) (err error) {
 
 	if err = h.db.DeleteSub(id); err != nil {
 		logger.Error("Failed to delete zhihu sub", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.ApiResp{Message: "Failed to delete zhihu sub"})
+		return c.JSON(http.StatusInternalServerError, common.WrapResp("Failed to delete zhihu sub"))
 	}
-	return c.JSON(http.StatusOK, common.ApiResp{Message: "Success"})
+	return c.JSON(http.StatusOK, common.WrapRespWithData("Success", common.EmptyData{}))
 }
