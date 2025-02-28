@@ -6,6 +6,14 @@ lint: lint-backend lint-frontend
 update: update-backend update-frontend
 
 [working-directory: 'server']
+cli:
+  go run ./cmd/cli
+
+[working-directory: 'server']
+tidy:
+  go mod tidy
+
+[working-directory: 'server']
 lint-backend:
   golangci-lint run -v --timeout 5m
 
@@ -16,7 +24,7 @@ update-backend:
 
 [working-directory: 'server']
 backend:
-  go run . --config=config.toml
+  go run ./cmd/server --config=config.toml
 
 [working-directory: 'webapp']
 format:

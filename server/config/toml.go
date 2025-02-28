@@ -18,6 +18,8 @@ type TomlConfig struct {
 		ServerURL         string `toml:"server_url"`
 		InternalServerURL string `toml:"internal_server_url"`
 		FreshRssURL       string `toml:"fresh_rss_url"`
+		Username          string `toml:"username"`
+		Password          string `toml:"password"`
 		Debug             bool   `toml:"debug"`
 	} `toml:"settings"`
 	Minio    MinioConfig    `toml:"minio"`
