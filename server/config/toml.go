@@ -9,6 +9,46 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+const DefaultFetchCount = 20
+
+var C TomlConfig
+
+type TomlConfig struct {
+	Settings struct {
+		ServerURL         string `toml:"server_url"`
+		InternalServerURL string `toml:"internal_server_url"`
+		FreshRssURL       string `toml:"fresh_rss_url"`
+		Debug             bool   `toml:"debug"`
+	} `toml:"settings"`
+	Minio    MinioConfig    `toml:"minio"`
+	Openai   OpenAIConfig   `toml:"openai"`
+	Database DatabaseConfig `toml:"database"`
+	Redis    RedisConfig    `toml:"redis"`
+	Bark     struct {
+		URL string `toml:"url"`
+	} `toml:"bark"`
+	TestURL struct {
+		Zsxq    string `toml:"zsxq"`
+		Xiaobot string `toml:"xiaobot"`
+	} `toml:"test_url"`
+	Zlive struct {
+		ServerUrl string `toml:"server_url"`
+		Username  string `toml:"username"`
+		Password  string `toml:"password"`
+	} `toml:"zlive"`
+	Utils struct {
+		RsshubURL string `toml:"rsshub_url"`
+	} `toml:"utils"`
+
+	BJT *time.Location
+}
+
+type OpenAIConfig struct {
+	Model   string `toml:"model"`
+	APIKey  string `toml:"api_key"`
+	BaseURL string `toml:"base_url"`
+}
+
 type DatabaseConfig struct {
 	Host     string `toml:"host"`
 	Port     string `toml:"port"`
@@ -28,41 +68,6 @@ type MinioConfig struct {
 type RedisConfig struct {
 	Address  string `toml:"address"`
 	Password string `toml:"password"`
-}
-
-type TomlConfig struct {
-	Settings struct {
-		ServerURL         string `toml:"server_url"`
-		InternalServerURL string `toml:"internal_server_url"`
-		FreshRssURL       string `toml:"fresh_rss_url"`
-		Debug             bool   `toml:"debug"`
-	} `toml:"settings"`
-	Minio  MinioConfig `toml:"minio"`
-	Openai struct {
-		Model   string `toml:"model"`
-		APIKey  string `toml:"api_key"`
-		BaseURL string `toml:"base_url"`
-	} `toml:"openai"`
-	Database DatabaseConfig `toml:"database"`
-	Redis    RedisConfig    `toml:"redis"`
-	Bark     struct {
-		URL string `toml:"url"`
-	} `toml:"bark"`
-	TestURL struct {
-		Zsxq    string `toml:"zsxq"`
-		Zhihu   string `toml:"zhihu"`
-		Xiaobot string `toml:"xiaobot"`
-	} `toml:"test_url"`
-	Zlive struct {
-		ServerUrl string `toml:"server_url"`
-		Username  string `toml:"username"`
-		Password  string `toml:"password"`
-	} `toml:"zlive"`
-	Utils struct {
-		RsshubURL string `toml:"rsshub_url"`
-	} `toml:"utils"`
-
-	BJT *time.Location
 }
 
 func InitForTestToml() (err error) {

@@ -12,7 +12,6 @@ require (
 	github.com/deckarep/golang-set/v2 v2.7.0
 	github.com/eli-yip/echo-pprof v1.0.1
 	github.com/go-co-op/gocron/v2 v2.16.0
-	github.com/go-telegram/bot v1.14.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/feeds v1.2.0
 	github.com/labstack/echo/v4 v4.13.3
