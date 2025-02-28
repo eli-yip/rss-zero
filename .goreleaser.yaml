@@ -1,17 +1,16 @@
 version: 2
 
 builds:
-  - env:
+  - id: server
+    env:
       - CGO_ENABLED=0
       - GOPROXY=https://goproxy.cn,direct
     dir: ./server
+    main: ./cmd/server
     ldflags:
       - -w -s -X "github.com/eli-yip/rss-zero/internal/version.Version={{ .Tag }}"
     goos: [darwin, linux]
     goarch: [arm64, amd64]
-    goamd64:
-      - v1
-      - v3
     ignore:
       - goos: darwin
         goarch: amd64
@@ -32,7 +31,12 @@ dockers:
       - "webapp/dist"
 
 archives:
-  - formats: ["tar.gz"]
+  - id: server
+    formats: ["tar.gz"]
+    files:
+      - none*
+    builds:
+      - server
 
 release:
   draft: true
