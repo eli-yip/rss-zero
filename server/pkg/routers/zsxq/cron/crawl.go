@@ -127,33 +127,25 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 		logger.Info("Get group IDs from db successfully", zap.Int("count", len(groupIDs)))
 
 		var lastCrawlInt int
-		if resumeJobInfo == nil {
-			lastCrawlInt = 0
-		} else {
+		if resumeJobInfo != nil && resumeJobInfo.LastCrawled != "" {
+			logger.Info("Resume job info has last crawled group id", zap.String("id", resumeJobInfo.LastCrawled))
 			lastCrawlInt, err = strconv.Atoi(resumeJobInfo.LastCrawled)
 			if err != nil {
 				logger.Error("Failed to convert lastCrawl to group id", zap.Error(err), zap.String("last_crawl", resumeJobInfo.LastCrawled))
 				return
 			}
-		}
-
-		if resumeJobInfo.LastCrawled != "" {
 			if !slices.Contains(groupIDs, lastCrawlInt) {
 				logger.Error("Last crawl group id not in group ids", zap.String("last_crawl", resumeJobInfo.LastCrawled))
 				lastCrawlInt = 0
 			}
 		}
 
-		fmt.Printf("include: %+v\n", include)
-		fmt.Printf("exclude: %+v\n", exclude)
-		fmt.Printf("groupIDs: %+v\n", groupIDs)
 		filteredGroupIDs, err := FilterGroupIDs(include, exclude, groupIDs)
 		if err != nil {
 			logger.Error("Failed to filter group ids", zap.Error(err))
 			return
 		}
 		logger.Info("Filter group ids successfully", zap.Int("count", len(filteredGroupIDs)))
-		fmt.Printf("filteredGroupIDs: %+v\n", filteredGroupIDs)
 
 		groupIDs = CutGroups(filteredGroupIDs, lastCrawlInt)
 		logger.Info("Group need to crawl", zap.Int("count", len(groupIDs)))
