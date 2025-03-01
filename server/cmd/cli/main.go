@@ -53,6 +53,12 @@ type model struct {
 	width     int
 }
 
+const (
+	feedTypeZhihu  = "Zhihu Subscribe"
+	feedTypeRSSHub = "RSSHub Subscribe"
+	feedTypeGitHub = "GitHub"
+)
+
 type feedResultMsg struct {
 	result string
 	err    error
@@ -66,7 +72,7 @@ func initialModel() model {
 	return model{
 		state:     StateMainMenu,
 		mainMenu:  []string{"RSS Feed Generator"},
-		subMenu:   []string{"Zhihu Subscribe", "RSSHub Subscribe", "GitHub Release Subscribe"},
+		subMenu:   []string{feedTypeZhihu, feedTypeRSSHub, feedTypeGitHub},
 		input:     ti,
 		serverURL: config.C.Settings.ServerURL,
 	}

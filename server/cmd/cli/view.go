@@ -56,11 +56,11 @@ func (m model) renderSubMenu() string {
 func (m model) renderInput() string {
 	var prompt string
 	switch m.feedType {
-	case "Zhihu Subscribe":
+	case feedTypeZhihu:
 		prompt = "Please enter Zhihu user Url Token:"
-	case "RSSHub Subscribe":
+	case feedTypeRSSHub:
 		prompt = "Please enter username:"
-	case "GitHub Release Subscribe":
+	case feedTypeGitHub:
 		prompt = "Please enter repository address in user/repo format:"
 	}
 

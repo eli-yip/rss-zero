@@ -6,24 +6,25 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
+type (
+	Feed struct {
+		External string `json:"external"`
+		Internal string `json:"internal"`
+		FreshRSS string `json:"fresh_rss"`
+	}
+	Resp struct {
+		Normal Feed `json:"normal"`
+		Pre    Feed `json:"pre"`
+	}
+)
+
 func (h *Controller) Feed(c echo.Context) (err error) {
-	type (
-		Feed struct {
-			External string `json:"external"`
-			Internal string `json:"internal"`
-			FreshRSS string `json:"fresh_rss"`
-		}
-		Resp struct {
-			Normal Feed `json:"normal"`
-			Pre    Feed `json:"pre"`
-		}
-	)
 
 	logger := common.ExtractLogger(c)
 

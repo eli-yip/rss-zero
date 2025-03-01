@@ -7,6 +7,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
+	githubHandler "github.com/eli-yip/rss-zero/internal/controller/github"
 	zhihuHandler "github.com/eli-yip/rss-zero/internal/controller/zhihu"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -18,12 +19,10 @@ func (m *model) generateFeed() tea.Msg {
 	var err error
 
 	switch m.feedType {
-	case "Zhihu Subscribe":
+	case feedTypeZhihu:
 		result, err = m.generateZhihuFeed(input)
-		// case "RSSHub Subscribe":
-		// 	result, err = m.generateRSSHubFeed(input)
-		// case "GitHub Release Subscribe":
-		// 	result, err = m.generateGitHubFeed(input)
+	case feedTypeGitHub:
+		result, err = m.generateGitHubFeed(input)
 	}
 
 	return feedResultMsg{
@@ -73,71 +72,26 @@ Idea Subscription: %s`,
 	return resultText, nil
 }
 
-// func (m *model) generateRSSHubFeed(username string) (string, error) {
-// 	payload := map[string]string{
-// 		"feed_type": "weibo",
-// 		"username":  username,
-// 	}
-// 	jsonData, err := json.Marshal(payload)
-// 	if err != nil {
-// 		return "", err
-// 	}
+func (m *model) generateGitHubFeed(userRepo string) (string, error) {
+	resp, err := http.Get(fmt.Sprintf("%s/api/v1/feed/github/%s", m.serverURL, userRepo))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
 
-// 	resp, err := http.Post(fmt.Sprintf("%s/api/v1/feed/rsshub", m.serverURL),
-// 		"application/json", bytes.NewBuffer(jsonData))
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	defer resp.Body.Close()
+	var result githubHandler.Resp
 
-// 	var result struct {
-// 		Data struct {
-// 			FeedURL string `json:"feed_url"`
-// 		} `json:"data"`
-// 	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
+	}
 
-// 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-// 		return "", err
-// 	}
+	resultText := fmt.Sprintf(`Official Version Subscription:
+  FreshRSS: %s
 
-// 	return fmt.Sprintf("Subscription URL:\n%s", result.Data.FeedURL), nil
-// }
+Pre-release Version Subscription:
+  FreshRSS: %s`,
+		result.Normal.FreshRSS,
+		result.Pre.FreshRSS)
 
-// func (m *model) generateGitHubFeed(userRepo string) (string, error) {
-// 	resp, err := http.Get(fmt.Sprintf("%s/api/v1/feed/github/%s", m.serverURL, userRepo))
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	defer resp.Body.Close()
-
-// 	var result struct {
-// 		Normal struct {
-// 			External string `json:"external"`
-// 			Internal string `json:"internal"`
-// 			FreshRSS string `json:"fresh_rss"`
-// 		} `json:"normal"`
-// 		Pre struct {
-// 			External string `json:"external"`
-// 			Internal string `json:"internal"`
-// 			FreshRSS string `json:"fresh_rss"`
-// 		} `json:"pre"`
-// 	}
-
-// 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-// 		return "", err
-// 	}
-
-// 	resultText := fmt.Sprintf(`Official Version Subscription:
-//   External Access: %s
-//   Internal Access: %s
-//   FreshRSS: %s
-
-// Pre-release Version Subscription:
-//   External Access: %s
-//   Internal Access: %s
-//   FreshRSS: %s`,
-// 		result.Normal.External, result.Normal.Internal, result.Normal.FreshRSS,
-// 		result.Pre.External, result.Pre.Internal, result.Pre.FreshRSS)
-
-// 	return resultText, nil
-// }
+	return resultText, nil
+}
