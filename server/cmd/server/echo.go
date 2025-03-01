@@ -14,7 +14,7 @@ import (
 	endoflifeController "github.com/eli-yip/rss-zero/internal/controller/endoflife"
 	githubController "github.com/eli-yip/rss-zero/internal/controller/github"
 	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
-	mackedController "github.com/eli-yip/rss-zero/internal/controller/macked"
+	mackedHandler "github.com/eli-yip/rss-zero/internal/controller/macked"
 	migrateController "github.com/eli-yip/rss-zero/internal/controller/migrate"
 	parseHandler "github.com/eli-yip/rss-zero/internal/controller/parse"
 	rsshubController "github.com/eli-yip/rss-zero/internal/controller/rsshub"
@@ -83,11 +83,11 @@ func setupEcho(redisService redis.Redis,
 	archiveHandler := archiveController.NewController(db)
 	githubDBService := githubDB.NewDBService(db)
 	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)
-	mackedController := mackedController.NewHandler(redisService, macked.NewDBService(db), logger)
+	mHandler := mackedHandler.NewHandler(redisService, macked.NewDBService(db), logger)
 	parseHandler := parseHandler.NewHandler(db, cookieService, fileService, notifier)
 	migrateHandler := migrateController.NewController(logger, db)
 
-	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mackedController)
+	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mHandler)
 	// /api/v1
 	apiGroup := e.Group("/api/v1")
 	registerFeed(apiGroup, zhihuHandler, githubController)
@@ -101,6 +101,7 @@ func setupEcho(redisService redis.Redis,
 	registerSub(apiGroup, zhihuHandler, githubController, xiaobotHandler)
 	registerMigrate(apiGroup, migrateHandler)
 	registerParse(apiGroup, parseHandler)
+	registerMacked(apiGroup, mHandler)
 
 	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct {
@@ -254,7 +255,7 @@ func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.Controoler
 }
 
 // /rss
-func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controoler, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedController.Handler) {
+func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controoler, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedHandler.Handler) {
 	rssGroup := e.Group("/rss")
 	rssGroup.Use(
 		myMiddleware.SetRSSContentType(), // set content type to application/atom+xml
@@ -339,4 +340,10 @@ func registerParse(apiGroup *echo.Group, parseHandler *parseHandler.Handler) {
 	parseApi := apiGroup.Group("/parse")
 	parseZhihuAnswerApi := parseApi.POST("/zhihu/answer", parseHandler.ParseZhihuAnswer)
 	parseZhihuAnswerApi.Name = "Parse zhihu answer route"
+}
+
+func registerMacked(apiGroup *echo.Group, mackedHandler *mackedHandler.Handler) {
+	mackedApi := apiGroup.Group("/macked")
+	mackedAddAppInfoApi := mackedApi.POST("/appinfo", mackedHandler.AddAppInfo)
+	mackedAddAppInfoApi.Name = "Add app info route for macked"
 }
