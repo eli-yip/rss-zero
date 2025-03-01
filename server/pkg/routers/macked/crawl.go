@@ -49,6 +49,7 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 		return fmt.Errorf("failed to get subscribed app infos: %w", err)
 	}
 	subscribedAppNames := lo.Map(subscribedAppInfos, func(info AppInfo, _ int) string { return info.AppName })
+	appIDToAppName := lo.SliceToMap(subscribedAppInfos, func(info AppInfo) (string, string) { return info.ID, info.AppName })
 
 	var unreadPosts []ParsedPost
 	for _, p := range parsedPosts {
@@ -57,6 +58,14 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 		}
 		if isSubscribed(p.Title, subscribedAppNames) {
 			unreadPosts = append(unreadPosts, p)
+			if appID, ok := appIDToAppName[p.ID]; ok {
+				if err = db.UpdateAppInfo(appID, p.Modified); err != nil {
+					logger.Error("Failed to update app info", zap.Error(err))
+					return fmt.Errorf("failed to update app info: %w", err)
+				}
+			} else {
+				logger.Error("App info not found in appIDToAppName map", zap.String("app_id", p.ID))
+			}
 		}
 	}
 

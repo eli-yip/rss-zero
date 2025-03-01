@@ -14,6 +14,7 @@ type DB interface {
 
 	CreateAppInfo(appName string) (appInfo *AppInfo, err error)
 	IsAppInfoExists(appName string) (exists bool, err error)
+	UpdateAppInfo(id string, lastFound time.Time) (err error)
 	GetAppInfos() (infos []AppInfo, err error)
 	DeleteAppInfo(id string) (err error)
 }
@@ -47,9 +48,9 @@ func (d *DBService) GetLatestTime() (t time.Time, err error) {
 }
 
 type AppInfo struct {
-	ID string `gorm:"primaryKey"`
-
-	AppName string `gorm:"column:app_name"`
+	ID        string    `gorm:"primaryKey"`
+	AppName   string    `gorm:"column:app_name"`
+	LastFound time.Time `gorm:"column:last_found"`
 
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
@@ -69,6 +70,11 @@ func (d *DBService) CreateAppInfo(appName string) (appInfo *AppInfo, err error) 
 
 func (d *DBService) GetAppInfos() (infos []AppInfo, err error) {
 	err = d.Find(&infos).Error
+	return
+}
+
+func (d *DBService) UpdateAppInfo(id string, lastFound time.Time) (err error) {
+	err = d.Model(&AppInfo{}).Where("id = ?", id).Update("last_found", lastFound).Error
 	return
 }
 
