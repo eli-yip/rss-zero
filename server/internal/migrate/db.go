@@ -47,6 +47,7 @@ func MigrateDB(db *gorm.DB) (err error) {
 		&githubDB.Repo{},
 
 		&macked.TimeInfo{},
+		&macked.AppInfo{},
 
 		&cookie.Cookie{},
 	)
