@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/samber/lo"
 )
 
 var mutex *sync.Mutex
@@ -43,12 +44,20 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 		return fmt.Errorf("failed to parse posts: %w", err)
 	}
 
+	subscribedAppInfos, err := db.GetAppInfos()
+	if err != nil {
+		return fmt.Errorf("failed to get subscribed app infos: %w", err)
+	}
+	subscribedAppNames := lo.Map(subscribedAppInfos, func(info AppInfo, _ int) string { return info.AppName })
+
 	var unreadPosts []ParsedPost
 	for _, p := range parsedPosts {
 		if !p.Modified.After(latestPostTimeInDB) {
 			break
 		}
-		unreadPosts = append(unreadPosts, p)
+		if isSubscribed(p.Title, subscribedAppNames) {
+			unreadPosts = append(unreadPosts, p)
+		}
 	}
 
 	if err = renderAndSaveRSS(redisService, unreadPosts); err != nil {
@@ -60,31 +69,12 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 	}
 
 	slices.Reverse(unreadPosts) // Reverse unread posts because we want to notify in tg channel from old to latest
-	// var count int = 0
-	go func() {
-		for _, p := range unreadPosts {
-			// if count >= 10 {
-			// 	logger.Info("Reach telegram bot limit, sleep 30 seconds")
-			// 	time.Sleep(30 * time.Second)
-			// 	count = 0
-			// }
-
-			if err = db.SaveTime(p.Modified); err != nil {
-				logger.Error("Failed to save post time to db", zap.Error(err))
-				return
-			}
-
-			// 			text := fmt.Sprintf(`%s
-			// %s`, p.Title, p.Link)
-
-			// 			if err = bot.SendText(config.C.Telegram.MackedChatID, text); err != nil {
-			// 				logger.Error("Failed to send message to telegram", zap.Error(err))
-			// 				return
-			// 			}
-
-			// count++
+	for _, p := range unreadPosts {
+		if err = db.SaveTime(p.Modified); err != nil {
+			logger.Error("Failed to save post time to db", zap.Error(err))
+			return fmt.Errorf("failed to save post time to db: %w", err)
 		}
-	}()
+	}
 
 	return nil
 }
