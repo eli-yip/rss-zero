@@ -92,6 +92,10 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 }
 
 func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) (err error) {
+	if config.C.Settings.Debug {
+		return nil
+	}
+
 	runningJobs, err := cronDBService.FindRunningJob()
 	if err != nil {
 		return fmt.Errorf("failed to find running cron jobs: %w", err)
