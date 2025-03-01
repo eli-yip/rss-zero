@@ -68,12 +68,12 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 		return nil
 	}
 
-	slices.Reverse(unreadPosts) // Reverse unread posts because we want to notify in tg channel from old to latest
-	for _, p := range unreadPosts {
-		if err = db.SaveTime(p.Modified); err != nil {
-			logger.Error("Failed to save post time to db", zap.Error(err))
-			return fmt.Errorf("failed to save post time to db: %w", err)
-		}
+	slices.SortFunc(parsedPosts, func(a, b ParsedPost) int {
+		return b.Modified.Compare(a.Modified)
+	})
+	if err = db.SaveTime(parsedPosts[0].Modified); err != nil {
+		logger.Error("Failed to save post time to db", zap.Error(err))
+		return fmt.Errorf("failed to save post time to db: %w", err)
 	}
 
 	return nil
