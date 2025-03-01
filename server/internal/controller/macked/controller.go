@@ -1,4 +1,4 @@
-package controller
+package handler
 
 import (
 	"go.uber.org/zap"
@@ -8,16 +8,16 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 )
 
-type Controller struct {
+type Handler struct {
 	redis  redis.Redis
 	db     macked.DB
 	taskCh chan common.Task
 	logger *zap.Logger
 }
 
-func NewController(redis redis.Redis, db macked.DB,
-	logger *zap.Logger) *Controller {
-	h := &Controller{
+func NewHandler(redis redis.Redis, db macked.DB,
+	logger *zap.Logger) *Handler {
+	h := &Handler{
 		redis:  redis,
 		db:     db,
 		taskCh: make(chan common.Task, 100),

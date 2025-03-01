@@ -1,4 +1,4 @@
-package controller
+package handler
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/redis"
 )
 
-func (h *Controller) RSS(c echo.Context) (err error) {
+func (h *Handler) RSS(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	rss, err := h.getRSS(logger)
@@ -24,7 +24,7 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 	return c.String(http.StatusOK, rss)
 }
 
-func (h *Controller) getRSS(logger *zap.Logger) (output string, err error) {
+func (h *Handler) getRSS(logger *zap.Logger) (output string, err error) {
 	logger = logger.With(zap.String("rss_path", "macked"))
 	defer logger.Info("task chnnel closes")
 
@@ -43,7 +43,7 @@ func (h *Controller) getRSS(logger *zap.Logger) (output string, err error) {
 	}
 }
 
-func (h *Controller) processTask() {
+func (h *Handler) processTask() {
 	for task := range h.taskCh {
 		key := redis.RssMackedPath
 

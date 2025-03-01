@@ -83,7 +83,7 @@ func setupEcho(redisService redis.Redis,
 	archiveHandler := archiveController.NewController(db)
 	githubDBService := githubDB.NewDBService(db)
 	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)
-	mackedController := mackedController.NewController(redisService, macked.NewDBService(db), logger)
+	mackedController := mackedController.NewHandler(redisService, macked.NewDBService(db), logger)
 	parseHandler := parseHandler.NewHandler(db, cookieService, fileService, notifier)
 	migrateHandler := migrateController.NewController(logger, db)
 
@@ -254,7 +254,7 @@ func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.Controoler
 }
 
 // /rss
-func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controoler, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedController.Controller) {
+func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controoler, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedController.Handler) {
 	rssGroup := e.Group("/rss")
 	rssGroup.Use(
 		myMiddleware.SetRSSContentType(), // set content type to application/atom+xml
