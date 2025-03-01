@@ -22,6 +22,17 @@ func (h *Handler) AddAppInfo(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 	}
 
+	exists, err := h.db.IsAppInfoExists(req.AppName)
+	if err != nil {
+		logger.Error("failed to check if app info exists", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+	}
+
+	if exists {
+		logger.Info("app info already exists", zap.String("app_name", req.AppName))
+		return c.JSON(http.StatusOK, common.WrapResp("app info already exists"))
+	}
+
 	var appinfo *macked.AppInfo
 	if appinfo, err = h.db.CreateAppInfo(req.AppName); err != nil {
 		logger.Error("failed to create app info", zap.Error(err))

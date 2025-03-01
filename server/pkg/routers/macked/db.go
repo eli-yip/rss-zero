@@ -13,6 +13,7 @@ type DB interface {
 	GetLatestTime() (t time.Time, err error)
 
 	CreateAppInfo(appName string) (appInfo *AppInfo, err error)
+	IsAppInfoExists(appName string) (exists bool, err error)
 	GetAppInfos() (infos []AppInfo, err error)
 	DeleteAppInfo(id string) (err error)
 }
@@ -69,6 +70,14 @@ func (d *DBService) CreateAppInfo(appName string) (appInfo *AppInfo, err error) 
 func (d *DBService) GetAppInfos() (infos []AppInfo, err error) {
 	err = d.Find(&infos).Error
 	return
+}
+
+func (d *DBService) IsAppInfoExists(appName string) (exists bool, err error) {
+	err = d.Where("app_name = ?", appName).First(&AppInfo{}).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil
+	}
+	return true, err
 }
 
 func (d *DBService) DeleteAppInfo(id string) (err error) {
