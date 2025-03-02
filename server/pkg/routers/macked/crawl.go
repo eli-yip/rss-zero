@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/rs/xid"
 	"github.com/samber/lo"
 )
 
@@ -26,26 +27,35 @@ func CrawlFunc(redisService redis.Redis, db DB, logger *zap.Logger) func() {
 }
 
 func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
+	logger = logger.With(zap.String("cron_job_id", xid.New().String()))
+
 	mutex.Lock()
 	defer mutex.Unlock()
 
 	latestPostTimeInDB, err := db.GetLatestTime()
 	if err != nil {
+		logger.Error("Failed to get latest post time in db", zap.Error(err))
 		return fmt.Errorf("failed to get latest post time in db: %w", err)
 	}
+	logger.Info("Got latest post time in db", zap.Time("latest_post_time", latestPostTimeInDB))
 
 	posts, err := GetLatestPosts()
 	if err != nil {
+		logger.Error("Failed to get latest posts", zap.Error(err))
 		return fmt.Errorf("failed to get latest posts: %w", err)
 	}
+	logger.Info("Got latest posts", zap.Int("num_of_posts", len(posts)))
 
 	parsedPosts, err := ParsePosts(posts)
 	if err != nil {
+		logger.Error("Failed to parse posts", zap.Error(err))
 		return fmt.Errorf("failed to parse posts: %w", err)
 	}
+	logger.Info("Parsed posts", zap.Int("num_of_parsed_posts", len(parsedPosts)))
 
 	subscribedAppInfos, err := db.GetAppInfos()
 	if err != nil {
+		logger.Error("Failed to get subscribed app infos", zap.Error(err))
 		return fmt.Errorf("failed to get subscribed app infos: %w", err)
 	}
 	subscribedAppNames := lo.Map(subscribedAppInfos, func(info AppInfo, _ int) string { return info.AppName })
@@ -59,10 +69,12 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 		if isSubscribed(p.Title, subscribedAppNames) {
 			unreadPosts = append(unreadPosts, p)
 			if appID, ok := appIDToAppName[p.ID]; ok {
+				logger.Info("Found unread post", zap.String("post_title", p.Title), zap.String("app_name", appIDToAppName[p.ID]))
 				if err = db.UpdateAppInfo(appID, p.Modified); err != nil {
 					logger.Error("Failed to update app info", zap.Error(err))
 					return fmt.Errorf("failed to update app info: %w", err)
 				}
+				logger.Info("Updated app info", zap.String("app_id", p.ID), zap.String("app_name", appID))
 			} else {
 				logger.Error("App info not found in appIDToAppName map", zap.String("app_id", p.ID))
 			}
@@ -70,10 +82,13 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 	}
 
 	if err = renderAndSaveRSS(redisService, unreadPosts); err != nil {
+		logger.Error("Failed to render and save rss", zap.Error(err))
 		return fmt.Errorf("failed to render and save rss: %w", err)
 	}
+	logger.Info("Rendered and saved rss")
 
 	if len(unreadPosts) == 0 {
+		logger.Info("No unread posts, skip saving post time to db")
 		return nil
 	}
 
@@ -84,6 +99,7 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 		logger.Error("Failed to save post time to db", zap.Error(err))
 		return fmt.Errorf("failed to save post time to db: %w", err)
 	}
+	logger.Info("Saved latest post time to db", zap.Time("post_time", parsedPosts[0].Modified))
 
 	return nil
 }
