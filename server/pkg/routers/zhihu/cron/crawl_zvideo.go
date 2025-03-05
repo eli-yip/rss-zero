@@ -19,7 +19,7 @@ import (
 
 func BuildZvideoCrawlFunc(user string, db *gorm.DB, notifier notify.Notifier, cs cookie.CookieIface) func() {
 	return func() {
-		logger := log.DefaultLogger.With(zap.String("cron_id", xid.New().String()))
+		logger := log.DefaultLogger.With(zap.String("cron_job_id", xid.New().String()))
 
 		requestService, parser, err := initZhihuZvideoServices(db, cs, logger)
 		if err != nil {

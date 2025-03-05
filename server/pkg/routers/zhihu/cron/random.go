@@ -13,7 +13,7 @@ import (
 
 func BuildRandomSelectCanglimoAnswerCronFunc(gormDB *gorm.DB, redisService redis.Redis) func() {
 	return func() {
-		logger := log.DefaultLogger.With(zap.String("cron_id", xid.New().String()))
+		logger := log.DefaultLogger.With(zap.String("cron_job_id", xid.New().String()))
 
 		zhihuDBService := zhihuDB.NewDBService(gormDB)
 
