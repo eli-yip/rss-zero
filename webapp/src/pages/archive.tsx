@@ -1,6 +1,5 @@
 import { DatePicker, DateValue, Select, SelectItem } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
-import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { ContentType } from "@/api/archive";
@@ -12,13 +11,12 @@ import { scrollToTop } from "@/utils/window";
 
 export default function ArchivePage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [contentType, setContentType] = useState<ContentType>(
-    ContentType.Answer,
-  );
   const pageStr = searchParams.get("page") || "1";
   const page = parseInt(pageStr);
   const startDate = searchParams.get("startDate") || "";
   const endDate = searchParams.get("endDate") || "";
+  const contentType =
+    (searchParams.get("contentType") as ContentType) || ContentType.Answer;
   const { topics, total, firstFetchDone, loading } = useArchiveTopics(
     page,
     startDate,
@@ -35,6 +33,14 @@ export default function ArchivePage() {
     if (dateValue) params.set(param, dateValue);
     else params.delete(param);
 
+    setSearchParams(params);
+    scrollToTop();
+  };
+
+  const handleContentTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const params = new URLSearchParams(searchParams);
+
+    params.set("contentType", e.target.value);
     setSearchParams(params);
     scrollToTop();
   };
@@ -73,7 +79,7 @@ export default function ArchivePage() {
         <Select
           defaultSelectedKeys={["answer"]}
           value={contentType}
-          onChange={(e) => setContentType(e.target.value as ContentType)}
+          onChange={handleContentTypeChange}
         >
           <SelectItem key="answer">回答</SelectItem>
           <SelectItem key="pin">想法</SelectItem>
