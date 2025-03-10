@@ -26,7 +26,10 @@ export function Archive({
 }: ArchiveProps) {
   const handlePageChange = useCallback(
     (page: number) => {
-      setSearchParams(new URLSearchParams({ page: page.toString() }));
+      const currentSearchParams = new URLSearchParams(window.location.search);
+
+      currentSearchParams.set("page", page.toString());
+      setSearchParams(currentSearchParams);
       scrollToTop();
     },
     [setSearchParams],
