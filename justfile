@@ -28,23 +28,23 @@ backend:
 
 [working-directory: 'webapp']
 format:
-  npx prettier --write .
+  bunx prettier --write .
 
 [working-directory: 'webapp']
 frontend:
-  npm run dev
+  bun run dev
 
 [working-directory: 'webapp']
 update-frontend:
-  npm outdated; npm update
+  bun outdated; bun update
 
 [working-directory: 'webapp']
 lint-frontend:
-  npx eslint .
+  bunx eslint .
 
 [working-directory: 'webapp']
 format-frontend:
-  npx prettier --write .
+  bunx prettier --write .
 
 commit:
   git add -A

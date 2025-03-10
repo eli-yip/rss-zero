@@ -51,15 +51,8 @@ export interface ArchivePaging {
   total: number;
 }
 
-// 定义响应数据的类型
 export interface ArchiveResponse {
-  /**
-   * 总数量
-   */
   count: number;
-  /**
-   * 分页信息
-   */
   paging: ArchivePaging;
   topics: Topic[];
 }

@@ -16,19 +16,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: webapp/package-lock.json
-      - name: use npm mirror
-        run: npm config set registry https://registry.npmmirror.com
-      - name: Build Frontend
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        working-directory: webapp
+        run: bun install --frozen-lockfile --registry=https://registry.npmmirror.com # Use cli args here as if we use with in setup-bun, then it will create a file in git, then goreleaser will not work
+      - name: Build webapp
         working-directory: webapp
         run: |
-          npm ci
-          npm run build
+          bun run build
       # setup-go automatically cache go.mod and go.sum.
       # So we don't need use actions/cache to cache go dependencies.
       # more info: https://github.com/actions/setup-go#caching-dependency-files-and-build-outputs
