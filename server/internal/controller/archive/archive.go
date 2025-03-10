@@ -28,8 +28,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 	logger.Info("Retrieved archive request successfully")
 
 	if req.Platform != PlatformZhihu ||
-		req.Author != "canglimo" ||
-		req.Type != "answer" {
+		req.Author != "canglimo" {
 		logger.Error("Invalid request parameters", zap.Any("request", req))
 		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
 	}
@@ -47,22 +46,49 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 	}
 
 	offset := req.Count * (req.Page - 1)
-	answers, err := h.zhihuDBService.FetchAnswerWithDateRange(req.Author, req.Count, offset, startDate, endDate)
-	if err != nil {
-		logger.Error("Failed to fetch answer", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch answer"})
-	}
+	var (
+		count  int
+		topics []Topic
+	)
+	switch req.Type {
+	case ContentTypeAnswer:
+		answers, err := h.zhihuDBService.FetchAnswerWithDateRange(req.Author, req.Count, offset, startDate, endDate)
+		if err != nil {
+			logger.Error("Failed to fetch answer", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch answer"})
+		}
 
-	topics, err := buildTopics(answers, h.zhihuDBService)
-	if err != nil {
-		logger.Error("Failed to build topics", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to build topics"})
-	}
+		topics, err = buildTopicsFromAnswer(answers, h.zhihuDBService)
+		if err != nil {
+			logger.Error("Failed to build topics", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to build topics"})
+		}
 
-	count, err := h.zhihuDBService.CountAnswerWithDateRange(req.Author, startDate, endDate)
-	if err != nil {
-		logger.Error("Failed to count answer", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to count answer"})
+		count, err = h.zhihuDBService.CountAnswerWithDateRange(req.Author, startDate, endDate)
+		if err != nil {
+			logger.Error("Failed to count answer", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to count answer"})
+		}
+	case ContentTypePin:
+		pins, err := h.zhihuDBService.FetchPinWithDateRange(req.Author, req.Count, offset, startDate, endDate)
+		if err != nil {
+			logger.Error("Failed to fetch pin", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch pin"})
+		}
+
+		topics, err = buildTopicsFromPin(pins, h.zhihuDBService)
+		if err != nil {
+			logger.Error("Failed to build topics", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to build topics"})
+		}
+
+		count, err = h.zhihuDBService.CountPinWithDateRange(req.Author, startDate, endDate)
+		if err != nil {
+			logger.Error("Failed to count pin", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to count pin"})
+		}
+	case ContentTypeArticle:
+	default:
 	}
 
 	// calculate page counts (ceil)

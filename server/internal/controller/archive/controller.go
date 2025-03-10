@@ -35,11 +35,19 @@ func NewController(db *gorm.DB) *Controller {
 	}
 }
 
+type ContentType string
+
+const (
+	ContentTypeAnswer  ContentType = "answer"
+	ContentTypeArticle ContentType = "article"
+	ContentTypePin     ContentType = "pin"
+)
+
 type RequestBase struct {
-	Platform string `json:"platform"`
-	Type     string `json:"type"`
-	Author   string `json:"author"`
-	Count    int    `json:"count"`
+	Platform string      `json:"platform"`
+	Type     ContentType `json:"type"`
+	Author   string      `json:"author"`
+	Count    int         `json:"count"`
 }
 
 type RandomRequest struct{ RequestBase }

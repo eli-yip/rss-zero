@@ -33,7 +33,7 @@ func (h *Controller) Random(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to select random answers"})
 	}
 
-	topics, err := buildTopics(answers, h.zhihuDBService)
+	topics, err := buildTopicsFromAnswer(answers, h.zhihuDBService)
 	if err != nil {
 		logger.Error("Failed to build topics", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, &ErrResponse{Message: "failed to build topics"})
