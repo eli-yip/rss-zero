@@ -101,7 +101,7 @@ func (d *DBService) FetchNPin(n int, opt FetchPinOption) (ps []Pin, err error) {
 
 func (d *DBService) FetchPinWithDateRange(authorID string, limit, offset int, startTime, endTime time.Time) (ps []Pin, err error) {
 	ps = make([]Pin, 0, limit)
-	if err := d.Where("author_id = ? and create_at >= ? and create_at < ?", authorID, startTime, endTime).Order("create_at asc").Limit(limit).Offset(offset).Find(&ps).Error; err != nil {
+	if err := d.Where("author_id = ? and create_at >= ? and create_at < ?", authorID, startTime, endTime).Order("create_at desc").Limit(limit).Offset(offset).Find(&ps).Error; err != nil {
 		return nil, err
 	}
 	return ps, nil

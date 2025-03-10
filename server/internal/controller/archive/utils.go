@@ -89,10 +89,15 @@ func buildTopicsFromPin(pins []zhihuDB.Pin, d zhihuDB.DB) (topics []Topic, err e
 			OriginalURL: zhihuRender.GeneratePinLink(p.ID),
 			ArchiveURL:  render.BuildArchiveLink(config.C.Settings.ServerURL, zhihuRender.GeneratePinLink(p.ID)),
 			Platform:    PlatformZhihu,
-			Title:       p.Title,
-			CreatedAt:   p.CreateAt.Format(time.RFC3339),
-			Body:        p.Text,
-			Author:      Author{ID: p.AuthorID, Nickname: authorMap[p.AuthorID]},
+			Title: func() string {
+				if p.Title == "" {
+					return strconv.Itoa(p.ID)
+				}
+				return p.Title
+			}(),
+			CreatedAt: p.CreateAt.Format(time.RFC3339),
+			Body:      p.Text,
+			Author:    Author{ID: p.AuthorID, Nickname: authorMap[p.AuthorID]},
 		})
 	}
 
