@@ -67,7 +67,7 @@ commit:
 
 push:
   git push -u origin {{current_branch}}
-  git push --tags
+  git push --tags --no-verify
 
 fpush:
   git push -u origin {{current_branch}} --force-with-lease --tags
