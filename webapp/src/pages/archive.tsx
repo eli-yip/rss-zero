@@ -1,7 +1,9 @@
-import { DatePicker, DateValue } from "@heroui/react";
+import { DatePicker, DateValue, Select, SelectItem } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
+import { ContentType } from "@/api/archive";
 import { Archive } from "@/components/archive";
 import { title } from "@/components/primitives";
 import { useArchiveTopics } from "@/hooks/use-archive-topics";
@@ -10,6 +12,9 @@ import { scrollToTop } from "@/utils/window";
 
 export default function ArchivePage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [contentType, setContentType] = useState<ContentType>(
+    ContentType.Answer,
+  );
   const pageStr = searchParams.get("page") || "1";
   const page = parseInt(pageStr);
   const startDate = searchParams.get("startDate") || "";
@@ -18,6 +23,7 @@ export default function ArchivePage() {
     page,
     startDate,
     endDate,
+    contentType,
   );
 
   const updateDateParam = (param: string, value: DateValue | null) => {
@@ -49,19 +55,29 @@ export default function ArchivePage() {
         </div>
       </section>
 
-      <div className="mx-auto my-4 flex w-full max-w-xs flex-col gap-4 sm:flex-row">
-        <DatePicker
-          showMonthAndYearPickers
-          label="开始时间"
-          value={startDate ? parseDate(startDate) : null}
-          onChange={handleStartDateChange}
-        />
-        <DatePicker
-          showMonthAndYearPickers
-          label="截止时间"
-          value={endDate ? parseDate(endDate) : null}
-          onChange={handleEndDateChange}
-        />
+      <div className="mx-auto flex w-full max-w-xs flex-col pb-4">
+        <div className="mx-auto my-4 flex w-full flex-col gap-4 sm:flex-row">
+          <DatePicker
+            showMonthAndYearPickers
+            label="开始时间"
+            value={startDate ? parseDate(startDate) : null}
+            onChange={handleStartDateChange}
+          />
+          <DatePicker
+            showMonthAndYearPickers
+            label="截止时间"
+            value={endDate ? parseDate(endDate) : null}
+            onChange={handleEndDateChange}
+          />
+        </div>
+        <Select
+          defaultSelectedKeys={["answer"]}
+          value={contentType}
+          onChange={(e) => setContentType(e.target.value as ContentType)}
+        >
+          <SelectItem key="answer">回答</SelectItem>
+          <SelectItem key="pin">想法</SelectItem>
+        </Select>
       </div>
 
       <Archive

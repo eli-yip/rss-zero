@@ -1,6 +1,12 @@
 import { apiUrl } from "@/config/config";
 import { Topic } from "@/types/topic";
 
+export enum ContentType {
+  Answer = "answer",
+  Pin = "pin",
+  Article = "article",
+}
+
 // 定义请求体类型
 export interface ArchiveRequest {
   /**
@@ -22,7 +28,7 @@ export interface ArchiveRequest {
   /**
    * 类型
    */
-  type: string;
+  type: ContentType;
   /**
    * 开始日期
    */
@@ -63,10 +69,11 @@ export async function fetchArchiveTopics(
   page: number,
   start_date: string = "",
   end_date: string = "",
+  type: ContentType = ContentType.Answer,
 ): Promise<ArchiveResponse> {
   const requestBody: ArchiveRequest = {
     platform: "zhihu",
-    type: "answer",
+    type: type,
     count: 10,
     page: page,
     author: "canglimo",

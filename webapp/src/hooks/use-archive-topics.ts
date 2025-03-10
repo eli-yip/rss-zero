@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 
-import { ArchiveResponse, fetchArchiveTopics } from "@/api/archive";
+import {
+  ArchiveResponse,
+  ContentType,
+  fetchArchiveTopics,
+} from "@/api/archive";
 import { Topic } from "@/types/topic";
 
 export function useArchiveTopics(
   page: number,
   startDate: string = "",
   endDate: string = "",
+  contentType: ContentType = ContentType.Answer,
 ) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -23,6 +28,7 @@ export function useArchiveTopics(
           page,
           startDate,
           endDate,
+          contentType,
         );
 
         setTopics(data.topics);
@@ -35,7 +41,7 @@ export function useArchiveTopics(
       }
     }
     getTopics();
-  }, [page, startDate, endDate]);
+  }, [page, startDate, endDate, contentType]);
 
   return { topics, total, firstFetchDone, loading, error };
 }
