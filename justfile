@@ -1,5 +1,20 @@
 current_branch := shell("git branch --show-current")
 
+# Build all
+build:
+  #!/usr/bin/env bash
+  cd server
+  go build -o ../server-app ./cmd/server
+  cd ../webapp
+  bun run build
+  cd ..
+  if [ -d "dist" ]; then
+    rm -rf dist
+  fi
+  mv webapp/dist dist
+  echo "Build successful"
+  ./server-app --config=server/config.toml
+
 # Lint the backend and frontend code
 lint: lint-backend lint-frontend
 

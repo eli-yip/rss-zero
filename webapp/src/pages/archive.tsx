@@ -15,8 +15,15 @@ export default function ArchivePage() {
   const page = parseInt(pageStr);
   const startDate = searchParams.get("startDate") || "";
   const endDate = searchParams.get("endDate") || "";
-  const contentType =
-    (searchParams.get("contentType") as ContentType) || ContentType.Answer;
+  const isValidContentType = (value: string | null): value is ContentType => {
+    return (
+      value !== null &&
+      Object.values(ContentType).includes(value as ContentType)
+    );
+  };
+  const contentType = isValidContentType(searchParams.get("contentType"))
+    ? (searchParams.get("contentType") as ContentType)
+    : ContentType.Answer;
   const { topics, total, firstFetchDone, loading } = useArchiveTopics(
     page,
     startDate,
@@ -77,12 +84,12 @@ export default function ArchivePage() {
           />
         </div>
         <Select
-          defaultSelectedKeys={["answer"]}
+          defaultSelectedKeys={[contentType]}
           value={contentType}
           onChange={handleContentTypeChange}
         >
-          <SelectItem key="answer">回答</SelectItem>
-          <SelectItem key="pin">想法</SelectItem>
+          <SelectItem key={ContentType.Answer}>回答</SelectItem>
+          <SelectItem key={ContentType.Pin}>想法</SelectItem>
         </Select>
       </div>
 
