@@ -26,8 +26,8 @@ func handleErr(err error, cookieService cookie.CookieIface, notifier notify.Noti
 		if err = removeZSECKCookie(cookieService); err != nil {
 			logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
 		}
-		notify.NoticeWithLogger(notifier, "Zhihu need new zse_ck", "please provide __zse_ck cookie", logger)
-		logger.Error("Need new zse_ck, break")
+		notify.NoticeWithLogger(notifier, "Zhihu need new __zse_ck", "please provide __zse_ck cookie", logger)
+		logger.Error("Need new __zse_ck, break")
 		return true
 	case errors.Is(err, request.ErrInvalidZC0):
 		if err = removeZC0Cookie(cookieService); err != nil {

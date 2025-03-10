@@ -107,7 +107,9 @@ func NewRequestService(logger *zap.Logger, dbService zhihuDB.EncryptionServiceIf
 
 type Error403 struct {
 	Error struct {
-		NeedLogin bool `json:"need_login"`
+		NeedLogin bool   `json:"need_login"`
+		Message   string `json:"message"`
+		Code      int    `json:"code"`
 	} `json:"error"`
 }
 
@@ -198,14 +200,25 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 				logger.Error("Failed to unmarshal 403 error", zap.Error(err))
 				continue
 			}
-			if e403.Error.NeedLogin {
-				logger.Error("Need login according to 403 error")
+			switch {
+			case e403.Error.NeedLogin:
+				logger.Error("Need login")
 				if err = r.dbService.MarkUnavailable(es.ID); err != nil {
 					logger.Error("Failed to mark unavailable", zap.Error(err))
 				}
 				logger.Info("Mark encryption service unavailable successfully")
 				return nil, ErrNeedZC0
-			} else {
+			case e403.Error.Code == 40362:
+				// {"error":{"message":"您当前请求存在异常，暂时限制本次访问。如有疑问，您可以通过手机摇一摇或登录后私信知乎小管家反馈。","code":40362}}
+				message := func() string {
+					if e403.Error.Message != "" {
+						return e403.Error.Message
+					}
+					return "您当前请求存在异常，暂时限制本次访问。如有疑问，您可以通过手机摇一摇或登录后私信知乎小管家反馈。"
+				}()
+				logger.Error("Need to refresh __zse_ck cookie", zap.String("message", message))
+				return nil, ErrInvalidZSECK
+			default:
 				return nil, ErrForbidden
 			}
 		case http.StatusUnauthorized:
