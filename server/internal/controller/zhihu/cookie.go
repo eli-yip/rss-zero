@@ -219,7 +219,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 				return c.JSON(http.StatusBadRequest, common.WrapResp("invalid expire_at"))
 			}
 
-			ttl = time.Until(expireAt.Add(-1 * 24 * time.Hour))
+			ttl = time.Until(expireAt.Add(-2 * 24 * time.Hour)) // -2 days, because __zse_ck cookie will expire before expireAt
 
 			if ttl < 0 {
 				logger.Error("Invalid expireAt", zap.String("expireAt", req.ZSECKCookie.ExpireAt))
