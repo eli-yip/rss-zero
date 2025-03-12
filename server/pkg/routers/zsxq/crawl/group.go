@@ -1,6 +1,7 @@
 package crawl
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -41,7 +42,7 @@ func CrawlGroup(groupID int, request request.Requester,
 		}
 		firstTime = false
 
-		respByte, err := request.Limit(url, logger)
+		respByte, err := request.Limit(context.Background(), url, logger)
 		if err != nil {
 			logger.Error("Failed to request zsxq api", zap.String("url", url), zap.Error(err))
 			return fmt.Errorf("failed to request zsxq api: %w", err)
@@ -100,7 +101,7 @@ func CrawlGroup(groupID int, request request.Requester,
 		createTimeStr := zsxqTime.EncodeTimeForQuery(createTime)
 		url = fmt.Sprintf(apiFetchURL, url, createTimeStr)
 
-		respByte, err := request.Limit(url, logger)
+		respByte, err := request.Limit(context.Background(), url, logger)
 		if err != nil {
 			logger.Error("Failed to request zsxq api", zap.String("url", url), zap.Error(err))
 			return fmt.Errorf("failed to request zsxq api: %w", err)

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -250,7 +251,7 @@ func (h *Controller) parseAuthorName(authorID string, logger *zap.Logger) (autho
 		return "", fmt.Errorf("failed to create request service: %w", err)
 	}
 
-	bytes, err := requestService.LimitRaw(zhihuCrawl.GenerateAnswerApiURL(authorID, 0), logger)
+	bytes, err := requestService.LimitRaw(context.Background(), zhihuCrawl.GenerateAnswerApiURL(authorID, 0), logger)
 	if err != nil {
 		if errors.Is(err, request.ErrUnreachable) {
 			logger.Info("Author does not exist in zhihu website", zap.String("author_id", authorID))

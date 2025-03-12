@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
@@ -42,7 +43,7 @@ func (s *ParseService) saveVoice(logger *zap.Logger, voice *models.Voice, topicI
 	}
 
 	objectKey := fmt.Sprintf("zsxq/%d.%s", voice.VoiceID, "wav")
-	resp, err := s.request.LimitStream(voice.URL, logger)
+	resp, err := s.request.LimitStream(context.Background(), voice.URL, logger)
 	if err != nil {
 		return fmt.Errorf("failed to download voice %d: %w", voice.VoiceID, err)
 	}

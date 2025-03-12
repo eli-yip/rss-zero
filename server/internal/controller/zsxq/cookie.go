@@ -85,7 +85,7 @@ func (h *Controoler) UpdateCookie(c echo.Context) (err error) {
 		requestID := c.Response().Header().Get(echo.HeaderXRequestID)
 
 		go func() {
-			_, err := requestService.Limit(config.C.TestURL.Zsxq, logger)
+			_, err := requestService.Limit(ctx, config.C.TestURL.Zsxq, logger)
 			if err != nil {
 				logger.Error("Failed to validate zsxq access token",
 					zap.String("cookie", req.AccessToken.Value),

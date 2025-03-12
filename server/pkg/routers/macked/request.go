@@ -1,6 +1,7 @@
 package macked
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -30,7 +31,12 @@ func GetLatestPosts() (posts []WPPost, err error) {
 	const pageSize = 30
 	posts = make([]WPPost, pageSize)
 
-	resp, err := http.Get(fmt.Sprintf("https://macked.app/wp-json/wp/v2/posts?orderby=modified&order=desc&per_page=%d", pageSize))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, fmt.Sprintf("https://macked.app/wp-json/wp/v2/posts?orderby=modified&order=desc&per_page=%d", pageSize), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest posts: %w", err)
 	}

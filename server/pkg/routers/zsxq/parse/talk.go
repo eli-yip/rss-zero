@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -53,7 +54,7 @@ func (s *ParseService) saveFiles(files []models.File, topicID int, createTimeStr
 		}
 
 		objectKey := fmt.Sprintf("zsxq/%d-%s", file.FileID, file.Name)
-		resp, err := s.request.LimitStream(downloadLink, logger)
+		resp, err := s.request.LimitStream(context.Background(), downloadLink, logger)
 		if err != nil {
 			return fmt.Errorf("failed to download file %d: %w", file.FileID, err)
 		}
@@ -87,7 +88,7 @@ func (s *ParseService) saveArticles(article *models.Article, logger *zap.Logger)
 		return nil
 	}
 
-	html, err := s.request.LimitRaw(article.ArticleURL, logger)
+	html, err := s.request.LimitRaw(context.Background(), article.ArticleURL, logger)
 	if err != nil {
 		return fmt.Errorf("failed to request article url: %w", err)
 	}

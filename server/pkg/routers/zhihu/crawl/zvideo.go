@@ -2,6 +2,7 @@ package crawl
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -40,7 +41,7 @@ func CrawlZvideo(user string, rs request.Requester, parser parse.ZvideoParser, n
 
 	next := buildZvideoApiUrl(user, offset)
 
-	bytes, err := rs.LimitRaw(next, logger)
+	bytes, err := rs.LimitRaw(context.Background(), next, logger)
 	if err != nil {
 		logger.Error("Failed to request zhihu api", zap.Error(err), zap.String("url", next))
 		return fmt.Errorf("failed to request zhihu api: %w", err)

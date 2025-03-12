@@ -1,6 +1,7 @@
 package request
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -22,7 +23,7 @@ type Release struct {
 func GetRepoReleases(user, repo, token string) (releases []Release, err error) {
 	releases = make([]Release, 0)
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", user, repo), nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", user, repo), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create releases API request: %w", err)
 	}

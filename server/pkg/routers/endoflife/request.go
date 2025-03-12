@@ -1,6 +1,7 @@
 package endoflife
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,10 +21,17 @@ type cycle struct {
 func GetReleaseCycles(product string) (cycles []cycle, err error) {
 	cycles = make([]cycle, 0)
 
-	resp, err := http.Get(fmt.Sprintf("https://endoflife.date/api/%s.json", product))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, fmt.Sprintf("https://endoflife.date/api/%s.json", product), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest release API response: %w", err)
 	}
+	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to get latest release API response, bad status code: %d", resp.StatusCode)
 	}

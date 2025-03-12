@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -41,7 +42,7 @@ func (p *OnlineImageParser) ParseImages(text string, id int, t int, logger *zap.
 	for _, imageLink := range findImageLinks(text) {
 		picID := URLToID(imageLink) // generate a unique int id from url by hash
 
-		resp, err := p.request.NoLimitStream(imageLink, logger)
+		resp, err := p.request.NoLimitStream(context.Background(), imageLink, logger)
 		if err != nil {
 			return "", fmt.Errorf("failed to get image stream for url %s: %w", imageLink, err)
 		}
@@ -71,7 +72,7 @@ func (p *OnlineImageParser) ParseImages(text string, id int, t int, logger *zap.
 }
 
 func (p *OnlineImageParser) GetImageStream(url string, logger *zap.Logger) (resp *http.Response, err error) {
-	return p.request.NoLimitStream(url, logger)
+	return p.request.NoLimitStream(context.Background(), url, logger)
 }
 
 // Offline image parser will get image info directly from database,

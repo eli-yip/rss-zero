@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -43,7 +44,7 @@ func MigrateMinio20240905(file file.File, db *gorm.DB, logger *zap.Logger) {
 			continue
 		}
 
-		resp, err := zhihuRequest.NoLimitStream(http.DefaultClient, obj.URL, 3, logger)
+		resp, err := zhihuRequest.NoLimitStream(context.Background(), http.DefaultClient, obj.URL, 3, logger)
 		if err != nil {
 			logger.Error("Failed to get image stream", zap.Error(err), zap.String("url", obj.URL))
 			return

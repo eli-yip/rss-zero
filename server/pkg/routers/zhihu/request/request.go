@@ -2,6 +2,7 @@ package request
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,10 +32,10 @@ func init() {
 
 type Requester interface {
 	// LimitRaw requests to the given url with limiter and returns raw data,
-	LimitRaw(string, *zap.Logger) ([]byte, error)
+	LimitRaw(context.Context, string, *zap.Logger) ([]byte, error)
 	// NoLimitRaw requests to the given url without limiter and returns raw data,
 	// Commonly used in file download
-	NoLimitStream(string, *zap.Logger) (*http.Response, error)
+	NoLimitStream(context.Context, string, *zap.Logger) (*http.Response, error)
 }
 
 var (
@@ -140,11 +141,11 @@ type EncryptErrResp struct {
 }
 
 // Send request with limiter, used for all zhihu api requests
-func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte, err error) {
+func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Logger) (respByte []byte, err error) {
 	requestTaskID := xid.New().String()
 	logger.Info("Start to get zhihu raw data with limit, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
-	for i := 0; i < r.maxRetry; i++ {
+	for i := range r.maxRetry {
 		currentRequestTaskID := fmt.Sprintf("%s_%d", requestTaskID, i)
 		logger := logger.With(zap.String("request_task_id", currentRequestTaskID))
 
@@ -172,7 +173,14 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 			return nil, fmt.Errorf("failed to increase used count for service %s, %w", es.ID, err)
 		}
 
-		resp, err := http.Post(es.URL+"/data", "application/json", bytes.NewBuffer(reqBodyByte))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, es.URL+"/data", bytes.NewBuffer(reqBodyByte))
+		if err != nil {
+			logger.Error("Failed to new a request", zap.Error(err))
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := r.client.Do(req)
 		if err != nil {
 			logger.Error("Failed to request", zap.Error(err))
 			continue
@@ -261,11 +269,11 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 	return nil, err
 }
 
-func (r *RequestService) NoLimitStream(u string, logger *zap.Logger) (resp *http.Response, err error) {
-	return NoLimitStream(r.client, u, r.maxRetry, logger)
+func (r *RequestService) NoLimitStream(ctx context.Context, u string, logger *zap.Logger) (resp *http.Response, err error) {
+	return NoLimitStream(ctx, r.client, u, r.maxRetry, logger)
 }
 
-func NoLimitStream(client *http.Client, u string, maxRetry int, logger *zap.Logger) (resp *http.Response, err error) {
+func NoLimitStream(ctx context.Context, client *http.Client, u string, maxRetry int, logger *zap.Logger) (resp *http.Response, err error) {
 	logger = logger.With(zap.String("url", u))
 	logger.Info("start to request without limit for stream")
 
@@ -273,7 +281,7 @@ func NoLimitStream(client *http.Client, u string, maxRetry int, logger *zap.Logg
 		logger := logger.With(zap.Int("index", i))
 
 		var req *http.Request
-		req, err = setReq(u)
+		req, err = setReq(ctx, u)
 		if err != nil {
 			logger.Error("failed to new a request", zap.Error(err))
 			continue
@@ -300,8 +308,8 @@ func NoLimitStream(client *http.Client, u string, maxRetry int, logger *zap.Logg
 	return nil, err
 }
 
-func setReq(u string) (req *http.Request, err error) {
-	req, err = http.NewRequest("GET", u, nil)
+func setReq(ctx context.Context, u string) (req *http.Request, err error) {
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err
 	}

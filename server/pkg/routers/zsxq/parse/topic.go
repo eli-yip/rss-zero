@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"slices"
@@ -116,7 +117,7 @@ type FileDownload struct {
 func (s *ParseService) downloadLink(fileID int, logger *zap.Logger) (link string, err error) {
 	url := fmt.Sprintf(ZsxqFileBaseURL, fileID)
 
-	resp, err := s.request.Limit(url, logger)
+	resp, err := s.request.Limit(context.Background(), url, logger)
 	if err != nil {
 		return "", fmt.Errorf("failed to request zsxq api: %w", err)
 	}

@@ -1,6 +1,7 @@
 package request
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,14 +39,14 @@ const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/5
 type Requester interface {
 	// Limit requests to the given url with limiter and returns data,
 	// and it will validate the response json data
-	Limit(string, *zap.Logger) ([]byte, error)
+	Limit(context.Context, string, *zap.Logger) ([]byte, error)
 	// LimitRaw requests to the given url with limiter and returns raw data,
-	LimitRaw(string, *zap.Logger) ([]byte, error)
+	LimitRaw(context.Context, string, *zap.Logger) ([]byte, error)
 	// LimitStream requests to the given url with limiter and returns http response,
 	// Commonly used in file download
-	LimitStream(string, *zap.Logger) (*http.Response, error)
+	LimitStream(context.Context, string, *zap.Logger) (*http.Response, error)
 	// NoLimit requests to the given url without limiter
-	NoLimit(string, *zap.Logger) ([]byte, error)
+	NoLimit(context.Context, string, *zap.Logger) ([]byte, error)
 }
 
 type RequestService struct {
@@ -110,7 +111,7 @@ type dataSystemResp struct {
 }
 
 // Send request with limiter, used for zsxq api.
-func (r *RequestService) Limit(u string, logger *zap.Logger) (respByte []byte, err error) {
+func (r *RequestService) Limit(ctx context.Context, u string, logger *zap.Logger) (respByte []byte, err error) {
 	requestTaskID := xid.New().String()
 	logger.Info("Start to reqeust zsxq api, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
@@ -121,7 +122,7 @@ func (r *RequestService) Limit(u string, logger *zap.Logger) (respByte []byte, e
 		logger.Info("Get limiter successfully, start to request url")
 
 		var req *http.Request
-		if req, err = r.setReq(u); err != nil {
+		if req, err = r.setReq(ctx, u); err != nil {
 			logger.Error("Failed to new a request", zap.Error(err))
 			continue
 		}
@@ -191,7 +192,7 @@ func (r *RequestService) Limit(u string, logger *zap.Logger) (respByte []byte, e
 }
 
 // Send request with limiter, used for zsxq article
-func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte, err error) {
+func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Logger) (respByte []byte, err error) {
 	requestTaskID := xid.New().String()
 	logger.Info("Start to reqeust zsxq api raw, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
@@ -202,7 +203,7 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 		logger.Info("Get limiter successfully, start to request url")
 
 		var req *http.Request
-		if req, err = r.setReq(u); err != nil {
+		if req, err = r.setReq(ctx, u); err != nil {
 			logger.Error("Failed to new a request", zap.Error(err))
 			continue
 		}
@@ -237,7 +238,7 @@ func (r *RequestService) LimitRaw(u string, logger *zap.Logger) (respByte []byte
 
 // Send request with limiter and get a stream result,
 // used for zsxq voices
-func (r *RequestService) LimitStream(u string, logger *zap.Logger) (resp *http.Response, err error) {
+func (r *RequestService) LimitStream(ctx context.Context, u string, logger *zap.Logger) (resp *http.Response, err error) {
 	requestTaskID := xid.New().String()
 	logger.Info("Start to reqeust zsxq api stream, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
@@ -248,7 +249,7 @@ func (r *RequestService) LimitStream(u string, logger *zap.Logger) (resp *http.R
 		logger.Info("Get limiter successfully, start to request url")
 
 		var req *http.Request
-		if req, err = r.setReq(u); err != nil {
+		if req, err = r.setReq(ctx, u); err != nil {
 			logger.Error("Failed to new a request", zap.Error(err))
 			continue
 		}
@@ -277,7 +278,7 @@ func (r *RequestService) LimitStream(u string, logger *zap.Logger) (resp *http.R
 }
 
 // Send request without limiter, used for zsxq cdn
-func (r *RequestService) NoLimit(u string, logger *zap.Logger) (respByte []byte, err error) {
+func (r *RequestService) NoLimit(ctx context.Context, u string, logger *zap.Logger) (respByte []byte, err error) {
 	requestTaskID := xid.New().String()
 	logger.Info("Start to request zsxq api without limit", zap.String("url", u), zap.String("request_task_id", requestTaskID))
 
@@ -286,7 +287,7 @@ func (r *RequestService) NoLimit(u string, logger *zap.Logger) (respByte []byte,
 		logger := logger.With(zap.String("request_task_id", currentRequestTaskID))
 
 		var req *http.Request
-		if req, err = r.setReq(u); err != nil {
+		if req, err = r.setReq(ctx, u); err != nil {
 			logger.Error("Failed to new a request", zap.Error(err))
 			continue
 		}
@@ -318,8 +319,8 @@ func (r *RequestService) NoLimit(u string, logger *zap.Logger) (respByte []byte,
 }
 
 // Set request header and method
-func (r *RequestService) setReq(u string) (req *http.Request, err error) {
-	req, err = http.NewRequest("GET", u, nil)
+func (r *RequestService) setReq(ctx context.Context, u string) (req *http.Request, err error) {
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err
 	}

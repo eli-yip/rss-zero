@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -35,7 +36,7 @@ func (s *ParseService) saveImages(images []models.Image, topicID int, createTime
 		}
 
 		objectKey := fmt.Sprintf("zsxq/%d.%s", image.ImageID, image.Type)
-		resp, err := s.request.LimitStream(url, logger)
+		resp, err := s.request.LimitStream(context.Background(), url, logger)
 		if err != nil {
 			return fmt.Errorf("failed to download image %d: %w", image.ImageID, err)
 		}

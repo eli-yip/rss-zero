@@ -1,6 +1,7 @@
 package crawl
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"time"
@@ -38,7 +39,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 	index := 0
 	lastArticleCount := 0
 	for {
-		bytes, err := request.LimitRaw(next, logger)
+		bytes, err := request.LimitRaw(context.Background(), next, logger)
 		if err != nil {
 			logger.Error("Failed to request zhihu api", zap.Error(err), zap.String("url", next))
 			return fmt.Errorf("failed to request zhihu api: %w", err)
