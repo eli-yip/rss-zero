@@ -15,6 +15,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/douyu"
 	githubCron "github.com/eli-yip/rss-zero/pkg/routers/github/cron"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 	xiaobotCron "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/cron"
@@ -72,6 +73,11 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 			name:     "zvideo_crawl",
 			schedule: "0 0,3,6,9,12,15,18,21 * * *",
 			fn:       zhihuCron.BuildZvideoCrawlFunc("canglimo", db, notifier, cookieService),
+		},
+		{
+			name:     "douyu_crawl",
+			schedule: "30 19 * * *",
+			fn:       douyu.BuildCrawlFunc(notifier, redisService),
 		},
 	}
 
