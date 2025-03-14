@@ -31,6 +31,7 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 	topicIDSkip := []int{
 		2855142121821411,
 		4848142822512458, // Cause ariticle markdown converter error
+		1525884245581542, // Cause ariticle markdown converter error
 	}
 	if slices.Contains(topicIDSkip, topic.Topic.TopicID) {
 		logger.Info("Skip crawling 2855142121821411, as it will cause database error")
