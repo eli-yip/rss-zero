@@ -131,7 +131,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 	if req.DC0Cookie != nil {
 		respData.DC0Cookie = &Cookie{}
 		var ttl time.Duration
-		if req.DC0Cookie.ExpireAt != "" {
+		if req.DC0Cookie.ExpireAt != nil {
 			expireAt, err := cookie.ParseArcExpireAt(req.DC0Cookie.ExpireAt)
 			if err != nil {
 				logger.Error("Failed to parse expireAt", zap.Error(err))
@@ -172,7 +172,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 	if req.ZC0Cookie != nil {
 		respData.ZC0Cookie = &Cookie{}
 		var ttl time.Duration
-		if req.ZC0Cookie.ExpireAt != "" {
+		if req.ZC0Cookie.ExpireAt != nil {
 			expireAt, err := cookie.ParseArcExpireAt(req.ZC0Cookie.ExpireAt)
 			if err != nil {
 				logger.Error("Failed to parse expireAt", zap.Error(err))
@@ -212,7 +212,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 	if req.ZSECKCookie != nil {
 		respData.ZSECKCookie = &Cookie{}
 		var ttl time.Duration
-		if req.ZSECKCookie.ExpireAt != "" {
+		if req.ZSECKCookie.ExpireAt != nil {
 			expireAt, err := cookie.ParseArcExpireAt(req.ZSECKCookie.ExpireAt)
 			if err != nil {
 				logger.Error("Failed to parse expireAt", zap.Error(err))
