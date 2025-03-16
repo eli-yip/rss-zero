@@ -16,7 +16,7 @@ import (
 type (
 	Cookie struct {
 		Value    string `json:"value"`
-		ExpireAt string `json:"expire_at"`
+		ExpireAt any    `json:"expire_at"`
 	}
 
 	CookieResp struct {
@@ -141,7 +141,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 			ttl = time.Until(expireAt.Add(-1 * 24 * time.Hour))
 
 			if ttl < 0 {
-				logger.Error("Invalid expireAt", zap.String("expireAt", req.DC0Cookie.ExpireAt))
+				logger.Error("Invalid expireAt", zap.Any("expireAt", req.DC0Cookie.ExpireAt))
 				return c.JSON(http.StatusBadRequest, common.WrapResp("invalid expire_at"))
 			}
 
@@ -182,7 +182,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 			ttl = time.Until(expireAt.Add(-1 * 24 * time.Hour))
 
 			if ttl < 0 {
-				logger.Error("Invalid expireAt", zap.String("expireAt", req.ZC0Cookie.ExpireAt))
+				logger.Error("Invalid expireAt", zap.Any("expireAt", req.ZC0Cookie.ExpireAt))
 				return c.JSON(http.StatusBadRequest, common.WrapResp("invalid expire_at"))
 			}
 
@@ -222,7 +222,7 @@ func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 			ttl = time.Until(expireAt.Add(-2 * 24 * time.Hour)) // -2 days, because __zse_ck cookie will expire before expireAt
 
 			if ttl < 0 {
-				logger.Error("Invalid expireAt", zap.String("expireAt", req.ZSECKCookie.ExpireAt))
+				logger.Error("Invalid expireAt", zap.Any("expireAt", req.ZSECKCookie.ExpireAt))
 				return c.JSON(http.StatusBadRequest, common.WrapResp("invalid expire_at"))
 			}
 
