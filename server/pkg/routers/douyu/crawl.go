@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/xid"
+	lop "github.com/samber/lo/parallel"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/log"
@@ -17,11 +18,15 @@ import (
 
 func BuildCrawlFunc(notifier notify.Notifier, redis redis.Redis) func() {
 	return func() {
-		crawl("3484", notifier, redis, log.DefaultLogger)
+		rooms := []string{"3484"}
+		lop.ForEach(rooms, func(room string, _ int) { crawl(room, notifier, redis, log.DefaultLogger) })
 	}
 }
 
-const douyuLiveKey = "douyu:live:%s"
+func buildDouyuLiveKey(roomId string) string {
+	const douyuLiveKey = "douyu:live:%s"
+	return fmt.Sprintf(douyuLiveKey, roomId)
+}
 
 func crawl(roomId string, notifier notify.Notifier, r redis.Redis, logger *zap.Logger) {
 	tokenCh := make(chan struct{})
@@ -45,7 +50,7 @@ func crawl(roomId string, notifier notify.Notifier, r redis.Redis, logger *zap.L
 
 		logger.Info("start check douyu room", zap.String("room_id", roomId))
 
-		if v, err := r.Get(fmt.Sprintf(douyuLiveKey, roomId)); err != nil {
+		if v, err := r.Get(buildDouyuLiveKey(roomId)); err != nil {
 			if !errors.Is(err, redis.ErrKeyNotExist) {
 				logger.Error("failed to get douyu room live status", zap.Error(err))
 				return
@@ -72,7 +77,7 @@ func crawl(roomId string, notifier notify.Notifier, r redis.Redis, logger *zap.L
 		if info != nil {
 			logger.Info("douyu room is live", zap.String("room_id", roomId), zap.Time("start_time", info.startTime))
 			notify.NoticeWithLogger(notifier, fmt.Sprintf("[douyu] %s is live", roomId), "", logger)
-			_ = r.Set(fmt.Sprintf(douyuLiveKey, roomId), 1, 10*time.Hour) // Use 10 hours as we only check live status in 19:00-20:30
+			_ = r.Set(buildDouyuLiveKey(roomId), 1, 10*time.Hour) // Use 10 hours as we only check live status in 19:00-20:30
 			return
 		}
 
@@ -92,7 +97,7 @@ func crawl(roomId string, notifier notify.Notifier, r redis.Redis, logger *zap.L
 		if info != nil {
 			logger.Info("douyu room is live", zap.String("room_id", roomId), zap.Time("start_time", info.startTime))
 			notify.NoticeWithLogger(notifier, fmt.Sprintf("[douyu] %s is live", roomId), "", logger)
-			_ = r.Set(fmt.Sprintf(douyuLiveKey, roomId), "1", 10*time.Hour)
+			_ = r.Set(buildDouyuLiveKey(roomId), "1", 10*time.Hour)
 			return
 		}
 
