@@ -21,7 +21,7 @@ type (
 
 	Cookie struct {
 		Value    string `json:"value"`
-		ExpireAt string `json:"expire_at"`
+		ExpireAt any    `json:"expire_at"`
 	}
 
 	CookieResp struct {
@@ -54,7 +54,7 @@ func (h *Controoler) UpdateCookie(c echo.Context) (err error) {
 	if req.AccessToken != nil {
 		respData.AccessToken = &Cookie{}
 		var ttl time.Duration
-		if req.AccessToken.ExpireAt != "" {
+		if req.AccessToken.ExpireAt != nil {
 			expireAt, err := cookie.ParseArcExpireAt(req.AccessToken.ExpireAt)
 			if err != nil {
 				logger.Error("Failed to parse expire_at", zap.Error(err))
@@ -64,7 +64,7 @@ func (h *Controoler) UpdateCookie(c echo.Context) (err error) {
 			ttl = time.Until(expireAt.Add(-1 * time.Hour))
 
 			if ttl < 0 {
-				logger.Error("Invalid expire_at", zap.String("expire_at", req.AccessToken.ExpireAt))
+				logger.Error("Invalid expire_at", zap.Any("expire_at", req.AccessToken.ExpireAt))
 				return c.JSON(http.StatusBadRequest, common.WrapResp("invalid expire_at"))
 			}
 
