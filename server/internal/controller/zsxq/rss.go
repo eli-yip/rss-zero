@@ -18,7 +18,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/random"
 )
 
-func (h *Controoler) RSS(c echo.Context) (err error) {
+func (h *Controller) RSS(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	groupIDStr := c.Get("feed_id").(string)
@@ -35,7 +35,7 @@ func (h *Controoler) RSS(c echo.Context) (err error) {
 	return c.String(http.StatusOK, rssContent)
 }
 
-func (h *Controoler) getRSS(key string, logger *zap.Logger) (content string, err error) {
+func (h *Controller) getRSS(key string, logger *zap.Logger) (content string, err error) {
 	logger = logger.With(zap.String("key", key))
 	defer logger.Info("task channel closed")
 

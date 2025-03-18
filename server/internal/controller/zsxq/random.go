@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (h *Controoler) RandomCanglimoDigest(c echo.Context) (err error) {
+func (h *Controller) RandomCanglimoDigest(c echo.Context) (err error) {
 	logger := serverCommon.ExtractLogger(c)
 
 	rss, err := h.getRSS(redis.ZsxqRandomCanglimoDigestPath, logger)

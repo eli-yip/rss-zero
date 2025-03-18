@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -19,10 +20,7 @@ type (
 		AccessToken *Cookie `json:"access_token"`
 	}
 
-	Cookie struct {
-		Value    string `json:"value"`
-		ExpireAt any    `json:"expire_at"`
-	}
+	Cookie common.Cookie
 
 	CookieResp struct {
 		AccessToken *Cookie      `json:"access_token,omitempty"`
@@ -33,13 +31,41 @@ type (
 	CookieStatus string
 )
 
+func (h *Controller) CheckCookie(c echo.Context) (err error) {
+	logger := common.ExtractLogger(c)
+
+	var resp CookieResp
+	resp.AccessToken = &Cookie{}
+
+	accessToken, err := h.cookie.Get(cookie.CookieTypeZsxqAccessToken)
+	if err != nil {
+		if errors.Is(err, cookie.ErrKeyNotExist) {
+			return c.JSON(http.StatusOK, common.WrapRespWithData("Zsxq access token not set", resp))
+		} else {
+			logger.Error("Failed to get zsxq access token from db", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		}
+	}
+
+	ttl, err := h.cookie.GetTTL(cookie.CookieTypeZsxqAccessToken)
+	if err != nil {
+		logger.Error("Failed to get zsxq access token ttl from db", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+	}
+
+	resp.AccessToken.Value = accessToken
+	resp.AccessToken.ExpireAt = time.Now().Add(ttl).Format(time.RFC3339)
+
+	return c.JSON(http.StatusOK, common.WrapRespWithData("Zsxq access token is valid", resp))
+}
+
 const (
 	CookieStatusSuccess CookieStatus = "success"
 	CookieStatusPending CookieStatus = "pending"
 	CookieStatusFailed  CookieStatus = "failed"
 )
 
-func (h *Controoler) UpdateCookie(c echo.Context) (err error) {
+func (h *Controller) UpdateCookie(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req ZsxqSetCookieReq

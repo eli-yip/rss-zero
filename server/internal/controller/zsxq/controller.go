@@ -10,7 +10,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 )
 
-type Controoler struct {
+type Controller struct {
 	redis    redis.Redis
 	cookie   cookie.CookieIface
 	db       *gorm.DB
@@ -19,8 +19,8 @@ type Controoler struct {
 	notifier notify.Notifier
 }
 
-func NewZsxqController(redis redis.Redis, cookie cookie.CookieIface, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *Controoler {
-	h := &Controoler{
+func NewZsxqController(redis redis.Redis, cookie cookie.CookieIface, db *gorm.DB, notifier notify.Notifier, logger *zap.Logger) *Controller {
+	h := &Controller{
 		redis:    redis,
 		cookie:   cookie,
 		db:       db,

@@ -14,10 +14,7 @@ import (
 )
 
 type (
-	Cookie struct {
-		Value    string `json:"value"`
-		ExpireAt any    `json:"expire_at"`
-	}
+	Cookie common.Cookie
 
 	CookieResp struct {
 		DC0Cookie   *Cookie `json:"d_c0_cookie,omitempty"`

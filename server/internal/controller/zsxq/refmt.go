@@ -17,7 +17,7 @@ type RefmtReq struct {
 	GroupID int `json:"group_id"`
 }
 
-func (h *Controoler) Reformat(c echo.Context) (err error) {
+func (h *Controller) Reformat(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req RefmtReq

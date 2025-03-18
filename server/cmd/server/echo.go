@@ -185,7 +185,7 @@ func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Con
 // /api/v1/export/zsxq
 // /api/v1/export/zhihu
 // /api/v1/export/xiaobot
-func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.Controoler, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
+func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	exportApi := apiGroup.Group("/export")
 
 	exportZsxqApi := exportApi.POST("/zsxq", zsxqHandler.Export)
@@ -217,7 +217,7 @@ func registerDEncryptionService(apiGroup *echo.Group, zhihuHandler *zhihuControl
 // /api/v1/refmt/zsxq
 // /api/v1/refmt/zhihu
 // /api/v1/refmt/xiaobot
-func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.Controoler, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
+func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	refmtApi := apiGroup.Group("/refmt")
 
 	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Reformat)
@@ -235,11 +235,14 @@ func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.Controol
 // /api/v1/cookie/xiaobot
 // /api/v1/cookie/zhihu
 // /api/v1/cookie/zhihu/check
-func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.Controoler, xiaobotHandler *xiaobotController.Controller, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
+func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller, xiaobotHandler *xiaobotController.Controller, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
 	cookieApi := apiGroup.Group("/cookie")
 
 	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateCookie)
 	zsxqCookieApi.Name = "Cookie updating route for zsxq"
+
+	zsxqCheckCookieApi := cookieApi.GET("/zsxq", zsxqHandler.CheckCookie)
+	zsxqCheckCookieApi.Name = "Cookie checking route for zsxq"
 
 	xiaobotCookieApi := cookieApi.POST("/xiaobot", xiaobotHandler.UpdateToken)
 	xiaobotCookieApi.Name = "Token updating route for xiaobot"
@@ -255,7 +258,7 @@ func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.Controoler
 }
 
 // /rss
-func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controoler, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedHandler.Handler) {
+func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedHandler.Handler) {
 	rssGroup := e.Group("/rss")
 	rssGroup.Use(
 		myMiddleware.SetRSSContentType(), // set content type to application/atom+xml
