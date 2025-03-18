@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -50,7 +51,7 @@ func (d *DBService) SavePaper(paper *Paper) (err error) { return d.Save(paper).E
 func (d *DBService) GetPaper(id string) (paper *Paper, err error) {
 	paper = new(Paper)
 	if err = d.Where("id = ?", id).First(paper).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get paper %s: %w", id, err)
 	}
 	return paper, nil
 }

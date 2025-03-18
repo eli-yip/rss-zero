@@ -1,5 +1,7 @@
 package db
 
+import "fmt"
+
 type Creator struct {
 	ID       string `gorm:"column:id;type:text;primaryKey"`
 	NickName string `gorm:"column:nickname;type:text"`
@@ -18,6 +20,8 @@ func (d *DBService) SaveCreator(creator *Creator) (err error) { return d.Save(cr
 
 func (d *DBService) GetCreatorName(id string) (string, error) {
 	var creator Creator
-	err := d.Where("id = ?", id).First(&creator).Error
-	return creator.NickName, err
+	if err := d.Where("id = ?", id).First(&creator).Error; err != nil {
+		return "", fmt.Errorf("failed to get creator %s: %w", id, err)
+	}
+	return creator.NickName, nil
 }

@@ -2,6 +2,7 @@ package export
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -51,17 +52,17 @@ func (s *ExportService) Export(w io.Writer, opt Option) (err error) {
 
 	_, err = w.Write([]byte(md.H1(paper.Name) + "\n\n"))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write paper name: %w", err)
 	}
 
-	authorName, err := s.db.GetCreatorName(paper.ID)
+	authorName, err := s.db.GetCreatorName(paper.CreatorID)
 	if err != nil {
 		return err
 	}
 
 	_, err = w.Write([]byte("作者：" + authorName + "\n\n"))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write author name: %w", err)
 	}
 
 	var (
@@ -93,11 +94,11 @@ func (s *ExportService) Export(w io.Writer, opt Option) (err error) {
 				Text:  post.Text,
 			})
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to render post %s: %w", post.ID, err)
 			}
 
 			if _, err := w.Write([]byte(fullText)); err != nil {
-				return err
+				return fmt.Errorf("failed to write post %s: %w", post.ID, err)
 			}
 
 			if finished && i == len(posts)-1 {
@@ -105,22 +106,21 @@ func (s *ExportService) Export(w io.Writer, opt Option) (err error) {
 			}
 
 			if _, err := w.Write([]byte("\n")); err != nil {
-				return err
+				return fmt.Errorf("failed to write post %s: %w", post.ID, err)
 			}
 
 			queryOpt.StartTime = lastTime
 		}
 	}
 
-	return
+	return nil
 }
 
 func (s *ExportService) FileName(opt Option) (fileName string) {
 	fileNameArr := []string{"小报童专栏", opt.PaperID}
 
 	fileNameArr = append(fileNameArr, opt.StartTime.Format("2006-01-02"))
-	// HACK: -1 day to make the end time inclusive: https://git.momoai.me/yezi/rss-zero/issues/55
-	fileNameArr = append(fileNameArr, opt.EndTime.Add(1*time.Hour*24).Format("2006-01-02"))
+	fileNameArr = append(fileNameArr, opt.EndTime.Format("2006-01-02"))
 
 	return strings.Join(fileNameArr, "-") + ".md"
 }

@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -63,7 +64,7 @@ func (d *DBService) FetchNPost(n int, opt Option) (ps []Post, err error) {
 	}
 
 	if err = query.Find(&ps).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch posts: %w", err)
 	}
 
 	return ps, nil
