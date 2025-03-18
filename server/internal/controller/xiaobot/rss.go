@@ -46,7 +46,7 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 }
 
 func (h *Controller) getRSS(key string, logger *zap.Logger) (output string, err error) {
-	logger = logger.With(zap.String("rss path", key))
+	logger = logger.With(zap.String("redis_key", key))
 	defer logger.Info("Task channel closes")
 
 	task := common.Task{TextCh: make(chan string), ErrCh: make(chan error), Logger: logger}
@@ -98,7 +98,7 @@ func (r *RssGenerator) generateRSS(key string, logger *zap.Logger) (output strin
 }
 
 func (r *RssGenerator) extractPaperID(key string) (paperID string, err error) {
-	strs := strings.Split(key, "_")
+	strs := strings.SplitN(key, "_", 3)
 	if len(strs) != 3 {
 		return "", errors.New("invalid rss key")
 	}
