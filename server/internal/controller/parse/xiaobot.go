@@ -15,7 +15,8 @@ import (
 
 type (
 	XiaobotParseRequest struct {
-		Data json.RawMessage `json:"data"`
+		PaperID string          `json:"paper_id"`
+		Data    json.RawMessage `json:"data"`
 	}
 )
 
@@ -51,7 +52,7 @@ func (h *Handler) ParseXiaobotPaper(c echo.Context) (err error) {
 				return
 			}
 
-			if _, err := parser.ParsePaperPost(postBytes, p.ID); err != nil {
+			if _, err := parser.ParsePaperPost(postBytes, req.PaperID); err != nil {
 				logger.Error("failed to parse xiaobot paper post", zap.Error(err))
 				return
 			}
