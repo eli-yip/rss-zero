@@ -343,6 +343,9 @@ func registerParse(apiGroup *echo.Group, parseHandler *parseHandler.Handler) {
 	parseApi := apiGroup.Group("/parse")
 	parseZhihuAnswerApi := parseApi.POST("/zhihu/answer", parseHandler.ParseZhihuAnswer)
 	parseZhihuAnswerApi.Name = "Parse zhihu answer route"
+
+	parseXiaobotPaperApi := parseApi.POST("/xiaobot", parseHandler.ParseXiaobotPaper)
+	parseXiaobotPaperApi.Name = "Parse xiaobot paper route"
 }
 
 func registerMacked(apiGroup *echo.Group, mackedHandler *mackedHandler.Handler) {

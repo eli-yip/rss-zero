@@ -14,7 +14,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-type Request struct {
+type ZhihuParseRequest struct {
 	Type     string          `json:"type"`
 	AuthorID string          `json:"author_id"`
 	Data     json.RawMessage `json:"data"`
@@ -28,7 +28,7 @@ type Response struct {
 func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	var req Request
+	var req ZhihuParseRequest
 	if err := c.Bind(&req); err != nil {
 		logger.Error("failed to bind request", zap.Error(err))
 		return c.JSON(http.StatusBadRequest, Response{Message: "invalid request"})
