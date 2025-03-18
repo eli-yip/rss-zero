@@ -1,19 +1,15 @@
 current_branch := shell("git branch --show-current")
 
 # Build all
-build:
-  #!/usr/bin/env bash
-  cd server
-  go build -o ../server-app ./cmd/server
-  cd ../webapp
-  bun run build
-  cd ..
-  if [ -d "dist" ]; then
-    rm -rf dist
-  fi
-  mv webapp/dist dist
-  echo "Build successful"
+build: build-backend build-frontend
+  mv server/server-app .
+  rm -rf dist
+  mv webapp/dist .
+  @echo "Build successful"
   ./server-app --config=server/config.toml
+
+clean:
+  rm -rf server-app dist
 
 # Lint the backend and frontend code
 lint: lint-backend lint-frontend
@@ -27,6 +23,10 @@ cli:
 [working-directory: 'server']
 tidy:
   go mod tidy
+
+[working-directory: 'server']
+build-backend:
+  go build -o server-app ./cmd/server
 
 [working-directory: 'server']
 lint-backend:
@@ -60,6 +60,10 @@ lint-frontend:
 [working-directory: 'webapp']
 format-frontend:
   bunx prettier --write .
+
+[working-directory: 'webapp']
+build-frontend:
+  bun run build
 
 commit:
   git add -A
