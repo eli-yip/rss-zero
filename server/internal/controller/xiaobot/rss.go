@@ -132,7 +132,7 @@ func (h *Controller) checkPaper(paperID string, logger *zap.Logger) (err error) 
 		if err != nil {
 			return err
 		}
-		_, err = parser.ParsePaper(data)
+		_, err = parser.ParsePaper(data, logger)
 		if err != nil {
 			return err
 		}

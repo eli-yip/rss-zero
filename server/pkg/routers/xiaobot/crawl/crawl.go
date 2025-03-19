@@ -57,7 +57,7 @@ func Crawl(paperID string, request request.Requester, parser parse.Parser,
 			}
 			logger.Info("Marshal post successfully")
 
-			_, err = parser.ParsePaperPost(postBytes, paperID)
+			_, err = parser.ParsePaperPost(postBytes, paperID, logger)
 			if err != nil {
 				logger.Error("Failed to parse paper post", zap.Error(err))
 				return err

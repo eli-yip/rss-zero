@@ -28,7 +28,7 @@ func (h *Controller) Reformat(c echo.Context) error {
 	}
 	logger.Info("Retieved xiaobot reformat request", zap.String("paper_id", req.PaperID))
 
-	parser, err := parse.NewParseService(parse.WithLogger(logger), parse.WithDB(h.db))
+	parser, err := parse.NewParseService(parse.WithDB(h.db))
 	if err != nil {
 		logger.Error("Failed to init xiaobot parse service", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to init xiaobot parse service"))

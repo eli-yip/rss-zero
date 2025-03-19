@@ -116,7 +116,7 @@ func initXiaobotServices(db *gorm.DB, logger *zap.Logger, cs cookie.CookieIface,
 	xiaobotRequestService := request.NewRequestService(cs, token, logger)
 
 	var xiaobotParser parse.Parser
-	if xiaobotParser, err = parse.NewParseService(parse.WithLogger(logger), parse.WithDB(xiaobotDBService)); err != nil {
+	if xiaobotParser, err = parse.NewParseService(parse.WithDB(xiaobotDBService)); err != nil {
 		return nil, nil, nil, err
 	}
 

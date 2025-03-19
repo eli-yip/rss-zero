@@ -33,7 +33,7 @@ func (h *Handler) ParseXiaobotPaper(c echo.Context) (err error) {
 
 	go func() {
 		var parser parse.Parser
-		if parser, err = parse.NewParseService(parse.WithLogger(pLogger), parse.WithDB(h.xiabotDBService)); err != nil {
+		if parser, err = parse.NewParseService(parse.WithDB(h.xiabotDBService)); err != nil {
 			logger.Error("failed to init xiaobot parser", zap.Error(err))
 			return
 		}
@@ -52,7 +52,7 @@ func (h *Handler) ParseXiaobotPaper(c echo.Context) (err error) {
 				return
 			}
 
-			if _, err := parser.ParsePaperPost(postBytes, req.PaperID); err != nil {
+			if _, err := parser.ParsePaperPost(postBytes, req.PaperID, logger); err != nil {
 				logger.Error("failed to parse xiaobot paper post", zap.Error(err))
 				return
 			}

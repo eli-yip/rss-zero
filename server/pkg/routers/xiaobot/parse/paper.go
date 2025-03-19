@@ -16,12 +16,12 @@ func (p *ParseService) SplitPaper(data json.RawMessage) (posts []apiModels.Paper
 	return posts, nil
 }
 
-func (p *ParseService) ParsePaper(data []byte) (paperName string, err error) {
+func (p *ParseService) ParsePaper(data []byte, logger *zap.Logger) (paperName string, err error) {
 	var paper apiModels.Paper
 	if err = json.Unmarshal(data, &paper); err != nil {
 		return "", err
 	}
-	p.logger.Info("Unmarshal data to paper")
+	logger.Info("Unmarshal data to paper")
 
 	if err = p.db.SaveCreator(&db.Creator{
 		ID:       paper.Creator.ID,
@@ -29,7 +29,7 @@ func (p *ParseService) ParsePaper(data []byte) (paperName string, err error) {
 	}); err != nil {
 		return "", err
 	}
-	p.logger.Info("Save creator to db", zap.String("id", paper.Creator.NickName))
+	logger.Info("Save creator to db", zap.String("id", paper.Creator.NickName))
 
 	if err = p.db.SavePaper(&db.Paper{
 		ID:        paper.Slug,
@@ -39,21 +39,20 @@ func (p *ParseService) ParsePaper(data []byte) (paperName string, err error) {
 	}); err != nil {
 		return "", err
 	}
-	p.logger.Info("Save paper to db", zap.String("name", paper.Name))
+	logger.Info("Save paper to db", zap.String("name", paper.Name))
 
 	return paper.Name, nil
 }
 
-func (p *ParseService) ParsePaperPost(data []byte, paperID string) (text string, err error) {
+func (p *ParseService) ParsePaperPost(data []byte, paperID string, logger *zap.Logger) (text string, err error) {
 	var post apiModels.PaperPost
 	if err = json.Unmarshal(data, &post); err != nil {
 		return "", err
 	}
-	p.logger.Info("Unmarshal data to post")
+	logger = logger.With(zap.String("post_id", post.ID))
+	logger.Info("Unmarshal data to post")
 
-	logger := p.logger.With(zap.String("id", post.ID), zap.String("uuid", post.ID))
-
-	// when the paper is a description, we don't need to parse it
+	// if the post is a description, we don't need to parse it
 	if post.IsDescription == 1 {
 		logger.Info("Skip parsing description post")
 		return "", nil
@@ -86,7 +85,7 @@ func (p *ParseService) ParsePaperPost(data []byte, paperID string) (text string,
 	}); err != nil {
 		return "", err
 	}
-	logger.Info("Save post to db")
+	logger.Info("Save post to db successfully")
 
 	return text, nil
 }

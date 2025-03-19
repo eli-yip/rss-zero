@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/md"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
@@ -16,8 +15,8 @@ import (
 
 type Parser interface {
 	SplitPaper(data json.RawMessage) (posts []apiModels.PaperPost, err error)
-	ParsePaper(data []byte) (paperName string, err error)
-	ParsePaperPost(data []byte, paperID string) (text string, err error)
+	ParsePaper(data []byte, logger *zap.Logger) (paperName string, err error)
+	ParsePaperPost(data []byte, paperID string, logger *zap.Logger) (text string, err error)
 	// ParseTime parse xiaobot time string to time.Time
 	// 	input: 2024-02-07T14:30:14.000000Z
 	// 	output: time.Time
@@ -27,15 +26,13 @@ type Parser interface {
 type ParseService struct {
 	renderIface.HTMLToMarkdown
 	*md.MarkdownFormatter
-	db     db.DB
-	logger *zap.Logger
+	db db.DB
 }
 
 func NewParseService(options ...Option) (Parser, error) {
 	p := &ParseService{
 		HTMLToMarkdown:    renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...),
 		MarkdownFormatter: md.NewMarkdownFormatter(),
-		logger:            log.DefaultLogger,
 	}
 
 	for _, o := range options {
@@ -49,10 +46,6 @@ func NewParseService(options ...Option) (Parser, error) {
 }
 
 type Option func(p *ParseService)
-
-func WithLogger(l *zap.Logger) Option {
-	return func(p *ParseService) { p.logger = l }
-}
 
 func WithDB(d db.DB) Option {
 	return func(p *ParseService) { p.db = d }
