@@ -21,6 +21,12 @@ func (a *AIService) Conclude(text string) (result string, err error) {
 	return a.askGPT(fmt.Sprintf(concludePrompt, text))
 }
 
+func (a *AIService) TranslateToZh(text string) (result string, err error) {
+	const translatePrompt = "请将下面的内容翻译成中文，只需要回答翻译后的纯文本（不需要使用引号包裹），不需要其他内容和任何格式。\n\"\"\"%s\"\"\""
+
+	return a.askGPT(fmt.Sprintf(translatePrompt, text))
+}
+
 // askGPT will ask model to generate a reply based on the prompt.
 func (a *AIService) askGPT(prompt string) (reply string, err error) {
 	req := openai.ChatCompletionRequest{

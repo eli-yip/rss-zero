@@ -9,6 +9,8 @@ type Release struct {
 	Tag         string    `gorm:"column:tag"`
 	Title       string    `gorm:"column:title"`
 	Body        string    `gorm:"column:body"`
+	RawBody     string    `gorm:"column:raw_body"`
+	Language    int       `gorm:"column:language"`
 	Excerpt     string    `gorm:"column:excerpt"`
 	PreRelease  bool      `gorm:"column:pre_release"`
 	PublishedAt time.Time `gorm:"column:published_at"`

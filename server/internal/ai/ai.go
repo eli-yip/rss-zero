@@ -22,6 +22,7 @@ type AI interface {
 	Text(path io.Reader) (text string, err error)
 	// Conclude method will take a text and return the conclusion of it.
 	Conclude(text string) (result string, err error)
+	TranslateToZh(text string) (result string, err error)
 }
 
 // AIService implements AI interface.
@@ -53,3 +54,5 @@ func (s *AIServiceWithoutAPI) Polish(text string) (result string, err error) { r
 func (s *AIServiceWithoutAPI) Text(stream io.Reader) (text string, err error) { return "", nil }
 
 func (s *AIServiceWithoutAPI) Conclude(text string) (result string, err error) { return text, nil }
+
+func (s *AIServiceWithoutAPI) TranslateToZh(text string) (result string, err error) { return text, nil }

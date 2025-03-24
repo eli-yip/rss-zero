@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/pemistahl/lingua-go"
 	"gorm.io/gorm"
 
+	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/github/request"
@@ -13,17 +15,28 @@ import (
 
 type Parser interface {
 	ParseAndSaveRelease(repoID string, release request.Release) error
+	detectLanguage(text string) (lingua.Language, bool)
 }
 
 type ParseService struct {
-	db          db.DB
-	mdFormatter *md.MarkdownFormatter
+	db               db.DB
+	ai               ai.AI
+	mdFormatter      *md.MarkdownFormatter
+	languageDetector lingua.LanguageDetector
 }
 
 func NewParseService(db db.DB) Parser {
+	languages := []lingua.Language{
+		lingua.English,
+		lingua.Chinese,
+	}
+	detector := lingua.NewLanguageDetectorBuilder().
+		FromLanguages(languages...).Build()
+
 	return &ParseService{
-		db:          db,
-		mdFormatter: md.NewMarkdownFormatter(),
+		db:               db,
+		mdFormatter:      md.NewMarkdownFormatter(),
+		languageDetector: detector,
 	}
 }
 
@@ -48,6 +61,20 @@ func (s *ParseService) ParseAndSaveRelease(repoID string, release request.Releas
 		}
 	}
 
+	rawBody := release.Body
+	language, exists := s.detectLanguage(release.Body)
+	if exists {
+		if len(release.Body) > 200 && language == lingua.English {
+			translatedBody, err := s.ai.TranslateToZh(release.Body)
+			if err != nil {
+				return fmt.Errorf("failed to translate release body: %w", err)
+			}
+			release.Body = translatedBody
+		}
+	} else {
+		return fmt.Errorf("failed to detect language: %w", err)
+	}
+
 	releaseToSave := db.Release{
 		ID:     release.ID,
 		RepoID: repoID,
@@ -60,6 +87,8 @@ func (s *ParseService) ParseAndSaveRelease(repoID string, release request.Releas
 			return release.Name
 		}(),
 		Body:        formattedBody,
+		RawBody:     rawBody,
+		Language:    int(language),
 		PreRelease:  release.Prerelease,
 		PublishedAt: release.PublishedAt,
 	}
