@@ -19,7 +19,7 @@ jobs:
       - name: use mirror
         run: go env -w GOPROXY=https://goproxy.cn,direct
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           version: latest
           working-directory: server
