@@ -58,7 +58,7 @@ func (rs *RequestService) setCookies(cookie string) {
 
 	for _, domain := range domains {
 		u, _ := url.Parse("https://" + domain)
-		for _, cp := range strings.SplitN(cookie, ";", -1) {
+		for cp := range strings.SplitSeq(cookie, ";") {
 			if n, v, ok := strings.Cut(strings.TrimSpace(cp), "="); ok {
 				cookie := &http.Cookie{Name: n, Value: v}
 				rs.client.Jar.SetCookies(u, []*http.Cookie{cookie})
@@ -87,7 +87,9 @@ func (rs *RequestService) LimitRaw(u string) (data []byte, err error) {
 			logger.Error("failed to request url", zap.Error(err))
 			continue
 		}
-		defer resp.Body.Close()
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 
 		if resp.StatusCode != http.StatusOK {
 			err = fmt.Errorf("bad status code: %d", resp.StatusCode)

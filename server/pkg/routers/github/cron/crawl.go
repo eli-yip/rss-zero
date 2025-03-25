@@ -29,7 +29,7 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifie
 		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: cronJobID}}
 
 		var err error
-		var errCount int = 0
+		var errCount = 0
 
 		defer func() {
 			if errCount > 0 {

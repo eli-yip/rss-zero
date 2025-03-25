@@ -81,8 +81,10 @@ func (h *Controller) Export(c echo.Context) (err error) {
 
 		exportErrCh := make(chan error, 1)
 		go func() {
-			defer pw.Close()
-			defer wg.Done()
+			defer func() {
+				_ = pw.Close()
+				wg.Done()
+			}()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()

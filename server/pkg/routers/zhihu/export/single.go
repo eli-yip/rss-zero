@@ -59,7 +59,9 @@ func (s *ExportService) exportSingleAnswer(writer io.Writer, opt Option) (err er
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir: %w", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		_ = os.RemoveAll(tempDir)
+	}()
 
 	for !finished {
 		answers, err := s.db.FetchNAnswer(20, queryOpt)
@@ -113,7 +115,9 @@ func (s *ExportService) exportSingleAnswer(writer io.Writer, opt Option) (err er
 	}
 
 	zipWriter := zip.NewWriter(writer)
-	defer zipWriter.Close()
+	defer func() {
+		_ = zipWriter.Close()
+	}()
 
 	files, err := os.ReadDir(tempDir)
 	if err != nil {
@@ -125,7 +129,9 @@ func (s *ExportService) exportSingleAnswer(writer io.Writer, opt Option) (err er
 		if err != nil {
 			return fmt.Errorf("failed to open file %s: %w", file.Name(), err)
 		}
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 
 		w, err := zipWriter.Create(file.Name())
 		if err != nil {
@@ -158,7 +164,9 @@ func (s *ExportService) exportSingleArticle(writer io.Writer, opt Option) (err e
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir: %w", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		_ = os.RemoveAll(tempDir)
+	}()
 
 	for !finished {
 		articles, err := s.db.FetchNArticle(20, queryOpt)
@@ -202,7 +210,9 @@ func (s *ExportService) exportSingleArticle(writer io.Writer, opt Option) (err e
 	}
 
 	zipWriter := zip.NewWriter(writer)
-	defer zipWriter.Close()
+	defer func() {
+		_ = zipWriter.Close()
+	}()
 
 	files, err := os.ReadDir(tempDir)
 	if err != nil {
@@ -214,7 +224,9 @@ func (s *ExportService) exportSingleArticle(writer io.Writer, opt Option) (err e
 		if err != nil {
 			return fmt.Errorf("failed to open file %s: %w", file.Name(), err)
 		}
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 
 		w, err := zipWriter.Create(file.Name())
 		if err != nil {
@@ -247,7 +259,9 @@ func (s *ExportService) exportSinglePin(writer io.Writer, opt Option) (err error
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir: %w", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		_ = os.RemoveAll(tempDir)
+	}()
 
 	for !finished {
 		pins, err := s.db.FetchNPin(20, queryOpt)
@@ -292,7 +306,9 @@ func (s *ExportService) exportSinglePin(writer io.Writer, opt Option) (err error
 	}
 
 	zipWriter := zip.NewWriter(writer)
-	defer zipWriter.Close()
+	defer func() {
+		_ = zipWriter.Close()
+	}()
 
 	files, err := os.ReadDir(tempDir)
 	if err != nil {
@@ -304,7 +320,9 @@ func (s *ExportService) exportSinglePin(writer io.Writer, opt Option) (err error
 		if err != nil {
 			return fmt.Errorf("failed to open file %s: %w", file.Name(), err)
 		}
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 
 		w, err := zipWriter.Create(file.Name())
 		if err != nil {

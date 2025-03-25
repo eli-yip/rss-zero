@@ -64,7 +64,7 @@ type RequestService struct {
 }
 
 func NewLimiter() <-chan struct{} {
-	var tokenCh chan struct{} = make(chan struct{})
+	tokenCh := make(chan struct{})
 	go func() {
 		for {
 			tokenCh <- struct{}{}
@@ -185,7 +185,9 @@ func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Log
 			logger.Error("Failed to request", zap.Error(err))
 			continue
 		}
-		defer resp.Body.Close()
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
@@ -295,7 +297,9 @@ func NoLimitStream(ctx context.Context, client *http.Client, u string, maxRetry 
 		// do not defer resp body close here because we will save it to minio
 
 		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
+			defer func() {
+				_ = resp.Body.Close()
+			}()
 			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
 			logger.Error("bad status code", zap.Int("status code", resp.StatusCode))
 			continue

@@ -33,14 +33,14 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 		4848142822512458, // Cause ariticle markdown converter error
 		1525884245581542, // Cause ariticle markdown converter error
 	}
-	if slices.Contains(topicIDSkip, topic.Topic.TopicID) {
+	if slices.Contains(topicIDSkip, topic.TopicID) {
 		logger.Info("Skip crawling 2855142121821411, as it will cause database error")
 		return
 	}
 
-	logger.Info("Start to process topic", zap.String("type", topic.Topic.Type))
+	logger.Info("Start to process topic", zap.String("type", topic.Type))
 	// Parse topic and set result
-	switch topic.Topic.Type {
+	switch topic.Type {
 	case "talk":
 		if topic.AuthorID, topic.AuthorName, err = s.parseTalk(logger, &topic.Topic); err != nil {
 			if err == ErrNoText {
@@ -58,7 +58,7 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 	}
 	logger.Info("Parse topic text successfully")
 
-	createTimeInTime, err := zsxqTime.DecodeZsxqAPITime(topic.Topic.CreateTime)
+	createTimeInTime, err := zsxqTime.DecodeZsxqAPITime(topic.CreateTime)
 	if err != nil {
 		return "", fmt.Errorf("failed to decode create time: %w", err)
 	}
@@ -66,37 +66,37 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 
 	// Render topic to markdown text
 	if topic.Text, err = s.render.Text(&render.Topic{
-		ID:         topic.Topic.TopicID,
-		GroupID:    topic.Topic.Group.GroupID,
-		Type:       topic.Topic.Type,
-		Talk:       topic.Topic.Talk,
-		Question:   topic.Topic.Question,
-		Answer:     topic.Topic.Answer,
+		ID:         topic.TopicID,
+		GroupID:    topic.Group.GroupID,
+		Type:       topic.Type,
+		Talk:       topic.Talk,
+		Question:   topic.Question,
+		Answer:     topic.Answer,
 		AuthorName: topic.AuthorName,
 	}); err != nil {
 		return "", fmt.Errorf("failed to render topic to markdown text: %w", err)
 	}
 	logger.Info("Render topic to markdown text successfully")
 
-	if topic.Topic.Title == nil ||
+	if topic.Title == nil ||
 		// Zsxq API will return a excerpt with suffix "..." as title if there is no title
-		strings.HasSuffix(*topic.Topic.Title, "...") {
+		strings.HasSuffix(*topic.Title, "...") {
 		title, err := s.ai.Conclude(topic.Text)
 		if err != nil {
 			return "", fmt.Errorf("failed to conclude title: %w", err)
 		}
-		topic.Topic.Title = &title
+		topic.Title = &title
 	}
 
 	// Save topic to database
 	if err = s.db.SaveTopic(&db.Topic{
-		ID:       topic.Topic.TopicID,
+		ID:       topic.TopicID,
 		Time:     createTimeInTime,
-		GroupID:  topic.Topic.Group.GroupID,
-		Type:     topic.Topic.Type,
-		Digested: topic.Topic.Digested,
+		GroupID:  topic.Group.GroupID,
+		Type:     topic.Type,
+		Digested: topic.Digested,
 		AuthorID: topic.AuthorID,
-		Title:    topic.Topic.Title,
+		Title:    topic.Title,
 		Text:     topic.Text,
 		Raw:      topic.Raw,
 	}); err != nil {

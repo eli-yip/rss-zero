@@ -84,7 +84,9 @@ func (r *RequestService) Limit(u string) (data []byte, err error) {
 			logger.Error("Failed to request url", zap.Error(err))
 			continue
 		}
-		defer resp.Body.Close()
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 
 		if resp.StatusCode != http.StatusOK {
 			logger.Error("Status code not 200", zap.Int("status", resp.StatusCode))
