@@ -3,6 +3,7 @@ package macked
 import (
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
 
 	"go.uber.org/zap"
@@ -59,26 +60,28 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 		return fmt.Errorf("failed to get subscribed app infos: %w", err)
 	}
 	subscribedAppNames := lo.Map(subscribedAppInfos, func(info AppInfo, _ int) string { return info.AppName })
-	appIDToAppName := lo.SliceToMap(subscribedAppInfos, func(info AppInfo) (string, string) { return info.ID, info.AppName })
 
 	var unreadPosts []ParsedPost
 	for _, p := range parsedPosts {
 		if !p.Modified.After(latestPostTimeInDB) {
 			break
 		}
-		if isSubscribed(p.Title, subscribedAppNames) {
-			unreadPosts = append(unreadPosts, p)
-			if appID, ok := appIDToAppName[p.ID]; ok {
-				logger.Info("Found unread post", zap.String("post_title", p.Title), zap.String("app_name", appIDToAppName[p.ID]))
-				if err = db.UpdateAppInfo(appID, p.Modified); err != nil {
-					logger.Error("Failed to update app info", zap.Error(err))
-					return fmt.Errorf("failed to update app info: %w", err)
-				}
-				logger.Info("Updated app info", zap.String("app_id", p.ID), zap.String("app_name", appID))
-			} else {
-				logger.Error("App info not found in appIDToAppName map", zap.String("app_id", p.ID))
-			}
+		idx := slices.IndexFunc(subscribedAppNames, func(name string) bool { return strings.HasPrefix(strings.ToLower(p.Title), strings.ToLower(name)) })
+		if idx == -1 {
+			continue
 		}
+		unreadPosts = append(unreadPosts, p)
+		appInfo := subscribedAppInfos[idx]
+		logger.Info("Found unread post",
+			zap.String("post_title", p.Title),
+			zap.String("app_name", appInfo.AppName),
+			zap.String("macked_app_id", p.ID),
+			zap.String("macked_app_name", p.Title))
+		if err = db.UpdateAppInfo(appInfo.ID, p.Modified); err != nil {
+			logger.Error("Failed to update app info", zap.Error(err))
+			return fmt.Errorf("failed to update app info: %w", err)
+		}
+		logger.Info("Updated app info", zap.String("app_id", appInfo.ID), zap.String("app_name", appInfo.AppName))
 	}
 
 	if err = renderAndSaveRSS(redisService, unreadPosts); err != nil {
