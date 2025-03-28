@@ -2,6 +2,7 @@ package crawl
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/github/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/github/request"
@@ -20,7 +21,7 @@ func CrawlRepo(user, repo, repoID, token string, parser parse.Parser, logger *za
 		return fmt.Errorf("failed to request github API: %w", err)
 	}
 
-	for _, r := range releases {
+	for r := range slices.Values(releases) {
 		if err = parser.ParseAndSaveRelease(repoID, r); err != nil {
 			logger.Error("Failed to parse and save release", zap.Error(err))
 			return fmt.Errorf("failed to parse and save release: %w", err)
