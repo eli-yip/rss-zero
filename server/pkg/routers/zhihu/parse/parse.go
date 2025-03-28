@@ -50,10 +50,6 @@ func NewParseService(options ...Option) (Parser, error) {
 		s.htmlToMarkdown = renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
 	}
 
-	if s.ai == nil {
-		s.ai = ai.NewAIService("", "")
-	}
-
 	if s.mdfmt == nil {
 		s.mdfmt = md.NewMarkdownFormatter()
 	}

@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/ai"
 	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/file"
@@ -76,7 +77,8 @@ func main() {
 
 	var definitionToFunc jobController.DefinitionToFunc
 	var cronService *cron.CronService
-	if cronService, definitionToFunc, err = setupCronCrawlJob(logger, redisService, cookieService, db, bark); err != nil {
+	ai := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
+	if cronService, definitionToFunc, err = setupCronCrawlJob(logger, redisService, cookieService, db, ai, bark); err != nil {
 		logger.Fatal("Failed to setup cron jobs", zap.Error(err))
 	}
 	logger.Info("Init cron service and jobs successfully")
@@ -86,7 +88,7 @@ func main() {
 		logger.Fatal("Failed to init file service", zap.Error(err))
 	}
 
-	e := setupEcho(redisService, cookieService, db, bark, fileService, definitionToFunc, cronService, logger)
+	e := setupEcho(redisService, cookieService, db, ai, bark, fileService, definitionToFunc, cronService, logger)
 	logger.Info("Init echo server successfully")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

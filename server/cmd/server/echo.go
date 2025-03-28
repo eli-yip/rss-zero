@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
+	"github.com/eli-yip/rss-zero/internal/ai"
 	archiveController "github.com/eli-yip/rss-zero/internal/controller/archive"
 	endoflifeController "github.com/eli-yip/rss-zero/internal/controller/endoflife"
 	githubController "github.com/eli-yip/rss-zero/internal/controller/github"
@@ -37,6 +38,7 @@ import (
 func setupEcho(redisService redis.Redis,
 	cookieService cookie.CookieIface,
 	db *gorm.DB,
+	ai ai.AI,
 	notifier notify.Notifier,
 	fileService file.File,
 	definitionToFunc jobController.DefinitionToFunc,
@@ -78,13 +80,13 @@ func setupEcho(redisService redis.Redis,
 	endOfLifeHandler := endoflifeController.NewController(redisService, logger)
 	cronDBService := cronDB.NewDBService(db)
 	jobHandler := jobController.NewController(cronService,
-		redisService, cookieService, db, notifier,
+		redisService, cookieService, db, ai, notifier,
 		cronDBService, definitionToFunc, logger)
 	archiveHandler := archiveController.NewController(db)
 	githubDBService := githubDB.NewDBService(db)
 	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)
 	mHandler := mackedHandler.NewHandler(redisService, macked.NewDBService(db), logger)
-	parseHandler := parseHandler.NewHandler(db, cookieService, fileService, notifier)
+	parseHandler := parseHandler.NewHandler(db, ai, cookieService, fileService, notifier)
 	migrateHandler := migrateController.NewController(logger, db)
 
 	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mHandler)

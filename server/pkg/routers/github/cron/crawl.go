@@ -9,6 +9,7 @@ import (
 
 	"github.com/rs/xid"
 
+	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -21,7 +22,7 @@ import (
 	githubParse "github.com/eli-yip/rss-zero/pkg/routers/github/parse"
 )
 
-func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, aiService ai.AI, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronJobID := xid.New().String()
 		logger := log.DefaultLogger.With(zap.String("cron_job_id", cronJobID))
@@ -53,7 +54,7 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifie
 		}
 
 		dbService := githubDB.NewDBService(db)
-		parseService := githubParse.NewParseService(dbService)
+		parseService := githubParse.NewParseService(dbService, aiService)
 
 		var subs []githubDB.Sub
 		if subs, err = dbService.GetSubs(); err != nil {

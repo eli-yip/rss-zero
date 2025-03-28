@@ -25,7 +25,7 @@ type ParseService struct {
 	languageDetector lingua.LanguageDetector
 }
 
-func NewParseService(db db.DB) Parser {
+func NewParseService(db db.DB, ai ai.AI) Parser {
 	languages := []lingua.Language{
 		lingua.English,
 		lingua.Chinese,
@@ -35,6 +35,7 @@ func NewParseService(db db.DB) Parser {
 
 	return &ParseService{
 		db:               db,
+		ai:               ai,
 		mdFormatter:      md.NewMarkdownFormatter(),
 		languageDetector: detector,
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 func TestDetectLanguage(t *testing.T) {
-	parser := NewParseService(nil)
+	parser := NewParseService(nil, nil)
 
 	type testCase struct {
 		name     string

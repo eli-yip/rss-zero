@@ -31,7 +31,7 @@ type ResumeJobInfo struct {
 	JobID, LastCrawled string
 }
 
-func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []string, exclude []string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []string, exclude []string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronJobInfo := cron.CronJobInfo{}
 
@@ -111,7 +111,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 		logger.Info("Get zsxq cookie successfully", zap.String("cookie", zsxqAccessToken))
 
 		// init services needed by cron crawl and render job
-		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(zsxqAccessToken, db, logger)
+		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(zsxqAccessToken, db, ai, logger)
 		if err != nil {
 			logger.Error("Failed to init zsxq services", zap.Error(err))
 			return
@@ -180,7 +180,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 	}
 }
 
-func prepareZsxqServices(cookie string, db *gorm.DB, logger *zap.Logger,
+func prepareZsxqServices(cookie string, db *gorm.DB, ai ai.AI, logger *zap.Logger,
 ) (dbService zsxqDB.DB, requestService request.Requester, parseService parse.Parser, rssRenderService render.RSSRenderer, err error) {
 	dbService = zsxqDB.NewDBService(db)
 
@@ -191,15 +191,13 @@ func prepareZsxqServices(cookie string, db *gorm.DB, logger *zap.Logger,
 		return nil, nil, nil, nil, fmt.Errorf("failed to init zsxq file service: %w", err)
 	}
 
-	aiService := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
-
 	markdownRender := render.NewMarkdownRenderService(dbService)
 
 	if parseService, err = parse.NewParseService(
 		fileService,
 		requestService,
 		dbService,
-		aiService,
+		ai,
 		markdownRender); err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to init zsxq parse service: %w", err)
 	}

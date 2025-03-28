@@ -3,7 +3,6 @@ package parse
 import (
 	"gorm.io/gorm"
 
-	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/notify"
@@ -26,7 +25,7 @@ type Handler struct {
 	aiService     ai.AI
 }
 
-func NewHandler(db *gorm.DB, cookieService cookie.CookieIface, fileService file.File, notifier notify.Notifier) *Handler {
+func NewHandler(db *gorm.DB, ai ai.AI, cookieService cookie.CookieIface, fileService file.File, notifier notify.Notifier) *Handler {
 	zhihuDBService := zhihuDB.NewDBService(db)
 	xiabotDBService := xiaobotDB.NewDBService(db)
 	return &Handler{
@@ -38,6 +37,6 @@ func NewHandler(db *gorm.DB, cookieService cookie.CookieIface, fileService file.
 		cookieService: cookieService,
 		notifier:      notifier,
 		fileService:   fileService,
-		aiService:     ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL),
+		aiService:     ai,
 	}
 }

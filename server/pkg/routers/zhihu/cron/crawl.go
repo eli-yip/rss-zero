@@ -31,7 +31,7 @@ type ResumeJobInfo struct {
 	JobID, LastCrawled string
 }
 
-func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclude []string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclude []string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	// If resumeJobID is not empty, then resume the crawl from the breakpoint based on lastCrawl.
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		var cronJobInfo cron.CronJobInfo
@@ -115,7 +115,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 			}
 		}()
 
-		dbService, requestService, parser, err := initZhihuServices(db, cookieService, logger)
+		dbService, requestService, parser, err := initZhihuServices(db, ai, cookieService, logger)
 		if err != nil {
 			otherErr := cookie.HandleZhihuCookiesErr(err, notifier, logger)
 			if otherErr != nil {
@@ -324,7 +324,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 	}
 }
 
-func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
+func initZhihuServices(db *gorm.DB, aiService ai.AI, cs cookie.CookieIface, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
 	var err error
 
 	var (
@@ -333,7 +333,6 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 		fileService    file.File
 		htmlToMarkdown renderIface.HTMLToMarkdown
 		imageParser    parse.Imager
-		aiService      ai.AI
 		parser         parse.Parser
 	)
 
@@ -359,8 +358,6 @@ func initZhihuServices(db *gorm.DB, cs cookie.CookieIface, logger *zap.Logger) (
 	htmlToMarkdown = renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
 
 	imageParser = parse.NewOnlineImageParser(requestService, fileService, dbService)
-
-	aiService = ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
 
 	parser, err = parse.InitParser(aiService, imageParser, htmlToMarkdown, fileService, dbService)
 	if err != nil {
