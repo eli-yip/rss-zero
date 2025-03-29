@@ -1,0 +1,7 @@
+#:schema https://golangci-lint.run/jsonschema/golangci.jsonschema.json
+version = "2"
+
+[[linters.exclusions.rules]]
+linters = [ "errcheck" ]
+source = "^\\s*defer\\s+" # don't detect defer with error: https://github.com/kisielk/errcheck/issues/101#issuecomment-2561722380
+

@@ -71,7 +71,7 @@ func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
 	queryOpt.EndTime = opt.EndTime
 
 	var (
-		finished bool = false
+		finished  = false
 		lastTime time.Time
 	)
 

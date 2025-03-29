@@ -58,7 +58,7 @@ func (rs *RequestService) setCookies(cookie string) {
 
 	for _, domain := range domains {
 		u, _ := url.Parse("https://" + domain)
-		for _, cp := range strings.SplitN(cookie, ";", -1) {
+		for cp := range strings.SplitSeq(cookie, ";") {
 			if n, v, ok := strings.Cut(strings.TrimSpace(cp), "="); ok {
 				cookie := &http.Cookie{Name: n, Value: v}
 				rs.client.Jar.SetCookies(u, []*http.Cookie{cookie})

@@ -75,7 +75,7 @@ func NewRequestService(cookie string, logger *zap.Logger) Requester {
 }
 
 func (r *RequestService) SetCookies(c string) {
-	var domains []string = []string{
+	var domains = []string{
 		"articles.zsxq.com",
 		"api.zsxq.com",
 	}

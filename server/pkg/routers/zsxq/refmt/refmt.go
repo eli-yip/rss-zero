@@ -70,8 +70,8 @@ func (s *RefmtService) Reformat(gid int) {
 	var (
 		wg       sync.WaitGroup
 		count    int64                                  // atomic, count how many topics are formatted
-		topicSet mapset.Set[int] = mapset.NewSet[int]() // store topicIDs formatted
-		errCh    chan errMessage = make(chan errMessage, 100)
+		topicSet  = mapset.NewSet[int]() // store topicIDs formatted
+		errCh     = make(chan errMessage, 100)
 	)
 
 	for {
@@ -199,10 +199,10 @@ func (s *RefmtService) formatTopic(topic *zsxqDB.Topic, errCh chan errMessage) {
 	textBytes, err := s.render.Text(&render.Topic{
 		ID:         topic.ID,
 		GroupID:    topic.GroupID,
-		Type:       result.Topic.Type,
-		Talk:       result.Topic.Talk,
-		Question:   result.Topic.Question,
-		Answer:     result.Topic.Answer,
+		Type:       result.Type,
+		Talk:       result.Talk,
+		Question:   result.Question,
+		Answer:     result.Answer,
 		AuthorName: authorName,
 	})
 	if err != nil {
@@ -221,7 +221,7 @@ func (s *RefmtService) formatTopic(topic *zsxqDB.Topic, errCh chan errMessage) {
 		AuthorID: topic.AuthorID,
 		Title:    topic.Title,
 		Text:     string(textBytes),
-		Digested: result.Topic.Digested,
+		Digested: result.Digested,
 		Raw:      topic.Raw,
 	}); err != nil {
 		logger.Error("failed to update topic", zap.Error(err))
@@ -235,10 +235,10 @@ func (s *RefmtService) formatTopic(topic *zsxqDB.Topic, errCh chan errMessage) {
 
 // format Article if exist
 func (s *RefmtService) formatArticle(result models.TopicParseResult, logger *zap.Logger, errCh chan errMessage) error {
-	if result.Topic.Talk != nil && result.Topic.Talk.Article != nil {
-		logger := logger.With(zap.String("article_id", result.Topic.Talk.Article.ArticleID))
+	if result.Talk != nil && result.Talk.Article != nil {
+		logger := logger.With(zap.String("article_id", result.Talk.Article.ArticleID))
 
-		article, err := s.db.GetArticle(result.Topic.Talk.Article.ArticleID)
+		article, err := s.db.GetArticle(result.Talk.Article.ArticleID)
 		if err != nil {
 			logger.Error("Failed to get article from database", zap.Error(err))
 			errCh <- errMessage{topicID: result.TopicID, err: err}

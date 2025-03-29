@@ -70,8 +70,8 @@ func (z *ZvideoParseService) ParseZvideoList(content []byte, logger *zap.Logger)
 		}
 
 		var (
-			bestBitrate float64 = 0
-			bestStreem  string  = ""
+			bestBitrate  = 0.0
+			bestStreem    = ""
 		)
 
 		if zvideo.Video.PlayList != nil {
