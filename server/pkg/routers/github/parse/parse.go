@@ -68,7 +68,7 @@ func (s *ParseService) ParseAndSaveRelease(repoID string, release request.Releas
 			release.Body = translatedBody
 		}
 	} else {
-		return fmt.Errorf("failed to detect language: %w", err)
+		return fmt.Errorf("failed to detect language: %w, body content: %s", err, release.Body)
 	}
 
 	formattedBody, err := s.mdFormatter.FormatStr(release.Body)
