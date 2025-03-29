@@ -57,7 +57,7 @@ func (s *ParseService) ParseAndSaveRelease(repoID string, release request.Releas
 	}
 
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		if releaseInDB.PublishedAt.After(release.PublishedAt) {
+		if !releaseInDB.PublishedAt.Before(release.PublishedAt) {
 			return nil
 		}
 	}
