@@ -29,8 +29,8 @@ func CrawlGroup(groupID int, request request.Requester,
 	logger.Info("Start to crawl zsxq group", zap.Int("group_id", groupID))
 
 	var (
-		finished  = false
-		firstTime = true
+		finished  bool = false
+		firstTime bool = true
 	)
 	var createTime time.Time
 	for !finished {
@@ -63,9 +63,9 @@ func CrawlGroup(groupID int, request request.Requester,
 				return fmt.Errorf("failed to unmarshal topic: %w", err)
 			}
 
-			logger := logger.With(zap.Int("topic_id", result.TopicID))
+			logger := logger.With(zap.Int("topic_id", result.Topic.TopicID))
 
-			createTime, err = zsxqTime.DecodeZsxqAPITime(result.CreateTime)
+			createTime, err = zsxqTime.DecodeZsxqAPITime(result.Topic.CreateTime)
 			if err != nil {
 				logger.Error("Failed to decode create time", zap.Error(err))
 				return fmt.Errorf("failed to decode create time: %w", err)
@@ -122,15 +122,15 @@ func CrawlGroup(groupID int, request request.Requester,
 				return fmt.Errorf("failed to unmarshal topic: %w", err)
 			}
 
-			logger := logger.With(zap.Int("topic_id", result.TopicID))
+			logger := logger.With(zap.Int("topic_id", result.Topic.TopicID))
 
-			createTime, err = zsxqTime.DecodeZsxqAPITime(result.CreateTime)
+			createTime, err = zsxqTime.DecodeZsxqAPITime(result.Topic.CreateTime)
 			if err != nil {
 				logger.Error("Failed to decode create time", zap.Error(err))
 				return fmt.Errorf("failed to decode create time: %w", err)
 			}
 
-			logger.Info("start to parse topic", zap.Int("topic_id", result.TopicID))
+			logger.Info("start to parse topic", zap.Int("topic_id", result.Topic.TopicID))
 			if _, err := parser.ParseTopic(&result, logger); err != nil {
 				logger.Error("Failed to parse topic", zap.Error(err))
 				return fmt.Errorf("failed to parse topic: %w", err)

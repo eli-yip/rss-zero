@@ -57,9 +57,7 @@ func (s *ParseService) saveVoice(logger *zap.Logger, voice *models.Voice, topicI
 	if err != nil {
 		return fmt.Errorf("failed to get voice stream: %w", err)
 	}
-	defer func() {
-		_ = voiceStream.Close()
-	}()
+	defer voiceStream.Close()
 
 	transcript, err := s.ai.Text(voiceStream)
 	if err != nil {

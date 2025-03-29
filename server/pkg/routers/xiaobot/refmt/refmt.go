@@ -69,7 +69,7 @@ func (s *ReformatService) Reformat(paperID string) {
 	var (
 		wg    sync.WaitGroup
 		count int64
-		idSet = mapset.NewSet[string]()
+		idSet mapset.Set[string] = mapset.NewSet[string]()
 	)
 
 	for {

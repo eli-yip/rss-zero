@@ -46,7 +46,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 		logger := log.DefaultLogger.With(zap.String("cron_job_id", cronJobID))
 
 		var err error
-		var errCount = 0
+		var errCount int = 0
 
 		cronDBService := cronDB.NewDBService(db)
 		runningJobID, err := cronDBService.CheckRunningJob(taskID)

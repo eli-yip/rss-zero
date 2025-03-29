@@ -30,9 +30,7 @@ func requestUrl(ctx context.Context, u string, opts ...RequestOption) (data []by
 	if err != nil {
 		return nil, fmt.Errorf("failed to do request: %v", err)
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to do request, bad status code: %d", resp.StatusCode)

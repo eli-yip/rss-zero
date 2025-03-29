@@ -30,7 +30,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: cronJobID}}
 
 		var err error
-		var errCount = 0
+		var errCount int = 0
 
 		defer func() {
 			if errCount > 0 {

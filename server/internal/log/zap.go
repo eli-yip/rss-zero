@@ -23,9 +23,7 @@ func NewZapLogger() *zap.Logger {
 		MaxAge:     30,
 		Compress:   true,
 	}
-	defer func() {
-		_ = lumberjacklogger.Close()
-	}()
+	defer lumberjacklogger.Close()
 
 	var core zapcore.Core
 	var logger *zap.Logger

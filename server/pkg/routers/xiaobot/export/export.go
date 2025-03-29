@@ -66,7 +66,7 @@ func (s *ExportService) Export(w io.Writer, opt Option) (err error) {
 	}
 
 	var (
-		finished = false
+		finished bool = false
 		lastTime time.Time
 	)
 

@@ -75,7 +75,7 @@ func NewRequestService(cookie string, logger *zap.Logger) Requester {
 }
 
 func (r *RequestService) SetCookies(c string) {
-	var domains = []string{
+	var domains []string = []string{
 		"articles.zsxq.com",
 		"api.zsxq.com",
 	}
@@ -132,9 +132,7 @@ func (r *RequestService) Limit(ctx context.Context, u string, logger *zap.Logger
 			logger.Error("Failed to request url", zap.Error(err))
 			continue
 		}
-		defer func() {
-			_ = resp.Body.Close()
-		}()
+		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
@@ -215,9 +213,7 @@ func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Log
 			logger.Error("Failed to request url", zap.Error(err))
 			continue
 		}
-		defer func() {
-			_ = resp.Body.Close()
-		}()
+		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			err = fmt.Errorf("bad status code: %d", resp.StatusCode)
@@ -265,9 +261,7 @@ func (r *RequestService) LimitStream(ctx context.Context, u string, logger *zap.
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			defer func() {
-				_ = resp.Body.Close()
-			}()
+			defer resp.Body.Close()
 			err = fmt.Errorf("bad status code: %d", resp.StatusCode)
 			logger.Error("bad status code", zap.Error(err))
 			continue
@@ -303,9 +297,7 @@ func (r *RequestService) NoLimit(ctx context.Context, u string, logger *zap.Logg
 			logger.Error("Failed to request url", zap.Error(err))
 			continue
 		}
-		defer func() {
-			_ = resp.Body.Close()
-		}()
+		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			err = fmt.Errorf("bad status code: %d", resp.StatusCode)

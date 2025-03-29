@@ -30,9 +30,7 @@ func GetReleaseCycles(product string) (cycles []cycle, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest release API response: %w", err)
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to get latest release API response, bad status code: %d", resp.StatusCode)

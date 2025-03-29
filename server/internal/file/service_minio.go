@@ -43,9 +43,7 @@ func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, si
 	if stream == nil {
 		return errors.New("no body")
 	}
-	defer func() {
-		_ = stream.Close()
-	}()
+	defer stream.Close()
 
 	contentType := s.getContentType(objectKey)
 
