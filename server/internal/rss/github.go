@@ -2,6 +2,7 @@ package rss
 
 import (
 	"fmt"
+	"slices"
 
 	"go.uber.org/zap"
 
@@ -40,7 +41,7 @@ func GenerateGitHub(subID string, dbService githubDB.DB, logger *zap.Logger) (pa
 	}
 
 	rs := make([]render.RSSItem, 0, len(releases))
-	for _, r := range releases {
+	for r := range slices.Values(releases) {
 		rs = append(rs, render.RSSItem{
 			ID:         r.ID,
 			Link:       r.URL,
@@ -52,7 +53,12 @@ func GenerateGitHub(subID string, dbService githubDB.DB, logger *zap.Logger) (pa
 				}
 				return r.Title
 			}(),
-			Body:     r.Body,
+			Body: func() string {
+				if r.Body == "" {
+					return r.RawBody
+				}
+				return r.Body
+			}(),
 			TagName:  r.Tag,
 			Prelease: r.PreRelease,
 		})

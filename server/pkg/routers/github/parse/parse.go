@@ -46,11 +46,6 @@ func (s *ParseService) ParseAndSaveRelease(repoID string, release request.Releas
 		return nil
 	}
 
-	formattedBody, err := s.mdFormatter.FormatStr(release.Body)
-	if err != nil {
-		return fmt.Errorf("failed to format release body: %w", err)
-	}
-
 	releaseInDB, err := s.db.GetRelease(release.ID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return fmt.Errorf("failed to check release existance: %w", err)
@@ -74,6 +69,11 @@ func (s *ParseService) ParseAndSaveRelease(repoID string, release request.Releas
 		}
 	} else {
 		return fmt.Errorf("failed to detect language: %w", err)
+	}
+
+	formattedBody, err := s.mdFormatter.FormatStr(release.Body)
+	if err != nil {
+		return fmt.Errorf("failed to format release body: %w", err)
 	}
 
 	releaseToSave := db.Release{
