@@ -38,6 +38,9 @@ type TomlConfig struct {
 		Username  string `toml:"username"`
 		Password  string `toml:"password"`
 	} `toml:"zlive"`
+	LanguageDetection struct {
+		Server string `toml:"server"`
+	} `toml:"language_detection"`
 	Utils struct {
 		RsshubURL string `toml:"rsshub_url"`
 	} `toml:"utils"`
