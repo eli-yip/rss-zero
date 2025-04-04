@@ -277,7 +277,7 @@ func NoLimitStream(ctx context.Context, client *http.Client, u string, maxRetry 
 	logger = logger.With(zap.String("url", u))
 	logger.Info("start to request without limit for stream")
 
-	for i := 0; i < maxRetry; i++ {
+	for i := range maxRetry {
 		logger := logger.With(zap.Int("index", i))
 
 		var req *http.Request
