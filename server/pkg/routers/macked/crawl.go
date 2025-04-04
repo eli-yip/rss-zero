@@ -21,6 +21,7 @@ func init() {
 
 func CrawlFunc(redisService redis.Redis, db DB, logger *zap.Logger) func() {
 	return func() {
+		logger := logger.With(zap.String("cron_job_id", xid.New().String()))
 		if err := Crawl(redisService, db, logger); err != nil {
 			logger.Error("Failed to crawl macked", zap.Error(err))
 		}
@@ -28,8 +29,6 @@ func CrawlFunc(redisService redis.Redis, db DB, logger *zap.Logger) func() {
 }
 
 func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
-	logger = logger.With(zap.String("cron_job_id", xid.New().String()))
-
 	mutex.Lock()
 	defer mutex.Unlock()
 
