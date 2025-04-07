@@ -15,6 +15,11 @@ func CrawlRepo(user, repo, repoID, token string, parser parse.Parser, logger *za
 	logger = logger.With(zap.String("crawl_id", crawlID))
 	logger.Info("Start to crawl github release", zap.String("user", user), zap.String("repo", repo))
 
+	if repo == "alist" {
+		logger.Warn("Skip alist repo")
+		return nil
+	}
+
 	releases, err := request.GetRepoReleases(user, repo, token)
 	if err != nil {
 		logger.Error("Failed to get github release", zap.Error(err))
