@@ -15,8 +15,10 @@ func CrawlRepo(user, repo, repoID, token string, parser parse.Parser, logger *za
 	logger = logger.With(zap.String("crawl_id", crawlID))
 	logger.Info("Start to crawl github release", zap.String("user", user), zap.String("repo", repo))
 
-	if repo == "alist" {
-		logger.Warn("Skip alist repo")
+	repoToSkip := []string{"alist"}
+
+	if slices.Contains(repoToSkip, repo) {
+		logger.Warn("Skip this repo by hard-coded slice")
 		return nil
 	}
 
