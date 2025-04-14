@@ -1,7 +1,7 @@
 import { Card, CardBody, Link } from "@heroui/react";
 import moment from "moment-timezone";
 
-import { Zvideo } from "@/types/zvideo";
+import type { Zvideo } from "@/types/zvideo";
 
 interface ZvideosProps {
   zvideos: Zvideo[];

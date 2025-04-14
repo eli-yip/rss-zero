@@ -44,9 +44,9 @@ function PaginationWithJumper({
 }: PaginationWrapperProps) {
   const [inputPage, setInputPage] = useState<string>("");
   const handleJump = () => {
-    const pageNum = parseInt(inputPage);
+    const pageNum = Number.parseInt(inputPage);
 
-    if (!isNaN(pageNum) && pageNum > 0 && pageNum <= total) {
+    if (!Number.isNaN(pageNum) && pageNum > 0 && pageNum <= total) {
       onChange(pageNum);
       setInputPage("");
     }

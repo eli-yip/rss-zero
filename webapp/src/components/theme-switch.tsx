@@ -1,7 +1,7 @@
-import { SwitchProps, useSwitch } from "@heroui/switch";
+import { type SwitchProps, useSwitch } from "@heroui/switch";
 import { VisuallyHidden } from "@react-aria/visually-hidden";
 import clsx from "clsx";
-import { FC, useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
 import { MoonFilledIcon, SunFilledIcon } from "@/components/icons";
 import { useTheme } from "@/context/theme-context";
@@ -37,7 +37,7 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
 
   useEffect(() => {
     setIsMounted(true);
-  }, [isMounted]);
+  }, []);
 
   // Prevent Hydration Mismatch
   if (!isMounted) return <div className="h-6 w-6" />;

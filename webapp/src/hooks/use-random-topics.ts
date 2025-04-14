@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { fetchRandomTopics, RandomResponse } from "@/api/random";
-import { Topic } from "@/types/topic";
+import { fetchRandomTopics, type RandomResponse } from "@/api/random";
+import type { Topic } from "@/types/topic";
 
 export function useRandomTopics() {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -9,7 +9,7 @@ export function useRandomTopics() {
   const [error, setError] = useState<string | null>(null);
   const [firstFetchDone, setFirstFetchDone] = useState(true);
 
-  async function getTopics() {
+  const getTopics = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -22,11 +22,11 @@ export function useRandomTopics() {
       setLoading(false);
       setFirstFetchDone(true);
     }
-  }
+  }, []);
 
   useEffect(() => {
     getTopics();
-  }, []);
+  }, [getTopics]);
 
   return { topics, loading, error, firstFetch: firstFetchDone, getTopics };
 }

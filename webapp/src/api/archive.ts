@@ -1,5 +1,5 @@
 import { apiUrl } from "@/config/config";
-import { Topic } from "@/types/topic";
+import type { Topic } from "@/types/topic";
 
 export enum ContentType {
   Answer = "answer",
@@ -60,8 +60,8 @@ export interface ArchiveResponse {
 // 请求接口函数
 export async function fetchArchiveTopics(
   page: number,
-  start_date: string = "",
-  end_date: string = "",
+  start_date = "",
+  end_date = "",
   type: ContentType = ContentType.Answer,
 ): Promise<ArchiveResponse> {
   const requestBody: ArchiveRequest = {

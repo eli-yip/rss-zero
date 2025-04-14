@@ -55,11 +55,11 @@ update-frontend:
 
 [working-directory('webapp')]
 lint-frontend:
-    bunx eslint .
+    bunx biome lint --fix --unsafe .
 
 [working-directory('webapp')]
 format-frontend:
-    bunx prettier --write .
+    bunx biome format --fix .
 
 [working-directory('webapp')]
 build-frontend:

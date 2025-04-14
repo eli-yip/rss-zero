@@ -5,7 +5,7 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { Zvideos } from "@/components/zvideos";
 import { apiUrl } from "@/config/config";
 import DefaultLayout from "@/layouts/default";
-import { Zvideo } from "@/types/zvideo";
+import type { Zvideo } from "@/types/zvideo";
 
 export default function ZvideoPage() {
   const [zvideos, setZvideos] = useState<Zvideo[]>();

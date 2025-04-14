@@ -1,4 +1,4 @@
-import type { Topic } from "@/types/topic";
+import type { Topic as TopicType } from "@/types/topic";
 
 import {
   Button,
@@ -16,13 +16,13 @@ import remarkGfm from "remark-gfm";
 import "@/styles/github-markdown.css";
 
 interface TopicProps {
-  topic: Topic;
+  topic: TopicType;
 }
 
 export function Topic({ topic }: TopicProps) {
   let archiveUrl = topic.archive_url;
 
-  if (window.location.hostname == "mo.darkeli.com") {
+  if (window.location.hostname === "mo.darkeli.com") {
     archiveUrl = archiveUrl.replace("rss-zero", "mo");
   }
 
@@ -40,7 +40,7 @@ export function Topic({ topic }: TopicProps) {
                 size="sm"
                 onPress={() =>
                   navigator.clipboard.writeText(
-                    "# " + topic.title + "\n\n" + topic.body,
+                    `# ${topic.title}\n\n${topic.body}`,
                   )
                 }
               >
@@ -93,7 +93,7 @@ export function PlatformLink({ platform, url }: PlatformLinkProps) {
 }
 
 interface TopicsProps {
-  topics: Topic[];
+  topics: TopicType[];
 }
 
 export function Topics({ topics }: TopicsProps) {

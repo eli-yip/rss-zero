@@ -1,5 +1,5 @@
 import { apiUrl } from "@/config/config";
-import { Topic } from "@/types/topic";
+import type { Topic } from "@/types/topic";
 
 export interface RandomRequest {
   author: string;

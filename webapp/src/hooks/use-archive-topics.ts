@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 
 import {
-  ArchiveResponse,
+  type ArchiveResponse,
   ContentType,
   fetchArchiveTopics,
 } from "@/api/archive";
-import { Topic } from "@/types/topic";
+import type { Topic } from "@/types/topic";
 
 export function useArchiveTopics(
   page: number,
-  startDate: string = "",
-  endDate: string = "",
+  startDate = "",
+  endDate = "",
   contentType: ContentType = ContentType.Answer,
 ) {
   const [topics, setTopics] = useState<Topic[]>([]);

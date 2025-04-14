@@ -1,4 +1,4 @@
-import { DatePicker, DateValue, Select, SelectItem } from "@heroui/react";
+import { DatePicker, type DateValue, Select, SelectItem } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
 import { useSearchParams } from "react-router-dom";
 
@@ -12,7 +12,7 @@ import { scrollToTop } from "@/utils/window";
 export default function ArchivePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const pageStr = searchParams.get("page") || "1";
-  const page = parseInt(pageStr);
+  const page = Number.parseInt(pageStr);
   const startDate = searchParams.get("startDate") || "";
   const endDate = searchParams.get("endDate") || "";
   const isValidContentType = (value: string | null): value is ContentType => {

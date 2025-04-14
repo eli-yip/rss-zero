@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
 import { Topics } from "@/components/topic";
-import { Topic } from "@/types/topic";
+import type { Topic } from "@/types/topic";
 import { scrollToTop } from "@/utils/window";
 
 import PaginationWrapper from "./pagination";

@@ -1,5 +1,5 @@
 import { Tooltip } from "@heroui/react";
-import { Activity, ActivityCalendar } from "react-activity-calendar";
+import { type Activity, ActivityCalendar } from "react-activity-calendar";
 import { useSearchParams } from "react-router-dom";
 
 import { Archive } from "@/components/archive";
@@ -14,20 +14,19 @@ interface StatisticsProps {
 export function Statistics({ loading, statistics }: StatisticsProps) {
   const { state } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
-  const page = parseInt(searchParams.get("page") || "1");
+  const page = Number.parseInt(searchParams.get("page") || "1");
   const date = searchParams.get("date") || "";
   const { topics, total, loading: topicsLoading } = useDateTopics(page, date);
 
   const calLevel = (count: number): number => {
     if (count > 0 && count < 3) {
       return 1;
-    } else if (count >= 3 && count < 8) {
+    }if (count >= 3 && count < 8) {
       return 2;
-    } else if (count >= 8 && count < 12) {
+    }if (count >= 8 && count < 12) {
       return 3;
-    } else {
-      return 4;
     }
+      return 4;
   };
 
   const buildData = (): Array<Activity> => {
