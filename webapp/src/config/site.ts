@@ -1,5 +1,3 @@
-export type SiteConfig = typeof siteConfig;
-
 export const siteConfig = {
   name: "墨家第N基地",
   navItems: [

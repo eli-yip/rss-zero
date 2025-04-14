@@ -1,4 +1,4 @@
-import { Link } from "@heroui/link";
+import { Link } from "@heroui/react";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -7,8 +7,8 @@ import {
   NavbarMenu,
   NavbarMenuItem,
   NavbarMenuToggle,
-} from "@heroui/navbar";
-import { link as linkStyles } from "@heroui/theme";
+} from "@heroui/react";
+import { link as linkStyles } from "@heroui/react";
 import clsx from "clsx";
 import { useLocation } from "react-router-dom";
 

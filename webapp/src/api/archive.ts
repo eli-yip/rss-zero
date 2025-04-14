@@ -8,7 +8,7 @@ export enum ContentType {
 }
 
 // 定义请求体类型
-export interface ArchiveRequest {
+interface ArchiveRequest {
   /**
    * 作者url token，例如：canglimo
    */
@@ -40,7 +40,7 @@ export interface ArchiveRequest {
 }
 
 // 定义分页信息类型
-export interface ArchivePaging {
+interface ArchivePaging {
   /**
    * 当前页码
    */

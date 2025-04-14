@@ -1,7 +1,7 @@
-import { Code } from "@heroui/code";
-import { Link } from "@heroui/link";
-import { Snippet } from "@heroui/snippet";
-import { button as buttonStyles } from "@heroui/theme";
+import { Code } from "@heroui/react";
+import { Link } from "@heroui/react";
+import { Snippet } from "@heroui/react";
+import { button as buttonStyles } from "@heroui/react";
 
 import { GithubIcon } from "@/components/icons";
 import { subtitle, title } from "@/components/primitives";

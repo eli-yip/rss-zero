@@ -19,7 +19,7 @@ interface TopicProps {
   topic: TopicType;
 }
 
-export function Topic({ topic }: TopicProps) {
+function Topic({ topic }: TopicProps) {
   let archiveUrl = topic.archive_url;
 
   if (window.location.hostname === "mo.darkeli.com") {
@@ -75,7 +75,7 @@ interface PlatformLinkProps {
   url: string;
 }
 
-export function PlatformLink({ platform, url }: PlatformLinkProps) {
+function PlatformLink({ platform, url }: PlatformLinkProps) {
   const icon = (platform: string) => {
     switch (platform) {
       case "原文":

@@ -1,7 +1,7 @@
 import { apiUrl } from "@/config/config";
 import type { Topic } from "@/types/topic";
 
-export interface RandomRequest {
+interface RandomRequest {
   author: string;
   count: number;
   platform: string;

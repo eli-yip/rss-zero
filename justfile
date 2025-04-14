@@ -56,6 +56,7 @@ update-frontend:
 [working-directory('webapp')]
 lint-frontend:
     bunx biome lint --fix --unsafe .
+    bunx knip
 
 [working-directory('webapp')]
 format-frontend:

@@ -1,6 +1,6 @@
 import type { NavigateOptions } from "react-router-dom";
 
-import { HeroUIProvider } from "@heroui/system";
+import { HeroUIProvider } from "@heroui/react";
 import { useHref, useNavigate } from "react-router-dom";
 
 import { ThemeProvider } from "@/context/theme-context-provider";
