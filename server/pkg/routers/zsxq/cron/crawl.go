@@ -151,7 +151,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 		logger.Info("Group need to crawl", zap.Int("count", len(groupIDs)))
 
 		// Iterate group IDs
-		for _, groupID := range groupIDs {
+		for groupID := range slices.Values(groupIDs) {
 			if err = crawlGroup(groupID, requestService, parseService, redisService, rssRenderer, dbService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to do cron job on group", zap.Error(err))

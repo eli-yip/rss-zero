@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
@@ -61,7 +62,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 
 		next = paging.Next
 
-		for i, article := range articleExcerptList {
+		for i, article := range slices.Backward(articleExcerptList) {
 			logger := logger.With(zap.Int("article_id", article.ID))
 
 			if _, err = parser.ParseArticle(articleList[i], logger); err != nil {

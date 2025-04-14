@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/rs/xid"
@@ -62,7 +63,7 @@ func CrawlAnswer(user string, rs request.Requester, parser parse.Parser,
 
 		next = paging.Next
 
-		for i, answer := range answerExcerptList {
+		for i, answer := range slices.Backward(answerExcerptList) {
 			logger := logger.With(zap.Int("ans_id", answer.ID))
 
 			if _, err = parser.ParseAnswer(answerList[i], user, logger); err != nil {

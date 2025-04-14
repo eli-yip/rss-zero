@@ -29,8 +29,8 @@ func CrawlGroup(groupID int, request request.Requester,
 	logger.Info("Start to crawl zsxq group", zap.Int("group_id", groupID))
 
 	var (
-		finished   = false
-		firstTime  = true
+		finished  = false
+		firstTime = true
 	)
 	var createTime time.Time
 	for !finished {

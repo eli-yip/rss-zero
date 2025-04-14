@@ -56,7 +56,7 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 
 		next = paging.Next
 
-		for i, pin := range pinExcerptList {
+		for i, pin := range slices.Backward(pinExcerptList) {
 			logger := logger.With(zap.String("pin_id", pin.ID))
 
 			// see more in https://gitea.darkeli.com/yezi/rss-zero/issues/95 https://gitea.darkeli.com/yezi/rss-zero#140
