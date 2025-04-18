@@ -9,13 +9,19 @@ import { useArchiveTopics } from "@/hooks/use-archive-topics";
 import DefaultLayout from "@/layouts/default";
 import { scrollToTop } from "@/utils/window";
 
+const canglimoUrlToken: string = "canglimo";
+const authors = [
+	{ key: canglimoUrlToken, name: "墨苍离" },
+	{ key: "zi-e-79-23", name: "别打扰我修道" },
+];
+
 export default function ArchivePage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const pageStr = searchParams.get("page") || "1";
 	const page = Number.parseInt(pageStr);
 	const startDate = searchParams.get("startDate") || "";
 	const endDate = searchParams.get("endDate") || "";
-	const author = searchParams.get("author") || "";
+	const author = searchParams.get("author") || canglimoUrlToken;
 	const isValidContentType = (value: string | null): value is ContentType => {
 		return (
 			value !== null &&
@@ -30,26 +36,24 @@ export default function ArchivePage() {
 		startDate,
 		endDate,
 		contentType,
+		author,
 	);
 
 	const updateDateParam = (param: string, value: DateValue | null) => {
 		const dateValue = value ? value.toString() : "";
-		const params = new URLSearchParams(searchParams);
 
-		params.set("page", "1");
+		searchParams.set("page", "1");
+		if (dateValue) searchParams.set(param, dateValue);
+		else searchParams.delete(param);
 
-		if (dateValue) params.set(param, dateValue);
-		else params.delete(param);
-
-		setSearchParams(params);
+		setSearchParams(searchParams);
 		scrollToTop();
 	};
 
 	const handleContentTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const params = new URLSearchParams(searchParams);
-
-		params.set("contentType", e.target.value);
-		setSearchParams(params);
+		searchParams.set("contentType", e.target.value);
+		searchParams.set("page", "1");
+		setSearchParams(searchParams);
 		scrollToTop();
 	};
 
@@ -61,15 +65,10 @@ export default function ArchivePage() {
 		updateDateParam("endDate", value);
 	};
 
-	const updateAuthor = (param: string, value: string | null) => {
-		const authorValue = value ? value : "canglimo";
-		const params = new URLSearchParams(searchParams);
-
-		params.set("page", "1");
-
-		params.set(param, authorValue);
-
-		setSearchParams(params);
+	const handleAuthorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		searchParams.set("author", e.target.value);
+		searchParams.set("page", "1");
+		setSearchParams(searchParams);
 		scrollToTop();
 	};
 
@@ -82,7 +81,7 @@ export default function ArchivePage() {
 			</section>
 
 			<div className="mx-auto flex w-full max-w-xs flex-col pb-4">
-				<div className="mx-auto my-4 flex w-full flex-col gap-4 sm:flex-row">
+				<div className="mx-auto my-0 flex w-full gap-4">
 					<DatePicker
 						showMonthAndYearPickers
 						label="开始时间"
@@ -96,14 +95,25 @@ export default function ArchivePage() {
 						onChange={handleEndDateChange}
 					/>
 				</div>
-				<Select
-					defaultSelectedKeys={[contentType]}
-					value={contentType}
-					onChange={handleContentTypeChange}
-				>
-					<SelectItem key={ContentType.Answer}>回答</SelectItem>
-					<SelectItem key={ContentType.Pin}>想法</SelectItem>
-				</Select>
+				<div className="mx-auto my-4 flex w-full gap-4">
+					<Select
+						defaultSelectedKeys={[contentType]}
+						value={contentType}
+						onChange={handleContentTypeChange}
+					>
+						<SelectItem key={ContentType.Answer}>回答</SelectItem>
+						<SelectItem key={ContentType.Pin}>想法</SelectItem>
+					</Select>
+					<Select
+						defaultSelectedKeys={[author]}
+						value={author}
+						onChange={handleAuthorChange}
+					>
+						{authors.map((item) => (
+							<SelectItem key={item.key}>{item.name}</SelectItem>
+						))}
+					</Select>
+				</div>
 			</div>
 
 			<Archive
