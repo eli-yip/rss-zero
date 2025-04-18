@@ -6,27 +6,27 @@ import { useRandomTopics } from "@/hooks/use-random-topics";
 import DefaultLayout from "@/layouts/default";
 
 export default function RandomPage() {
-  const { topics, loading, firstFetch, getTopics } = useRandomTopics();
+	const { topics, loading, firstFetch, getTopics } = useRandomTopics();
 
-  const button = (
-    <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-      <Button
-        className="text-2xl font-bold"
-        isLoading={loading}
-        size="lg"
-        onPress={getTopics}
-      >
-        再来一打
-      </Button>
-    </section>
-  );
+	const button = (
+		<section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
+			<Button
+				className="text-2xl font-bold"
+				isLoading={loading}
+				size="lg"
+				onPress={getTopics}
+			>
+				再来一打
+			</Button>
+		</section>
+	);
 
-  return (
-    <DefaultLayout>
-      {button}
-      <Topics topics={topics} />
-      <ScrollToTop />
-      {!firstFetch && button}
-    </DefaultLayout>
-  );
+	return (
+		<DefaultLayout>
+			{button}
+			<Topics topics={topics} />
+			<ScrollToTop />
+			{!firstFetch && button}
+		</DefaultLayout>
+	);
 }

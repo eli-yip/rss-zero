@@ -4,14 +4,17 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), tsconfigPaths()],
-  base: "",
-  server: {
-    proxy: {
-      "/api": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
-    },
-  },
+	plugins: [react(), tsconfigPaths()],
+	base: "",
+	build: {
+		cssCodeSplit: true,
+	},
+	server: {
+		proxy: {
+			"/api": {
+				target: "http://localhost:8080",
+				changeOrigin: true,
+			},
+		},
+	},
 });

@@ -1,33 +1,33 @@
 import { Card, CardBody, Link } from "@heroui/react";
-import moment from "moment-timezone";
+import { tz } from "moment-timezone";
 
 import type { Zvideo } from "@/types/zvideo";
 
 interface ZvideosProps {
-  zvideos: Zvideo[];
+	zvideos: Zvideo[];
 }
 
 export function Zvideos({ zvideos }: ZvideosProps) {
-  const parseDate = (date: string): string => {
-    const beijingDate = moment.tz(date, "Asia/Shanghai");
+	const parseDate = (date: string): string => {
+		const beijingDate = tz(date, "Asia/Shanghai");
 
-    return beijingDate.format("YYYY年M月D日");
-  };
+		return beijingDate.format("YYYY 年 M 月 D 日");
+	};
 
-  return (
-    <div className="w-full max-w-3xl gap-4 sm:grid sm:grid-cols-2">
-      {zvideos.map((zvideo) => (
-        <Card key={zvideo.id} className="mb-4 sm:mb-0">
-          <CardBody>
-            <div className="flex justify-between gap-4">
-              <p>{parseDate(zvideo.published_at)}</p>
-              <Link isExternal showAnchorIcon href={zvideo.url} target="_blank">
-                {zvideo.title}
-              </Link>
-            </div>
-          </CardBody>
-        </Card>
-      ))}
-    </div>
-  );
+	return (
+		<div className="w-full max-w-3xl gap-4 sm:grid sm:grid-cols-2">
+			{zvideos.map((zvideo) => (
+				<Card key={zvideo.id} className="mb-4 sm:mb-0">
+					<CardBody>
+						<div className="flex justify-between gap-4">
+							<p>{parseDate(zvideo.published_at)}</p>
+							<Link isExternal showAnchorIcon href={zvideo.url} target="_blank">
+								{zvideo.title}
+							</Link>
+						</div>
+					</CardBody>
+				</Card>
+			))}
+		</div>
+	);
 }
