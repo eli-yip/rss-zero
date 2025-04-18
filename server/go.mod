@@ -7,8 +7,8 @@ toolchain go1.24.0
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/Kunde21/markdownfmt/v3 v3.1.0
-	github.com/PuerkitoBio/goquery v1.10.2
-	github.com/charmbracelet/bubbles v0.20.0
+	github.com/PuerkitoBio/goquery v1.10.3
+	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/deckarep/golang-set/v2 v2.8.0
@@ -18,16 +18,16 @@ require (
 	github.com/gorilla/feeds v1.2.0
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/lib/pq v1.10.9
-	github.com/minio/minio-go/v7 v7.0.89
-	github.com/pelletier/go-toml/v2 v2.2.3
+	github.com/minio/minio-go/v7 v7.0.90
+	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/rs/xid v1.6.0
 	github.com/samber/lo v1.49.1
-	github.com/sashabaranov/go-openai v1.38.1
+	github.com/sashabaranov/go-openai v1.38.2
 	github.com/stretchr/testify v1.10.0
-	github.com/yuin/goldmark v1.7.8
+	github.com/yuin/goldmark v1.7.10
 	go.uber.org/zap v1.27.0
-	golang.org/x/net v0.38.0
+	golang.org/x/net v0.39.0
 	golang.org/x/text v0.24.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/postgres v1.5.11
