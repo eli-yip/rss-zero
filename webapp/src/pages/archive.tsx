@@ -106,7 +106,7 @@ export default function ArchivePage() {
 					</Select>
 					<Select
 						defaultSelectedKeys={[author]}
-						value={author}
+						selectedKeys={[author]}
 						onChange={handleAuthorChange}
 					>
 						{authors.map((item) => (
