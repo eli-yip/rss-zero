@@ -14,8 +14,7 @@
     "@react-aria/visually-hidden": "^3.8.22",
     "clsx": "^2.1.1",
     "framer-motion": "^12.7.4",
-    "moment": "^2.30.1",
-    "moment-timezone": "^0.5.48",
+    "luxon": "^3.6.1",
     "react": "^19.1.0",
     "react-activity-calendar": "^2.7.10",
     "react-dom": "^19.1.0",
@@ -25,6 +24,7 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@types/luxon": "^3.6.2",
     "@types/node": "^22.14.1",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
@@ -32,6 +32,7 @@
     "autoprefixer": "^10.4.21",
     "knip": "^5.50.5",
     "postcss": "^8.5.3",
+    "rollup-plugin-visualizer": "^5.14.0",
     "tailwind-variants": "^1.0.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",

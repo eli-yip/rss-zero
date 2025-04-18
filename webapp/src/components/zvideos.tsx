@@ -1,5 +1,5 @@
 import { Card, CardBody, Link } from "@heroui/react";
-import { tz } from "moment-timezone";
+import { DateTime } from "luxon";
 
 import type { Zvideo } from "@/types/zvideo";
 
@@ -9,9 +9,9 @@ interface ZvideosProps {
 
 export function Zvideos({ zvideos }: ZvideosProps) {
 	const parseDate = (date: string): string => {
-		const beijingDate = tz(date, "Asia/Shanghai");
+		const beijingDate = DateTime.fromISO(date, { zone: "Asia/Shanghai" });
 
-		return beijingDate.format("YYYY 年 M 月 D 日");
+		return beijingDate.toFormat("yyyy 年 L 月 d 日");
 	};
 
 	return (

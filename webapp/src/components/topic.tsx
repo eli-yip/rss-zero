@@ -9,7 +9,7 @@ import {
 	CardHeader,
 	Tooltip,
 } from "@heroui/react";
-import moment from "moment";
+import { DateTime } from "luxon";
 import { FaArchive, FaCopy, FaSave, FaZhihu } from "react-icons/fa";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -29,7 +29,7 @@ function Topic({ topic }: TopicProps) {
 
 	return (
 		<div>
-			<Card disableAnimation className="markdown-body mb-4">
+			<Card disableAnimation className="markdown-body !mb-4">
 				<CardHeader className="flex justify-between gap-1">
 					<h3>{topic.title}</h3>
 					<div className="flex flex-row justify-start sm:justify-end">
@@ -69,7 +69,9 @@ function Topic({ topic }: TopicProps) {
 				<CardFooter className="flex flex-col justify-between gap-2 font-bold sm:flex-row">
 					<span>{topic.author.nickname}</span>
 					<span>
-						{moment(topic.created_at).format("YYYY 年 M 月 D 日 HH:mm")}
+						{DateTime.fromISO(topic.created_at).toFormat(
+							"yyyy 年 L 月 d 日 h:m",
+						)}
 					</span>
 				</CardFooter>
 			</Card>
