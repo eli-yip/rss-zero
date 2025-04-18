@@ -23,6 +23,8 @@ jobs:
         run: bun install --frozen-lockfile --registry=https://registry.npmmirror.com # Use cli args here as if we use with in setup-bun, then it will create a file in git, then goreleaser will not work
       - name: Build webapp
         working-directory: webapp
+        env:
+          VITE_APP_VERSION: ${{ gitea.ref_name }}
         run: |
           bun run build
       # setup-go automatically cache go.mod and go.sum.
