@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -27,8 +28,9 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 	}
 	logger.Info("Retrieved archive request successfully")
 
+	supportedAuthors := []string{"canglimo", "zi-e-79-23"}
 	if req.Platform != PlatformZhihu ||
-		req.Author != "canglimo" {
+		!slices.Contains(supportedAuthors, req.Author) {
 		logger.Error("Invalid request parameters", zap.Any("request", req))
 		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
 	}
