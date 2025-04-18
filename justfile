@@ -10,6 +10,7 @@ build: build-backend build-frontend
 
 clean:
     rm -rf server-app dist
+    rm -rf webapp/dist
 
 # Lint the backend and frontend code
 lint: lint-backend lint-frontend
