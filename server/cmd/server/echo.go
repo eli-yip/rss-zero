@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 	"net/http"
+	"slices"
 
 	echopprof "github.com/eli-yip/echo-pprof"
 	"github.com/labstack/echo/v4"
@@ -92,24 +93,58 @@ func setupEcho(redisService redis.Redis,
 	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mHandler)
 	// /api/v1
 	apiGroup := e.Group("/api/v1")
-	registerFeed(apiGroup, zhihuHandler, githubController)
-	registerCookie(apiGroup, zsxqHandler, xiaobotHandler, zhihuHandler, githubController)
-	registerAuthor(apiGroup, zhihuHandler)
-	registerDEncryptionService(apiGroup, zhihuHandler)
-	registerReformat(apiGroup, zsxqHandler, zhihuHandler, xiaobotHandler)
-	registerExport(apiGroup, zsxqHandler, zhihuHandler, xiaobotHandler)
 	registerArchive(apiGroup, archiveHandler)
-	registerJob(apiGroup, jobHandler)
-	registerSub(apiGroup, zhihuHandler, githubController, xiaobotHandler)
-	registerMigrate(apiGroup, migrateHandler)
-	registerParse(apiGroup, parseHandler)
-	registerMacked(apiGroup, mHandler)
 
-	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, struct {
-			Status string `json:"status"`
-		}{Status: "ok"})
-	})
+	var groupNeedAuth []*echo.Group
+
+	authorApi := apiGroup.Group("/author")
+	groupNeedAuth = append(groupNeedAuth, authorApi)
+	registerAuthor(authorApi, zhihuHandler)
+
+	feedApi := apiGroup.Group("/feed")
+	groupNeedAuth = append(groupNeedAuth, feedApi)
+	registerFeed(feedApi, zhihuHandler, githubController)
+
+	jobApi := apiGroup.Group("/job")
+	groupNeedAuth = append(groupNeedAuth, jobApi)
+	registerJob(jobApi, jobHandler)
+
+	cookieApi := apiGroup.Group("/cookie")
+	groupNeedAuth = append(groupNeedAuth, cookieApi)
+	registerCookie(cookieApi, zsxqHandler, xiaobotHandler, zhihuHandler, githubController)
+
+	encryptionServiceApi := apiGroup.Group("/es")
+	groupNeedAuth = append(groupNeedAuth, encryptionServiceApi)
+	registerDEncryptionService(encryptionServiceApi, zhihuHandler)
+
+	refmtGroup := apiGroup.Group("/refmt")
+	groupNeedAuth = append(groupNeedAuth, refmtGroup)
+	registerReformat(refmtGroup, zsxqHandler, zhihuHandler, xiaobotHandler)
+
+	exportGroup := apiGroup.Group("/export")
+	groupNeedAuth = append(groupNeedAuth, exportGroup)
+	registerExport(exportGroup, zsxqHandler, zhihuHandler, xiaobotHandler)
+
+	subGroup := apiGroup.Group("/sub")
+	groupNeedAuth = append(groupNeedAuth, subGroup)
+	registerSub(subGroup, zhihuHandler, githubController, xiaobotHandler)
+
+	migrateGroup := apiGroup.Group("/migrate")
+	groupNeedAuth = append(groupNeedAuth, migrateGroup)
+	registerMigrate(migrateGroup, migrateHandler)
+
+	parseGroup := apiGroup.Group("/parse")
+	groupNeedAuth = append(groupNeedAuth, parseGroup)
+	registerParse(parseGroup, parseHandler)
+
+	mackedGroup := apiGroup.Group("/macked")
+	registerMacked(mackedGroup, mHandler)
+
+	for g := range slices.Values(groupNeedAuth) {
+		g.Use(myMiddleware.AllowAdmin())
+	}
+
+	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error { return c.JSON(http.StatusOK, map[string]string{"status": "ok"}) })
 	healthEndpoint.Name = "Health check route"
 
 	// iterate all routes and log them
@@ -134,38 +169,32 @@ func registerAuthor(apiGroup *echo.Group, zhihuHandler *zhihuController.Controll
 // /api/v1/feed/zhihu/:id
 // /api/v1/feed/rsshub
 func registerFeed(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
-	feedApi := apiGroup.Group("/feed")
-	feedApi.Use(myMiddleware.AllowAdmin())
-
-	zhihuFeedApi := feedApi.GET("/zhihu/:id", zhihuHandler.Feed)
+	zhihuFeedApi := apiGroup.GET("/zhihu/:id", zhihuHandler.Feed)
 	zhihuFeedApi.Name = "Feed route for zhihu"
-	rssHubFeddApi := feedApi.POST("/rsshub", rsshubController.GenerateRSSHubFeed)
+	rssHubFeddApi := apiGroup.POST("/rsshub", rsshubController.GenerateRSSHubFeed)
 	rssHubFeddApi.Name = "RSSHub feed generator route"
 
-	githubFeedApi := feedApi.GET("/github/:user_repo", githubController.Feed)
+	githubFeedApi := apiGroup.GET("/github/:user_repo", githubController.Feed)
 	githubFeedApi.Name = "Feed route for github"
 }
 
 // /api/v1/job
 func registerJob(apiGroup *echo.Group, jobHandler *jobController.Controller) {
-	jobApi := apiGroup.Group("/job")
-	jobApi.Use(myMiddleware.AllowAdmin())
-
-	startJobApi := jobApi.POST("/start/:task", jobHandler.StartJob)
+	startJobApi := apiGroup.POST("/start/:task", jobHandler.StartJob)
 	startJobApi.Name = "Start job route"
-	getJobsApi := jobApi.GET("/list", jobHandler.GetJobs)
+	getJobsApi := apiGroup.GET("/list", jobHandler.GetJobs)
 	getJobsApi.Name = "Get jobs route"
-	getErrorJobsApi := jobApi.GET("/list/error", jobHandler.GetErrorJobs)
+	getErrorJobsApi := apiGroup.GET("/list/error", jobHandler.GetErrorJobs)
 	getErrorJobsApi.Name = "Get error jobs route"
-	addTaskApi := jobApi.POST("/task", jobHandler.AddTask)
+	addTaskApi := apiGroup.POST("/task", jobHandler.AddTask)
 	addTaskApi.Name = "Add task route"
-	patchTaskApi := jobApi.POST("/task/patch", jobHandler.PatchTask)
+	patchTaskApi := apiGroup.POST("/task/patch", jobHandler.PatchTask)
 	patchTaskApi.Name = "Patch task route"
-	deleteTaskApi := jobApi.DELETE("/task/:id", jobHandler.DeleteTask)
+	deleteTaskApi := apiGroup.DELETE("/task/:id", jobHandler.DeleteTask)
 	deleteTaskApi.Name = "Delete task route"
-	listTaskApi := jobApi.GET("/task/list", jobHandler.ListTask)
+	listTaskApi := apiGroup.GET("/task/list", jobHandler.ListTask)
 	listTaskApi.Name = "List task route"
-	runNowApi := jobApi.POST("/run/:job", jobHandler.RunJobByName)
+	runNowApi := apiGroup.POST("/run/:job", jobHandler.RunJobByName)
 	runNowApi.Name = "Run job now route"
 }
 
@@ -190,10 +219,7 @@ func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Con
 // /api/v1/export/zsxq
 // /api/v1/export/zhihu
 // /api/v1/export/xiaobot
-func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
-	exportApi := apiGroup.Group("/export")
-	exportApi.Use(myMiddleware.AllowAdmin())
-
+func registerExport(exportApi *echo.Group, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	exportZsxqApi := exportApi.POST("/zsxq", zsxqHandler.Export)
 	exportZsxqApi.Name = "Export route for zsxq"
 
@@ -206,8 +232,7 @@ func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller
 
 // /api/v1/es
 func registerDEncryptionService(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller) {
-	zhihuEncryptionServiceApi := apiGroup.Group("/es/zhihu")
-	zhihuEncryptionServiceApi.Use(myMiddleware.AllowAdmin())
+	zhihuEncryptionServiceApi := apiGroup.Group("/zhihu")
 
 	zhihuEncryptionServiceAdd := zhihuEncryptionServiceApi.POST("/add", zhihuHandler.Add)
 	zhihuEncryptionServiceAdd.Name = "Add route for zhihu db api"
@@ -225,10 +250,7 @@ func registerDEncryptionService(apiGroup *echo.Group, zhihuHandler *zhihuControl
 // /api/v1/refmt/zsxq
 // /api/v1/refmt/zhihu
 // /api/v1/refmt/xiaobot
-func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
-	refmtApi := apiGroup.Group("/refmt")
-	refmtApi.Use(myMiddleware.AllowAdmin())
-
+func registerReformat(refmtApi *echo.Group, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Reformat)
 	refmtZsxqApi.Name = "Reformat route for zsxq"
 
@@ -245,25 +267,22 @@ func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.Controll
 // /api/v1/cookie/zhihu
 // /api/v1/cookie/zhihu/check
 func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller, xiaobotHandler *xiaobotController.Controller, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
-	cookieApi := apiGroup.Group("/cookie")
-	cookieApi.Use(myMiddleware.AllowAdmin())
-
-	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateCookie)
+	zsxqCookieApi := apiGroup.POST("/zsxq", zsxqHandler.UpdateCookie)
 	zsxqCookieApi.Name = "Cookie updating route for zsxq"
 
-	zsxqCheckCookieApi := cookieApi.GET("/zsxq", zsxqHandler.CheckCookie)
+	zsxqCheckCookieApi := apiGroup.GET("/zsxq", zsxqHandler.CheckCookie)
 	zsxqCheckCookieApi.Name = "Cookie checking route for zsxq"
 
-	xiaobotCookieApi := cookieApi.POST("/xiaobot", xiaobotHandler.UpdateToken)
+	xiaobotCookieApi := apiGroup.POST("/xiaobot", xiaobotHandler.UpdateToken)
 	xiaobotCookieApi.Name = "Token updating route for xiaobot"
 
-	zhihuCookieApi := cookieApi.POST("/zhihu", zhihuHandler.UpdateCookie)
+	zhihuCookieApi := apiGroup.POST("/zhihu", zhihuHandler.UpdateCookie)
 	zhihuCookieApi.Name = "Cookie updating route for zhihu"
 
-	zhihuCheckCookieApi := cookieApi.GET("/zhihu", zhihuHandler.CheckCookie)
+	zhihuCheckCookieApi := apiGroup.GET("/zhihu", zhihuHandler.CheckCookie)
 	zhihuCheckCookieApi.Name = "Cookie checking route for zhihu"
 
-	githubCookieApi := cookieApi.POST("/github", githubController.UpdateToken)
+	githubCookieApi := apiGroup.POST("/github", githubController.UpdateToken)
 	githubCookieApi.Name = "Token updating route for github"
 }
 
@@ -315,10 +334,7 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controller, zhihuHand
 	githubRSSPreApi.Name = "RSS route for github pre"
 }
 
-func registerSub(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller, github *githubController.Controller, xiaobotHandler *xiaobotController.Controller) {
-	subApi := apiGroup.Group("/sub")
-	subApi.Use(myMiddleware.AllowAdmin())
-
+func registerSub(subApi *echo.Group, zhihuHandler *zhihuController.Controller, github *githubController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	// /api/v1/sub/zhihu
 	zhihuSubApi := subApi.GET("/zhihu", zhihuHandler.GetSubs)
 	zhihuSubApi.Name = "Sub list route for zhihu"
@@ -344,20 +360,14 @@ func registerSub(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller,
 	xiaobotActivateSubApi.Name = "Activate sub route for xiaobot"
 }
 
-func registerMigrate(apiGroup *echo.Group, migrateHandler *migrateController.Controller) {
-	migrateApi := apiGroup.Group("/migrate")
-	migrateApi.Use(myMiddleware.AllowAdmin())
-
+func registerMigrate(migrateApi *echo.Group, migrateHandler *migrateController.Controller) {
 	migrateMinioApi := migrateApi.POST("/20240905", migrateHandler.Migrate20240905)
 	migrateMinioApi.Name = "Migrate minio files route 20240905"
 	migrate20240929Api := migrateApi.POST("/20240929", migrateHandler.Migrate20240929)
 	migrate20240929Api.Name = "Migrate db 20240929 route"
 }
 
-func registerParse(apiGroup *echo.Group, parseHandler *parseHandler.Handler) {
-	parseApi := apiGroup.Group("/parse")
-	parseApi.Use(myMiddleware.AllowAdmin())
-
+func registerParse(parseApi *echo.Group, parseHandler *parseHandler.Handler) {
 	parseZhihuAnswerApi := parseApi.POST("/zhihu/answer", parseHandler.ParseZhihuAnswer)
 	parseZhihuAnswerApi.Name = "Parse zhihu answer route"
 
@@ -365,10 +375,7 @@ func registerParse(apiGroup *echo.Group, parseHandler *parseHandler.Handler) {
 	parseXiaobotPaperApi.Name = "Parse xiaobot paper route"
 }
 
-func registerMacked(apiGroup *echo.Group, mackedHandler *mackedHandler.Handler) {
-	mackedApi := apiGroup.Group("/macked")
-	mackedApi.Use(myMiddleware.AllowAdmin())
-
+func registerMacked(mackedApi *echo.Group, mackedHandler *mackedHandler.Handler) {
 	mackedAddAppInfoApi := mackedApi.POST("/appinfo", mackedHandler.AddAppInfo)
 	mackedAddAppInfoApi.Name = "Add app info route for macked"
 }

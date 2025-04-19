@@ -1,3 +1,10 @@
 {
-  "go.testEnvFile": "${workspaceFolder}/.env"
+	"go.testEnvFile": "${workspaceFolder}/.env",
+	"github.copilot.enable": {
+		"*": false,
+		"plaintext": false,
+		"markdown": false,
+		"scminput": false,
+		"tex": false
+	}
 }
