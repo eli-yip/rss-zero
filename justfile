@@ -44,7 +44,7 @@ backend:
 
 [working-directory('webapp')]
 format:
-    bunx prettier --write .
+    bunx biome format --fix .
 
 [working-directory('webapp')]
 frontend:

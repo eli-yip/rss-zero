@@ -5,32 +5,32 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-	plugins: [
-		react(),
-		tsconfigPaths(),
-		visualizer({
-			open: true,
-			gzipSize: true,
-			filename: "dist/stats.html",
-		}),
-	],
-	build: {
-		cssCodeSplit: true,
-		rollupOptions: {
-			output: {
-				manualChunks: {
-					react: ["react", "react-dom", "react-router-dom"],
-				},
-			},
-		},
-	},
-	base: "",
-	server: {
-		proxy: {
-			"/api": {
-				target: "http://localhost:8080",
-				changeOrigin: true,
-			},
-		},
-	},
+  plugins: [
+    react(),
+    tsconfigPaths(),
+    visualizer({
+      open: true,
+      gzipSize: true,
+      filename: "dist/stats.html",
+    }),
+  ],
+  build: {
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+        },
+      },
+    },
+  },
+  base: "",
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+    },
+  },
 });

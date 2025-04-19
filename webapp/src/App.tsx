@@ -9,18 +9,18 @@ const ZvideoPage = lazy(() => import("@/pages/zvideo"));
 const AboutPage = lazy(() => import("@/pages/about"));
 
 function App() {
-	return (
-		<Suspense fallback={<div>Loading...</div>}>
-			<Routes>
-				<Route path="/" element={<IndexPage />} />
-				<Route path="/random" element={<RandomPage />} />
-				<Route path="/archive" element={<ArchivePage />} />
-				<Route path="/statistics" element={<BlogPage />} />
-				<Route path="/zvideo" element={<ZvideoPage />} />
-				<Route path="/about" element={<AboutPage />} />
-			</Routes>
-		</Suspense>
-	);
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Routes>
+        <Route path="/" element={<IndexPage />} />
+        <Route path="/random" element={<RandomPage />} />
+        <Route path="/archive" element={<ArchivePage />} />
+        <Route path="/statistics" element={<BlogPage />} />
+        <Route path="/zvideo" element={<ZvideoPage />} />
+        <Route path="/about" element={<AboutPage />} />
+      </Routes>
+    </Suspense>
+  );
 }
 
 export default App;

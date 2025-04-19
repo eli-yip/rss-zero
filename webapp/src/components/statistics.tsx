@@ -21,12 +21,14 @@ export function Statistics({ loading, statistics }: StatisticsProps) {
   const calLevel = (count: number): number => {
     if (count > 0 && count < 3) {
       return 1;
-    }if (count >= 3 && count < 8) {
+    }
+    if (count >= 3 && count < 8) {
       return 2;
-    }if (count >= 8 && count < 12) {
+    }
+    if (count >= 8 && count < 12) {
       return 3;
     }
-      return 4;
+    return 4;
   };
 
   const buildData = (): Array<Activity> => {

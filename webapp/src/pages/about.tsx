@@ -11,21 +11,21 @@ const roadMap = `\
 一份想写但是偷懒没写的路线图...`;
 
 export default function DocsPage() {
-	return (
-		<DefaultLayout>
-			<section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
-				<div className="inline-block max-w-lg justify-center text-center">
-					<h1 className={title()}>关于本站</h1>
-				</div>
-			</section>
+  return (
+    <DefaultLayout>
+      <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
+        <div className="inline-block max-w-lg justify-center text-center">
+          <h1 className={title()}>关于本站</h1>
+        </div>
+      </section>
 
-			<div className="mx-auto w-full max-w-3xl">
-				<Card>
-					<CardBody>
-						<Markdown remarkPlugins={[remarkGfm]}>{roadMap}</Markdown>
-					</CardBody>
-				</Card>
-			</div>
-		</DefaultLayout>
-	);
+      <div className="mx-auto w-full max-w-3xl">
+        <Card>
+          <CardBody>
+            <Markdown remarkPlugins={[remarkGfm]}>{roadMap}</Markdown>
+          </CardBody>
+        </Card>
+      </div>
+    </DefaultLayout>
+  );
 }
