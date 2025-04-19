@@ -92,7 +92,7 @@ export default function ArchivePage() {
 					<DatePicker
 						showMonthAndYearPickers
 						label="截止时间"
-						value={endDate ? (parseDate(endDate) as DateValue) : null}
+						value={endDate ? parseDate(endDate) : null}
 						onChange={handleEndDateChange}
 					/>
 				</div>
