@@ -135,6 +135,7 @@ func registerAuthor(apiGroup *echo.Group, zhihuHandler *zhihuController.Controll
 // /api/v1/feed/rsshub
 func registerFeed(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
 	feedApi := apiGroup.Group("/feed")
+	feedApi.Use(myMiddleware.AllowAdmin())
 
 	zhihuFeedApi := feedApi.GET("/zhihu/:id", zhihuHandler.Feed)
 	zhihuFeedApi.Name = "Feed route for zhihu"
@@ -148,6 +149,8 @@ func registerFeed(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller
 // /api/v1/job
 func registerJob(apiGroup *echo.Group, jobHandler *jobController.Controller) {
 	jobApi := apiGroup.Group("/job")
+	jobApi.Use(myMiddleware.AllowAdmin())
+
 	startJobApi := jobApi.POST("/start/:task", jobHandler.StartJob)
 	startJobApi.Name = "Start job route"
 	getJobsApi := jobApi.GET("/list", jobHandler.GetJobs)
@@ -189,6 +192,7 @@ func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Con
 // /api/v1/export/xiaobot
 func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	exportApi := apiGroup.Group("/export")
+	exportApi.Use(myMiddleware.AllowAdmin())
 
 	exportZsxqApi := exportApi.POST("/zsxq", zsxqHandler.Export)
 	exportZsxqApi.Name = "Export route for zsxq"
@@ -203,6 +207,8 @@ func registerExport(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller
 // /api/v1/es
 func registerDEncryptionService(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller) {
 	zhihuEncryptionServiceApi := apiGroup.Group("/es/zhihu")
+	zhihuEncryptionServiceApi.Use(myMiddleware.AllowAdmin())
+
 	zhihuEncryptionServiceAdd := zhihuEncryptionServiceApi.POST("/add", zhihuHandler.Add)
 	zhihuEncryptionServiceAdd.Name = "Add route for zhihu db api"
 	zhihuEncryptionServiceUpdate := zhihuEncryptionServiceApi.POST("/update", zhihuHandler.Update)
@@ -221,6 +227,7 @@ func registerDEncryptionService(apiGroup *echo.Group, zhihuHandler *zhihuControl
 // /api/v1/refmt/xiaobot
 func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	refmtApi := apiGroup.Group("/refmt")
+	refmtApi.Use(myMiddleware.AllowAdmin())
 
 	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Reformat)
 	refmtZsxqApi.Name = "Reformat route for zsxq"
@@ -239,6 +246,7 @@ func registerReformat(apiGroup *echo.Group, zsxqHandler *zsxqController.Controll
 // /api/v1/cookie/zhihu/check
 func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller, xiaobotHandler *xiaobotController.Controller, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
 	cookieApi := apiGroup.Group("/cookie")
+	cookieApi.Use(myMiddleware.AllowAdmin())
 
 	zsxqCookieApi := cookieApi.POST("/zsxq", zsxqHandler.UpdateCookie)
 	zsxqCookieApi.Name = "Cookie updating route for zsxq"
@@ -308,33 +316,38 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controller, zhihuHand
 }
 
 func registerSub(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller, github *githubController.Controller, xiaobotHandler *xiaobotController.Controller) {
+	subApi := apiGroup.Group("/sub")
+	subApi.Use(myMiddleware.AllowAdmin())
+
 	// /api/v1/sub/zhihu
-	zhihuSubApi := apiGroup.GET("/sub/zhihu", zhihuHandler.GetSubs)
+	zhihuSubApi := subApi.GET("/zhihu", zhihuHandler.GetSubs)
 	zhihuSubApi.Name = "Sub list route for zhihu"
-	zhihuDeleteSubApi := apiGroup.DELETE("/sub/zhihu/:id", zhihuHandler.DeleteSub)
+	zhihuDeleteSubApi := subApi.DELETE("/sub/zhihu/:id", zhihuHandler.DeleteSub)
 	zhihuDeleteSubApi.Name = "Delete sub route for zhihu"
-	zhihuActivateSubApi := apiGroup.POST("/sub/zhihu/activate/:id", zhihuHandler.ActivateSub)
+	zhihuActivateSubApi := subApi.POST("/sub/zhihu/activate/:id", zhihuHandler.ActivateSub)
 	zhihuActivateSubApi.Name = "Activate sub route for zhihu"
 
 	// /api/v1/sub/github
-	githubSubApi := apiGroup.GET("/sub/github", github.GetSubs)
+	githubSubApi := subApi.GET("/github", github.GetSubs)
 	githubSubApi.Name = "Sub list route for github"
-	githubDeleteSubApi := apiGroup.DELETE("/sub/github/:id", github.DeleteSub)
+	githubDeleteSubApi := subApi.DELETE("/github/:id", github.DeleteSub)
 	githubDeleteSubApi.Name = "Delete sub route for github"
-	githubActivateSubApi := apiGroup.POST("/sub/github/activate/:id", github.ActivateSub)
+	githubActivateSubApi := subApi.POST("/github/activate/:id", github.ActivateSub)
 	githubActivateSubApi.Name = "Activate sub route for github"
 
 	// /api/v1/sub/xiaobot
-	xiaobotSubApi := apiGroup.GET("/sub/xiaobot", xiaobotHandler.GetSubs)
+	xiaobotSubApi := subApi.GET("/xiaobot", xiaobotHandler.GetSubs)
 	xiaobotSubApi.Name = "Sub list route for xiaobot"
-	xiaobotDeleteSubApi := apiGroup.DELETE("/sub/xiaobot/:id", xiaobotHandler.DeleteSub)
+	xiaobotDeleteSubApi := subApi.DELETE("/xiaobot/:id", xiaobotHandler.DeleteSub)
 	xiaobotDeleteSubApi.Name = "Delete sub route for xiaobot"
-	xiaobotActivateSubApi := apiGroup.POST("/sub/xiaobot/activate/:id", xiaobotHandler.ActivateSub)
+	xiaobotActivateSubApi := subApi.POST("/xiaobot/activate/:id", xiaobotHandler.ActivateSub)
 	xiaobotActivateSubApi.Name = "Activate sub route for xiaobot"
 }
 
 func registerMigrate(apiGroup *echo.Group, migrateHandler *migrateController.Controller) {
 	migrateApi := apiGroup.Group("/migrate")
+	migrateApi.Use(myMiddleware.AllowAdmin())
+
 	migrateMinioApi := migrateApi.POST("/20240905", migrateHandler.Migrate20240905)
 	migrateMinioApi.Name = "Migrate minio files route 20240905"
 	migrate20240929Api := migrateApi.POST("/20240929", migrateHandler.Migrate20240929)
@@ -343,6 +356,8 @@ func registerMigrate(apiGroup *echo.Group, migrateHandler *migrateController.Con
 
 func registerParse(apiGroup *echo.Group, parseHandler *parseHandler.Handler) {
 	parseApi := apiGroup.Group("/parse")
+	parseApi.Use(myMiddleware.AllowAdmin())
+
 	parseZhihuAnswerApi := parseApi.POST("/zhihu/answer", parseHandler.ParseZhihuAnswer)
 	parseZhihuAnswerApi.Name = "Parse zhihu answer route"
 
@@ -352,6 +367,8 @@ func registerParse(apiGroup *echo.Group, parseHandler *parseHandler.Handler) {
 
 func registerMacked(apiGroup *echo.Group, mackedHandler *mackedHandler.Handler) {
 	mackedApi := apiGroup.Group("/macked")
+	mackedApi.Use(myMiddleware.AllowAdmin())
+
 	mackedAddAppInfoApi := mackedApi.POST("/appinfo", mackedHandler.AddAppInfo)
 	mackedAddAppInfoApi.Name = "Add app info route for macked"
 }
