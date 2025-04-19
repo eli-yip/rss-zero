@@ -1,7 +1,7 @@
 import { Suspense, lazy } from "react";
 import { Route, Routes } from "react-router-dom";
 
-const IndexPage = lazy(() => import("@/pages/index"));
+import IndexPage from "@/pages/index";
 const RandomPage = lazy(() => import("@/pages/random"));
 const ArchivePage = lazy(() => import("@/pages/archive"));
 const BlogPage = lazy(() => import("@/pages/statistics"));
@@ -10,56 +10,16 @@ const AboutPage = lazy(() => import("@/pages/about"));
 
 function App() {
 	return (
-		<Routes>
-			<Route
-				path="/"
-				element={
-					<Suspense fallback={<div>Loading...</div>}>
-						<IndexPage />
-					</Suspense>
-				}
-			/>
-			<Route
-				path="/random"
-				element={
-					<Suspense fallback={<div>Loading...</div>}>
-						<RandomPage />
-					</Suspense>
-				}
-			/>
-			<Route
-				path="/archive"
-				element={
-					<Suspense fallback={<div>Loading...</div>}>
-						<ArchivePage />
-					</Suspense>
-				}
-			/>
-			<Route
-				path="/statistics"
-				element={
-					<Suspense fallback={<div>Loading...</div>}>
-						<BlogPage />
-					</Suspense>
-				}
-			/>
-			<Route
-				path="/zvideo"
-				element={
-					<Suspense fallback={<div>Loading...</div>}>
-						<ZvideoPage />
-					</Suspense>
-				}
-			/>
-			<Route
-				path="/about"
-				element={
-					<Suspense fallback={<div>Loading...</div>}>
-						<AboutPage />
-					</Suspense>
-				}
-			/>
-		</Routes>
+		<Suspense fallback={<div>Loading...</div>}>
+			<Routes>
+				<Route path="/" element={<IndexPage />} />
+				<Route path="/random" element={<RandomPage />} />
+				<Route path="/archive" element={<ArchivePage />} />
+				<Route path="/statistics" element={<BlogPage />} />
+				<Route path="/zvideo" element={<ZvideoPage />} />
+				<Route path="/about" element={<AboutPage />} />
+			</Routes>
+		</Suspense>
 	);
 }
 

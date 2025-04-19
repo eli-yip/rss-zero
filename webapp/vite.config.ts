@@ -16,6 +16,13 @@ export default defineConfig({
 	],
 	build: {
 		cssCodeSplit: true,
+		rollupOptions: {
+			output: {
+				manualChunks: {
+					react: ["react", "react-dom", "react-router-dom"],
+				},
+			},
+		},
 	},
 	base: "",
 	server: {

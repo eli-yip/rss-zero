@@ -1,60 +1,36 @@
-import { Code } from "@heroui/react";
-import { Link } from "@heroui/react";
-import { Snippet } from "@heroui/react";
-import { button as buttonStyles } from "@heroui/react";
-
-import { GithubIcon } from "@/components/icons";
-import { subtitle, title } from "@/components/primitives";
-import { siteConfig } from "@/config/site";
+import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
+import { Card, CardBody, CardHeader } from "@heroui/react";
 
 export default function IndexPage() {
 	return (
 		<DefaultLayout>
 			<section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
 				<div className="inline-block max-w-lg justify-center text-center">
-					<span className={title()}>Make&nbsp;</span>
-					<span className={title({ color: "violet" })}>beautiful&nbsp;</span>
-					<br />
-					<span className={title()}>
-						websites regardless of your design experience.
-					</span>
-					<div className={subtitle({ class: "mt-4" })}>
-						Beautiful, fast and modern React UI library.
-					</div>
-				</div>
-
-				<div className="flex gap-3">
-					<Link
-						isExternal
-						className={buttonStyles({
-							color: "primary",
-							radius: "full",
-							variant: "shadow",
-						})}
-						href={siteConfig.links.docs}
-					>
-						Documentation
-					</Link>
-					<Link
-						isExternal
-						className={buttonStyles({ variant: "bordered", radius: "full" })}
-						href={siteConfig.links.github}
-					>
-						<GithubIcon size={20} />
-						GitHub
-					</Link>
-				</div>
-
-				<div className="mt-8">
-					<Snippet hideCopyButton hideSymbol variant="bordered">
-						<span>
-							Get started by editing{" "}
-							<Code color="primary">pages/index.tsx</Code>
-						</span>
-					</Snippet>
+					<span className={title()}>墨家&nbsp;</span>
+					<span className={title({ color: "violet" })}>第一基地&nbsp;</span>
 				</div>
 			</section>
+
+			<div className="mx-auto max-w-3xl w-full">
+				<Card>
+					<CardHeader className="justify-center">
+						<p className="text-xl font-bold">使用说明</p>
+					</CardHeader>
+					<CardBody>
+						<div className="mx-6">
+							<ul className="list-disc leading-loose text-pretty">
+								<li>随便看看中有随机刷新的墨大回答</li>
+								<li>历史文章中可以根据日期、作者、内容类型筛选和浏览</li>
+								<li>
+									文章数据中展示了墨大过去一年的创作热力图，点击具体的日期可以显示那天的内容
+								</li>
+								<li>直播回放中汇总了从 2024 年 10 月开始的所有直播回放链接</li>
+							</ul>
+						</div>
+					</CardBody>
+				</Card>
+			</div>
 		</DefaultLayout>
 	);
 }
