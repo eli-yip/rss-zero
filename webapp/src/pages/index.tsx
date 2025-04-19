@@ -30,6 +30,20 @@ export default function IndexPage() {
             </div>
           </CardBody>
         </Card>
+
+        <Card>
+          <CardHeader className="justify-center">
+            <p className="text-xl font-bold">FAQ</p>
+          </CardHeader>
+          <CardBody>
+            <div className="mx-6">
+              <ul className="list-disc leading-loose text-pretty">
+                <li>不会提供知识星球中的存档内容</li>
+                <li>未来会提供搜索功能，但不会接入 LLM</li>
+              </ul>
+            </div>
+          </CardBody>
+        </Card>
       </div>
     </DefaultLayout>
   );
