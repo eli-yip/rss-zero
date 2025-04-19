@@ -13,6 +13,7 @@ const canglimoUrlToken: string = "canglimo";
 const authors = [
 	{ key: canglimoUrlToken, name: "墨苍离" },
 	{ key: "zi-e-79-23", name: "别打扰我修道" },
+	{ key: "fu-lan-ke-yang", name: "弗兰克扬" },
 ];
 
 export default function ArchivePage() {

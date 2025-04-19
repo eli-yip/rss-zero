@@ -28,7 +28,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 	}
 	logger.Info("Retrieved archive request successfully")
 
-	supportedAuthors := []string{"canglimo", "zi-e-79-23"}
+	supportedAuthors := []string{"canglimo", "zi-e-79-23", "fu-lan-ke-yang"}
 	if req.Platform != PlatformZhihu ||
 		!slices.Contains(supportedAuthors, req.Author) {
 		logger.Error("Invalid request parameters", zap.Any("request", req))
