@@ -40,6 +40,7 @@ export default function IndexPage() {
               <ul className="list-disc text-pretty leading-loose">
                 <li>不会提供知识星球中的存档内容</li>
                 <li>未来会提供搜索功能，但不会接入 LLM</li>
+                <li>网站当前部署在大陆外，无法保证访问速度</li>
               </ul>
             </div>
           </CardBody>
