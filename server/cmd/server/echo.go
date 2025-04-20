@@ -20,6 +20,7 @@ import (
 	migrateController "github.com/eli-yip/rss-zero/internal/controller/migrate"
 	parseHandler "github.com/eli-yip/rss-zero/internal/controller/parse"
 	rsshubController "github.com/eli-yip/rss-zero/internal/controller/rsshub"
+	userController "github.com/eli-yip/rss-zero/internal/controller/user"
 	xiaobotController "github.com/eli-yip/rss-zero/internal/controller/xiaobot"
 	zhihuController "github.com/eli-yip/rss-zero/internal/controller/zhihu"
 	zsxqController "github.com/eli-yip/rss-zero/internal/controller/zsxq"
@@ -94,6 +95,7 @@ func setupEcho(redisService redis.Redis,
 	// /api/v1
 	apiGroup := e.Group("/api/v1")
 	registerArchive(apiGroup, archiveHandler)
+	apiGroup.GET("/user", userController.GetUserInfo)
 
 	var groupNeedAuth []*echo.Group
 
