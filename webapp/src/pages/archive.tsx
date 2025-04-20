@@ -1,4 +1,10 @@
-import { DatePicker, type DateValue, Select, SelectItem } from "@heroui/react";
+import {
+  DatePicker,
+  type DateValue,
+  Select,
+  SelectItem,
+  addToast,
+} from "@heroui/react";
 import { parseDate } from "@internationalized/date";
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -40,6 +46,10 @@ export default function ArchivePage() {
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.set("author", canglimoUrlToken);
       setSearchParams(newSearchParams);
+      addToast({
+        title: "当前作者还未添加，切换到墨苍离的内容",
+        timeout: 3000,
+      });
     }
   }, [authorParam, searchParams, setSearchParams]);
 
