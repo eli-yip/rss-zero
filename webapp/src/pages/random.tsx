@@ -11,7 +11,7 @@ export default function RandomPage() {
   const button = (
     <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
       <Button
-        className="text-2xl font-bold"
+        className="font-bold text-2xl"
         isLoading={loading}
         size="lg"
         onPress={getTopics}

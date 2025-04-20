@@ -12,14 +12,14 @@ export default function IndexPage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-3xl w-full">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-y-4">
         <Card>
           <CardHeader className="justify-center">
-            <p className="text-xl font-bold">使用说明</p>
+            <p className="font-bold text-xl">使用说明</p>
           </CardHeader>
           <CardBody>
             <div className="mx-6">
-              <ul className="list-disc leading-loose text-pretty">
+              <ul className="list-disc text-pretty leading-loose">
                 <li>随便看看中有随机刷新的墨大回答</li>
                 <li>历史文章中可以根据日期、作者、内容类型筛选和浏览</li>
                 <li>
@@ -33,11 +33,11 @@ export default function IndexPage() {
 
         <Card>
           <CardHeader className="justify-center">
-            <p className="text-xl font-bold">FAQ</p>
+            <p className="font-bold text-xl">FAQ</p>
           </CardHeader>
           <CardBody>
             <div className="mx-6">
-              <ul className="list-disc leading-loose text-pretty">
+              <ul className="list-disc text-pretty leading-loose">
                 <li>不会提供知识星球中的存档内容</li>
                 <li>未来会提供搜索功能，但不会接入 LLM</li>
               </ul>

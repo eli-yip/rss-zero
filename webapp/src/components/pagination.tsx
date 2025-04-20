@@ -59,7 +59,7 @@ function PaginationWithJumper({
   };
 
   return (
-    <div className="fixed bottom-4 left-0 right-0 z-40 flex flex-col items-center justify-center gap-4">
+    <div className="fixed right-0 bottom-4 left-0 z-40 flex flex-col items-center justify-center gap-4">
       <Pagination
         isCompact
         showControls

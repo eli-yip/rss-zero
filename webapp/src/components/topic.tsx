@@ -29,7 +29,7 @@ function Topic({ topic }: TopicProps) {
 
   return (
     <div>
-      <Card disableAnimation className="markdown-body !mb-4">
+      <Card disableAnimation className="markdown-body">
         <CardHeader className="flex justify-between gap-1">
           <h3>{topic.title}</h3>
           <div className="flex flex-row justify-start sm:justify-end">
@@ -113,7 +113,7 @@ interface TopicsProps {
 
 export function Topics({ topics }: TopicsProps) {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-y-4">
       {topics.map((topic) => (
         <Topic key={topic.id} topic={topic} />
       ))}
