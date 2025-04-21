@@ -70,7 +70,7 @@ function Topic({ topic }: TopicProps) {
           <span>{topic.author.nickname}</span>
           <span>
             {DateTime.fromISO(topic.created_at).toFormat(
-              "yyyy 年 L 月 d 日 h:m",
+              "yyyy 年 L 月 d 日 h:mm",
             )}
           </span>
         </CardFooter>
