@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
-
 import {
   type ArchiveResponse,
   ContentType,
   fetchArchiveTopics,
-} from "@/api/archive";
+} from "@/api/client";
 import type { Topic } from "@/types/topic";
+import { useEffect, useState } from "react";
 
 export function useArchiveTopics(
   page: number,

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { fetchStatistics } from "@/api/statistics";
+import { fetchStatistics } from "@/api/client";
 import { title } from "@/components/primitives";
 import { Statistics } from "@/components/statistics";
 import DefaultLayout from "@/layouts/default";

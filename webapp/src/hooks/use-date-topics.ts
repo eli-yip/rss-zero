@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { type ArchiveResponse, fetchArchiveTopics } from "@/api/archive";
+import { type ArchiveResponse, fetchArchiveTopics } from "@/api/client";
 import type { Topic } from "@/types/topic";
 
 export function useDateTopics(page: number, date: string) {

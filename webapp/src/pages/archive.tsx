@@ -14,7 +14,7 @@ import { parseDate } from "@internationalized/date";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { ContentType } from "@/api/archive";
+import { ContentType } from "@/api/client";
 import { Archive } from "@/components/archive";
 import { title } from "@/components/primitives";
 import { useArchiveTopics } from "@/hooks/use-archive-topics";

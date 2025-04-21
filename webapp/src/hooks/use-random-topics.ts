@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { fetchRandomTopics, type RandomResponse } from "@/api/random";
+import { fetchRandomTopics, type RandomResponse } from "@/api/client";
 import type { Topic } from "@/types/topic";
 
 export function useRandomTopics() {
