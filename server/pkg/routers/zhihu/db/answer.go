@@ -18,7 +18,7 @@ type DBAnswer interface {
 	// then return the answers for text generating.
 	FetchNAnswer(int, FetchAnswerOption) ([]Answer, error)
 	FetchAnswer(author string, limit, offset int) ([]Answer, error)
-	FetchAnswerWithDateRange(author string, limit, offset int, startTime, endTime time.Time) ([]Answer, error)
+	FetchAnswerWithDateRange(author string, limit, offset, order int, startTime, endTime time.Time) ([]Answer, error)
 	// UpdateAnswerStatus update answer status in zhihu_answer table
 	UpdateAnswerStatus(id int, status int) error
 	// GetLatestAnswerTime get the latest answer time from zhihu_answer table
@@ -44,7 +44,7 @@ type FetchAnswerOption struct {
 	Status *int
 }
 
-// "content": "\u003cp data-pid=\"TmR0DPFm\"\u003e有很多逻辑，其实都是词汇定义出了问题。\u003c/p\u003e\u003cp data-pid=\"SzvAo4_H\"\u003e把被动的，掩饰成主动的，然后再包装成所谓的竞争优势。\u003c/p\u003e\u003cp data-pid=\"5j3nbEqH\"\u003e这时候，就扭曲了基本逻辑，从而导致了应然和实然的冲突。\u003c/p\u003e\u003cp data-pid=\"X1J0RGRZ\"\u003e以题目中“保守”的语境而言。\u003c/p\u003e\u003cp data-pid=\"Gd3KsLn1\"\u003e如果一位女性，魅力突出、花容月貌、才华横溢，而又洁身自好，那么，这是一种褒义的“保守”。\u003c/p\u003e\u003cp data-pid=\"QqmczkmK\"\u003e注意，这种保守，是这位女性自己选择的。\u003c/p\u003e\u003cp data-pid=\"_qEBUjq9\"\u003e另外一位女性，出门回头率零，邋邋遢遢从不收拾自己，她没有异性交往经历，这也是一种“保守”。\u003c/p\u003e\u003cp data-pid=\"_LFutO-F\"\u003e但，第二种保守，是被动的，至少在她学会捯饬自己之前，没有异性愿意跟她交往，那么她没有“不保守”的选择。\u003c/p\u003e\u003cp data-pid=\"GhuwIZXx\"\u003e这时候，这个“保守”就不是褒义的，而是假象。\u003c/p\u003e\u003cp data-pid=\"pY6psRn_\"\u003e类似的案例很多，更常见的，我以前说过，“善良”。\u003c/p\u003e\u003cp data-pid=\"CANVglqI\"\u003e胸怀利刃而不害人，是善良。\u003c/p\u003e\u003cp data-pid=\"YEw371Vc\"\u003e胸无利刃，而四处说自己不害人，是被迫善良，不是真的善良。\u003c/p\u003e\u003cp data-pid=\"arJhegAK\"\u003e另外，用“保守”去褒义化女性，污名化有异性亲密经历的女性，这种思维本身也物化了女性，并且暗示了女性的亲密经历是吃亏的。\u003c/p\u003e\u003cp data-pid=\"bq3Ej6XK\"\u003e这其实会带来非常多的问题。\u003c/p\u003e\u003cp data-pid=\"nXadeqX9\"\u003e比如女性被某个长期非常痛苦的亲密关系绑架，而由于认为自己已经付出了贞洁（因而沉没成本太高），而不敢分手。\u003c/p\u003e\u003cp data-pid=\"-R5dQS7U\"\u003e很多事情，还是要分事情，辩证的看。\u003c/p\u003e\u003cp data-pid=\"IZfWnkEW\"\u003e在很多很多年前，有种伦理，女性未出嫁不小心碰到男性，就自杀，然后立个牌坊给家里人免税。\u003c/p\u003e\u003cp data-pid=\"YEssMHOc\"\u003e那个年代，没有拿女性当人看的，是吃人的年代。\u003c/p\u003e\u003cp data-pid=\"Pe3lcCr5\"\u003e在现代，类似的吃人逻辑，应该消失了。\u003c/p\u003e\u003cp data-pid=\"rq5i9sVN\"\u003e不要过着现代化生活，而脑子还在古代。\u003c/p\u003e\u003cp data-pid=\"WlD9gx6L\"\u003e供参考。\u003c/p\u003e\u003cp\u003e\u003c/p\u003e",
+// "content": "\u003cp data-pid=\"TmR0DPFm\"\u003e 有很多逻辑，其实都是词汇定义出了问题。\u003c/p\u003e\u003cp data-pid=\"SzvAo4_H\"\u003e 把被动的，掩饰成主动的，然后再包装成所谓的竞争优势。\u003c/p\u003e\u003cp data-pid=\"5j3nbEqH\"\u003e 这时候，就扭曲了基本逻辑，从而导致了应然和实然的冲突。\u003c/p\u003e\u003cp data-pid=\"X1J0RGRZ\"\u003e 以题目中“保守”的语境而言。\u003c/p\u003e\u003cp data-pid=\"Gd3KsLn1\"\u003e 如果一位女性，魅力突出、花容月貌、才华横溢，而又洁身自好，那么，这是一种褒义的“保守”。\u003c/p\u003e\u003cp data-pid=\"QqmczkmK\"\u003e 注意，这种保守，是这位女性自己选择的。\u003c/p\u003e\u003cp data-pid=\"_qEBUjq9\"\u003e 另外一位女性，出门回头率零，邋邋遢遢从不收拾自己，她没有异性交往经历，这也是一种“保守”。\u003c/p\u003e\u003cp data-pid=\"_LFutO-F\"\u003e 但，第二种保守，是被动的，至少在她学会捯饬自己之前，没有异性愿意跟她交往，那么她没有“不保守”的选择。\u003c/p\u003e\u003cp data-pid=\"GhuwIZXx\"\u003e 这时候，这个“保守”就不是褒义的，而是假象。\u003c/p\u003e\u003cp data-pid=\"pY6psRn_\"\u003e 类似的案例很多，更常见的，我以前说过，“善良”。\u003c/p\u003e\u003cp data-pid=\"CANVglqI\"\u003e 胸怀利刃而不害人，是善良。\u003c/p\u003e\u003cp data-pid=\"YEw371Vc\"\u003e 胸无利刃，而四处说自己不害人，是被迫善良，不是真的善良。\u003c/p\u003e\u003cp data-pid=\"arJhegAK\"\u003e 另外，用“保守”去褒义化女性，污名化有异性亲密经历的女性，这种思维本身也物化了女性，并且暗示了女性的亲密经历是吃亏的。\u003c/p\u003e\u003cp data-pid=\"bq3Ej6XK\"\u003e 这其实会带来非常多的问题。\u003c/p\u003e\u003cp data-pid=\"nXadeqX9\"\u003e 比如女性被某个长期非常痛苦的亲密关系绑架，而由于认为自己已经付出了贞洁（因而沉没成本太高），而不敢分手。\u003c/p\u003e\u003cp data-pid=\"-R5dQS7U\"\u003e 很多事情，还是要分事情，辩证的看。\u003c/p\u003e\u003cp data-pid=\"IZfWnkEW\"\u003e 在很多很多年前，有种伦理，女性未出嫁不小心碰到男性，就自杀，然后立个牌坊给家里人免税。\u003c/p\u003e\u003cp data-pid=\"YEssMHOc\"\u003e 那个年代，没有拿女性当人看的，是吃人的年代。\u003c/p\u003e\u003cp data-pid=\"Pe3lcCr5\"\u003e 在现代，类似的吃人逻辑，应该消失了。\u003c/p\u003e\u003cp data-pid=\"rq5i9sVN\"\u003e 不要过着现代化生活，而脑子还在古代。\u003c/p\u003e\u003cp data-pid=\"WlD9gx6L\"\u003e 供参考。\u003c/p\u003e\u003cp\u003e\u003c/p\u003e",
 // "created_time": 1705985791,
 // "id": 3372966744,
 type Answer struct {
@@ -159,9 +159,15 @@ func (d *DBService) FetchAnswer(author string, limit, offset int) ([]Answer, err
 	return as, nil
 }
 
-func (d *DBService) FetchAnswerWithDateRange(author string, limit, offset int, startTime, endTime time.Time) ([]Answer, error) {
+func (d *DBService) FetchAnswerWithDateRange(author string, limit, offset, order int, startTime, endTime time.Time) ([]Answer, error) {
 	as := make([]Answer, 0, limit)
-	if err := d.Where("author_id = ?", author).Where("create_at >= ?", startTime).Where("create_at < ?", endTime).Order("create_at desc").Limit(limit).Offset(offset).Find(&as).Error; err != nil {
+	stmt := d.Where("author_id = ?", author).Where("create_at >= ?", startTime).Where("create_at < ?", endTime).Limit(limit).Offset(offset)
+	if order == 0 {
+		stmt = stmt.Order("create_at desc")
+	} else {
+		stmt = stmt.Order("create_at asc")
+	}
+	if err := stmt.Find(&as).Error; err != nil {
 		return nil, err
 	}
 	return as, nil

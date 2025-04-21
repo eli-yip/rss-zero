@@ -24,7 +24,7 @@ type DBPin interface {
 	GetLatestNPin(n int, authorID string) ([]Pin, error)
 	GetLatestPinTime(userID string) (time.Time, error)
 	FetchNPin(n int, opt FetchPinOption) (ps []Pin, err error)
-	FetchPinWithDateRange(authorID string, limit, offset int, startTime, endTime time.Time) (ps []Pin, err error)
+	FetchPinWithDateRange(authorID string, limit, offset, order int, startTime, endTime time.Time) (ps []Pin, err error)
 	GetPinAfter(authorID string, t time.Time) ([]Pin, error)
 	CountPin(authorID string) (int, error)
 	CountPinWithDateRange(authorID string, startTime, endTime time.Time) (int, error)
@@ -99,9 +99,15 @@ func (d *DBService) FetchNPin(n int, opt FetchPinOption) (ps []Pin, err error) {
 	return ps, nil
 }
 
-func (d *DBService) FetchPinWithDateRange(authorID string, limit, offset int, startTime, endTime time.Time) (ps []Pin, err error) {
+func (d *DBService) FetchPinWithDateRange(authorID string, limit, offset, order int, startTime, endTime time.Time) (ps []Pin, err error) {
 	ps = make([]Pin, 0, limit)
-	if err := d.Where("author_id = ? and create_at >= ? and create_at < ?", authorID, startTime, endTime).Order("create_at desc").Limit(limit).Offset(offset).Find(&ps).Error; err != nil {
+	stmt := d.Where("author_id = ? and create_at >= ? and create_at < ?", authorID, startTime, endTime).Order("create_at desc").Limit(limit).Offset(offset)
+	if order == 0 {
+		stmt = stmt.Order("create_at desc")
+	} else {
+		stmt = stmt.Order("create_at asc")
+	}
+	if err := stmt.Find(&ps).Error; err != nil {
 		return nil, err
 	}
 	return ps, nil

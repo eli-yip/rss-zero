@@ -54,7 +54,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 	)
 	switch req.Type {
 	case ContentTypeAnswer:
-		answers, err := h.zhihuDBService.FetchAnswerWithDateRange(req.Author, req.Count, offset, startDate, endDate)
+		answers, err := h.zhihuDBService.FetchAnswerWithDateRange(req.Author, req.Count, offset, req.Order, startDate, endDate)
 		if err != nil {
 			logger.Error("Failed to fetch answer", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch answer"})
@@ -72,7 +72,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to count answer"})
 		}
 	case ContentTypePin:
-		pins, err := h.zhihuDBService.FetchPinWithDateRange(req.Author, req.Count, offset, startDate, endDate)
+		pins, err := h.zhihuDBService.FetchPinWithDateRange(req.Author, req.Count, offset, req.Order, startDate, endDate)
 		if err != nil {
 			logger.Error("Failed to fetch pin", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch pin"})

@@ -57,6 +57,7 @@ type ArchiveRequest struct {
 	Page      int    `json:"page"`
 	StartDate string `json:"start_date"`
 	EndDate   string `json:"end_date"`
+	Order     int    `json:"order"` // 0: created_at desc, 1: created_at asc
 }
 
 type SelectRequest struct {

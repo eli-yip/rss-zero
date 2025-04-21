@@ -13,6 +13,7 @@ export function useArchiveTopics(
   endDate = "",
   contentType: ContentType = ContentType.Answer,
   author = "canglimo",
+  order = 0,
 ) {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -31,6 +32,7 @@ export function useArchiveTopics(
           endDate,
           contentType,
           author,
+          order,
         );
 
         setTopics(data.topics);
@@ -43,7 +45,7 @@ export function useArchiveTopics(
       }
     }
     getTopics();
-  }, [page, startDate, endDate, contentType, author]);
+  }, [page, order, startDate, endDate, contentType, author]);
 
   return { topics, total, firstFetchDone, loading, error };
 }

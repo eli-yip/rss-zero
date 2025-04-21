@@ -37,6 +37,7 @@ interface ArchiveRequest {
    * 结束日期
    */
   end_date: string;
+  order: number;
 }
 
 // 定义分页信息类型
@@ -63,6 +64,7 @@ export async function fetchArchiveTopics(
   end_date = "",
   type: ContentType = ContentType.Answer,
   author = "canglimo",
+  order = 0,
 ): Promise<ArchiveResponse> {
   const requestBody: ArchiveRequest = {
     platform: "zhihu",
@@ -72,6 +74,7 @@ export async function fetchArchiveTopics(
     author: author,
     start_date: start_date,
     end_date: end_date,
+    order: order,
   };
 
   const response = await fetch(`${apiUrl}/archive`, {
