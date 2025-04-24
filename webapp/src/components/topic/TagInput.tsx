@@ -201,7 +201,7 @@ function TagInput({
       />
       {isOpen && displayTags.length > 0 ? (
         <div
-          className="absolute z-50 w-full"
+          className="absolute z-50 mt-0.5 w-full"
           // 添加鼠标进入事件，防止在点击标签项时因失焦而关闭
           onMouseDown={(e) => {
             // 阻止冒泡，防止触发输入框的 blur 事件
@@ -212,7 +212,7 @@ function TagInput({
             label="标签列表"
             items={listboxItems}
             onAction={(key) => handleTagSelect(key.toString())}
-            className="bg-sky-50"
+            className="rounded-xl bg-sky-50"
             itemClasses={{
               base: "data-[hover=true]:bg-sky-300 w-full text-nowrap",
             }}
