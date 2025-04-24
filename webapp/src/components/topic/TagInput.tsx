@@ -70,6 +70,9 @@ function TagInput({
   const [cursorPosition, setCursorPosition] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // 添加一个用于跟踪当前焦点状态的 ref
+  const hasFocusRef = useRef(false);
+
   // 将标签按照数量降序排序
   const sortedTags = Object.entries(tagCountMap)
     .sort(([, countA], [, countB]) => countB - countA)
@@ -93,6 +96,7 @@ function TagInput({
   // 显示的标签列表，如果当前没有词，则显示前 5 个标签
   const displayTags =
     currentWord === "" ? filteredTags.slice(0, 5) : filteredTags;
+
   // 转换为 Listbox 需要的格式
   const listboxItems: ListboxItemData[] = displayTags.map((tag) => ({
     key: tag,
@@ -105,41 +109,55 @@ function TagInput({
     onChange(e.target.value);
     const position = e.target.selectionStart || 0;
     setCursorPosition(position);
-    setTimeout(() => {
+
+    // 如果有焦点且有显示的标签，则打开下拉列表
+    if (hasFocusRef.current && displayTags.length > 0) {
       setIsOpen(true);
-    });
+    }
   };
 
   // 处理获取焦点
-  const handleFocus = (_: React.FocusEvent<HTMLInputElement>) => {
-    setTimeout(() => {
+  const handleFocus = () => {
+    hasFocusRef.current = true;
+
+    // 只有当有标签可显示时才打开下拉列表
+    if (displayTags.length > 0) {
       setIsOpen(true);
-    });
+    }
   };
 
+  // 处理光标位置选择
   const handleSelect = (e: React.FocusEvent<HTMLInputElement>) => {
+    // 只处理单一光标位置的情况，而不是文本选择
     if (e.target.selectionStart !== e.target.selectionEnd) {
       return;
     }
 
     const position = e.target.selectionStart || 0;
     setCursorPosition(position);
-    setTimeout(() => {
+
+    // 如果有焦点且有显示的标签，则打开下拉列表
+    if (hasFocusRef.current && displayTags.length > 0) {
       setIsOpen(true);
-    });
+    }
   };
 
   // 处理标签选择
   const handleTagSelect = (tag: string) => {
+    // 更新输入值，替换当前单词
     const newValue = `${value.substring(0, currentWordInfo.start)}${tag}${value.substring(currentWordInfo.end)}`;
-
     onChange(newValue);
-    setTimeout(() => {
+
+    // 关闭下拉列表
+    setIsOpen(false);
+
+    // 使用 requestAnimationFrame 来确保 DOM 更新后再设置焦点和光标位置
+    requestAnimationFrame(() => {
       if (inputRef.current) {
+        // 将焦点重新设置到输入框
         inputRef.current.focus();
-        setTimeout(() => {
-          setIsOpen(false);
-        });
+
+        // 计算新的光标位置
         const newPosition = currentWordInfo.start + tag.length;
         inputRef.current.setSelectionRange(newPosition, newPosition);
         setCursorPosition(newPosition);
@@ -147,10 +165,24 @@ function TagInput({
     });
   };
 
+  // 处理失去焦点
   const handleBlur = () => {
-    setTimeout(() => {
-      setIsOpen(false);
+    // 使用短延迟让标签选择事件有机会先触发
+    hasFocusRef.current = false;
+
+    // 使用 requestAnimationFrame 确保在下一次绘制前关闭下拉列表
+    // 这会让标签选择事件有机会先处理
+    requestAnimationFrame(() => {
+      // 再次检查焦点状态，防止因点击标签项而误关闭
+      if (!hasFocusRef.current) {
+        setIsOpen(false);
+      }
     });
+  };
+
+  const handleClear = () => {
+    onChange("");
+    setCursorPosition(0);
   };
 
   return (
@@ -160,7 +192,7 @@ function TagInput({
         ref={inputRef}
         value={value}
         onChange={handleInputChange}
-        onClear={() => onChange("")}
+        onClear={handleClear}
         onFocus={handleFocus}
         onSelect={handleSelect}
         onBlur={handleBlur}
@@ -168,12 +200,19 @@ function TagInput({
         fullWidth
       />
       {isOpen && displayTags.length > 0 ? (
-        <div className="absolute z-50 w-full">
+        <div
+          className="absolute z-50 w-full"
+          // 添加鼠标进入事件，防止在点击标签项时因失焦而关闭
+          onMouseDown={(e) => {
+            // 阻止冒泡，防止触发输入框的 blur 事件
+            e.preventDefault();
+          }}
+        >
           <Listbox
             label="标签列表"
             items={listboxItems}
             onAction={(key) => handleTagSelect(key.toString())}
-            className=" bg-sky-50"
+            className="bg-sky-50"
             itemClasses={{
               base: "data-[hover=true]:bg-sky-300 w-full text-nowrap",
             }}
