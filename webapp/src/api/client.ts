@@ -186,6 +186,7 @@ export async function fetchStatistics(): Promise<Record<string, number>> {
 interface UserInfoResponse {
   data: {
     username: string;
+    nickname: string;
   };
 }
 

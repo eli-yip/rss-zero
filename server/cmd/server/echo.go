@@ -95,7 +95,7 @@ func setupEcho(redisService redis.Redis,
 	// /api/v1
 	apiGroup := e.Group("/api/v1")
 	registerArchive(apiGroup, archiveHandler)
-	apiGroup.GET("/user", userController.GetUserInfo)
+	apiGroup.GET("/user", userController.GetUserInfo, myMiddleware.InjectUser())
 	bookmarkGroup := apiGroup.Group("/bookmark")
 	bookmarkGroup.Use(myMiddleware.InjectUser())
 	registerBookmark(bookmarkGroup, archiveHandler)

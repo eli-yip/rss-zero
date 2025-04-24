@@ -74,7 +74,7 @@ export const Navbar = () => {
                   as="button"
                   className="transition-transform"
                   src="https://i.pravatar.cc/150"
-                  name={userInfo.username}
+                  name={userInfo.nickname}
                   size="sm"
                 />
               </DropdownTrigger>
@@ -87,7 +87,7 @@ export const Navbar = () => {
                     base: "data-[hover=true]:bg-transparent cursor-auto",
                   }}
                 >
-                  <p>您好，{userInfo.username}</p>
+                  <p>您好，{userInfo.nickname}</p>
                 </DropdownItem>
                 <DropdownItem key="logout" color="danger" onPress={logout}>
                   退出登录
@@ -108,7 +108,7 @@ export const Navbar = () => {
                 as="button"
                 className="transition-transform"
                 src="https://i.pravatar.cc/150"
-                name={userInfo.username}
+                name={userInfo.nickname}
                 size="sm"
               />
             </DropdownTrigger>
@@ -121,7 +121,7 @@ export const Navbar = () => {
                   base: "data-[hover=true]:bg-transparent cursor-auto",
                 }}
               >
-                <p>您好，{userInfo.username}</p>
+                <p>您好，{userInfo.nickname}</p>
               </DropdownItem>
               <DropdownItem key="logout" color="danger" onPress={logout}>
                 退出登录
