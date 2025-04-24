@@ -41,8 +41,8 @@ type TagFilter struct {
 }
 
 type TagCount struct {
-	Name  string
-	Count int
+	Name  string `json:"name"`
+	Count int    `json:"count"`
 }
 
 type DB interface {
