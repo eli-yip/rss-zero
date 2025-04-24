@@ -349,7 +349,7 @@ func (h *Controller) GetAllTags(c echo.Context) (err error) {
 	logger.Info("Get tag counts successfully", zap.String("username", user))
 
 	response := struct {
-		Tags []bookmarkDB.TagCount
+		Tags []bookmarkDB.TagCount `json:"tags"`
 	}{
 		Tags: tagCounts,
 	}

@@ -25,8 +25,6 @@ export function Topics({
       const newTopics = topics.filter(
         (topic) => topic.custom && topic.custom.bookmark === true,
       );
-      console.log("new topics", newTopics);
-      console.log("new topics lenght", newTopics.length);
       return newTopics;
     }
     return topics;
