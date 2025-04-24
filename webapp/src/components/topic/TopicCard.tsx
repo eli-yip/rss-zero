@@ -130,7 +130,9 @@ function BookmarkedCardBody({
       )}
 
       {/* 文章内容 */}
-      <Markdown remarkPlugins={[remarkGfm]}>{topic.body}</Markdown>
+      <div className="markdown-body">
+        <Markdown remarkPlugins={[remarkGfm]}>{topic.body}</Markdown>
+      </div>
 
       {/* 这里可以添加更多收藏特有的 UI 元素，如标签显示、笔记显示等 */}
     </CardBody>
@@ -275,17 +277,16 @@ export function TopicCard({
   );
 
   return (
-    <Card disableAnimation className="markdown-body">
+    <Card disableAnimation>
       <CardHeader className="flex justify-between gap-1">
-        <h3>{topic.title}</h3>
-        <div className="flex flex-row justify-start sm:justify-end">
+        <p className="mt-2 font-bold text-2xl">{topic.title}</p>
+        <div className="mt-2 flex flex-row justify-start sm:justify-end">
           <ButtonGroup>
             <Tooltip content={isBookmarked ? "取消收藏" : "收藏"}>
               <Button
                 isIconOnly
                 isDisabled={userInfo?.username === "mojia"}
                 size="sm"
-                className="mt-6 mb-4"
                 onPress={handleToggleBookmark}
               >
                 {isBookmarked ? (
@@ -297,7 +298,7 @@ export function TopicCard({
             </Tooltip>
             <Dropdown>
               <DropdownTrigger>
-                <Button isIconOnly size="sm" className="mt-6 mb-4">
+                <Button isIconOnly size="sm">
                   <FaEllipsisV size={14} />
                 </Button>
               </DropdownTrigger>
