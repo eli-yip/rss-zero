@@ -112,9 +112,9 @@ function BookmarkedCardBody({
           )}
         </div>
       ) : (
-        <div className="mb-2 flex gap-2">
+        <div className="mb-2 flex flex-wrap gap-2">
           {Boolean(topic.custom?.tags?.length) && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {topic.custom?.tags.map((tag) => (
                 <Chip className="my-auto" key={tag} size="lg">
                   {tag}
