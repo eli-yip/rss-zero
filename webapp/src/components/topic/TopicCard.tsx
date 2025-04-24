@@ -31,9 +31,10 @@ import remarkGfm from "remark-gfm";
 import { addBookmark, removeBookmark, updateBookmark } from "@/api/client";
 import { TagInputForm } from "@/components/topic/TagInput";
 import { useAllTags } from "@/hooks/useAllTags";
-import type { Topic } from "@/types/Topic";
-import "@/styles/github-markdown.css";
 import { useUserInfo } from "@/hooks/useUserInfo";
+import type { Topic } from "@/types/Topic";
+
+import "@/styles/github-markdown.css";
 
 interface TopicCardProps {
   topic: Topic;
@@ -145,7 +146,9 @@ function BookmarkedCardBody({
 function RegularCardBody({ topic }: RegularCardBodyProps) {
   return (
     <CardBody>
-      <Markdown remarkPlugins={[remarkGfm]}>{topic.body}</Markdown>
+      <div className="markdown-body">
+        <Markdown remarkPlugins={[remarkGfm]}>{topic.body}</Markdown>
+      </div>
     </CardBody>
   );
 }
