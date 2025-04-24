@@ -3,6 +3,7 @@ package migrate
 import (
 	"gorm.io/gorm"
 
+	bookmark "github.com/eli-yip/rss-zero/pkg/bookmark/db"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
@@ -50,5 +51,8 @@ func MigrateDB(db *gorm.DB) (err error) {
 		&macked.AppInfo{},
 
 		&cookie.Cookie{},
+
+		&bookmark.Bookmark{},
+		&bookmark.Tag{},
 	)
 }

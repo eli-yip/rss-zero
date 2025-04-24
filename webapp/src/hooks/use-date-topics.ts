@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { type ArchiveResponse, fetchArchiveTopics } from "@/api/client";
-import type { Topic } from "@/types/topic";
+import type { Topic } from "@/types/Topic";
 
 export function useDateTopics(page: number, date: string) {
   const [topics, setTopics] = useState<Topic[]>([]);

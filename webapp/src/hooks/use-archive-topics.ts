@@ -3,7 +3,7 @@ import {
   ContentType,
   fetchArchiveTopics,
 } from "@/api/client";
-import type { Topic } from "@/types/topic";
+import type { Topic } from "@/types/Topic";
 import { useEffect, useState } from "react";
 
 export function useArchiveTopics(
@@ -24,6 +24,7 @@ export function useArchiveTopics(
     async function getTopics() {
       setLoading(true);
       setError(null);
+      setTopics([]);
       try {
         const data: ArchiveResponse = await fetchArchiveTopics(
           page,

@@ -96,6 +96,12 @@ func setupEcho(redisService redis.Redis,
 	apiGroup := e.Group("/api/v1")
 	registerArchive(apiGroup, archiveHandler)
 	apiGroup.GET("/user", userController.GetUserInfo)
+	bookmarkGroup := apiGroup.Group("/bookmark")
+	bookmarkGroup.Use(myMiddleware.InjectUser())
+	registerBookmark(bookmarkGroup, archiveHandler)
+	tagGroup := apiGroup.Group("/tag")
+	tagGroup.Use(myMiddleware.InjectUser())
+	registerTag(tagGroup, archiveHandler)
 
 	var groupNeedAuth []*echo.Group
 
@@ -161,6 +167,22 @@ func setupEcho(redisService redis.Redis,
 	return e
 }
 
+func registerBookmark(bookmarkGroup *echo.Group, archiveHandler *archiveController.Controller) {
+	bookmarkList := bookmarkGroup.POST("", archiveHandler.GetBookmarkList)
+	bookmarkList.Name = "Bookmark list route"
+	bookmarkAdd := bookmarkGroup.PUT("", archiveHandler.PutBookmark)
+	bookmarkAdd.Name = "Bookmark add route"
+	bookmarkDelete := bookmarkGroup.DELETE("/:id", archiveHandler.DeleteBookmark)
+	bookmarkDelete.Name = "Bookmark delete route"
+	bookmarkUpdate := bookmarkGroup.PATCH("/:id", archiveHandler.PatchBookmark)
+	bookmarkUpdate.Name = "Bookmark update route"
+}
+
+func registerTag(tagGroup *echo.Group, archiveHandler *archiveController.Controller) {
+	tagList := tagGroup.GET("", archiveHandler.GetAllTags)
+	tagList.Name = "Tag list route"
+}
+
 func registerAuthor(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller) {
 	// /api/v1/author/zhihu
 	zhihuAuthorApi := apiGroup.GET("/author/zhihu/:id", zhihuHandler.AuthorName)
@@ -202,16 +224,18 @@ func registerJob(apiGroup *echo.Group, jobHandler *jobController.Controller) {
 
 // /api/v1/archive
 func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Controller) {
-	archiveApi := apiGroup.Group("/archive")
-	archivePickApi := archiveApi.POST("", archiveHandler.Archive)
-	statisticApi := archiveApi.GET("/statistics", archiveHandler.GetStatistics)
+	archiveGroup := apiGroup.Group("/archive")
+	archiveGroup.Use(myMiddleware.InjectUser())
+
+	archivePickApi := archiveGroup.POST("", archiveHandler.Archive)
+	statisticApi := archiveGroup.GET("/statistics", archiveHandler.GetStatistics)
 	statisticApi.Name = "Statistics route"
 	archivePickApi.Name = "Archive pick route"
-	archiveHistoryApi := archiveApi.GET("/:url", archiveHandler.History)
+	archiveHistoryApi := archiveGroup.GET("/:url", archiveHandler.History)
 	archiveHistoryApi.Name = "Archive route"
-	randomPickApi := archiveApi.POST("/random", archiveHandler.Random)
+	randomPickApi := archiveGroup.POST("/random", archiveHandler.Random)
 	randomPickApi.Name = "Random pick route"
-	zvideoListApi := archiveApi.GET("/zvideo", archiveHandler.ZvideoList)
+	zvideoListApi := archiveGroup.GET("/zvideo", archiveHandler.ZvideoList)
 	zvideoListApi.Name = "Zvideo list route"
 	// selectPickApi := archiveApi.POST("/select", archiveHandler.Select)
 	// selectPickApi.Name = "Select pick route"

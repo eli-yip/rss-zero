@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 
 import { title } from "@/components/primitives";
 import { ScrollToTop } from "@/components/scroll-to-top";
-import { Zvideos } from "@/components/zvideos";
+import { Zvideos } from "@/components/Zvideos";
 import { apiUrl } from "@/config/config";
 import DefaultLayout from "@/layouts/default";
-import type { Zvideo } from "@/types/zvideo";
+import type { Zvideo } from "@/types/Zvideo";
 
 export default function ZvideoPage() {
   const [zvideos, setZvideos] = useState<Zvideo[]>();

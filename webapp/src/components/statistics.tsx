@@ -1,10 +1,11 @@
-import { Tooltip } from "@heroui/react";
-import { type Activity, ActivityCalendar } from "react-activity-calendar";
-import { useSearchParams } from "react-router-dom";
-
-import { Archive } from "@/components/archive";
+import { Archive } from "@/components/archive/Archive";
 import { useTheme } from "@/context/theme-context";
 import { useDateTopics } from "@/hooks/use-date-topics";
+import type { Topic } from "@/types/Topic";
+import { Tooltip } from "@heroui/react";
+import { useCallback, useEffect, useState } from "react";
+import { type Activity, ActivityCalendar } from "react-activity-calendar";
+import { useSearchParams } from "react-router-dom";
 
 interface StatisticsProps {
   statistics: Record<string, number>;
@@ -16,7 +17,27 @@ export function Statistics({ loading, statistics }: StatisticsProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number.parseInt(searchParams.get("page") || "1");
   const date = searchParams.get("date") || "";
-  const { topics, total, loading: topicsLoading } = useDateTopics(page, date);
+
+  const {
+    topics: initialTopics,
+    total,
+    loading: topicsLoading,
+  } = useDateTopics(page, date);
+
+  // 添加本地状态管理 topics
+  const [topics, setTopics] = useState<Topic[]>([]);
+
+  // 当初始数据加载完成时更新本地状态
+  useEffect(() => {
+    if (initialTopics?.length > 0) {
+      setTopics(initialTopics);
+    }
+  }, [initialTopics]);
+
+  // 处理 topics 更新的回调函数
+  const handleTopicsUpdate = useCallback((updatedTopics: Topic[]) => {
+    setTopics(updatedTopics);
+  }, []);
 
   const calLevel = (count: number): number => {
     if (count > 0 && count < 3) {
@@ -78,6 +99,7 @@ export function Statistics({ loading, statistics }: StatisticsProps) {
           setSearchParams={setSearchParams}
           topics={topics}
           total={total}
+          onTopicsUpdate={handleTopicsUpdate}
         />
       )}
     </div>

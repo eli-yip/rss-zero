@@ -1,7 +1,7 @@
 import { Card, CardBody, Link } from "@heroui/react";
 import { DateTime } from "luxon";
 
-import type { Zvideo } from "@/types/zvideo";
+import type { Zvideo } from "@/types/Zvideo";
 
 interface ZvideosProps {
   zvideos: Zvideo[];

@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/eli-yip/rss-zero/internal/md"
+	bookmarkDB "github.com/eli-yip/rss-zero/pkg/bookmark/db"
 	"github.com/eli-yip/rss-zero/pkg/render"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
@@ -15,6 +16,7 @@ type Controller struct {
 	db *gorm.DB
 
 	zhihuDBService             zhihuDB.DB
+	bookmarkDBService          bookmarkDB.DB
 	zhihuFullTextRenderService zhihuRender.FullTextRenderIface
 	zsxqDBService              zsxqDB.DB
 	zsxqFullTextRenderService  zsxqRender.FullTextRenderer
@@ -27,6 +29,7 @@ func NewController(db *gorm.DB) *Controller {
 	return &Controller{
 		db:                         db,
 		zhihuDBService:             zhihuDB.NewDBService(db),
+		bookmarkDBService:          bookmarkDB.NewBookMarkDBImpl(db),
 		zhihuFullTextRenderService: zhihuRender.NewFullTextRender(md.NewMarkdownFormatter()),
 		zsxqDBService:              zsxqDBService,
 		zsxqFullTextRenderService:  zsxqRender.NewFullTextRenderService(),
@@ -60,6 +63,22 @@ type ArchiveRequest struct {
 	Order     int    `json:"order"` // 0: created_at desc, 1: created_at asc
 }
 
+type BookmarkRequest struct {
+	Page      int        `json:"page"`
+	Tags      *TagFilter `json:"tags"`
+	StartDate string     `json:"start_date"`
+	EndDate   string     `json:"end_date"`
+	DateBy    int        `json:"date_by"`  // 0: created_at, 1: updated_at
+	Order     int        `json:"order"`    // 0: created_at desc, 1: created_at asc
+	OrderBy   int        `json:"order_by"` // 0: created_at, 1: updated_at
+}
+
+type TagFilter struct {
+	NoTag   bool     `json:"no_tag"`
+	Include []string `json:"include"`
+	Exclude []string `json:"exclude"`
+}
+
 type SelectRequest struct {
 	Platform string   `json:"platform"`
 	IDs      []string `json:"ids"`
@@ -90,14 +109,25 @@ type Author struct {
 }
 
 type Topic struct {
-	ID          string `json:"id"`
-	OriginalURL string `json:"original_url"`
-	ArchiveURL  string `json:"archive_url"`
-	Platform    string `json:"platform"`
-	Title       string `json:"title"`
-	CreatedAt   string `json:"created_at"`
-	Body        string `json:"body"`
-	Author      Author `json:"author"`
+	ID          string  `json:"id"`
+	OriginalURL string  `json:"original_url"`
+	ArchiveURL  string  `json:"archive_url"`
+	Platform    string  `json:"platform"`
+	Type        int     `json:"type"`
+	Title       string  `json:"title"`
+	CreatedAt   string  `json:"created_at"`
+	Body        string  `json:"body"`
+	Author      Author  `json:"author"`
+	Custom      *Custom `json:"custom"`
+}
+
+type Custom struct {
+	Bookmark   bool     `json:"bookmark"`
+	BookmarkID string   `json:"bookmark_id"`
+	Like       int      `json:"like"`
+	Tags       []string `json:"tags"`
+	Comment    string   `json:"comment"`
+	Note       string   `json:"note"`
 }
 
 type ZvideoResponse struct {
@@ -114,3 +144,18 @@ type Zvideo struct {
 const (
 	PlatformZhihu = "zhihu"
 )
+
+type NewBookmarkRequest struct {
+	ContentType int    `json:"content_type"`
+	ContentID   string `json:"content_id"`
+}
+
+type NewBookmarkResponse struct {
+	BookmarkID string `json:"bookmark_id"`
+}
+
+type PutBookmarkRequest struct {
+	Tags    []string `json:"tags"`
+	Comment *string  `json:"comment"`
+	Note    *string  `json:"note"`
+}

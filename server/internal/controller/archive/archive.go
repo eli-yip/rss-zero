@@ -52,6 +52,8 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 		count  int
 		topics []Topic
 	)
+
+	username := c.Get("username").(string)
 	switch req.Type {
 	case ContentTypeAnswer:
 		answers, err := h.zhihuDBService.FetchAnswerWithDateRange(req.Author, req.Count, offset, req.Order, startDate, endDate)
@@ -60,7 +62,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch answer"})
 		}
 
-		topics, err = buildTopicsFromAnswer(answers, h.zhihuDBService)
+		topics, err = buildTopicsFromAnswer(answers, username, h.zhihuDBService, h.bookmarkDBService)
 		if err != nil {
 			logger.Error("Failed to build topics", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to build topics"})
@@ -78,7 +80,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch pin"})
 		}
 
-		topics, err = buildTopicsFromPin(pins, h.zhihuDBService)
+		topics, err = buildTopicsFromPin(pins, username, h.zhihuDBService, h.bookmarkDBService)
 		if err != nil {
 			logger.Error("Failed to build topics", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to build topics"})

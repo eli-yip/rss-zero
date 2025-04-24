@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { fetchRandomTopics, type RandomResponse } from "@/api/client";
-import type { Topic } from "@/types/topic";
+import { type RandomResponse, fetchRandomTopics } from "@/api/client";
+import type { Topic } from "@/types/Topic";
 
 export function useRandomTopics() {
   const [topics, setTopics] = useState<Topic[]>([]);

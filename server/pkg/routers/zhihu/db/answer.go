@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"time"
 
 	"gorm.io/gorm"
@@ -18,6 +19,7 @@ type DBAnswer interface {
 	// then return the answers for text generating.
 	FetchNAnswer(int, FetchAnswerOption) ([]Answer, error)
 	FetchAnswer(author string, limit, offset int) ([]Answer, error)
+	FetchAnswerByIDs(ids []int) (map[int]Answer, error)
 	FetchAnswerWithDateRange(author string, limit, offset, order int, startTime, endTime time.Time) ([]Answer, error)
 	// UpdateAnswerStatus update answer status in zhihu_answer table
 	UpdateAnswerStatus(id int, status int) error
@@ -101,6 +103,20 @@ func (d *DBService) GetLatestNAnswer(n int, userID string) ([]Answer, error) {
 func (d *DBService) FetchNAnswersBeforeTime(n int, t time.Time, userID string) (as []Answer, err error) {
 	err = d.Where("author_id = ? and create_at < ?", userID, t).Order("create_at desc").Limit(n).Find(&as).Error
 	return as, err
+}
+
+func (d *DBService) FetchAnswerByIDs(ids []int) (map[int]Answer, error) {
+	answers := make([]Answer, 0, len(ids))
+	if err := d.Where("id in ?", ids).Find(&answers).Error; err != nil {
+		return nil, fmt.Errorf("failed to get answers by ids: %w", err)
+	}
+
+	result := make(map[int]Answer, len(answers))
+	for answer := range slices.Values(answers) {
+		result[answer.ID] = answer
+	}
+
+	return result, nil
 }
 
 func (d *DBService) CountAnswer(userID string) (int, error) {

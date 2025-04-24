@@ -1,21 +1,27 @@
 import { apiUrl } from "@/config/config";
-import type { Topic } from "@/types/topic";
+import type { Topic } from "@/types/Topic";
+import { addToast } from "@heroui/react";
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
 
-// 创建 axios 实例
 const apiClient: AxiosInstance = axios.create({
   baseURL: apiUrl,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000, // 设置超时时间为 10 秒
+  timeout: 10000,
 });
 
-// 添加一个响应拦截器处理错误
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const errorMessage = error.response?.data?.message || "请求失败";
+    const requestId = error.response?.headers?.["X-Request-Id	"] || "未知 ID";
+    addToast({
+      title: errorMessage,
+      description: `请求 ID: ${requestId}`,
+      timeout: 3000,
+      color: "warning",
+    });
     return Promise.reject(new Error(errorMessage));
   },
 );
@@ -174,5 +180,234 @@ export async function fetchStatistics(): Promise<Record<string, number>> {
       throw error;
     }
     throw new Error("获取统计数据失败");
+  }
+}
+
+interface UserInfoResponse {
+  data: {
+    username: string;
+  };
+}
+
+export const fetchUserInfo = async () => {
+  try {
+    const response: AxiosResponse<UserInfoResponse> =
+      await apiClient.get("/user");
+    return response.data.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || "获取用户信息失败";
+      throw new Error(errorMessage);
+    }
+    throw new Error("获取用户信息失败");
+  }
+};
+
+export const ContentTypeV2 = {
+  Answer: 0,
+  Article: 1,
+  Pin: 2,
+} as const;
+
+export type ContentTypeV2 = (typeof ContentTypeV2)[keyof typeof ContentTypeV2];
+
+interface NewBookmarkRequest {
+  content_type: ContentTypeV2;
+  content_id: string;
+}
+
+interface NewBookmarkResponse {
+  message: string;
+  data: {
+    bookmark_id: string;
+  };
+}
+
+export async function addBookmark(
+  content_type: ContentTypeV2,
+  content_id: string,
+): Promise<NewBookmarkResponse> {
+  const requestBody: NewBookmarkRequest = {
+    content_type,
+    content_id,
+  };
+
+  try {
+    const response: AxiosResponse<NewBookmarkResponse> = await apiClient.put(
+      "/bookmark",
+      requestBody,
+    );
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("添加收藏失败");
+  }
+}
+
+export async function removeBookmark(
+  bookmark_id: string,
+): Promise<NewBookmarkResponse> {
+  try {
+    const response: AxiosResponse<NewBookmarkResponse> = await apiClient.delete(
+      `/bookmark/${bookmark_id}`,
+    );
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("删除收藏失败");
+  }
+}
+
+interface BookmarkUpdateRequest {
+  comment: string | null;
+  note: string | null;
+  tags: string[] | null;
+}
+
+export async function updateBookmark(
+  bookmark_id: string,
+  note: string | null = null,
+  tags: string[] | null = null,
+  comment: string | null = null,
+): Promise<NewBookmarkResponse> {
+  const requestBody: BookmarkUpdateRequest = {
+    comment,
+    note,
+    tags,
+  };
+
+  try {
+    const response: AxiosResponse<NewBookmarkResponse> = await apiClient.patch(
+      `/bookmark/${bookmark_id}`,
+      requestBody,
+    );
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("更新收藏失败");
+  }
+}
+
+interface AllTagsResponse {
+  message: string;
+  data: {
+    tags: {
+      name: string;
+      count: number;
+    }[];
+  };
+}
+
+export async function fetchAllTags(): Promise<AllTagsResponse> {
+  try {
+    const response: AxiosResponse<AllTagsResponse> =
+      await apiClient.get("/tag");
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("获取所有标签失败");
+  }
+}
+
+export const TimeBy = {
+  Create: 0,
+  Update: 1,
+} as const;
+
+export type TimeBy = (typeof TimeBy)[keyof typeof TimeBy];
+
+interface BookmarkListRequest {
+  page: number;
+  tags: TagFilter | null;
+  start_date: string;
+  end_date: string;
+  date_by: TimeBy;
+  order: number;
+  order_by: TimeBy;
+}
+
+interface TagFilter {
+  include: string[] | null;
+  exclude: string[] | null;
+  no_tag: boolean;
+}
+
+interface BookmarkListResponse {
+  message: string;
+  data: {
+    count: number;
+    paging: ArchivePaging;
+    topics: Topic[];
+  } | null;
+}
+
+/**
+ * 获取书签列表
+ * @param page 页码
+ * @param tags 标签过滤配置
+ * @param start_date 开始日期
+ * @param end_date 结束日期
+ * @param date_by 日期类型（创建时间或更新时间）
+ * @param order 排序方式（0 为降序，1 为升序）
+ * @param order_by 排序依据（创建时间或更新时间）
+ * @returns 书签列表响应
+ */
+export async function fetchBookmarkList(
+  page: number,
+  tag_include: string[] | null = null,
+  tag_exclude: string[] | null = null,
+  no_tag = false,
+  start_date = "",
+  end_date = "",
+  date_by: TimeBy = TimeBy.Create,
+  order = 0,
+  order_by: TimeBy = TimeBy.Create,
+): Promise<BookmarkListResponse> {
+  let tags: TagFilter | null = null;
+  if (tag_include || tag_exclude || no_tag) {
+    tags = {
+      include: null,
+      exclude: null,
+      no_tag: false,
+    };
+    if (tag_include && tag_include.length > 0) {
+      tags.include = tag_include;
+    }
+    if (tag_exclude && tag_exclude.length > 0) {
+      tags.exclude = tag_exclude;
+    }
+    if (no_tag) {
+      tags.no_tag = no_tag;
+    }
+  }
+  const requestBody: BookmarkListRequest = {
+    page,
+    tags,
+    start_date,
+    end_date,
+    date_by,
+    order,
+    order_by,
+  };
+
+  try {
+    const response: AxiosResponse<BookmarkListResponse> = await apiClient.post(
+      "/bookmark",
+      requestBody,
+    );
+    return response.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("获取书签列表失败");
   }
 }

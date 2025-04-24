@@ -1,12 +1,13 @@
 import { Suspense, lazy } from "react";
 import { Route, Routes } from "react-router-dom";
 
-import IndexPage from "@/pages/index";
-const RandomPage = lazy(() => import("@/pages/random"));
-const ArchivePage = lazy(() => import("@/pages/archive"));
-const BlogPage = lazy(() => import("@/pages/statistics"));
-const ZvideoPage = lazy(() => import("@/pages/zvideo"));
-const AboutPage = lazy(() => import("@/pages/about"));
+const IndexPage = lazy(() => import("@/pages/IndexPage"));
+const RandomPage = lazy(() => import("@/pages/RandomPage"));
+const ArchivePage = lazy(() => import("@/pages/ArchivePage"));
+const BookmarkPage = lazy(() => import("@/pages/BookmarkPage"));
+const StatisticsPage = lazy(() => import("@/pages/StatisticsPage"));
+const ZvideoPage = lazy(() => import("@/pages/ZvideoPage"));
+const AboutPage = lazy(() => import("@/pages/AboutPage"));
 
 function App() {
   return (
@@ -15,7 +16,8 @@ function App() {
         <Route path="/" element={<IndexPage />} />
         <Route path="/random" element={<RandomPage />} />
         <Route path="/archive" element={<ArchivePage />} />
-        <Route path="/statistics" element={<BlogPage />} />
+        <Route path="/bookmark" element={<BookmarkPage />} />
+        <Route path="/statistics" element={<StatisticsPage />} />
         <Route path="/zvideo" element={<ZvideoPage />} />
         <Route path="/about" element={<AboutPage />} />
       </Routes>

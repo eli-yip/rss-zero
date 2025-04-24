@@ -14,6 +14,10 @@ export const siteConfig = {
       href: "/archive",
     },
     {
+      label: "我的书签",
+      href: "/bookmark",
+    },
+    {
       label: "文章数据",
       href: "/statistics",
     },

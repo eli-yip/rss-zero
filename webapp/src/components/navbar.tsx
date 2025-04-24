@@ -1,3 +1,4 @@
+// Navbar.tsx
 import { Link } from "@heroui/react";
 import {
   Avatar,
@@ -14,52 +15,17 @@ import {
   NavbarMenuToggle,
 } from "@heroui/react";
 import { link as linkStyles } from "@heroui/react";
-import {
-  type QueryClient,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
 import clsx from "clsx";
 import { useLocation } from "react-router-dom";
 
 import { Logo } from "@/components/icons";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { siteConfig } from "@/config/site";
-
-const fetchUserInfo = async () => {
-  const response = await fetch("/api/v1/user");
-  if (!response.ok) {
-    throw new Error("获取用户信息失败");
-  }
-  return response.json();
-};
-
-const handleLogout = (queryClient: QueryClient) => {
-  for (const cookie of document.cookie.split(";")) {
-    const eqPos = cookie.indexOf("=");
-    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-  }
-
-  queryClient.invalidateQueries({ queryKey: ["userInfo"] });
-  queryClient.removeQueries({ queryKey: ["userInfo"] });
-
-  window.location.reload();
-};
+import { useUserInfo } from "@/hooks/useUserInfo";
 
 export const Navbar = () => {
   const pathname = useLocation().pathname;
-  const queryClient = useQueryClient();
-
-  const {
-    data: userInfo,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["userInfo"],
-    queryFn: fetchUserInfo,
-    staleTime: 1000 * 60 * 5,
-  });
+  const { userInfo, isLoading, isError, logout } = useUserInfo();
 
   return (
     <HeroUINavbar shouldHideOnScroll maxWidth="xl" position="sticky">
@@ -108,7 +74,7 @@ export const Navbar = () => {
                   as="button"
                   className="transition-transform"
                   src="https://i.pravatar.cc/150"
-                  name={userInfo.data.username}
+                  name={userInfo.username}
                   size="sm"
                 />
               </DropdownTrigger>
@@ -121,13 +87,9 @@ export const Navbar = () => {
                     base: "data-[hover=true]:bg-transparent cursor-auto",
                   }}
                 >
-                  <p>您好，{userInfo.data.username}</p>
+                  <p>您好，{userInfo.username}</p>
                 </DropdownItem>
-                <DropdownItem
-                  key="logout"
-                  color="danger"
-                  onPress={() => handleLogout(queryClient)}
-                >
+                <DropdownItem key="logout" color="danger" onPress={logout}>
                   退出登录
                 </DropdownItem>
               </DropdownMenu>
@@ -146,7 +108,7 @@ export const Navbar = () => {
                 as="button"
                 className="transition-transform"
                 src="https://i.pravatar.cc/150"
-                name={userInfo.data.username}
+                name={userInfo.username}
                 size="sm"
               />
             </DropdownTrigger>
@@ -159,13 +121,9 @@ export const Navbar = () => {
                   base: "data-[hover=true]:bg-transparent cursor-auto",
                 }}
               >
-                <p>您好，{userInfo.data.username}</p>
+                <p>您好，{userInfo.username}</p>
               </DropdownItem>
-              <DropdownItem
-                key="logout"
-                color="danger"
-                onPress={() => handleLogout(queryClient)}
-              >
+              <DropdownItem key="logout" color="danger" onPress={logout}>
                 退出登录
               </DropdownItem>
             </DropdownMenu>
