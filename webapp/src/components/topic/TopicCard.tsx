@@ -33,6 +33,7 @@ import { TagInputForm } from "@/components/topic/TagInput";
 import { useAllTags } from "@/hooks/useAllTags";
 import type { Topic } from "@/types/Topic";
 import "@/styles/github-markdown.css";
+import { useUserInfo } from "@/hooks/useUserInfo";
 
 interface TopicCardProps {
   topic: Topic;
@@ -159,6 +160,8 @@ export function TopicCard({
   const isBookmarked = topic.custom?.bookmark || false;
   const bookmarkId = topic.custom?.bookmark_id || "";
 
+  const { userInfo } = useUserInfo();
+
   // 处理收藏/取消收藏
   const handleToggleBookmark = useCallback(async () => {
     if (isBookmarked && bookmarkId) {
@@ -280,6 +283,7 @@ export function TopicCard({
             <Tooltip content={isBookmarked ? "取消收藏" : "收藏"}>
               <Button
                 isIconOnly
+                isDisabled={userInfo?.username === "mojia"}
                 size="sm"
                 className="mt-6 mb-4"
                 onPress={handleToggleBookmark}
