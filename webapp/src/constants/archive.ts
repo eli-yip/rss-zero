@@ -3,6 +3,7 @@ import { ContentType } from "@/api/client";
 export const AUTHORS = [
   { key: "canglimo", name: "墨苍离" },
   { key: "zi-e-79-23", name: "别打扰我修道" },
+  { key: "ffancage", name: "FanFanFan" },
   { key: "fu-lan-ke-yang", name: "弗兰克扬" },
 ] as const;
 
