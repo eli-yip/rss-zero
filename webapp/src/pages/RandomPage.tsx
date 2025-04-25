@@ -3,17 +3,12 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { Topics } from "@/components/topic/Topics";
-import { useRandomTopics } from "@/hooks/use-random-topics";
+import { useRandomTopics } from "@/hooks/useRandomTopics";
 import DefaultLayout from "@/layouts/default";
 import type { Topic } from "@/types/Topic";
 
 export default function RandomPage() {
-  const {
-    topics: initialTopics,
-    loading,
-    firstFetch,
-    getTopics,
-  } = useRandomTopics();
+  const { topics: initialTopics, loading, getTopics } = useRandomTopics();
 
   // 添加本地状态管理 topics
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -44,9 +39,13 @@ export default function RandomPage() {
   return (
     <DefaultLayout>
       {button}
-      <Topics topics={topics} onTopicsChange={handleTopicsChange} />
-      <ScrollToTop />
-      {!firstFetch && button}
+      {topics.length > 0 && (
+        <>
+          <Topics topics={topics} onTopicsChange={handleTopicsChange} />
+          {button}
+          <ScrollToTop />
+        </>
+      )}
     </DefaultLayout>
   );
 }
