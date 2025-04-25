@@ -221,7 +221,11 @@ export function BookmarkFilters({
           </PopoverTrigger>
           <PopoverContent className="w-64 flex-col gap-4 px-4 py-4">
             {/* 日期选择器 */}
-            <Listbox itemClasses={{ base: "data-[focus]:bg-transparent" }}>
+            <Listbox
+              itemClasses={{
+                base: "data-[focus]:bg-transparent data-[hover]:bg-transparent",
+              }}
+            >
               <ListboxSection showDivider title={"按照日期筛选"}>
                 <ListboxItem>
                   <Switch
