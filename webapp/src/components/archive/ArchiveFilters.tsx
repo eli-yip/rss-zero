@@ -10,9 +10,10 @@ import {
   Switch,
 } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ContentType } from "@/api/client";
+import { DateClearButtons } from "@/components/DateClearButtons";
 import { AUTHORS, SORT_OPTIONS } from "@/constants/archive";
 
 interface ArchiveFiltersProps {
@@ -32,6 +33,13 @@ export function ArchiveFilters({
   order,
   updateSearchParams,
 }: ArchiveFiltersProps) {
+  const localStartDate = useMemo(() => {
+    return startDate ? parseDate(startDate) : null;
+  }, [startDate]);
+  const localEndDate = useMemo(() => {
+    return endDate ? parseDate(endDate) : null;
+  }, [endDate]);
+
   // 排序状态
   const [isNewestFirst, setIsNewestFirst] = useState(
     order === SORT_OPTIONS.NEWEST_FIRST,
@@ -76,6 +84,16 @@ export function ArchiveFilters({
     });
   };
 
+  // 清除开始日期
+  const handleClearStartDate = () => {
+    updateSearchParams({ startDate: null });
+  };
+
+  // 清除结束日期
+  const handleClearEndDate = () => {
+    updateSearchParams({ endDate: null });
+  };
+
   return (
     <div className="mx-auto flex w-full max-w-xs flex-col pb-4">
       <div className="mx-auto flex w-full gap-4">
@@ -107,14 +125,22 @@ export function ArchiveFilters({
             <DatePicker
               showMonthAndYearPickers
               label="开始时间"
-              value={startDate ? parseDate(startDate) : null}
+              value={localStartDate}
               onChange={handleStartDateChange}
             />
             <DatePicker
               showMonthAndYearPickers
               label="截止时间"
-              value={endDate ? parseDate(endDate) : null}
+              value={localEndDate}
               onChange={handleEndDateChange}
+            />
+
+            {/* 日期清除按钮组件 */}
+            <DateClearButtons
+              startDate={localStartDate}
+              endDate={localEndDate}
+              onClearStartDate={handleClearStartDate}
+              onClearEndDate={handleClearEndDate}
             />
 
             {/* 排序开关 */}

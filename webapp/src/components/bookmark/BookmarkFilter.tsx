@@ -11,10 +11,11 @@ import {
   Switch,
 } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaFilter, FaTags } from "react-icons/fa";
 
 import { TimeBy } from "@/api/client";
+import { DateClearButtons } from "@/components/DateClearButtons";
 import { TagInputForm } from "@/components/topic/TagInput";
 import { SORT_OPTIONS } from "@/constants/archive";
 import { useAllTags } from "@/hooks/useAllTags";
@@ -42,6 +43,14 @@ export function BookmarkFilters({
   orderBy,
   updateSearchParams,
 }: BookmarkFiltersProps) {
+  const localStartDate = useMemo(() => {
+    return startDate ? parseDate(startDate) : null;
+  }, [startDate]);
+
+  const localEndDate = useMemo(() => {
+    return endDate ? parseDate(endDate) : null;
+  }, [endDate]);
+
   // 排序状态
   const [isNewestFirst, setIsNewestFirst] = useState(
     order === SORT_OPTIONS.NEWEST_FIRST,
@@ -124,6 +133,16 @@ export function BookmarkFilters({
     updateSearchParams({
       endDate: value ? value.toString() : null,
     });
+  };
+
+  // 清除开始日期
+  const handleClearStartDate = () => {
+    updateSearchParams({ startDate: null });
+  };
+
+  // 清除结束日期
+  const handleClearEndDate = () => {
+    updateSearchParams({ endDate: null });
   };
 
   // 处理包含标签变更
@@ -217,7 +236,7 @@ export function BookmarkFilters({
                   <DatePicker
                     showMonthAndYearPickers
                     label="开始时间"
-                    value={startDate ? parseDate(startDate) : null}
+                    value={localStartDate}
                     onChange={handleStartDateChange}
                   />
                 </ListboxItem>
@@ -225,8 +244,17 @@ export function BookmarkFilters({
                   <DatePicker
                     showMonthAndYearPickers
                     label="截止时间"
-                    value={endDate ? parseDate(endDate) : null}
+                    value={localEndDate}
                     onChange={handleEndDateChange}
+                  />
+                </ListboxItem>
+                <ListboxItem>
+                  {/* 日期清除按钮组件 */}
+                  <DateClearButtons
+                    startDate={localStartDate}
+                    endDate={localEndDate}
+                    onClearStartDate={handleClearStartDate}
+                    onClearEndDate={handleClearEndDate}
                   />
                 </ListboxItem>
               </ListboxSection>
