@@ -117,10 +117,10 @@ func buildTopicsFromAnswer(answers []zhihuDB.Answer, userID string, d zhihuDB.DB
 }
 
 // answers: map[answerID]Answer
-// bookmarks: map[answerID]bookmarkID
+// bookmarks: map[answerID]bookmark
 // tags: map[answerID][]string
 // Returns a map of answerID to Topic
-func buildTopicMapFromAnswer(answers map[int]zhihuDB.Answer, bookmarks map[int]string, tags map[string][]string, d zhihuDB.DB) (topicMap map[string]Topic, err error) {
+func buildTopicMapFromAnswer(answers map[int]zhihuDB.Answer, bookmarks map[int]bookmarkDB.Bookmark, tags map[string][]string, d zhihuDB.DB) (topicMap map[string]Topic, err error) {
 	questionMap, err := buildQuestionMapFromAnswer(answers, d)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build question map: %w", err)
@@ -142,7 +142,12 @@ func buildTopicMapFromAnswer(answers map[int]zhihuDB.Answer, bookmarks map[int]s
 
 		answerID := strconv.Itoa(answer.ID)
 
-		custom := &Custom{Bookmark: true, BookmarkID: bookmarks[answer.ID]}
+		custom := &Custom{
+			Bookmark:   true,
+			BookmarkID: bookmarks[answer.ID].ID,
+			Comment:    bookmarks[answer.ID].Comment,
+			Note:       bookmarks[answer.ID].Note,
+		}
 		answerTags, hasTag := tags[answerID]
 		if hasTag {
 			custom.Tags = answerTags
@@ -221,7 +226,9 @@ func buildTopicsFromPin(pins []zhihuDB.Pin, userID string, d zhihuDB.DB, bd book
 	return topics, nil
 }
 
-func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, bookmarks map[int]string, tags map[string][]string, d zhihuDB.DB) (topicMap map[string]Topic, err error) {
+// bookmarks: map[pinID]bookmark
+// tags: map[pinID][]string
+func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, pinIDToBookmark map[int]bookmarkDB.Bookmark, tags map[string][]string, d zhihuDB.DB) (topicMap map[string]Topic, err error) {
 	authorIDs := lo.Uniq(lo.MapToSlice(pins, func(_ int, v zhihuDB.Pin) string { return v.AuthorID }))
 	authorMap, err := buildAuthorMap(authorIDs, d)
 	if err != nil {
@@ -233,7 +240,12 @@ func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, bookmarks map[int]string, ta
 	for _, p := range pins {
 		pinID := strconv.Itoa(p.ID)
 
-		custom := &Custom{Bookmark: true, BookmarkID: bookmarks[p.ID]}
+		custom := &Custom{
+			Bookmark:   true,
+			BookmarkID: pinIDToBookmark[p.ID].ID,
+			Comment:    pinIDToBookmark[p.ID].Comment,
+			Note:       pinIDToBookmark[p.ID].Note,
+		}
 		pinTags, hasTag := tags[pinID]
 		if hasTag {
 			custom.Tags = pinTags
