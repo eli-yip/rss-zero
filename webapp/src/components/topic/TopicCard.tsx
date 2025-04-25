@@ -111,11 +111,8 @@ function BookmarkedCardBody({
   // 处理更新备注
   const handleUpdateComment = useCallback(() => {
     // 切换评论备注状态
-    setIsEditingComment((prev) => !prev);
-    if (!isEditingComment) {
-      setCommentText(topic.custom?.comment || "");
-    }
-  }, [isEditingComment, topic.custom]);
+    setIsEditingComment(true);
+  }, []);
 
   // 处理备注提交
   const handleCommentSubmit = useCallback(() => {
@@ -128,7 +125,25 @@ function BookmarkedCardBody({
     setIsEditingComment(false);
   }, [topic.id, bookmarkId, commentText, onBookmarkDataChange]);
 
-  // 在编辑状态改变时聚焦输入框
+  // 处理取消编辑
+  const handleCancelComment = useCallback(() => {
+    setIsEditingComment(false);
+    setCommentText(topic.custom?.comment || "");
+  }, [topic.custom?.comment]);
+
+  // 添加键盘事件处理函数
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleCommentSubmit();
+      } else if (e.key === "Escape") {
+        handleCancelComment();
+      }
+    },
+    [handleCommentSubmit, handleCancelComment],
+  );
+
   useEffect(() => {
     if (isEditingComment && commentInputRef.current) {
       commentInputRef.current.focus();
@@ -148,7 +163,8 @@ function BookmarkedCardBody({
               placeholder="添加备注"
               fullWidth
               className="flex-1"
-              ref={commentInputRef} // 添加引用
+              ref={commentInputRef}
+              onKeyDown={handleKeyDown}
             />
             <Button
               size="sm"
@@ -161,7 +177,7 @@ function BookmarkedCardBody({
             <Button
               size="sm"
               disableAnimation
-              onPress={handleUpdateComment}
+              onPress={handleCancelComment}
               className="flex-2"
             >
               取消编辑
