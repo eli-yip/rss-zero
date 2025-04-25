@@ -10,7 +10,17 @@ interface MarkdownProps {
 export function Markdown({ content }: MarkdownProps) {
   return (
     <div className="markdown-body">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          ul: ({ node, ...props }) => <ul className="list-disc" {...props} />,
+          ol: ({ node, ...props }) => (
+            <ol className="list-decimal" {...props} />
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }

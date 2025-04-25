@@ -1,6 +1,5 @@
+import { Markdown } from "@/components/topic/Markdown";
 import { Card, CardBody } from "@heroui/react";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -18,6 +17,45 @@ const roadMap = `\
 - [ ] 实现墨大为了解决灾难化叙事而推荐的「双面卡片」功能
 
 本站起初只是我自用的内容存档，甚至没有实现前端的打算，上述功能也仅仅是我的想法，并不一定会实现。
+
+## 更新日志
+
+### v1.13
+
+v1.13.7(unreleased):
+
+- 在「随便看看」底部添加了刷新按钮
+- 修复了 Markdown 列表样式问题
+
+v1.13.5(2025.4.25):
+
+- 修复了内容展示的 Markdown 样式
+
+v1.13.5(2025.4.25):
+
+- 添加了「FanFanFan」作为内容作者。
+
+v1.13.4(2025.4.25):
+
+- 美化了标签选取列表的样式
+
+v1.13.3(2025.4.25):
+
+- 修复了标签选取列表的样式
+- 优化了标签选取列表的性能
+
+v1.13.2(2025.4.25):
+
+- 修复了标签数量过多时的样式问题
+
+v1.13.1(2025.4.25):
+
+- 展示昵称而不是用户名
+- 当用户为测试用户时，禁用书签按钮
+
+v1.13.0(2025.4.25):
+
+- 添加了书签和标签功能
 `;
 
 export default function DocsPage() {
@@ -31,10 +69,8 @@ export default function DocsPage() {
 
       <div className="mx-auto w-full max-w-3xl">
         <Card>
-          <CardBody className="markdown-body">
-            <div className="mx-4">
-              <Markdown remarkPlugins={[remarkGfm]}>{roadMap}</Markdown>
-            </div>
+          <CardBody>
+            <Markdown content={roadMap} />
           </CardBody>
         </Card>
       </div>
