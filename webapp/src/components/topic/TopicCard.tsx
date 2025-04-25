@@ -25,16 +25,13 @@ import {
   FaTags,
   FaZhihu,
 } from "react-icons/fa";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 import { addBookmark, removeBookmark, updateBookmark } from "@/api/client";
+import { Markdown } from "@/components/topic/Markdown";
 import { TagInputForm } from "@/components/topic/TagInput";
 import { useAllTags } from "@/hooks/useAllTags";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import type { Topic } from "@/types/Topic";
-
-import "@/styles/github-markdown.css";
 
 interface TopicCardProps {
   topic: Topic;
@@ -131,9 +128,7 @@ function BookmarkedCardBody({
       )}
 
       {/* 文章内容 */}
-      <div className="markdown-body">
-        <Markdown remarkPlugins={[remarkGfm]}>{topic.body}</Markdown>
-      </div>
+      <Markdown content={topic.body} />
 
       {/* 这里可以添加更多收藏特有的 UI 元素，如标签显示、笔记显示等 */}
     </CardBody>
@@ -146,9 +141,7 @@ function BookmarkedCardBody({
 function RegularCardBody({ topic }: RegularCardBodyProps) {
   return (
     <CardBody>
-      <div className="markdown-body">
-        <Markdown remarkPlugins={[remarkGfm]}>{topic.body}</Markdown>
-      </div>
+      <Markdown content={topic.body} />
     </CardBody>
   );
 }
