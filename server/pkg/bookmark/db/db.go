@@ -68,8 +68,6 @@ type DB interface {
 	// The result is ordered by created_at ASC.
 	// If a bookmark has no tags, the value will be nil
 	GetTags(bookmarkIDs []string) (map[string][]string, error)
-	GetTagsFromAnswer(answerIDs []string) (map[string][]string, error)
-	GetTagsFromPin(pins []string) (map[string][]string, error)
 	// GetTagByUser returns all tag names for a user
 	GetTagByUser(userID string) ([]string, error)
 	// GetTagCountByUser returns the count of each tag for a user, ordered by count
@@ -371,68 +369,6 @@ func (db *BookmarkDBImpl) GetTags(bookmarkIDs []string) (map[string][]string, er
 		tagMap[t.BookmarkID] = append(tagMap[t.BookmarkID], t.Name)
 	}
 	return tagMap, nil
-}
-
-func (db *BookmarkDBImpl) GetTagsFromAnswer(answerIDs []string) (map[string][]string, error) {
-	if len(answerIDs) == 0 {
-		return nil, nil
-	}
-
-	bookmarks := make([]Bookmark, 0)
-	if err := db.Where("content_type = ? AND content_id IN ?", ContentTypeAnswer, answerIDs).Find(&bookmarks).Error; err != nil {
-		return nil, err
-	}
-
-	if len(bookmarks) == 0 {
-		return make(map[string][]string), nil
-	}
-
-	bookmarkIDs := lo.Map(bookmarks, func(b Bookmark, _ int) string { return b.ID })
-	bookmarkToContent := lo.SliceToMap(bookmarks, func(b Bookmark) (string, string) { return b.ID, b.ContentID })
-
-	bookmarkTags, err := db.GetTags(bookmarkIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string][]string)
-	for bookmarkID, tags := range bookmarkTags {
-		contentID := bookmarkToContent[bookmarkID]
-		result[contentID] = tags
-	}
-
-	return result, nil
-}
-
-func (db *BookmarkDBImpl) GetTagsFromPin(pins []string) (map[string][]string, error) {
-	if len(pins) == 0 {
-		return nil, nil
-	}
-
-	bookmarks := make([]Bookmark, 0)
-	if err := db.Where("content_type = ? AND content_id IN ?", ContentTypePin, pins).Find(&bookmarks).Error; err != nil {
-		return nil, err
-	}
-
-	if len(bookmarks) == 0 {
-		return make(map[string][]string), nil
-	}
-
-	bookmarkIDs := lo.Map(bookmarks, func(b Bookmark, _ int) string { return b.ID })
-	bookmarkToContent := lo.SliceToMap(bookmarks, func(b Bookmark) (string, string) { return b.ID, b.ContentID })
-
-	bookmarkTags, err := db.GetTags(bookmarkIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string][]string)
-	for bookmarkID, tags := range bookmarkTags {
-		contentID := bookmarkToContent[bookmarkID]
-		result[contentID] = tags
-	}
-
-	return result, nil
 }
 
 func (db *BookmarkDBImpl) GetTagByUser(userID string) ([]string, error) {
