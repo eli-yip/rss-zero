@@ -15,7 +15,7 @@ import {
   addToast,
 } from "@heroui/react";
 import { DateTime } from "luxon";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FaArchive,
   FaBookmark,
@@ -82,6 +82,8 @@ function BookmarkedCardBody({
   const [commentText, setCommentText] = useState(topic.custom?.comment || "");
   // 使用自定义 hook 获取所有标签
   const { tags, isLoading } = useAllTags();
+  // 添加输入框引用
+  const commentInputRef = useRef<HTMLInputElement>(null);
 
   // 将标签数据转换为 TagInputForm 所需的格式
   const tagCountMap = Object.fromEntries(
@@ -126,6 +128,13 @@ function BookmarkedCardBody({
     setIsEditingComment(false);
   }, [topic.id, bookmarkId, commentText, onBookmarkDataChange]);
 
+  // 在编辑状态改变时聚焦输入框
+  useEffect(() => {
+    if (isEditingComment && commentInputRef.current) {
+      commentInputRef.current.focus();
+    }
+  }, [isEditingComment]);
+
   return (
     <CardBody>
       {/* 备注显示与编辑 */}
@@ -139,6 +148,7 @@ function BookmarkedCardBody({
               placeholder="添加备注"
               fullWidth
               className="flex-1"
+              ref={commentInputRef} // 添加引用
             />
             <Button
               size="sm"
