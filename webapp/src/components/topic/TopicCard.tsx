@@ -10,6 +10,7 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
+  Input,
   Tooltip,
   addToast,
 } from "@heroui/react";
@@ -18,6 +19,7 @@ import { useCallback, useState } from "react";
 import {
   FaArchive,
   FaBookmark,
+  FaComment,
   FaCopy,
   FaEllipsisV,
   FaRegBookmark,
@@ -41,14 +43,23 @@ interface TopicCardProps {
     bookmarkId?: string, // when deleting a bookmark, this is null
   ) => void;
   onTagUpdate: (topicId: string, bookmarkId: string, tags: string[]) => void;
+  onCommentUpdate: (
+    topicId: string,
+    bookmarkId: string,
+    comment: string,
+  ) => void;
 }
 
 interface BookmarkedCardBodyProps {
   topic: Topic;
   bookmarkId: string; // 添加 bookmarkId 作为必须属性
   onTagUpdate: (topicId: string, bookmarkId: string, tags: string[]) => void;
-  onUpdateComment: (bookmarkId: string, comment: string) => void;
-  onUpdateNote: (bookmarkId: string, note: string) => void;
+  onUpdateComment: (
+    topicId: string,
+    bookmarkId: string,
+    comment: string,
+  ) => void;
+  onUpdateNote: (topicId: string, bookmarkId: string, note: string) => void;
 }
 
 // 常规 CardBody 属性
@@ -63,9 +74,14 @@ function BookmarkedCardBody({
   topic,
   bookmarkId,
   onTagUpdate,
+  onUpdateComment,
 }: BookmarkedCardBodyProps) {
   // 标签编辑状态
   const [isEditingTags, setIsEditingTags] = useState(false);
+  // 备注编辑状态
+  const [isEditingComment, setIsEditingComment] = useState(false);
+  // 备注内容
+  const [commentText, setCommentText] = useState(topic.custom?.comment || "");
   // 使用自定义 hook 获取所有标签
   const { tags, isLoading } = useAllTags();
 
@@ -92,8 +108,71 @@ function BookmarkedCardBody({
     [topic.id, bookmarkId, onTagUpdate],
   );
 
+  // 处理更新备注
+  const handleUpdateComment = useCallback(() => {
+    // 切换评论备注状态
+    setIsEditingComment((prev) => !prev);
+    if (!isEditingComment) {
+      setCommentText(topic.custom?.comment || "");
+    }
+  }, [isEditingComment, topic.custom]);
+
+  // 处理备注提交
+  const handleCommentSubmit = useCallback(() => {
+    onUpdateComment(topic.id, bookmarkId, commentText);
+    setIsEditingComment(false);
+  }, [topic.id, bookmarkId, commentText, onUpdateComment]);
+
   return (
     <CardBody>
+      {/* 备注显示与编辑 */}
+      <div className="mb-2 flex gap-2">
+        {isEditingComment ? (
+          <div className="flex w-full gap-4">
+            <Input
+              size="sm"
+              value={commentText}
+              onValueChange={setCommentText}
+              placeholder="添加备注"
+              fullWidth
+              className="flex-1"
+            />
+            <Button
+              size="sm"
+              disableAnimation
+              onPress={handleCommentSubmit}
+              className="flex-2"
+            >
+              保存备注
+            </Button>
+            <Button
+              size="sm"
+              disableAnimation
+              onPress={handleUpdateComment}
+              className="flex-2"
+            >
+              取消编辑
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {Boolean(topic.custom?.comment) && (
+              <Chip className="my-auto" size="lg" color="primary">
+                {topic.custom?.comment}
+              </Chip>
+            )}
+            <Button
+              size="sm"
+              disableAnimation
+              startContent={<FaComment />}
+              onPress={handleUpdateComment}
+            >
+              编辑备注
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* 标签编辑模式 */}
       {isEditingTags ? (
         <div className="mb-4">
@@ -129,8 +208,6 @@ function BookmarkedCardBody({
 
       {/* 文章内容 */}
       <Markdown content={topic.body} />
-
-      {/* 这里可以添加更多收藏特有的 UI 元素，如标签显示、笔记显示等 */}
     </CardBody>
   );
 }
@@ -153,6 +230,7 @@ export function TopicCard({
   topic,
   onBookmarkChange,
   onTagUpdate,
+  onCommentUpdate,
 }: TopicCardProps) {
   const archiveUrl = useArchiveUrl(topic.archive_url);
   const isBookmarked = topic.custom?.bookmark || false;
@@ -228,27 +306,6 @@ export function TopicCard({
       handleCopyMarkdown,
       handleCopyArchiveUrl,
     ],
-  );
-
-  // 处理评论更新
-  const handleUpdateComment = useCallback(
-    async (bookmarkId: string, comment: string) => {
-      try {
-        await updateBookmark(bookmarkId, null, null, comment);
-        addToast({
-          title: "评论更新成功",
-          timeout: 3000,
-        });
-      } catch (error) {
-        console.error("更新评论失败", error);
-        addToast({
-          title: "更新评论失败",
-          timeout: 3000,
-          color: "danger",
-        });
-      }
-    },
-    [],
   );
 
   // 处理笔记更新
@@ -339,7 +396,7 @@ export function TopicCard({
           topic={topic}
           bookmarkId={bookmarkId}
           onTagUpdate={onTagUpdate}
-          onUpdateComment={handleUpdateComment}
+          onUpdateComment={onCommentUpdate}
           onUpdateNote={handleUpdateNote}
         />
       ) : (

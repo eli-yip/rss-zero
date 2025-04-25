@@ -189,6 +189,7 @@ function TagInput({
     <div className="relative">
       <Input
         isClearable
+        size="sm"
         ref={inputRef}
         value={value}
         onChange={handleInputChange}
@@ -274,7 +275,9 @@ export function TagInputForm({
           />
         </div>
         <div className="flex-2">
-          <Button type="submit">{submitButtonText}</Button>
+          <Button size="sm" type="submit">
+            {submitButtonText}
+          </Button>
         </div>
       </div>
     </Form>

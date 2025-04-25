@@ -101,6 +101,42 @@ export function Topics({
     [topics, onTopicsChange, refetch],
   );
 
+  // 处理备注更新
+  const handleCommentUpdate = useCallback(
+    async (topicId: string, bookmarkId: string, comment: string) => {
+      try {
+        await updateBookmark(bookmarkId, null, null, comment);
+        const updatedTopics = topics.map((topic) => {
+          if (topic.id === topicId) {
+            const custom = topic.custom ? { ...topic.custom } : ({} as Custom);
+            custom.comment = comment;
+
+            return {
+              ...topic,
+              custom,
+            };
+          }
+          return topic;
+        });
+
+        onTopicsChange(updatedTopics);
+
+        addToast({
+          title: "备注更新成功",
+          timeout: 3000,
+        });
+      } catch (error) {
+        console.error("更新备注失败", error);
+        addToast({
+          title: "标签备注失败",
+          timeout: 3000,
+          color: "danger",
+        });
+      }
+    },
+    [topics, onTopicsChange],
+  );
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-y-4">
       {filteredTopics.map((topic) => (
@@ -109,6 +145,7 @@ export function Topics({
           topic={topic}
           onBookmarkChange={handleBookmarkChange}
           onTagUpdate={handleTagUpdate}
+          onCommentUpdate={handleCommentUpdate}
         />
       ))}
     </div>
