@@ -259,8 +259,10 @@ export function TagInputForm({
   // 表单提交处理
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newTags = internalValue.trim().split(/\s+/).filter(Boolean);
-    onChange(newTags);
+    const tagsArray = internalValue.trim().split(/\s+/).filter(Boolean);
+    const uniqueTags = [...new Set(tagsArray)];
+
+    onChange(uniqueTags);
   };
 
   return (
