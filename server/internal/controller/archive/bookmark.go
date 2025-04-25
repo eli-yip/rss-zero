@@ -64,14 +64,15 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 		logger.Error("failed to get bookmarks", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 	}
+	bookmarkIDs := lo.Map(bookmarks, func(b bookmarkDB.Bookmark, _ int) string { return b.ID })
+	bookmarkIDToTags, err := h.bookmarkDBService.GetTags(bookmarkIDs)
+	if err != nil {
+		logger.Error("failed to get tags", zap.Error(err))
+		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+	}
 
 	answerBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == bookmarkDB.ContentTypeAnswer })
 	answerIDs := lo.Map(answerBookmarks, func(b bookmarkDB.Bookmark, _ int) string { return b.ContentID })
-	answerTags, err := h.bookmarkDBService.GetTagsFromAnswer(answerIDs)
-	if err != nil {
-		logger.Error("failed to get tags from answers", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
-	}
 	err = nil
 	answerIDsInt := lo.Map(answerIDs, func(id string, _ int) int {
 		var idInt int
@@ -105,7 +106,7 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 		logger.Error("failed to convert bookmark ID to int", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 	}
-	answerTopics, err := buildTopicMapFromAnswer(answers, answerIDToBookmark, answerTags, h.zhihuDBService)
+	answerTopics, err := buildTopicMapFromAnswer(answers, answerIDToBookmark, bookmarkIDToTags, h.zhihuDBService)
 	if err != nil {
 		logger.Error("failed to build topic map from answers", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
@@ -113,11 +114,6 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 
 	pinBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == bookmarkDB.ContentTypePin })
 	pinIDs := lo.Map(pinBookmarks, func(b bookmarkDB.Bookmark, _ int) string { return b.ContentID })
-	pinTags, err := h.bookmarkDBService.GetTagsFromPin(pinIDs)
-	if err != nil {
-		logger.Error("failed to get tags from pins", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
-	}
 	pinIDsInt := lo.Map(pinIDs, func(id string, _ int) int {
 		var idInt int
 		idInt, err = strconv.Atoi(id)
@@ -149,7 +145,7 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 		logger.Error("failed to convert bookmark ID to int", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 	}
-	pinTopics, err := buildTopicMapFromPin(pins, pinIDToBookmarkMap, pinTags, h.zhihuDBService)
+	pinTopics, err := buildTopicMapFromPin(pins, pinIDToBookmarkMap, bookmarkIDToTags, h.zhihuDBService)
 	if err != nil {
 		logger.Error("failed to build topic map from pins", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))

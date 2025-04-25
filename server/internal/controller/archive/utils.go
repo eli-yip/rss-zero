@@ -118,7 +118,7 @@ func buildTopicsFromAnswer(answers []zhihuDB.Answer, userID string, d zhihuDB.DB
 
 // answers: map[answerID]Answer
 // bookmarks: map[answerID]bookmark
-// tags: map[answerID][]string
+// tags: map[bookmarkID]tags
 // Returns a map of answerID to Topic
 func buildTopicMapFromAnswer(answers map[int]zhihuDB.Answer, bookmarks map[int]bookmarkDB.Bookmark, tags map[string][]string, d zhihuDB.DB) (topicMap map[string]Topic, err error) {
 	questionMap, err := buildQuestionMapFromAnswer(answers, d)
@@ -142,13 +142,14 @@ func buildTopicMapFromAnswer(answers map[int]zhihuDB.Answer, bookmarks map[int]b
 
 		answerID := strconv.Itoa(answer.ID)
 
+		bookmark := bookmarks[answer.ID]
 		custom := &Custom{
 			Bookmark:   true,
-			BookmarkID: bookmarks[answer.ID].ID,
-			Comment:    bookmarks[answer.ID].Comment,
-			Note:       bookmarks[answer.ID].Note,
+			BookmarkID: bookmark.ID,
+			Comment:    bookmark.Comment,
+			Note:       bookmark.Note,
 		}
-		answerTags, hasTag := tags[answerID]
+		answerTags, hasTag := tags[bookmark.ID]
 		if hasTag {
 			custom.Tags = answerTags
 		} else {
@@ -228,7 +229,7 @@ func buildTopicsFromPin(pins []zhihuDB.Pin, userID string, d zhihuDB.DB, bd book
 
 // bookmarks: map[pinID]bookmark
 // tags: map[pinID][]string
-func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, pinIDToBookmark map[int]bookmarkDB.Bookmark, tags map[string][]string, d zhihuDB.DB) (topicMap map[string]Topic, err error) {
+func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, bookmarks map[int]bookmarkDB.Bookmark, tags map[string][]string, d zhihuDB.DB) (topicMap map[string]Topic, err error) {
 	authorIDs := lo.Uniq(lo.MapToSlice(pins, func(_ int, v zhihuDB.Pin) string { return v.AuthorID }))
 	authorMap, err := buildAuthorMap(authorIDs, d)
 	if err != nil {
@@ -240,13 +241,14 @@ func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, pinIDToBookmark map[int]book
 	for _, p := range pins {
 		pinID := strconv.Itoa(p.ID)
 
+		bookmark := bookmarks[p.ID]
 		custom := &Custom{
 			Bookmark:   true,
-			BookmarkID: pinIDToBookmark[p.ID].ID,
-			Comment:    pinIDToBookmark[p.ID].Comment,
-			Note:       pinIDToBookmark[p.ID].Note,
+			BookmarkID: bookmark.ID,
+			Comment:    bookmark.Comment,
+			Note:       bookmark.Note,
 		}
-		pinTags, hasTag := tags[pinID]
+		pinTags, hasTag := tags[bookmark.ID]
 		if hasTag {
 			custom.Tags = pinTags
 		} else {
