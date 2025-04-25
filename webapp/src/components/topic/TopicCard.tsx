@@ -28,7 +28,7 @@ import {
   FaZhihu,
 } from "react-icons/fa";
 
-import { addBookmark, removeBookmark, updateBookmark } from "@/api/client";
+import { addBookmark, removeBookmark } from "@/api/client";
 import { Markdown } from "@/components/topic/Markdown";
 import { TagInputForm } from "@/components/topic/TagInput";
 import { useAllTags } from "@/hooks/useAllTags";
@@ -42,24 +42,23 @@ interface TopicCardProps {
     isBookmarked: boolean,
     bookmarkId?: string, // when deleting a bookmark, this is null
   ) => void;
-  onTagUpdate: (topicId: string, bookmarkId: string, tags: string[]) => void;
-  onCommentUpdate: (
+  onBookmarkDataChange: (
     topicId: string,
     bookmarkId: string,
-    comment: string,
+    data: { tags?: string[] | null; comment?: string | null },
+    type: "tags" | "comment",
   ) => void;
 }
 
 interface BookmarkedCardBodyProps {
   topic: Topic;
   bookmarkId: string; // 添加 bookmarkId 作为必须属性
-  onTagUpdate: (topicId: string, bookmarkId: string, tags: string[]) => void;
-  onUpdateComment: (
+  onBookmarkDataChange: (
     topicId: string,
     bookmarkId: string,
-    comment: string,
+    data: { tags?: string[] | null; comment?: string | null },
+    type: "tags" | "comment",
   ) => void;
-  onUpdateNote: (topicId: string, bookmarkId: string, note: string) => void;
 }
 
 // 常规 CardBody 属性
@@ -73,8 +72,7 @@ interface RegularCardBodyProps {
 function BookmarkedCardBody({
   topic,
   bookmarkId,
-  onTagUpdate,
-  onUpdateComment,
+  onBookmarkDataChange,
 }: BookmarkedCardBodyProps) {
   // 标签编辑状态
   const [isEditingTags, setIsEditingTags] = useState(false);
@@ -102,10 +100,10 @@ function BookmarkedCardBody({
   // 处理标签提交
   const handleTagSubmit = useCallback(
     (newTags: string[]) => {
-      onTagUpdate(topic.id, bookmarkId, newTags);
+      onBookmarkDataChange(topic.id, bookmarkId, { tags: newTags }, "tags");
       setIsEditingTags(false);
     },
-    [topic.id, bookmarkId, onTagUpdate],
+    [topic.id, bookmarkId, onBookmarkDataChange],
   );
 
   // 处理更新备注
@@ -119,9 +117,14 @@ function BookmarkedCardBody({
 
   // 处理备注提交
   const handleCommentSubmit = useCallback(() => {
-    onUpdateComment(topic.id, bookmarkId, commentText);
+    onBookmarkDataChange(
+      topic.id,
+      bookmarkId,
+      { comment: commentText },
+      "comment",
+    );
     setIsEditingComment(false);
-  }, [topic.id, bookmarkId, commentText, onUpdateComment]);
+  }, [topic.id, bookmarkId, commentText, onBookmarkDataChange]);
 
   return (
     <CardBody>
@@ -229,8 +232,9 @@ function RegularCardBody({ topic }: RegularCardBodyProps) {
 export function TopicCard({
   topic,
   onBookmarkChange,
-  onTagUpdate,
-  onCommentUpdate,
+  onBookmarkDataChange,
+  // onTagUpdate,
+  // onCommentUpdate,
 }: TopicCardProps) {
   const archiveUrl = useArchiveUrl(topic.archive_url);
   const isBookmarked = topic.custom?.bookmark || false;
@@ -308,27 +312,6 @@ export function TopicCard({
     ],
   );
 
-  // 处理笔记更新
-  const handleUpdateNote = useCallback(
-    async (bookmarkId: string, note: string) => {
-      try {
-        await updateBookmark(bookmarkId, note, null, null);
-        addToast({
-          title: "笔记更新成功",
-          timeout: 3000,
-        });
-      } catch (error) {
-        console.error("更新笔记失败", error);
-        addToast({
-          title: "更新笔记失败",
-          timeout: 3000,
-          color: "danger",
-        });
-      }
-    },
-    [],
-  );
-
   return (
     <Card disableAnimation>
       <CardHeader className="flex justify-between gap-1">
@@ -395,9 +378,7 @@ export function TopicCard({
         <BookmarkedCardBody
           topic={topic}
           bookmarkId={bookmarkId}
-          onTagUpdate={onTagUpdate}
-          onUpdateComment={onCommentUpdate}
-          onUpdateNote={handleUpdateNote}
+          onBookmarkDataChange={onBookmarkDataChange}
         />
       ) : (
         <RegularCardBody topic={topic} />

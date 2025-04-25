@@ -62,18 +62,31 @@ export function Topics({
     [topics, onTopicsChange],
   );
 
-  // 处理标签更新
-  const handleTagUpdate = useCallback(
-    async (topicId: string, bookmarkId: string, tags: string[]) => {
+  const handleBookmarkDataUpdate = useCallback(
+    async (
+      topicId: string,
+      bookmarkId: string,
+      data: { tags?: string[] | null; comment?: string | null },
+      type: "tags" | "comment",
+    ) => {
       try {
-        await updateBookmark(bookmarkId, null, tags, null);
-        // 刷新标签数据
-        await refetch();
+        const tagsToUpdate = data.tags ?? null;
+        const commentToUpdate = data.comment ?? null;
+        // 传递对应的参数给 API
+        await updateBookmark(bookmarkId, null, tagsToUpdate, commentToUpdate);
+
+        if (type === "tags") {
+          // 仅在更新标签时刷新标签数据
+          await refetch();
+        }
 
         const updatedTopics = topics.map((topic) => {
           if (topic.id === topicId) {
             const custom = topic.custom ? { ...topic.custom } : ({} as Custom);
-            custom.tags = tags;
+
+            // 根据更新类型设置相应属性
+            if (tagsToUpdate) custom.tags = tagsToUpdate;
+            if (commentToUpdate) custom.comment = commentToUpdate;
 
             return {
               ...topic,
@@ -85,56 +98,21 @@ export function Topics({
 
         onTopicsChange(updatedTopics);
 
+        // 根据类型显示不同的成功消息
         addToast({
-          title: "标签更新成功",
+          title: type === "tags" ? "标签更新成功" : "备注更新成功",
           timeout: 3000,
         });
       } catch (error) {
-        console.error("更新标签失败", error);
+        console.error(`${type === "tags" ? "标签" : "备注"}更新失败`, error);
         addToast({
-          title: "标签更新失败",
+          title: `${type === "tags" ? "标签" : "备注"}更新失败`,
           timeout: 3000,
           color: "danger",
         });
       }
     },
     [topics, onTopicsChange, refetch],
-  );
-
-  // 处理备注更新
-  const handleCommentUpdate = useCallback(
-    async (topicId: string, bookmarkId: string, comment: string) => {
-      try {
-        await updateBookmark(bookmarkId, null, null, comment);
-        const updatedTopics = topics.map((topic) => {
-          if (topic.id === topicId) {
-            const custom = topic.custom ? { ...topic.custom } : ({} as Custom);
-            custom.comment = comment;
-
-            return {
-              ...topic,
-              custom,
-            };
-          }
-          return topic;
-        });
-
-        onTopicsChange(updatedTopics);
-
-        addToast({
-          title: "备注更新成功",
-          timeout: 3000,
-        });
-      } catch (error) {
-        console.error("更新备注失败", error);
-        addToast({
-          title: "标签备注失败",
-          timeout: 3000,
-          color: "danger",
-        });
-      }
-    },
-    [topics, onTopicsChange],
   );
 
   return (
@@ -144,8 +122,7 @@ export function Topics({
           key={topic.id}
           topic={topic}
           onBookmarkChange={handleBookmarkChange}
-          onTagUpdate={handleTagUpdate}
-          onCommentUpdate={handleCommentUpdate}
+          onBookmarkDataChange={handleBookmarkDataUpdate}
         />
       ))}
     </div>
