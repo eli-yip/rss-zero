@@ -123,6 +123,11 @@ function BookmarkedCardBody({
 
   // 处理备注提交
   const handleCommentSubmit = useCallback(() => {
+    if (commentText === topic.custom?.comment) {
+      setIsEditingComment(false);
+      return;
+    }
+
     onBookmarkDataChange(
       topic.id,
       bookmarkId,
@@ -130,7 +135,7 @@ function BookmarkedCardBody({
       "comment",
     );
     setIsEditingComment(false);
-  }, [topic.id, bookmarkId, commentText, onBookmarkDataChange]);
+  }, [topic.id, topic.custom, bookmarkId, commentText, onBookmarkDataChange]);
 
   // 处理取消编辑备注
   const handleCancelComment = useCallback(() => {
@@ -193,17 +198,18 @@ function BookmarkedCardBody({
             </Button>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex items-center justify-between gap-2">
             {Boolean(topic.custom?.comment) && (
-              <Chip className="my-auto" size="lg" color="primary">
-                {topic.custom?.comment}
-              </Chip>
+              <div className="flex-grow text-wrap rounded-lg bg-blue-600 p-1 text-white">
+                <p>{topic.custom?.comment}</p>
+              </div>
             )}
             <Button
               size="sm"
               disableAnimation
               startContent={<FaComment />}
               onPress={handleUpdateComment}
+              className="flex-shrink-0"
             >
               编辑备注
             </Button>

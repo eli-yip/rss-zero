@@ -86,7 +86,8 @@ export function Topics({
 
             // 根据更新类型设置相应属性
             if (tagsToUpdate) custom.tags = tagsToUpdate;
-            if (commentToUpdate) custom.comment = commentToUpdate;
+            if (commentToUpdate || commentToUpdate === "")
+              custom.comment = commentToUpdate;
 
             return {
               ...topic,
