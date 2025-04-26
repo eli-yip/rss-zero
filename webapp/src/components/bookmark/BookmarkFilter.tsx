@@ -152,11 +152,21 @@ export function BookmarkFilters({
     });
   };
 
+  // 处理取消编辑包含标签
+  const handleCancelIncludeTagsEdit = () => {
+    // 取消编辑，不执行任何操作，保持原状态
+  };
+
   // 处理排除标签变更
   const handleExcludeTagsChange = (tags: string[]) => {
     updateSearchParams({
       tagExclude: tags.length > 0 ? tags.join(",") : null,
     });
+  };
+
+  // 处理取消编辑排除标签
+  const handleCancelExcludeTagsEdit = () => {
+    // 取消编辑，不执行任何操作，保持原状态
   };
 
   // 处理无标签选项变更
@@ -185,8 +195,8 @@ export function BookmarkFilters({
                   tagCountMap={tagCountMap}
                   value={tagInclude || []}
                   onChange={handleIncludeTagsChange}
+                  onCancel={handleCancelIncludeTagsEdit}
                   placeholder="输入需要包含的标签"
-                  submitButtonText="确认"
                 />
               )}
 
@@ -198,8 +208,8 @@ export function BookmarkFilters({
                   tagCountMap={tagCountMap}
                   value={tagExclude || []}
                   onChange={handleExcludeTagsChange}
+                  onCancel={handleCancelExcludeTagsEdit}
                   placeholder="输入需要排除的标签"
-                  submitButtonText="确认"
                 />
               )}
 

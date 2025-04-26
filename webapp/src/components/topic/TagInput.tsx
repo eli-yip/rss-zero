@@ -3,6 +3,7 @@ import { Listbox, ListboxItem } from "@heroui/react";
 import { Button, Form } from "@heroui/react";
 import { useRef, useState } from "react";
 import { useFilter } from "react-aria";
+import { FaCheck, FaTimes } from "react-icons/fa";
 
 // 定义 listbox 项的接口
 interface ListboxItemData {
@@ -241,17 +242,18 @@ interface TagInputFormProps {
   value: string[];
   // 更新标签的回调函数
   onChange: (value: string[]) => void;
+  // 取消编辑的回调函数
+  onCancel: () => void;
   // 可选属性
   placeholder?: string;
-  submitButtonText?: string;
 }
 
 export function TagInputForm({
   tagCountMap,
   value,
   onChange,
+  onCancel,
   placeholder = "输入标签，以空格分隔",
-  submitButtonText = "提交",
 }: TagInputFormProps) {
   // 内部状态，只在提交时更新到外部
   const [internalValue, setInternalValue] = useState<string>(value.join(" "));
@@ -267,7 +269,7 @@ export function TagInputForm({
 
   return (
     <Form onSubmit={handleSubmit} className="w-full">
-      <div className="flex w-full gap-4">
+      <div className="flex w-full gap-2">
         <div className="flex-1">
           <TagInput
             tagCountMap={tagCountMap}
@@ -276,9 +278,12 @@ export function TagInputForm({
             placeholder={placeholder}
           />
         </div>
-        <div className="flex-2">
-          <Button size="sm" type="submit">
-            {submitButtonText}
+        <div className="flex flex-2 gap-2">
+          <Button isIconOnly size="sm" type="submit">
+            <FaCheck />
+          </Button>
+          <Button isIconOnly size="sm" onPress={onCancel}>
+            <FaTimes />
           </Button>
         </div>
       </div>

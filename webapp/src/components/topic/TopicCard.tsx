@@ -19,12 +19,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FaArchive,
   FaBookmark,
+  FaCheck,
   FaComment,
   FaCopy,
   FaEllipsisV,
   FaRegBookmark,
   FaSave,
   FaTags,
+  FaTimes,
   FaZhihu,
 } from "react-icons/fa";
 
@@ -108,6 +110,11 @@ function BookmarkedCardBody({
     [topic.id, bookmarkId, onBookmarkDataChange],
   );
 
+  // 处理取消标签编辑
+  const handleCancelTagEdit = useCallback(() => {
+    setIsEditingTags(false);
+  }, []);
+
   // 处理更新备注
   const handleUpdateComment = useCallback(() => {
     // 切换评论备注状态
@@ -125,7 +132,7 @@ function BookmarkedCardBody({
     setIsEditingComment(false);
   }, [topic.id, bookmarkId, commentText, onBookmarkDataChange]);
 
-  // 处理取消编辑
+  // 处理取消编辑备注
   const handleCancelComment = useCallback(() => {
     setIsEditingComment(false);
     setCommentText(topic.custom?.comment || "");
@@ -155,7 +162,7 @@ function BookmarkedCardBody({
       {/* 备注显示与编辑 */}
       <div className="mb-2 flex gap-2">
         {isEditingComment ? (
-          <div className="flex w-full gap-4">
+          <div className="flex w-full gap-2">
             <Input
               size="sm"
               value={commentText}
@@ -168,19 +175,21 @@ function BookmarkedCardBody({
             />
             <Button
               size="sm"
+              isIconOnly
               disableAnimation
               onPress={handleCommentSubmit}
               className="flex-2"
             >
-              保存备注
+              <FaCheck />
             </Button>
             <Button
               size="sm"
+              isIconOnly
               disableAnimation
               onPress={handleCancelComment}
               className="flex-2"
             >
-              取消编辑
+              <FaTimes />
             </Button>
           </div>
         ) : (
@@ -212,8 +221,8 @@ function BookmarkedCardBody({
               tagCountMap={tagCountMap}
               value={currentTags}
               onChange={handleTagSubmit}
+              onCancel={handleCancelTagEdit}
               placeholder="输入标签，以空格分隔"
-              submitButtonText="保存标签"
             />
           )}
         </div>
