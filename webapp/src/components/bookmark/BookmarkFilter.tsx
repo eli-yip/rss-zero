@@ -232,12 +232,13 @@ export function BookmarkFilters({
           <PopoverContent className="w-64 flex-col gap-4 px-4 py-4">
             {/* 日期选择器 */}
             <Listbox
+              aria-label="筛选"
               itemClasses={{
                 base: "data-[focus]:bg-transparent data-[hover]:bg-transparent",
               }}
             >
               <ListboxSection showDivider title={"按照日期筛选"}>
-                <ListboxItem>
+                <ListboxItem textValue="按创建时间">
                   <Switch
                     isSelected={isCreateDate}
                     onValueChange={handleDateByChange}
@@ -246,7 +247,7 @@ export function BookmarkFilters({
                     {isCreateDate ? "按创建时间筛选" : "按更新时间筛选"}
                   </Switch>
                 </ListboxItem>
-                <ListboxItem>
+                <ListboxItem textValue="开始时间">
                   <DatePicker
                     showMonthAndYearPickers
                     label="开始时间"
@@ -254,7 +255,7 @@ export function BookmarkFilters({
                     onChange={handleStartDateChange}
                   />
                 </ListboxItem>
-                <ListboxItem>
+                <ListboxItem textValue="截止时间">
                   <DatePicker
                     showMonthAndYearPickers
                     label="截止时间"
@@ -262,7 +263,7 @@ export function BookmarkFilters({
                     onChange={handleEndDateChange}
                   />
                 </ListboxItem>
-                <ListboxItem>
+                <ListboxItem textValue="清除日期">
                   {/* 日期清除按钮组件 */}
                   <DateClearButtons
                     startDate={localStartDate}
@@ -274,7 +275,7 @@ export function BookmarkFilters({
               </ListboxSection>
 
               <ListboxSection showDivider title={"排序设置"}>
-                <ListboxItem>
+                <ListboxItem textValue="按创建时间排序">
                   <Switch
                     isSelected={isOrderByCreate}
                     onValueChange={handleOrderByChange}
@@ -283,7 +284,7 @@ export function BookmarkFilters({
                     {isOrderByCreate ? "按创建时间排序" : "按更新时间排序"}
                   </Switch>
                 </ListboxItem>
-                <ListboxItem>
+                <ListboxItem textValue="排序方式">
                   <Switch
                     isSelected={isNewestFirst}
                     onValueChange={handleSortChange}
