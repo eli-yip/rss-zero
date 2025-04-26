@@ -45,7 +45,7 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 		EndTime:   endDate,
 		TimeBy:    bookmarkDB.BookmarkQueryTime(req.DateBy),
 		Page:      req.Page,
-		Order:     req.DateBy,
+		Order:     req.Order,
 		Orderby:   bookmarkDB.BookmarkQueryTime(req.OrderBy),
 	}
 	if req.Tags != nil {

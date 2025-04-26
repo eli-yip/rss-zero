@@ -56,6 +56,7 @@ type DB interface {
 	GetBookmarkByTags(userID string, tagNames []string) ([]Bookmark, error)
 	UpdateBookmark(id string, comment, note string) (*Bookmark, error)
 	RemoveBookmark(id string) error
+	UpdateBookmarkUpdatedAt(id string) error
 
 	UpdateTag(bookmarkID string, newTags []string) error
 	AddTag(bookmarkID string, name string) (*Tag, error)
@@ -293,6 +294,19 @@ func (db *BookmarkDBImpl) UpdateTag(bookmarkID string, newTags []string) error {
 		return fmt.Errorf("failed to add new tags: %w", err)
 	}
 
+	// Update the updated_at field of the bookmark
+	if err := db.Model(&Bookmark{}).Where("id = ?", bookmarkID).Update("updated_at", time.Now()).Error; err != nil {
+		return fmt.Errorf("failed to update bookmark updated_at: %w", err)
+	}
+
+	return nil
+}
+
+func (db *BookmarkDBImpl) UpdateBookmarkUpdatedAt(id string) error {
+	result := db.Model(&Bookmark{}).Where("id = ?", id).Update("updated_at", time.Now())
+	if result.Error != nil {
+		return result.Error
+	}
 	return nil
 }
 
