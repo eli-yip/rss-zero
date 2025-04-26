@@ -432,5 +432,5 @@ function useArchiveUrl(originalArchiveUrl: string): string {
  * 格式化日期时间
  */
 function formatDateTime(isoString: string): string {
-  return DateTime.fromISO(isoString).toFormat("yyyy 年 L 月 d 日 h:mm");
+  return DateTime.fromISO(isoString).toFormat("yyyy 年 L 月 d 日 H:mm");
 }
