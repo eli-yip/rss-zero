@@ -130,19 +130,17 @@ export function NoteEditor({
                     </div>
                   </div>
                 ) : (
-                  <div className="h-full rounded-2xl border p-4">
-                    <Textarea
-                      value={noteText}
-                      onValueChange={setNoteText}
-                      placeholder="在此输入笔记内容，支持 Markdown 格式..."
-                      disableAutosize
-                      classNames={{
-                        base: "!h-full",
-                        inputWrapper: "!h-full",
-                        input: "!h-full",
-                      }}
-                    />
-                  </div>
+                  <Textarea
+                    value={noteText}
+                    onValueChange={setNoteText}
+                    placeholder="在此输入笔记内容，支持 Markdown 格式..."
+                    disableAutosize
+                    classNames={{
+                      base: "!h-full",
+                      inputWrapper: "!h-full",
+                      input: "!h-full text-base",
+                    }}
+                  />
                 )}
               </div>
             </div>
