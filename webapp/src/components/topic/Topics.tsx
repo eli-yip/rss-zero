@@ -11,6 +11,17 @@ interface TopicsProps {
   onTopicsChange: (updatedTopics: TopicType[]) => void;
 }
 
+export type BookmarkDataChangeHandler = (
+  topicId: string,
+  bookmarkId: string,
+  data: {
+    tags?: string[] | null;
+    comment?: string | null;
+    note?: string | null;
+  },
+  type: "tags" | "comment" | "note",
+) => void;
+
 export function Topics({
   topics,
   onlyBookmark = false,
@@ -62,18 +73,42 @@ export function Topics({
     [topics, onTopicsChange],
   );
 
-  const handleBookmarkDataUpdate = useCallback(
+  const handleBookmarkDataUpdate: BookmarkDataChangeHandler = useCallback(
     async (
       topicId: string,
       bookmarkId: string,
-      data: { tags?: string[] | null; comment?: string | null },
-      type: "tags" | "comment",
+      data: {
+        tags?: string[] | null;
+        comment?: string | null;
+        note?: string | null;
+      },
+      type: "tags" | "comment" | "note",
     ) => {
+      let toastTitlePart: string;
+      switch (type) {
+        case "tags":
+          toastTitlePart = "标签";
+          break;
+        case "comment":
+          toastTitlePart = "备注";
+          break;
+        case "note":
+          toastTitlePart = "笔记";
+          break;
+        default:
+          toastTitlePart = "";
+      }
       try {
         const tagsToUpdate = data.tags ?? null;
         const commentToUpdate = data.comment ?? null;
+        const noteToUpdate = data.note ?? null;
         // 传递对应的参数给 API
-        await updateBookmark(bookmarkId, null, tagsToUpdate, commentToUpdate);
+        await updateBookmark(
+          bookmarkId,
+          noteToUpdate,
+          tagsToUpdate,
+          commentToUpdate,
+        );
 
         if (type === "tags") {
           // 仅在更新标签时刷新标签数据
@@ -88,6 +123,7 @@ export function Topics({
             if (tagsToUpdate) custom.tags = tagsToUpdate;
             if (commentToUpdate || commentToUpdate === "")
               custom.comment = commentToUpdate;
+            if (noteToUpdate || noteToUpdate === "") custom.note = noteToUpdate;
 
             return {
               ...topic,
@@ -101,13 +137,13 @@ export function Topics({
 
         // 根据类型显示不同的成功消息
         addToast({
-          title: type === "tags" ? "标签更新成功" : "备注更新成功",
+          title: `${toastTitlePart}更新成功`,
           timeout: 3000,
         });
       } catch (error) {
-        console.error(`${type === "tags" ? "标签" : "备注"}更新失败`, error);
+        console.error(`${toastTitlePart}更新失败`, error);
         addToast({
-          title: `${type === "tags" ? "标签" : "备注"}更新失败`,
+          title: `${toastTitlePart}更新失败`,
           timeout: 3000,
           color: "danger",
         });

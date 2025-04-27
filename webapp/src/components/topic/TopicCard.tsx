@@ -32,7 +32,9 @@ import {
 
 import { addBookmark, removeBookmark } from "@/api/client";
 import { Markdown } from "@/components/topic/Markdown";
+import { NoteEditor } from "@/components/topic/NoteEditor";
 import { TagInputForm } from "@/components/topic/TagInput";
+import type { BookmarkDataChangeHandler } from "@/components/topic/Topics";
 import { useAllTags } from "@/hooks/useAllTags";
 import { useUserInfo } from "@/hooks/useUserInfo";
 import type { Topic } from "@/types/Topic";
@@ -44,23 +46,13 @@ interface TopicCardProps {
     isBookmarked: boolean,
     bookmarkId?: string, // when deleting a bookmark, this is null
   ) => void;
-  onBookmarkDataChange: (
-    topicId: string,
-    bookmarkId: string,
-    data: { tags?: string[] | null; comment?: string | null },
-    type: "tags" | "comment",
-  ) => void;
+  onBookmarkDataChange: BookmarkDataChangeHandler;
 }
 
 interface BookmarkedCardBodyProps {
   topic: Topic;
   bookmarkId: string; // 添加 bookmarkId 作为必须属性
-  onBookmarkDataChange: (
-    topicId: string,
-    bookmarkId: string,
-    data: { tags?: string[] | null; comment?: string | null },
-    type: "tags" | "comment",
-  ) => void;
+  onBookmarkDataChange: BookmarkDataChangeHandler;
 }
 
 // 常规 CardBody 属性
@@ -247,6 +239,20 @@ function BookmarkedCardBody({
           <Button size="sm" startContent={<FaTags />} onPress={handleUpdateTag}>
             {isEditingTags ? "取消编辑" : "更新标签"}
           </Button>
+        </div>
+      )}
+
+      {/* 笔记编辑 */}
+      <NoteEditor
+        topic={topic}
+        bookmarkId={bookmarkId}
+        onBookmarkDataChange={onBookmarkDataChange}
+      />
+
+      {/* 笔记内容预览区域 */}
+      {topic.custom?.note && (
+        <div className="my-2 rounded-2xl border p-4">
+          <Markdown content={topic.custom.note} />
         </div>
       )}
 
