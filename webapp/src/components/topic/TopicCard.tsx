@@ -211,7 +211,7 @@ function BookmarkedCardBody({
 
       {/* 标签编辑模式 */}
       {isEditingTags ? (
-        <div className="mb-4">
+        <div className="mb-2">
           {isLoading ? (
             <div>加载标签中...</div>
           ) : (
