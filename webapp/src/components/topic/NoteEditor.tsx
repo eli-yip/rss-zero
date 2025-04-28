@@ -31,6 +31,8 @@ export function NoteEditor({
   const [isPreviewMode, setIsPreviewMode] = useState(true);
   // 笔记内容
   const [noteText, setNoteText] = useState(topic.custom?.note || "");
+  // 编辑状态标志
+  const [isEditing, setIsEditing] = useState(false);
   // 在小屏幕上控制是否显示主题内容
   const [showTopicContent, setShowTopicContent] = useState(false);
 
@@ -42,7 +44,11 @@ export function NoteEditor({
   // 切换预览模式
   const handleTogglePreview = useCallback(() => {
     setIsPreviewMode((prev) => !prev);
-  }, []);
+    // 当进入编辑模式时设置编辑状态为 true
+    if (isPreviewMode) {
+      setIsEditing(true);
+    }
+  }, [isPreviewMode]);
 
   // 切换显示主题内容
   const handleToggleTopicContent = useCallback(() => {
@@ -53,18 +59,21 @@ export function NoteEditor({
   const handleSaveNote = useCallback(() => {
     onBookmarkDataChange(topic.id, bookmarkId, { note: noteText }, "note");
     setIsPreviewMode(true);
+    setIsEditing(false);
   }, [topic.id, bookmarkId, noteText, onBookmarkDataChange]);
 
   // 取消编辑
   const handleCancelEdit = useCallback(() => {
     setNoteText(topic.custom?.note || "");
     setIsPreviewMode(true);
+    setIsEditing(false);
   }, [topic.custom?.note]);
 
   // 当抽屉关闭时重置状态
   useEffect(() => {
     if (!isDrawerOpen) {
       setIsPreviewMode(true);
+      setIsEditing(false);
       setShowTopicContent(false);
       setNoteText(topic.custom?.note || "");
     }
@@ -155,7 +164,8 @@ export function NoteEditor({
               >
                 <FaExpand />
               </Button>
-              {!isPreviewMode && (
+              {/* 显示编辑按钮，无论是否处于预览模式，只要在编辑状态中 */}
+              {isEditing && (
                 <>
                   <Button color="danger" isIconOnly onPress={handleCancelEdit}>
                     <FaTimes />

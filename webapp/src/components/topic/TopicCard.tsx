@@ -79,6 +79,8 @@ function BookmarkedCardBody({
   // 添加输入框引用
   const commentInputRef = useRef<HTMLInputElement>(null);
 
+  const { userInfo } = useUserInfo();
+
   // 将标签数据转换为 TagInputForm 所需的格式
   const tagCountMap = Object.fromEntries(
     tags.map((tag) => [tag.name, tag.count]),
@@ -242,18 +244,22 @@ function BookmarkedCardBody({
         </div>
       )}
 
-      {/* 笔记编辑 */}
-      <NoteEditor
-        topic={topic}
-        bookmarkId={bookmarkId}
-        onBookmarkDataChange={onBookmarkDataChange}
-      />
+      {userInfo?.username !== "jason" && (
+        <>
+          {/* 笔记编辑 */}
+          <NoteEditor
+            topic={topic}
+            bookmarkId={bookmarkId}
+            onBookmarkDataChange={onBookmarkDataChange}
+          />
 
-      {/* 笔记内容预览区域 */}
-      {topic.custom?.note && (
-        <div className="my-2 rounded-2xl border p-4">
-          <Markdown content={topic.custom.note} />
-        </div>
+          {/* 笔记内容预览区域 */}
+          {topic.custom?.note && (
+            <div className="my-2 rounded-2xl border p-4">
+              <Markdown content={topic.custom.note} />
+            </div>
+          )}
+        </>
       )}
 
       {/* 文章内容 */}
