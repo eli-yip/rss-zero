@@ -1,6 +1,6 @@
 .env
-/server/config.toml
-/server/logs
+/config.toml
+/logs
 /test
 *.prof
 *.wav

@@ -5,7 +5,6 @@ builds:
     env:
       - CGO_ENABLED=0
       - GOPROXY=https://goproxy.cn,direct
-    dir: ./server
     main: ./cmd/server
     ldflags:
       - -w -s -X "github.com/eli-yip/rss-zero/internal/version.Version={{ .Tag }}"
@@ -27,8 +26,6 @@ dockers:
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--build-arg=VERSION={{ .Tag }}"
-    extra_files:
-      - "webapp/dist"
 
 archives:
   - id: server
