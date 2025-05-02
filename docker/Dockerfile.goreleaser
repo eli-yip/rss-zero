@@ -7,7 +7,7 @@ RUN sed -i 's#https://mirrors.tuna.tsinghua.edu.cn/alpine#https://dl-cdn.alpinel
 
 WORKDIR /app
 
-COPY rss-zero /app/rss-zero
+COPY rss-zero-server /app/rss-zero
 
 ENV TZ=Asia/Shanghai
 
