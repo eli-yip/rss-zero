@@ -60,7 +60,13 @@ func setupEcho(redisService redis.Redis,
 		middleware.RequestID(), // add request id
 		middleware.Recover(),   // recover from panic
 		middleware.CORSWithConfig(middleware.CORSConfig{
-			AllowOrigins: []string{"*"},
+			AllowOrigins: []string{
+				"https://mo.darkeli.com",
+				"https://rss-zero.darkeli.com",
+				"http://mo.darkeli.com",
+				"http://rss-zero.darkeli.com",
+				"http://localhost:8080",
+			},
 			AllowHeaders: []string{"*"},
 			AllowMethods: []string{"*"},
 		}),
