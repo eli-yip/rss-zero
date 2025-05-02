@@ -1,9 +1,7 @@
 name: Release
-
 on:
   push:
     tags: ["*"]
-
 jobs:
   lint:
     uses: ./.gitea/workflows/lint.yaml
@@ -50,6 +48,6 @@ jobs:
           script_stop: true
           script: |
             cd /home/yip/services/rss-zero
-            sed -i "s/TAG=.*/TAG=${{ gitea.ref_name }}/" .env
+            sed -i "s/SERVER_TAG=.*/SERVER_TAG=${{ gitea.ref_name }}/" .env
             docker compose pull
             docker compose up -d
