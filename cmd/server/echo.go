@@ -67,8 +67,9 @@ func setupEcho(redisService redis.Redis,
 				"http://rss-zero.darkeli.com",
 				"http://localhost:8080",
 			},
-			AllowHeaders: []string{"*"},
-			AllowMethods: []string{"*"},
+			AllowHeaders:     []string{"*"},
+			AllowMethods:     []string{"*"},
+			AllowCredentials: true,
 		}),
 		myMiddleware.LogRequest(logger),   // log request
 		myMiddleware.InjectLogger(logger), // inject logger to context
