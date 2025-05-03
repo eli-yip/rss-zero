@@ -74,4 +74,4 @@ dtag +tags:
     done
 
 @ltag:
-    git tag --list --sort -v:refname -n
+    git tag --list | rg -v "\d{8}" | column -c $(tput cols) | less -R
