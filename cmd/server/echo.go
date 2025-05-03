@@ -76,8 +76,17 @@ func setupEcho(redisService redis.Redis,
 				"Sec-Fetch-Mode",
 				"Sec-Fetch-Dest",
 			},
-			AllowMethods:     []string{"*"},
+			AllowMethods: []string{
+				http.MethodGet,
+				http.MethodHead,
+				http.MethodPut,
+				http.MethodPatch,
+				http.MethodPost,
+				http.MethodDelete,
+				http.MethodOptions,
+			},
 			AllowCredentials: true,
+			MaxAge:           60 * 60 * 24,
 		}),
 		myMiddleware.LogRequest(logger),   // log request
 		myMiddleware.InjectLogger(logger), // inject logger to context
