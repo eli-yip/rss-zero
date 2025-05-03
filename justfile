@@ -64,7 +64,7 @@ conclude:
     git diff --stat @{0.day.ago.midnight} | sort -k3nr
 
 tpush: && push
-    git-bump
+    git tag --list | rg -v "\d{8}" | head -n1 | calver --layout YY.MM.MICRO --next
 
 dtag +tags:
     #!/usr/bin/env bash
