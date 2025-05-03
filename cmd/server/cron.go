@@ -171,7 +171,10 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 				return nil, fmt.Errorf("failed to patch cron task definition: %w", err)
 			}
 		case cronDB.TypeXiaobot:
-			crawlFunc = xiaobotCron.BuildCronCrawlFunc(redisService, cookieService, db, notifier)
+			crawlFunc = xiaobotCron.BuildCronCrawlFunc(redisService, cookieService, db, notifier, &xiaobotCron.Filter{
+				Include: def.Include,
+				Exclude: def.Exclude,
+			})
 			if jobID, err = cronService.AddCrawlJob("xiaobot_crawl", def.CronExpr, crawlFunc); err != nil {
 				return nil, fmt.Errorf("failed to add xiaobot cron job: %w", err)
 			}

@@ -2,12 +2,14 @@ package crawl
 
 import (
 	"errors"
+	"slices"
 	"time"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"github.com/rs/xid"
+	"github.com/samber/lo"
 
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
@@ -22,7 +24,12 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 )
 
-func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier) func(chan cron.CronJobInfo) {
+type Filter struct {
+	Include []string
+	Exclude []string
+}
+
+func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier, fConfig *Filter) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronJobID := xid.New().String()
 		logger := log.DefaultLogger.With(zap.String("cron_job_id", cronJobID))
@@ -30,7 +37,7 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: cronJobID}}
 
 		var err error
-		var errCount  = 0
+		var errCount = 0
 
 		defer func() {
 			if errCount > 0 {
@@ -72,6 +79,16 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 			return
 		}
 		logger.Info("Get xiaobot papers subs from database")
+
+		// TODO: handle both include and exclude using set
+		if fConfig != nil {
+			papers = lo.FilterMap(papers, func(paper xiaobotDB.Paper, _ int) (xiaobotDB.Paper, bool) {
+				if slices.Contains(fConfig.Exclude, paper.ID) {
+					return paper, false
+				}
+				return paper, true
+			})
+		}
 
 		for _, paper := range papers {
 			logger := logger.With(zap.String("paper_id", paper.ID))
