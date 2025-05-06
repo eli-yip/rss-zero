@@ -124,13 +124,10 @@ func resumeRunningJobs(cronDBService cronDB.DB, redisService redis.Redis, cookie
 			go crawlFunc()
 			logger.Info("Start zhihu running job", zap.String("job_id", job.ID))
 		case cronDB.TypeXiaobot:
-			// Xiaobot crawl is quick and simple, so do not need to resume running job
-			if err = cronDBService.UpdateStatus(job.ID, cronDB.StatusStopped); err != nil {
-				return fmt.Errorf("failed to stop xiaobot running job: %w", err)
-			}
+			fallthrough
 		case cronDB.TypeGitHub:
 			if err = cronDBService.UpdateStatus(job.ID, cronDB.StatusStopped); err != nil {
-				return fmt.Errorf("failed to stop github running job: %w", err)
+				return fmt.Errorf("failed to stop xiaobot/github running job: %w", err)
 			}
 		default:
 			return fmt.Errorf("unknown cron job type %d", definition.Type)
