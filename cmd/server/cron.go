@@ -77,7 +77,7 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 		},
 		{
 			name:     "douyu_crawl",
-			schedule: "30 19 * * *",
+			schedule: "0 19 * * *",
 			fn:       douyu.BuildCrawlFunc(notifier, redisService),
 		},
 	}
