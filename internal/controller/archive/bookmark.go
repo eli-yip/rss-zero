@@ -196,7 +196,7 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 
 	_, err = h.bookmarkDBService.GetBookmarkByContent(user, req.ContentType, req.ContentID)
 	if err == nil {
-		logger.Error("bookmark already exists", zap.String("content_id", req.ContentID))
+		logger.Info("bookmark already exists, return now", zap.String("content_id", req.ContentID))
 		return c.JSON(http.StatusBadRequest, common.WrapResp("bookmark already exists"))
 	} else if !errors.Is(err, bookmarkDB.ErrNoBookmark) {
 		logger.Error("failed to get bookmark", zap.Error(err))
