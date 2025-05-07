@@ -177,7 +177,7 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 		}
 	}
 
-	logger.Info("Get bookmark list successfully", zap.String("username", username), zap.Int("page", req.Page), zap.Int("total_page", totalPage))
+	logger.Info("Get bookmark list successfully", zap.Int("page", req.Page), zap.Int("total_page", totalPage))
 
 	return c.JSON(http.StatusOK, common.WrapRespWithData("success", response))
 }
@@ -345,15 +345,13 @@ func (h *Controller) GetAllTags(c echo.Context) (err error) {
 		logger.Error("failed to get tag counts", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 	}
-	logger.Info("Get tag counts successfully", zap.String("username", user))
+	logger.Info("Get tag counts successfully", zap.Int("count", len(tagCounts)))
 
 	response := struct {
 		Tags []bookmarkDB.TagCount `json:"tags"`
 	}{
 		Tags: tagCounts,
 	}
-
-	logger.Info("Get all tags successfully", zap.String("username", user))
 
 	return c.JSON(http.StatusOK, common.WrapRespWithData("success", response))
 }
