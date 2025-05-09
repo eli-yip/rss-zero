@@ -1,5 +1,4 @@
 services:
-
   rss-zero:
     image: ${IMAGE}
     container_name: rss-zero
@@ -13,7 +12,7 @@ services:
       - /var/log/rss-zero:/app/logs
 
   rss-zhihu-encrypt:
-    image: eliyip/rss-zhihu-encrypt:1.2.12
+    image: eliyip/rss-zhihu-encrypt:1.7.0
     container_name: rss-zhihu-encrypt
     restart: always
     expose:
