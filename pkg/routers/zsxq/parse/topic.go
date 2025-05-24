@@ -36,7 +36,7 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 		8852488254285212, // Same
 	}
 	if slices.Contains(topicIDSkip, topic.TopicID) {
-		logger.Info("Skip crawling 2855142121821411, as it will cause database error")
+		logger.Info("Skip crawling topic, as it will cause markdown parser timeout", zap.Int("topic_id", topic.TopicID))
 		return
 	}
 
