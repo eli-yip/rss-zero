@@ -26,6 +26,11 @@ func (s *ParseService) parseTalk(logger *zap.Logger, topic *models.Topic) (autho
 	}
 	logger.Info("Parse author successfully", zap.Int("author_id", authorID), zap.String("author_name", authorName))
 
+	if authorID == 184544455455452 || authorName == `庄太云` {
+		logger.Info("Skip crawling topic, as it's from zhuangtaiyun", zap.Int("topic_id", topic.TopicID))
+		return 0, "", ErrNoText
+	}
+
 	if err = s.saveFiles(talk.Files, topic.TopicID, topic.CreateTime, logger); err != nil {
 		return 0, "", fmt.Errorf("failed to save files: %w", err)
 	}
