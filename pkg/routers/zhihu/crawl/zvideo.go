@@ -3,6 +3,7 @@ package crawl
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -89,7 +90,9 @@ func sendDownloadRequest(taskID, filename, url string) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create download request: %w", err)
 	}
-	req.SetBasicAuth(config.C.Zlive.Username, config.C.Zlive.Password)
+	credentials := fmt.Sprintf("%s:%s", config.C.Zlive.Username, config.C.Zlive.Password)
+	encoded := base64.StdEncoding.EncodeToString([]byte(credentials))
+	req.Header.Set("Proxy-Authorization", "Basic "+encoded)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
