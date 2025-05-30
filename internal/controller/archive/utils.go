@@ -9,6 +9,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	bookmarkDB "github.com/eli-yip/rss-zero/pkg/bookmark/db"
+	pkgCommon "github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/render"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
@@ -76,7 +77,7 @@ func buildTopicsFromAnswer(answers []zhihuDB.Answer, userID string, d zhihuDB.DB
 		}
 
 		answerID := strconv.Itoa(answer.ID)
-		bookmark, err := bd.GetBookmarkByContent(userID, bookmarkDB.ContentTypeAnswer, answerID)
+		bookmark, err := bd.GetBookmarkByContent(userID, pkgCommon.TypeZhihuAnswer, answerID)
 		var custom *Custom
 		if err != nil {
 			if !errors.Is(err, bookmarkDB.ErrNoBookmark) {
@@ -104,7 +105,7 @@ func buildTopicsFromAnswer(answers []zhihuDB.Answer, userID string, d zhihuDB.DB
 			OriginalURL: zhihuRender.GenerateAnswerLink(question.ID, answer.ID),
 			ArchiveURL:  render.BuildArchiveLink(config.C.Settings.ServerURL, zhihuRender.GenerateAnswerLink(question.ID, answer.ID)),
 			Platform:    PlatformZhihu,
-			Type:        bookmarkDB.ContentTypeAnswer,
+			Type:        pkgCommon.TypeZhihuAnswer,
 			Title:       question.Title,
 			CreatedAt:   answer.CreateAt.Format(time.RFC3339),
 			Body:        answer.Text,
@@ -161,7 +162,7 @@ func buildTopicMapFromAnswer(answers map[int]zhihuDB.Answer, bookmarks map[int]b
 			OriginalURL: zhihuRender.GenerateAnswerLink(question.ID, answer.ID),
 			ArchiveURL:  render.BuildArchiveLink(config.C.Settings.ServerURL, zhihuRender.GenerateAnswerLink(question.ID, answer.ID)),
 			Platform:    PlatformZhihu,
-			Type:        bookmarkDB.ContentTypeAnswer,
+			Type:        pkgCommon.TypeZhihuAnswer,
 			Title:       question.Title,
 			CreatedAt:   answer.CreateAt.Format(time.RFC3339),
 			Body:        answer.Text,
@@ -182,7 +183,7 @@ func buildTopicsFromPin(pins []zhihuDB.Pin, userID string, d zhihuDB.DB, bd book
 
 	for p := range slices.Values(pins) {
 		pinID := strconv.Itoa(p.ID)
-		bookmark, err := bd.GetBookmarkByContent(userID, bookmarkDB.ContentTypePin, pinID)
+		bookmark, err := bd.GetBookmarkByContent(userID, pkgCommon.TypeZhihuPin, pinID)
 		var custom *Custom
 		if err != nil {
 			if !errors.Is(err, bookmarkDB.ErrNoBookmark) {
@@ -210,7 +211,7 @@ func buildTopicsFromPin(pins []zhihuDB.Pin, userID string, d zhihuDB.DB, bd book
 			OriginalURL: zhihuRender.GeneratePinLink(p.ID),
 			ArchiveURL:  render.BuildArchiveLink(config.C.Settings.ServerURL, zhihuRender.GeneratePinLink(p.ID)),
 			Platform:    PlatformZhihu,
-			Type:        bookmarkDB.ContentTypePin,
+			Type:        pkgCommon.TypeZhihuPin,
 			Title: func() string {
 				if p.Title == "" {
 					return strconv.Itoa(p.ID)
@@ -260,7 +261,7 @@ func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, bookmarks map[int]bookmarkDB
 			OriginalURL: zhihuRender.GeneratePinLink(p.ID),
 			ArchiveURL:  render.BuildArchiveLink(config.C.Settings.ServerURL, zhihuRender.GeneratePinLink(p.ID)),
 			Platform:    PlatformZhihu,
-			Type:        bookmarkDB.ContentTypePin,
+			Type:        pkgCommon.TypeZhihuPin,
 			Title: func() string {
 				if p.Title == "" {
 					return strconv.Itoa(p.ID)

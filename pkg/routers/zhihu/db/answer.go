@@ -37,6 +37,7 @@ type DBAnswer interface {
 	// Answers are created after 2023-01-01, and the word count is between 300 and 1200.
 	RandomSelect(n int, userID string) ([]Answer, error)
 	SelectByID(ids []int) ([]Answer, error)
+	SelectAnswerIDsWithAuthorID(authorID string) ([]int, error)
 }
 
 type FetchAnswerOption struct {
@@ -261,6 +262,13 @@ func (d *DBService) SelectByID(ids []int) (answers []Answer, err error) {
 		return nil, fmt.Errorf("failed to get answers: %w", err)
 	}
 	return answers, nil
+}
+
+func (d *DBService) SelectAnswerIDsWithAuthorID(authorID string) (ids []int, err error) {
+	if err := d.Model(&Answer{}).Where("author_id = ?", authorID).Pluck("id", &ids).Error; err != nil {
+		return nil, fmt.Errorf("failed to get answer ids: %w", err)
+	}
+	return ids, nil
 }
 
 type DBQuestion interface {

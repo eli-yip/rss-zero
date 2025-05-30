@@ -12,6 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	utils "github.com/eli-yip/rss-zero/internal/utils"
 	bookmarkDB "github.com/eli-yip/rss-zero/pkg/bookmark/db"
+	pkgCommon "github.com/eli-yip/rss-zero/pkg/common"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -71,7 +72,7 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 	}
 
-	answerBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == bookmarkDB.ContentTypeAnswer })
+	answerBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == pkgCommon.TypeZhihuAnswer })
 	answerIDs := lo.Map(answerBookmarks, func(b bookmarkDB.Bookmark, _ int) string { return b.ContentID })
 	err = nil
 	answerIDsInt := lo.Map(answerIDs, func(id string, _ int) int {
@@ -112,7 +113,7 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 	}
 
-	pinBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == bookmarkDB.ContentTypePin })
+	pinBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == pkgCommon.TypeZhihuPin })
 	pinIDs := lo.Map(pinBookmarks, func(b bookmarkDB.Bookmark, _ int) string { return b.ContentID })
 	pinIDsInt := lo.Map(pinIDs, func(id string, _ int) int {
 		var idInt int
@@ -170,9 +171,9 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 
 	for b := range slices.Values(bookmarks) {
 		switch b.ContentType {
-		case bookmarkDB.ContentTypeAnswer:
+		case pkgCommon.TypeZhihuAnswer:
 			response.Topics = append(response.Topics, answerTopics[b.ContentID])
-		case bookmarkDB.ContentTypePin:
+		case pkgCommon.TypeZhihuPin:
 			response.Topics = append(response.Topics, pinTopics[b.ContentID])
 		}
 	}
@@ -205,7 +206,7 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 
 	var b *bookmarkDB.Bookmark
 	switch req.ContentType {
-	case bookmarkDB.ContentTypeAnswer:
+	case pkgCommon.TypeZhihuAnswer:
 		answerIDInt, err := strconv.Atoi(req.ContentID)
 		if err != nil {
 			logger.Error("failed to convert answer ID to int", zap.Error(err))
@@ -216,12 +217,12 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 			logger.Error("failed to get answer", zap.Error(err))
 			return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 		}
-		b, err = h.bookmarkDBService.NewBookmark(user, bookmarkDB.ContentTypeAnswer, req.ContentID)
+		b, err = h.bookmarkDBService.NewBookmark(user, pkgCommon.TypeZhihuAnswer, req.ContentID)
 		if err != nil {
 			logger.Error("failed to create bookmark", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 		}
-	case bookmarkDB.ContentTypePin:
+	case pkgCommon.TypeZhihuPin:
 		pinIDInt, err := strconv.Atoi(req.ContentID)
 		if err != nil {
 			logger.Error("failed to convert pin ID to int", zap.Error(err))
@@ -232,7 +233,7 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 			logger.Error("failed to get pin", zap.Error(err))
 			return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 		}
-		b, err = h.bookmarkDBService.NewBookmark(user, bookmarkDB.ContentTypePin, req.ContentID)
+		b, err = h.bookmarkDBService.NewBookmark(user, pkgCommon.TypeZhihuPin, req.ContentID)
 		if err != nil {
 			logger.Error("failed to create bookmark", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))

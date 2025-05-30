@@ -7,6 +7,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
+	embeddingDB "github.com/eli-yip/rss-zero/pkg/embedding/db"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -16,6 +17,7 @@ import (
 type Handler struct {
 	zhihuDbService      zhihuDB.DB
 	zhihuHtmlToMarkdown renderIface.HTMLToMarkdown
+	embeddingDBService  embeddingDB.DBIface
 
 	xiabotDBService xiaobotDB.DB
 
@@ -31,8 +33,8 @@ func NewHandler(db *gorm.DB, ai ai.AI, cookieService cookie.CookieIface, fileSer
 	return &Handler{
 		zhihuDbService:      zhihuDBService,
 		zhihuHtmlToMarkdown: renderIface.NewHTMLToMarkdownService(zhihuRender.GetHtmlRules()...),
-
-		xiabotDBService: xiabotDBService,
+		embeddingDBService:  embeddingDB.NewDBService(db),
+		xiabotDBService:     xiabotDBService,
 
 		cookieService: cookieService,
 		notifier:      notifier,

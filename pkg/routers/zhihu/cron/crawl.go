@@ -19,6 +19,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
+	embeddingDB "github.com/eli-yip/rss-zero/pkg/embedding/db"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawl"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -46,7 +47,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 		logger := log.DefaultLogger.With(zap.String("cron_job_id", cronJobID))
 
 		var err error
-		var errCount  = 0
+		var errCount = 0
 
 		cronDBService := cronDB.NewDBService(db)
 		runningJobID, err := cronDBService.CheckRunningJob(taskID)
@@ -359,7 +360,9 @@ func initZhihuServices(db *gorm.DB, aiService ai.AI, cs cookie.CookieIface, logg
 
 	imageParser = parse.NewOnlineImageParser(requestService, fileService, dbService)
 
-	parser, err = parse.InitParser(aiService, imageParser, htmlToMarkdown, fileService, dbService)
+	embeddingDBService := embeddingDB.NewDBService(db)
+
+	parser, err = parse.InitParser(aiService, imageParser, htmlToMarkdown, fileService, dbService, embeddingDBService)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to init zhihu parser: %w", err)
 	}

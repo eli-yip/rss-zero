@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"go.uber.org/zap"
@@ -121,7 +122,26 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 	}
 	logger.Info("Save answer info to db successfully")
 
+	if authorID == "canglimo" {
+		go p.saveEmbedding(answer.ID, formattedText, logger)
+	}
+
 	return formattedText, nil
+}
+
+func (p *ParseService) saveEmbedding(answerID int, text string, logger *zap.Logger) {
+	embedding, err := p.ai.Embed(text)
+	if err != nil {
+		logger.Error("Failed to embed text", zap.Error(err))
+		return
+	}
+
+	answerIDStr := strconv.Itoa(answerID)
+	_, err = p.embeddingDB.CreateEmbedding(common.TypeZhihuAnswer, answerIDStr, embedding)
+	if err != nil {
+		logger.Error("Failed to create embedding", zap.Error(err))
+	}
+	logger.Info("Save embedding to db successfully", zap.String("answer_id", answerIDStr))
 }
 
 func checkAnswerExist(answerID int, db db.DB) (answer *db.Answer, exist bool, err error) {

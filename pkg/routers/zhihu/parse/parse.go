@@ -9,9 +9,11 @@ import (
 	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/md"
+	embeddingDB "github.com/eli-yip/rss-zero/pkg/embedding/db"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
+
 	"go.uber.org/zap"
 )
 
@@ -26,6 +28,7 @@ type ParseService struct {
 	htmlToMarkdown renderIface.HTMLToMarkdown
 	file           file.File
 	db             db.DB
+	embeddingDB    embeddingDB.DBIface
 	ai             ai.AI
 	mdfmt          *md.MarkdownFormatter
 	Imager
@@ -57,13 +60,16 @@ func NewParseService(options ...Option) (Parser, error) {
 	return s, nil
 }
 
-func InitParser(aiService ai.AI, imageParser Imager, htmlToMarkdown renderIface.HTMLToMarkdown, fileService file.File, dbService db.DB) (Parser, error) {
+func InitParser(aiService ai.AI, imageParser Imager,
+	htmlToMarkdown renderIface.HTMLToMarkdown, fileService file.File,
+	dbService db.DB, embeddingDBService embeddingDB.DBIface) (Parser, error) {
 	return NewParseService(
 		WithAI(aiService),
 		WithImager(imageParser),
 		WithHTMLToMarkdownConverter(htmlToMarkdown),
 		WithFile(fileService),
 		WithDB(dbService),
+		WithEmbeddingDB(embeddingDBService),
 	)
 }
 
@@ -77,6 +83,10 @@ func WithFile(f file.File) Option {
 
 func WithDB(d db.DB) Option {
 	return func(s *ParseService) { s.db = d }
+}
+
+func WithEmbeddingDB(e embeddingDB.DBIface) Option {
+	return func(s *ParseService) { s.embeddingDB = e }
 }
 
 func WithAI(ai ai.AI) Option {

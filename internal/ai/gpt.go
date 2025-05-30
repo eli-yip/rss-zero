@@ -10,7 +10,7 @@ import (
 )
 
 func (a *AIService) Polish(text string) (result string, err error) {
-	const polishPrompt = "请为我格式化下面的文本，使其通顺完整，谢谢！请使用Markdown格式，并且只需要回答格式化后的文本，不需要其他内容。\n\"\"\"%s\"\"\""
+	const polishPrompt = "请为我格式化下面的文本，使其通顺完整，谢谢！请使用 Markdown 格式，并且只需要回答格式化后的文本，不需要其他内容。\n\"\"\"%s\"\"\""
 
 	return a.askGPT(fmt.Sprintf(polishPrompt, text))
 }

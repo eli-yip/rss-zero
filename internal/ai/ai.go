@@ -23,6 +23,7 @@ type AI interface {
 	// Conclude method will take a text and return the conclusion of it.
 	Conclude(text string) (result string, err error)
 	TranslateToZh(text string) (result string, err error)
+	Embed(text string) (result []float32, err error)
 }
 
 // AIService implements AI interface.
@@ -56,3 +57,5 @@ func (s *AIServiceWithoutAPI) Text(stream io.Reader) (text string, err error) { 
 func (s *AIServiceWithoutAPI) Conclude(text string) (result string, err error) { return text, nil }
 
 func (s *AIServiceWithoutAPI) TranslateToZh(text string) (result string, err error) { return text, nil }
+
+func (s *AIServiceWithoutAPI) Embed(text string) (result []float32, err error) { return nil, nil }

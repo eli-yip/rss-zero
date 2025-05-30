@@ -255,6 +255,8 @@ func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Con
 	randomPickApi.Name = "Random pick route"
 	zvideoListApi := archiveGroup.GET("/zvideo", archiveHandler.ZvideoList)
 	zvideoListApi.Name = "Zvideo list route"
+	similarityApi := archiveGroup.GET("/similarity/:id", archiveHandler.Similarity)
+	similarityApi.Name = "Similarity route"
 	// selectPickApi := archiveApi.POST("/select", archiveHandler.Select)
 	// selectPickApi.Name = "Select pick route"
 }
@@ -409,6 +411,8 @@ func registerMigrate(migrateApi *echo.Group, migrateHandler *migrateController.C
 	migrateMinioApi.Name = "Migrate minio files route 20240905"
 	migrate20240929Api := migrateApi.POST("/20240929", migrateHandler.Migrate20240929)
 	migrate20240929Api.Name = "Migrate db 20240929 route"
+	migrate20250530Api := migrateApi.POST("/20250530", migrateHandler.Migrate20250530)
+	migrate20250530Api.Name = "Migrate db 20250530 route"
 }
 
 func registerParse(parseApi *echo.Group, parseHandler *parseHandler.Handler) {

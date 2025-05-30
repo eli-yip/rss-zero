@@ -47,7 +47,7 @@ func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, Response{Message: "failed to init request service"})
 	}
 	imageParser := parse.NewOnlineImageParser(requestService, h.fileService, h.zhihuDbService)
-	zhihuParseService, err := parse.InitParser(h.aiService, imageParser, h.zhihuHtmlToMarkdown, h.fileService, h.zhihuDbService)
+	zhihuParseService, err := parse.InitParser(h.aiService, imageParser, h.zhihuHtmlToMarkdown, h.fileService, h.zhihuDbService, h.embeddingDBService)
 	if err != nil {
 		logger.Error("failed to init zhihu parse service", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, Response{Message: "failed to init zhihu parse service"})

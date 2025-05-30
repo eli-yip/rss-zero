@@ -6,12 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	ContentTypeAnswer = iota
-	ContentTypeArticle
-	ContentTypePin
-)
-
 type Bookmark struct {
 	ID          string `gorm:"primaryKey"`
 	UserID      string `gorm:"type:text;index"`
