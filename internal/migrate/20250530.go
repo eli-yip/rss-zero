@@ -50,32 +50,30 @@ func Migrate20250530(db *gorm.DB, logger *zap.Logger) {
 
 	ticker := time.NewTicker(3 * time.Second)
 	for _, answerID := range answerIDsNotEmbedded {
-		select {
-		case <-ticker.C:
-			answerIDInt, err := strconv.Atoi(answerID)
-			if err != nil {
-				logger.Error("Failed to convert answer id to int", zap.Error(err))
-				continue
-			}
-			answer, err := zhihuDBService.GetAnswer(answerIDInt)
-			if err != nil {
-				logger.Error("Failed to get answer", zap.Error(err))
-			}
-
-			embedding, err := aiService.Embed(answer.Text)
-			if err != nil {
-				logger.Error("Failed to embed answer", zap.Error(err))
-				continue
-			}
-
-			_, err = embeddingDBService.CreateEmbedding(common.TypeZhihuAnswer, answerID, embedding)
-			if err != nil {
-				logger.Error("Failed to create embedding", zap.Error(err))
-				return
-			}
-
-			logger.Info("Created embedding", zap.String("answer_id", answerID))
+		<-ticker.C
+		answerIDInt, err := strconv.Atoi(answerID)
+		if err != nil {
+			logger.Error("Failed to convert answer id to int", zap.Error(err))
+			continue
 		}
+		answer, err := zhihuDBService.GetAnswer(answerIDInt)
+		if err != nil {
+			logger.Error("Failed to get answer", zap.Error(err))
+		}
+
+		embedding, err := aiService.Embed(answer.Text)
+		if err != nil {
+			logger.Error("Failed to embed answer", zap.Error(err))
+			continue
+		}
+
+		_, err = embeddingDBService.CreateEmbedding(common.TypeZhihuAnswer, answerID, embedding)
+		if err != nil {
+			logger.Error("Failed to create embedding", zap.Error(err))
+			return
+		}
+
+		logger.Info("Created embedding", zap.String("answer_id", answerID))
 	}
 
 	logger.Info("Migrate 20250530 done")
