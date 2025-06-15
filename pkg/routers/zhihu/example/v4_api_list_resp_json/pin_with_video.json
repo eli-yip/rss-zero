@@ -1,0 +1,549 @@
+{
+  "id": "1917184806803994588",
+  "type": "pin",
+  "state": "normal",
+  "url": "https://www.zhihu.com/video/immersion/feed/1917184806803994588?object_type=pin&scene=",
+  "view_permission": "all",
+  "source_pin_id": 0,
+  "created": 1749872477,
+  "updated": 1749872477,
+  "is_deleted": false,
+  "self_create": false,
+  "comment_permission": "all",
+  "can_top": false,
+  "is_top": false,
+  "is_admin_close_repin": false,
+  "admin_closed_comment": false,
+  "meet_reaction_guide_conditions": false,
+  "like_count": 23,
+  "comment_count": 16,
+  "repin_count": 0,
+  "reaction_count": 23,
+  "favorite_count": 7,
+  "favlists_count": 7,
+  "page_view_count": null,
+  "content": [
+    {
+      "title": "",
+      "content": "在讲中日利率此消彼长之前，大家先看看这个视频，头脑中没浮现出一堆问题之前，不要停止循环播放。<br><br>P.S. 说来惭愧，虽然用的是 macOS，虽然 mac 以视频剪辑效率著称，但我完全不熟悉。取而代之的是，向大模型描述需求——生成 ffmpeg 命令——在 TorchPod 中执行——输出结果。",
+      "fold_type": "raw",
+      "own_text": "在讲中日利率此消彼长之前，大家先看看这个视频，头脑中没浮现出一堆问题之前，不要停止循环播放。<br><br>P.S. 说来惭愧，虽然用的是 macOS，虽然 mac 以视频剪辑效率著称，但我完全不熟悉。取而代之的是，向大模型描述需求——生成 ffmpeg 命令——在 TorchPod 中执行——输出结果。",
+      "type": "text",
+      "text_link_type": "internal"
+    },
+    {
+      "status": "success",
+      "width": 754,
+      "playlist": [
+        {
+          "format": "mp4",
+          "url": "https://vdn.vzuu.com/SD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali",
+          "bitrate": 98,
+          "height": 848,
+          "width": 754,
+          "fps": 15,
+          "duration": 93,
+          "quality": "ld",
+          "size": 1135600
+        },
+        {
+          "format": "mp4",
+          "url": "https://vdn.vzuu.com/HD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali",
+          "bitrate": 176,
+          "height": 1280,
+          "width": 1138,
+          "fps": 15,
+          "duration": 93,
+          "quality": "hd",
+          "size": 2038405
+        },
+        {
+          "format": "mp4",
+          "url": "https://vdn.vzuu.com/SD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali",
+          "bitrate": 98,
+          "height": 848,
+          "width": 754,
+          "fps": 15,
+          "duration": 93,
+          "quality": "sd",
+          "size": 1135600
+        }
+      ],
+      "duration": 93,
+      "video_id": "1917184186026037751",
+      "type": "video",
+      "thumbnail": "https://pic2.zhimg.com/80/v2-eae909fefcae80c0368c253b231ad71f_b.jpg",
+      "is_custom_thumbnail": true,
+      "height": 848,
+      "is_long": false,
+      "video_info": {
+        "video_id": "1917184186026037751",
+        "width": 754,
+        "height": 848,
+        "duration": 93,
+        "type": "video",
+        "thumbnail": "https://pic2.zhimg.com/80/v2-eae909fefcae80c0368c253b231ad71f_b.jpg",
+        "play_count": 0,
+        "playlist": {
+          "fhd": {
+            "play_url": "https://vdn.vzuu.com/FHD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali",
+            "bitrate": 263,
+            "duration": 92.466333,
+            "format": "mp4",
+            "fps": 15,
+            "size": 3043091,
+            "height": 1920,
+            "width": 1706,
+            "channels": 0,
+            "sample_rate": 0,
+            "url": "https://vdn.vzuu.com/FHD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali"
+          },
+          "hd": {
+            "play_url": "https://vdn.vzuu.com/HD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali",
+            "bitrate": 176,
+            "duration": 92.466333,
+            "format": "mp4",
+            "fps": 15,
+            "size": 2038405,
+            "height": 1280,
+            "width": 1138,
+            "channels": 0,
+            "sample_rate": 0,
+            "url": "https://vdn.vzuu.com/HD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali"
+          },
+          "ld": {
+            "play_url": "https://vdn.vzuu.com/SD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali",
+            "bitrate": 98,
+            "duration": 92.466333,
+            "format": "mp4",
+            "fps": 15,
+            "size": 1135600,
+            "height": 848,
+            "width": 754,
+            "channels": 0,
+            "sample_rate": 0,
+            "url": "https://vdn.vzuu.com/SD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali"
+          },
+          "sd": {
+            "play_url": "https://vdn.vzuu.com/SD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali",
+            "bitrate": 98,
+            "duration": 92.466333,
+            "format": "mp4",
+            "fps": 15,
+            "size": 1135600,
+            "height": 848,
+            "width": 754,
+            "channels": 0,
+            "sample_rate": 0,
+            "url": "https://vdn.vzuu.com/SD/f2c30cba-48cf-11f0-b571-7a88c35bdf9f-v8_f2_t1_k9i45X5i.mp4?auth_key=1749944959-0-0-&bu=3a8548f7&c=avc.8.0&disable_local_cache=1&expiration=1749944959&f=mp4&pu=3a8548f7&v=ali"
+          }
+        },
+        "status": "SUCCESS",
+        "begin_frame": {
+          "FHD": "https://picx.zhimg.com/v2-a3cba47338f1db0c83f91385f2ed3514.jpg?source=25ab7b06",
+          "HD": "https://picx.zhimg.com/v2-a3cba47338f1db0c83f91385f2ed3514.jpg?source=25ab7b06",
+          "SD": "https://picx.zhimg.com/v2-a3cba47338f1db0c83f91385f2ed3514.jpg?source=25ab7b06"
+        }
+      }
+    }
+  ],
+  "excerpt_title": "在讲中日利率此消彼长之前，大家先看看这个视频，头脑中没浮现出一堆问题之前，不要停止循环播放。<br><br>P.S. 说来惭愧，虽然用的是 macOS，虽然 mac 以视频剪辑效率著称，但我完全不熟悉。取而代之的是，向大模型描述需求——生成 ffmpeg 命令——在 TorchPod 中执行——输出结果。",
+  "content_html": "<div>在讲中日利率此消彼长之前，大家先看看这个视频，头脑中没浮现出一堆问题之前，不要停止循环播放。<br/><br/>P.S. 说来惭愧，虽然用的是 macOS，虽然 mac 以视频剪辑效率著称，但我完全不熟悉。取而代之的是，向大模型描述需求——生成 ffmpeg 命令——在 TorchPod 中执行——输出结果。</div><a class=\"video-box\" href=\"https://link.zhihu.com/?target=https%3A//www.zhihu.com/video/1917184186026037751\"\n        target=\"_blank\" data-video-id=\"\" data-video-playable=\"\" data-name=\"\"\n        data-poster=\"https://pic2.zhimg.com/80/v2-eae909fefcae80c0368c253b231ad71f_b.jpg\" data-lens-id=\"1917184186026037751\">",
+  "virtuals": {
+    "is_liked": false,
+    "is_favorited": false
+  },
+  "reaction_relation": {
+    "like": 0,
+    "vote": 23
+  },
+  "top_reactions": {
+    "like": 23
+  },
+  "comments": [],
+  "author": {
+    "id": "f8dedf1a968ebab2c312fd734ba88e3b",
+    "name": "Gemfield",
+    "avatar_url": "https://pica.zhimg.com/dcd82ce04_720w.jpg?source=8a6f5038&needBackground=1",
+    "gender": 1,
+    "type": "people",
+    "headline": "A CivilNet Maintainer",
+    "url_token": "gemfield",
+    "user_type": "people",
+    "url": "/people/f8dedf1a968ebab2c312fd734ba88e3b",
+    "vip_info": {
+      "is_vip": false
+    },
+    "kvip_info": {
+      "is_vip": true,
+      "vip_icon": {
+        "url": "https://pic1.zhimg.com/v2-57fe7feb4813331d5eca02ef731e12c9.jpg?source=88ceefae",
+        "night_mode_url": "https://pic1.zhimg.com/v2-57fe7feb4813331d5eca02ef731e12c9.jpg?source=88ceefae"
+      },
+      "target_url": "https://www.zhihu.com/kvip/purchase"
+    },
+    "exposed_medal": {
+      "medal_id": "972466021521641472",
+      "medal_name": "优秀答主",
+      "description": "成为「优秀答主」即可获得",
+      "mini_avatar_url": "https://picx.zhimg.com/v2-b9c90b8615a3f2e45b30d4e33d1f6e7b_720w.jpg?source=8a6f5038&needBackground=1",
+      "avatar_url": "https://pica.zhimg.com/v2-b9c90b8615a3f2e45b30d4e33d1f6e7b_720w.jpg?source=8a6f5038&needBackground=1",
+      "medal_avatar_frame": ""
+    },
+    "is_org": false,
+    "is_advertiser": false,
+    "is_following": false,
+    "is_followed": false,
+    "is_blocking": false,
+    "is_blocked": false,
+    "is_special_follow": false,
+    "badge": [
+      {
+        "type": "best_answerer",
+        "description": "优秀回答者",
+        "topics": [
+          {
+            "id": "19552981",
+            "name": "经济",
+            "type": "topic"
+          }
+        ]
+      }
+    ],
+    "badge_v2": {
+      "detail_badges": null,
+      "merged_badges": [
+        {
+          "badge_status": "passed",
+          "description": "经济话题下的优秀答主",
+          "detail_type": "best",
+          "icon": "",
+          "night_icon": "",
+          "sources": [
+            {
+              "avatar_path": "v2-671059a6d5bf2ca92a657a5df5ffc5bb",
+              "avatar_url": "https://pica.zhimg.com/v2-671059a6d5bf2ca92a657a5df5ffc5bb_720w.jpg?source=32738c0c",
+              "description": "",
+              "id": "19552981",
+              "name": "经济",
+              "priority": 0,
+              "token": "19552981",
+              "type": "topic",
+              "url": "https://www.zhihu.com/topic/19552981"
+            }
+          ],
+          "title": "优秀答主",
+          "type": "best",
+          "url": "https://www.zhihu.com/question/48509984"
+        }
+      ],
+      "title": "经济话题下的优秀答主"
+    },
+    "reaction_count": 0,
+    "follower_count": 57346
+  },
+  "likers": [
+    {
+      "id": "fe04fbb874467bc2ba37727fd691a8fc",
+      "name": "完颜爱新觉罗",
+      "avatar_url": "https://pic1.zhimg.com/a5bf9c30eec790ce5fe98903e39362ea_720w.jpg?source=8a6f5038&needBackground=1",
+      "gender": 1,
+      "type": "people",
+      "headline": "举重若轻",
+      "url_token": "hopeli-xi-wang",
+      "user_type": "people",
+      "url": "/people/fe04fbb874467bc2ba37727fd691a8fc",
+      "vip_info": {
+        "is_vip": false
+      },
+      "kvip_info": {
+        "is_vip": false,
+        "target_url": ""
+      },
+      "exposed_medal": {
+        "medal_id": "972480281613197312",
+        "medal_name": "每天逛逛",
+        "description": "累计登录 365 天",
+        "mini_avatar_url": "https://picx.zhimg.com/v2-cdc7c578bc7555f8113a409eaf2704b8_720w.jpg?source=8a6f5038&needBackground=1",
+        "avatar_url": "https://picx.zhimg.com/v2-cdc7c578bc7555f8113a409eaf2704b8_720w.jpg?source=8a6f5038&needBackground=1",
+        "medal_avatar_frame": ""
+      },
+      "is_org": false,
+      "is_advertiser": false,
+      "is_following": false,
+      "is_followed": false,
+      "is_blocking": false,
+      "is_blocked": false,
+      "is_special_follow": false,
+      "badge_v2": {
+        "detail_badges": null,
+        "merged_badges": [],
+        "title": ""
+      },
+      "reaction_count": 0,
+      "follower_count": 28
+    },
+    {
+      "id": "44fec94bd6d0ef71cc282d9daacbf5ff",
+      "name": "折翼天使",
+      "avatar_url": "https://pic1.zhimg.com/d702ab625037dc8dd17598ddee2fcb10_720w.jpg?source=8a6f5038&needBackground=1",
+      "gender": 1,
+      "type": "people",
+      "headline": "",
+      "url_token": "zhe-yi-tian-shi",
+      "user_type": "people",
+      "url": "/people/44fec94bd6d0ef71cc282d9daacbf5ff",
+      "vip_info": {
+        "is_vip": false
+      },
+      "kvip_info": {
+        "is_vip": false,
+        "target_url": ""
+      },
+      "exposed_medal": {
+        "medal_id": "0",
+        "medal_name": "",
+        "description": "",
+        "mini_avatar_url": "",
+        "avatar_url": "",
+        "medal_avatar_frame": ""
+      },
+      "is_org": false,
+      "is_advertiser": false,
+      "is_following": false,
+      "is_followed": false,
+      "is_blocking": false,
+      "is_blocked": false,
+      "is_special_follow": false,
+      "badge_v2": {
+        "detail_badges": null,
+        "merged_badges": [],
+        "title": ""
+      },
+      "reaction_count": 0,
+      "follower_count": 39
+    },
+    {
+      "id": "2952267344a55fb1422702c45350a6a5",
+      "name": "momo",
+      "avatar_url": "https://picx.zhimg.com/v2-96f81e9c2d70c6f507b3afea7f28fb31_720w.jpg?source=8a6f5038&needBackground=1",
+      "gender": 1,
+      "type": "people",
+      "headline": "运维工程师",
+      "url_token": "ampxe",
+      "user_type": "people",
+      "url": "/people/2952267344a55fb1422702c45350a6a5",
+      "vip_info": {
+        "is_vip": false
+      },
+      "kvip_info": {
+        "is_vip": false,
+        "target_url": ""
+      },
+      "exposed_medal": {
+        "medal_id": "972477022068568064",
+        "medal_name": "备受瞩目",
+        "description": "被 100 个人关注",
+        "mini_avatar_url": "https://pica.zhimg.com/v2-7565d834d652a9960da0cedd8d7952ee_720w.jpg?source=8a6f5038&needBackground=1",
+        "avatar_url": "https://picx.zhimg.com/v2-7565d834d652a9960da0cedd8d7952ee_720w.jpg?source=8a6f5038&needBackground=1",
+        "medal_avatar_frame": ""
+      },
+      "is_org": false,
+      "is_advertiser": false,
+      "is_following": false,
+      "is_followed": false,
+      "is_blocking": false,
+      "is_blocked": false,
+      "is_special_follow": false,
+      "badge_v2": {
+        "detail_badges": null,
+        "merged_badges": [],
+        "title": ""
+      },
+      "reaction_count": 0,
+      "follower_count": 174
+    },
+    {
+      "id": "da6eb767e5fba4751de34a9db0363a7f",
+      "name": "柳下惠",
+      "avatar_url": "https://picx.zhimg.com/v2-d2fbaa42ac4431ada7f3920accf75e57_720w.jpg?source=8a6f5038&needBackground=1",
+      "gender": 1,
+      "type": "people",
+      "headline": "",
+      "url_token": "fan-jin-bang-52",
+      "user_type": "people",
+      "url": "/people/da6eb767e5fba4751de34a9db0363a7f",
+      "vip_info": {
+        "is_vip": false
+      },
+      "kvip_info": {
+        "is_vip": false,
+        "target_url": ""
+      },
+      "exposed_medal": {
+        "medal_id": "972464154808860672",
+        "medal_name": "社交达人",
+        "description": "关注 5 个人",
+        "mini_avatar_url": "https://pic1.zhimg.com/v2-43f31dcf25c71d80b5808055529663c8_720w.jpg?source=8a6f5038&needBackground=1",
+        "avatar_url": "https://pica.zhimg.com/v2-43f31dcf25c71d80b5808055529663c8_720w.jpg?source=8a6f5038&needBackground=1",
+        "medal_avatar_frame": ""
+      },
+      "is_org": false,
+      "is_advertiser": false,
+      "is_following": false,
+      "is_followed": false,
+      "is_blocking": false,
+      "is_blocked": false,
+      "is_special_follow": false,
+      "badge_v2": {
+        "detail_badges": null,
+        "merged_badges": [],
+        "title": ""
+      },
+      "reaction_count": 0,
+      "follower_count": 0
+    },
+    {
+      "id": "d9a6db6620c634cba9179e595a52d925",
+      "name": "你比烟花寂寞雅阳",
+      "avatar_url": "https://picx.zhimg.com/v2-aecc7f92626919800669ba831ec2ffd0_720w.jpg?source=8a6f5038&needBackground=1",
+      "gender": 1,
+      "type": "people",
+      "headline": "",
+      "url_token": "ni-bi-yan-hua-ji-mo-ya-yang",
+      "user_type": "people",
+      "url": "/people/d9a6db6620c634cba9179e595a52d925",
+      "vip_info": {
+        "is_vip": false
+      },
+      "kvip_info": {
+        "is_vip": false,
+        "target_url": ""
+      },
+      "exposed_medal": {
+        "medal_id": "972464154808860672",
+        "medal_name": "社交达人",
+        "description": "关注 5 个人",
+        "mini_avatar_url": "https://pic1.zhimg.com/v2-43f31dcf25c71d80b5808055529663c8_720w.jpg?source=8a6f5038&needBackground=1",
+        "avatar_url": "https://picx.zhimg.com/v2-43f31dcf25c71d80b5808055529663c8_720w.jpg?source=8a6f5038&needBackground=1",
+        "medal_avatar_frame": ""
+      },
+      "is_org": false,
+      "is_advertiser": false,
+      "is_following": false,
+      "is_followed": false,
+      "is_blocking": false,
+      "is_blocked": false,
+      "is_special_follow": false,
+      "badge_v2": {
+        "detail_badges": null,
+        "merged_badges": [],
+        "title": ""
+      },
+      "reaction_count": 0,
+      "follower_count": 1
+    },
+    {
+      "id": "d141e78aaecdbe9599e94cc58428d814",
+      "name": "Wenbo",
+      "avatar_url": "https://picx.zhimg.com/v2-57f5749b807c09ece40b429381872a40_720w.jpg?source=8a6f5038&needBackground=1",
+      "gender": 1,
+      "type": "people",
+      "headline": "",
+      "url_token": "wenbo-49-28",
+      "user_type": "people",
+      "url": "/people/d141e78aaecdbe9599e94cc58428d814",
+      "vip_info": {
+        "is_vip": false
+      },
+      "kvip_info": {
+        "is_vip": false,
+        "target_url": ""
+      },
+      "exposed_medal": {
+        "medal_id": "972464154808860672",
+        "medal_name": "社交达人",
+        "description": "关注 100 个人",
+        "mini_avatar_url": "https://picx.zhimg.com/v2-45e5d2ebffb2114bab23f8e87b2ca9f0_720w.jpg?source=8a6f5038&needBackground=1",
+        "avatar_url": "https://picx.zhimg.com/v2-45e5d2ebffb2114bab23f8e87b2ca9f0_720w.jpg?source=8a6f5038&needBackground=1",
+        "medal_avatar_frame": ""
+      },
+      "is_org": false,
+      "is_advertiser": false,
+      "is_following": false,
+      "is_followed": false,
+      "is_blocking": false,
+      "is_blocked": false,
+      "is_special_follow": false,
+      "badge_v2": {
+        "detail_badges": null,
+        "merged_badges": [],
+        "title": ""
+      },
+      "reaction_count": 0,
+      "follower_count": 16
+    }
+  ],
+  "tags": [],
+  "tag_specials": {},
+  "topics": null,
+  "questions": null,
+  "reaction_instruction": {},
+  "regulate_info": {
+    "is_regulating": false
+  },
+  "long_threshold": [
+    {
+      "width": 1,
+      "height": 3
+    },
+    {
+      "width": 3,
+      "height": 1
+    }
+  ],
+  "ab_config": {
+    "md_interact_unify": "1"
+  },
+  "reaction": {
+    "statistics": {
+      "up_vote_count": 23,
+      "down_vote_count": 1,
+      "like_count": 0,
+      "comment_count": 16,
+      "share_count": 0,
+      "play_count": 0,
+      "interest_play_count": 0,
+      "favorites": 7,
+      "pv_count": 0,
+      "bullet_count": 0,
+      "applaud_count": 23,
+      "question_follower_count": 0,
+      "question_answer_count": 0,
+      "plaincontent_vote_up_count": 0,
+      "plaincontent_like_count": 0,
+      "img_like_count": {
+        "v2-eae909fefcae80c0368c253b231ad71f": 0
+      },
+      "subscribe_count": 0
+    },
+    "relation": {
+      "is_author": false,
+      "vote": "Neutral",
+      "liked": false,
+      "img_liked": {
+        "v2-eae909fefcae80c0368c253b231ad71f": false
+      },
+      "faved": false,
+      "following": false,
+      "subcribed": false
+    },
+    "image_reactions": {
+      "v2-eae909fefcae80c0368c253b231ad71f": {
+        "like_count": 0,
+        "is_liked": false
+      }
+    }
+  },
+  "creation_disclaimer": ""
+}

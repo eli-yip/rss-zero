@@ -16,6 +16,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
+	"github.com/samber/lo"
 )
 
 type PinParser interface {
@@ -234,6 +235,23 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 
 			textPart = append(textPart, text)
 		case "video":
+			logger.Info("Found video content")
+
+			var videoContent apiModels.PinVideo
+			if err := json.Unmarshal(c, &videoContent); err != nil {
+				return emptyString, emptyString, fmt.Errorf("failed to unmarshal video content: %w", err)
+			}
+			logger.Info("Unmarshal video content successfully")
+
+			maxVideo := lo.MaxBy(videoContent.Playlist, func(a, b apiModels.PlaylistItem) bool { return a.Size > b.Size })
+			logger.Info("Found max video", zap.Any("max_video", maxVideo))
+
+			videoURL := maxVideo.Url
+			videoID := videoContent.VideoID
+			logger.Info("Found video", zap.String("video_url", videoURL), zap.String("video_id", videoID))
+
+			text = fmt.Sprintf("![视频 %s](%s)", videoID, videoURL)
+			textPart = append(textPart, text)
 		default:
 			return "", "", fmt.Errorf("unknown content type: %s", contentType.Type)
 		}

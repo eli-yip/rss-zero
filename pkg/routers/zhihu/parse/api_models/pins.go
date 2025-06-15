@@ -31,6 +31,17 @@ type PinLink struct {
 	URL   string `json:"url"`
 }
 
+type PinVideo struct {
+	Type     string         `json:"type"`
+	VideoID  string         `json:"video_id"`
+	Playlist []PlaylistItem `json:"playlist"`
+}
+
+type PlaylistItem struct {
+	Url  string `json:"url"`
+	Size int    `json:"size"`
+}
+
 type PinList struct {
 	Paging Paging            `json:"paging"`
 	Data   []json.RawMessage `json:"data"` // NOTE: HTML is empty
