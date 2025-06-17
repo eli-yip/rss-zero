@@ -7,6 +7,7 @@ import (
 )
 
 func TestFormatMarkdown(t *testing.T) {
+	// autocorrect: false
 	var tests = []struct {
 		input  string
 		output string
@@ -88,6 +89,7 @@ func TestFormatMarkdown(t *testing.T) {
 `,
 		},
 	}
+	// autocorrect: true
 
 	s := NewMarkdownFormatter()
 
