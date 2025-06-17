@@ -19,6 +19,8 @@ func getFormatFuncs() []formatFunc {
 		processMention,
 		replacePercentEncodedChars,
 		escapeLinkPath,
+		replaceTextBold,
+		removeZeroWidthChars,
 	}
 }
 
@@ -161,4 +163,41 @@ func replacePercentEncodedChars(input string) (string, error) {
 	}
 
 	return re.ReplaceAllStringFunc(input, replaceFunc), nil
+}
+
+// replaceTextBold 将 text_bold 标签转换为 markdown 粗体
+func replaceTextBold(input string) (string, error) {
+	const textBoldPattern = `<e type="text_bold" title="([^"]+)" />`
+	re := regexp.MustCompile(textBoldPattern)
+
+	replaceFunc := func(s string) string {
+		matches := re.FindStringSubmatch(s)
+		if len(matches) < 2 {
+			return s
+		}
+
+		text := matches[1]
+		return fmt.Sprintf("**%s**", text)
+	}
+
+	return re.ReplaceAllStringFunc(input, replaceFunc), nil
+}
+
+// removeZeroWidthChars 移除零宽字符
+func removeZeroWidthChars(input string) (string, error) {
+	// 定义常见的零宽字符
+	zeroWidthChars := []string{
+		"\u200b", // 零宽空格 (Zero Width Space)
+		"\u200c", // 零宽非连字符 (Zero Width Non-Joiner)
+		"\u200d", // 零宽连字符 (Zero Width Joiner)
+		"\ufeff", // 零宽非断空格/字节顺序标记 (Zero Width No-Break Space/BOM)
+		"\u2060", // 单词连接符 (Word Joiner)
+	}
+
+	result := input
+	for _, char := range zeroWidthChars {
+		result = strings.ReplaceAll(result, char, "")
+	}
+
+	return result, nil
 }
