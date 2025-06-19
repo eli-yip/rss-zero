@@ -2,8 +2,6 @@ module github.com/eli-yip/rss-zero
 
 go 1.24
 
-toolchain go1.24.0
-
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/Kunde21/markdownfmt/v3 v3.1.0
