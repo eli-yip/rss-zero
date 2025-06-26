@@ -28,6 +28,7 @@ import (
 	myMiddleware "github.com/eli-yip/rss-zero/internal/middleware"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/version"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
@@ -170,7 +171,12 @@ func setupEcho(redisService redis.Redis,
 		g.Use(myMiddleware.AllowAdmin())
 	}
 
-	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error { return c.JSON(http.StatusOK, map[string]string{"status": "ok"}) })
+	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{
+			"status":  "ok",
+			"version": version.Version,
+		})
+	})
 	healthEndpoint.Name = "Health check route"
 
 	// iterate all routes and log them
