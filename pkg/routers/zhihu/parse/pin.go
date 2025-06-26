@@ -252,7 +252,7 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 
 			text = fmt.Sprintf("![视频 %s](%s)", videoID, videoURL)
 			textPart = append(textPart, text)
-		case "linker_card":
+		case "link_card":
 			logger.Info("Found linkercard content")
 		default:
 			return "", "", fmt.Errorf("unknown content type: %s", contentType.Type)
