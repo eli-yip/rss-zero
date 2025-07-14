@@ -3,6 +3,7 @@ package parse
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -76,18 +77,24 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 		Answer:     topic.Answer,
 		AuthorName: topic.AuthorName,
 	}); err != nil {
-		return "", fmt.Errorf("failed to render topic to markdown text: %w", err)
-	}
-	logger.Info("Render topic to markdown text successfully")
-
-	if topic.Title == nil ||
-		// Zsxq API will return a excerpt with suffix "..." as title if there is no title
-		strings.HasSuffix(*topic.Title, "...") {
-		title, err := s.ai.Conclude(topic.Text)
-		if err != nil {
-			return "", fmt.Errorf("failed to conclude title: %w", err)
+		if errors.Is(err, render.ErrUnknownType) {
+			logger.Info("This topic is not a talk or q&a, skip", zap.Error(err))
+		} else { // If render failed, return error
+			return "", fmt.Errorf("failed to render topic to markdown text: %w", err)
 		}
-		topic.Title = &title
+	} else { // If render successfully, continue to conclude title
+		logger.Info("Render topic to markdown text successfully")
+
+		if topic.Title == nil ||
+			// Zsxq API will return a excerpt with suffix "..." as title if there is no title
+			strings.HasSuffix(*topic.Title, "...") {
+			title, err := s.ai.Conclude(topic.Text)
+			if err != nil {
+				return "", fmt.Errorf("failed to conclude title: %w", err)
+			}
+			topic.Title = &title
+			logger.Info("Conclude title successfully")
+		}
 	}
 
 	// Save topic to database

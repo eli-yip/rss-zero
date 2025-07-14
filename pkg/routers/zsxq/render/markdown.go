@@ -61,6 +61,8 @@ func BuildTitle(t *Topic) string {
 	return titlePart
 }
 
+var ErrUnknownType = errors.New("unknown type")
+
 func (m *MarkdownRenderService) Text(t *Topic) (text string, err error) {
 	var buffer bytes.Buffer
 	switch t.Type {
@@ -73,7 +75,7 @@ func (m *MarkdownRenderService) Text(t *Topic) (text string, err error) {
 			return "", fmt.Errorf("failed to render q&a: %w", err)
 		}
 	default:
-		return "", fmt.Errorf("unknow type: %s", t.Type)
+		return "", fmt.Errorf("%w: %s", ErrUnknownType, t.Type)
 	}
 
 	if text, err = m.formatTopicText(buffer.String()); err != nil {
