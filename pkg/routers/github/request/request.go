@@ -3,6 +3,7 @@ package request
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -19,6 +20,8 @@ type Release struct {
 	CreatedAt   time.Time `json:"created_at"`
 	PublishedAt time.Time `json:"published_at"`
 }
+
+var ErrNoRelease = errors.New("releases API response is empty")
 
 func GetRepoReleases(user, repo, token string) (releases []Release, err error) {
 	releases = make([]Release, 0)
@@ -44,7 +47,7 @@ func GetRepoReleases(user, repo, token string) (releases []Release, err error) {
 	}
 
 	if len(releases) == 0 {
-		return nil, fmt.Errorf("releases API response is empty")
+		return nil, ErrNoRelease
 	}
 
 	return releases, nil

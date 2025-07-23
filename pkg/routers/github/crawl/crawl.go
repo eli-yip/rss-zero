@@ -1,6 +1,7 @@
 package crawl
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
@@ -24,6 +25,10 @@ func CrawlRepo(user, repo, repoID, token string, parser parse.Parser, logger *za
 
 	releases, err := request.GetRepoReleases(user, repo, token)
 	if err != nil {
+		if errors.Is(err, request.ErrNoRelease) {
+			logger.Warn("No release found for this repo")
+			return nil
+		}
 		logger.Error("Failed to get github release", zap.Error(err))
 		return fmt.Errorf("failed to request github API: %w", err)
 	}
