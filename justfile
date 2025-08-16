@@ -75,4 +75,4 @@ dtag +tags:
     done
 
 @ltag:
-    git tag --list | rg -v "\d{8}" | column -c $(tput cols) | less -R
+    git tag --list | rg -v "\d{8}" | rg -v "v" | sort -r | less -R
