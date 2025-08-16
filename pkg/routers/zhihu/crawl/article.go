@@ -72,7 +72,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 			logger.Info("Parse article successfully")
 		}
 
-		if !time.Unix(articleExcerptList[len(articleExcerptList)-1].CreateAt, 0).After(targetTime) {
+		if len(articleExcerptList) > 0 && !time.Unix(articleExcerptList[len(articleExcerptList)-1].CreateAt, 0).After(targetTime) {
 			logger.Info("Reach target time, break")
 			return nil
 		}

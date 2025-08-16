@@ -74,7 +74,7 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 			logger.Info("Parse pin successfully")
 		}
 
-		if !time.Unix(pinExcerptList[len(pinExcerptList)-1].CreateAt, 0).After(targetTime) {
+		if len(pinExcerptList) > 0 && !time.Unix(pinExcerptList[len(pinExcerptList)-1].CreateAt, 0).After(targetTime) {
 			logger.Info("Reached target time, break")
 			return nil
 		}
