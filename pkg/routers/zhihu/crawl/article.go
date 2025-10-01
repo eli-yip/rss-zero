@@ -65,6 +65,12 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 		for i, article := range slices.Backward(articleExcerptList) {
 			logger := logger.With(zap.Int("article_id", article.ID))
 
+			unsupportedArticleIDs := []int{1946529288879858682}
+			if slices.Contains(unsupportedArticleIDs, article.ID) {
+				logger.Info("Found unsupported article, skip", zap.Int("article_id", article.ID))
+				continue
+			}
+
 			if _, err = parser.ParseArticle(articleList[i], logger); err != nil {
 				logger.Error("Failed to parse article", zap.Error(err))
 				return fmt.Errorf("failed to parse article: %w", err)
