@@ -31,10 +31,11 @@ func (s *ParseService) SplitTopics(respBytes []byte, logger *zap.Logger) (rawTop
 func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Logger) (text string, err error) {
 	topicIDSkip := []int{
 		2855142121821411,
-		4848142822512458, // Cause ariticle markdown converter error
-		1525884245581542, // Cause ariticle markdown converter error
-		1524441421222552, // Same
-		8852488254285212, // Same
+		4848142822512458,  // Cause ariticle markdown converter error
+		1525884245581542,  // Cause ariticle markdown converter error
+		1524441421222552,  // Same
+		8852488254285212,  // Same
+		14588211152588222, // Same
 	}
 	if slices.Contains(topicIDSkip, topic.TopicID) {
 		logger.Info("Skip crawling topic, as it will cause markdown parser timeout", zap.Int("topic_id", topic.TopicID))
