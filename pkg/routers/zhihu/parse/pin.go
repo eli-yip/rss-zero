@@ -254,6 +254,8 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 			textPart = append(textPart, text)
 		case "link_card":
 			logger.Info("Found linkercard content")
+		case "poll":
+			logger.Info("Found poll content")
 		default:
 			return "", "", fmt.Errorf("unknown content type: %s", contentType.Type)
 		}
