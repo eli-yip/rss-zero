@@ -19,6 +19,11 @@ import (
 
 func BuildZvideoCrawlFunc(user string, db *gorm.DB, notifier notify.Notifier, cs cookie.CookieIface) func() {
 	return func() {
+		if config.C.Settings.DisableZhihu {
+			log.DefaultLogger.Info("Zhihu is disabled, skip this job")
+			return
+		}
+
 		logger := log.DefaultLogger.With(zap.String("cron_job_id", xid.New().String()))
 
 		requestService, parser, err := initZhihuZvideoServices(db, cs, logger)

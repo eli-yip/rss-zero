@@ -35,6 +35,11 @@ type ResumeJobInfo struct {
 func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclude []string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	// If resumeJobID is not empty, then resume the crawl from the breakpoint based on lastCrawl.
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
+		if config.C.Settings.DisableZhihu {
+			log.DefaultLogger.Info("Zhihu is disabled, skip this job")
+			return
+		}
+
 		var cronJobInfo cron.CronJobInfo
 
 		var cronJobID string

@@ -21,6 +21,7 @@ type TomlConfig struct {
 		Username          string `toml:"username"`
 		Password          string `toml:"password"`
 		Debug             bool   `toml:"debug"`
+		DisableZhihu      bool   `toml:"disable_zhihu"`
 	} `toml:"settings"`
 	Minio    MinioConfig    `toml:"minio"`
 	Openai   OpenAIConfig   `toml:"openai"`
