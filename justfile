@@ -1,5 +1,5 @@
 current_branch := shell("git branch --show-current")
-next_version := `git tag | rg -v "\d{8}" | rg -v -F "v" | sort -r | head -n1 | calver --layout YY.MM.MICRO --next`
+next_version := `git tag | rg -v "\d{8}" | rg -v -F "v" | sort -Vr | head -n1 | calver --layout YY.MM.MICRO --next`
 
 # 构建后端
 build:
@@ -65,7 +65,7 @@ conclude:
     git diff --stat @{0.day.ago.midnight} | sort -k3nr
 
 tpush: && push
-    git tag {{ next_version}}
+    git tag {{ next_version }}
 
 dtag +tags:
     #!/usr/bin/env bash
