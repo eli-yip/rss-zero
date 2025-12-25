@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -123,16 +124,14 @@ func (h *Controller) History(c echo.Context) (err error) {
 	}
 	logger.Info("After PathUnescape", zap.String("unescaped_url", u))
 
-	// Debug: parse and log the parsed URL structure
-	parsedURL, parseErr := url.Parse(u)
-	if parseErr == nil {
-		logger.Info("Parsed URL structure",
-			zap.String("scheme", parsedURL.Scheme),
-			zap.String("host", parsedURL.Host),
-			zap.String("path", parsedURL.Path),
-			zap.String("raw_path", parsedURL.RawPath))
-	} else {
-		logger.Warn("Failed to parse URL for debugging", zap.Error(parseErr))
+	// Fix malformed URLs where double slashes were normalized to single slash by web server/framework
+	// e.g., "https:/www.zhihu.com/pin/123" -> "https://www.zhihu.com/pin/123"
+	if strings.HasPrefix(u, "https:/") && !strings.HasPrefix(u, "https://") {
+		u = strings.Replace(u, "https:/", "https://", 1)
+		logger.Info("Fixed normalized https URL", zap.String("fixed_url", u))
+	} else if strings.HasPrefix(u, "http:/") && !strings.HasPrefix(u, "http://") {
+		u = strings.Replace(u, "http:/", "http://", 1)
+		logger.Info("Fixed normalized http URL", zap.String("fixed_url", u))
 	}
 
 	logger.Info("Get history url", zap.String("url", u))
