@@ -183,5 +183,5 @@ func ExtractPinID(link string) (string, error) {
 	if len(matches) == 2 {
 		return matches[1], nil
 	}
-	return matches[1], fmt.Errorf("no match found")
+	return "", fmt.Errorf("no match found")
 }
