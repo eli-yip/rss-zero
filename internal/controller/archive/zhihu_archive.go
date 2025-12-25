@@ -157,7 +157,7 @@ func ExtractAnswerID(link string) (*zhihuAnswer, error) {
 			answerID:   answerID,
 		}, nil
 	}
-	return nil, fmt.Errorf("no match found")
+	return nil, fmt.Errorf("no match found, path: %s", parsedURL.Path)
 }
 
 func ExtractArticleID(link string) (string, error) {
@@ -170,7 +170,7 @@ func ExtractArticleID(link string) (string, error) {
 	if len(matches) == 2 {
 		return matches[1], nil
 	}
-	return "", fmt.Errorf("no match found")
+	return "", fmt.Errorf("no match found, path: %s", parsedURL.Path)
 }
 
 func ExtractPinID(link string) (string, error) {
@@ -183,5 +183,5 @@ func ExtractPinID(link string) (string, error) {
 	if len(matches) == 2 {
 		return matches[1], nil
 	}
-	return "", fmt.Errorf("no match found")
+	return "", fmt.Errorf("no match found, path: %s", parsedURL.Path)
 }
