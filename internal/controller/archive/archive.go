@@ -114,11 +114,27 @@ func (h *Controller) History(c echo.Context) (err error) {
 	requestID := c.Response().Header().Get(echo.HeaderXRequestID)
 
 	u := c.Param("url")
+	logger.Info("Raw URL param from request", zap.String("raw_url", u))
+
 	u, err = url.PathUnescape(u)
 	if err != nil {
 		logger.Error("Failed to unescape url", zap.Error(err))
 		return c.HTML(http.StatusBadRequest, renderErrorPage(err, requestID))
 	}
+	logger.Info("After PathUnescape", zap.String("unescaped_url", u))
+
+	// Debug: parse and log the parsed URL structure
+	parsedURL, parseErr := url.Parse(u)
+	if parseErr == nil {
+		logger.Info("Parsed URL structure",
+			zap.String("scheme", parsedURL.Scheme),
+			zap.String("host", parsedURL.Host),
+			zap.String("path", parsedURL.Path),
+			zap.String("raw_path", parsedURL.RawPath))
+	} else {
+		logger.Warn("Failed to parse URL for debugging", zap.Error(parseErr))
+	}
+
 	logger.Info("Get history url", zap.String("url", u))
 
 	params := c.QueryParams()
