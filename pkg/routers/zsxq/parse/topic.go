@@ -40,6 +40,7 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 		14588584821842242, // Same
 		14588442484115242, // Same
 		14588445248825242, // Same
+		14588445248242452, // Same
 	}
 	if slices.Contains(topicIDSkip, topic.TopicID) {
 		logger.Info("Skip crawling topic, as it will cause markdown parser timeout", zap.Int("topic_id", topic.TopicID))
