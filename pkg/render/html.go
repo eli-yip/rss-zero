@@ -14,6 +14,10 @@ import (
 
 const DefaultTimeout = 30 * time.Second
 
+var (
+	ErrTimeout = errors.New("timeout")
+)
+
 // HTMLToMarkdown is a interface for converting HTML to Markdown text
 type HTMLToMarkdown interface {
 	// Convert convert HTML bytes to Markdown bytes
@@ -68,7 +72,7 @@ func (h *HTMLToMarkdownService) ConvertWithTimeout(content []byte, second time.D
 	case res := <-resultCh:
 		return res.content, res.err
 	case <-ctx.Done():
-		return nil, errors.New("timeout")
+		return nil, ErrTimeout
 	}
 }
 

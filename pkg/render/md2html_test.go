@@ -16,7 +16,7 @@ func TestHtmlRender(t *testing.T) {
 		Title  string
 		Output string
 	}
-
+	// autocorrect-disable
 	cases := []Case{
 		{
 			`# 我是一个接近完美的人。没有高学历的情况下，如何做才能做到在大城市优雅的生活？
@@ -169,6 +169,7 @@ func TestHtmlRender(t *testing.T) {
 </html>`,
 		},
 	}
+	// autocorrect-enable
 
 	for _, c := range cases {
 		output, err := htmlRenderService.Render(c.Title, c.Input)

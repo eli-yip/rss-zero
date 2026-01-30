@@ -10,6 +10,7 @@ import (
 
 	"go.uber.org/zap"
 
+	commonRender "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
@@ -57,11 +58,16 @@ func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Lo
 	switch topic.Type {
 	case "talk":
 		if topic.AuthorID, topic.AuthorName, err = s.parseTalk(logger, &topic.Topic); err != nil {
-			if err == ErrNoText {
+			switch {
+			case errors.Is(err, ErrNoText):
 				logger.Info("This topic has no text, skip")
 				return "", nil
+			case errors.Is(err, commonRender.ErrTimeout):
+				logger.Warn("This topic's article markdown converter timeout, skip", zap.Int("topic_id", topic.TopicID))
+				return "", nil
+			default:
+				return "", fmt.Errorf("failed to parse talk: %w", err)
 			}
-			return "", fmt.Errorf("failed to parse talk: %w", err)
 		}
 	case "q&a":
 		if topic.AuthorID, topic.AuthorName, err = s.parseQA(logger, &topic.Topic); err != nil {
