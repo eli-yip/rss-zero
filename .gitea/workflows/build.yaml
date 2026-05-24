@@ -11,23 +11,23 @@ jobs:
     needs: lint
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       # setup-go automatically cache go.mod and go.sum.
       # So we don't need use actions/cache to cache go dependencies.
       # more info: https://github.com/actions/setup-go#caching-dependency-files-and-build-outputs
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: stable
           token: ${{ secrets.GH_TOKEN }}
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         env:
           GITEA_TOKEN: ${{ secrets.GITEA_TOKEN}}
         with:
@@ -39,7 +39,7 @@ jobs:
     needs: build
     steps:
       - name: docker pull and docker run
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOST }}
           port: ${{ secrets.PORT }}
