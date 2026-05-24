@@ -1,5 +1,5 @@
-current_branch := shell("git branch --show-current")
-next_version := `git tag | rg -v "\d{8}" | rg -v -F "v" | sort -Vr | head -n1 | calver --layout YY.MM.MICRO --next`
+current_branch := `git branch --show-current`
+next_version := `git tag | rg -v "\d{8}" | rg -v -F "v" | sort -Vr | head -n1 | calver --layout YY.MM.MICRO --next || true`
 
 # 构建后端
 build:
