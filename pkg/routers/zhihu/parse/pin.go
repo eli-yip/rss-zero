@@ -253,7 +253,15 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 			text = fmt.Sprintf("![视频 %s](%s)", videoID, videoURL)
 			textPart = append(textPart, text)
 		case "link_card":
-			logger.Info("Found linkercard content")
+			logger.Info("Found link card content")
+
+			var linkCardContent apiModels.PinLinkCard
+			if err := json.Unmarshal(c, &linkCardContent); err != nil {
+				return emptyString, emptyString, fmt.Errorf("failed to unmarshal link card content: %w", err)
+			}
+
+			text = fmt.Sprintf("[%s|%s](%s)", linkCardContent.DataContentType, linkCardContent.URL, linkCardContent.URL)
+			textPart = append(textPart, text)
 		case "poll":
 			logger.Info("Found poll content")
 		default:

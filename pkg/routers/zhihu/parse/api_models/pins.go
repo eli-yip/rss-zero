@@ -31,6 +31,12 @@ type PinLink struct {
 	URL   string `json:"url"`
 }
 
+type PinLinkCard struct {
+	Type            string `json:"type"`
+	DataContentType string `json:"data_content_type"`
+	URL             string `json:"url"`
+}
+
 type PinVideo struct {
 	Type     string         `json:"type"`
 	VideoID  string         `json:"video_id"`
