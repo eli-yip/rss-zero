@@ -49,7 +49,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 
 		paging, articleExcerptList, articleList, err := parser.ParseArticleList(bytes, index, logger)
 		if err != nil {
-			logger.Error("Failed to parse article list", zap.Error(err))
+			logger.Error("Failed to parse article list", zap.Error(err), zap.Int("index", index), zap.String("url", next))
 			return fmt.Errorf("failed to parse article list: %w", err)
 		}
 		logger.Info("Parse article list successfully", zap.Int("index", index), zap.String("next", next))

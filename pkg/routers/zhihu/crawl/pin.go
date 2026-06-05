@@ -43,7 +43,7 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 
 		paging, pinExcerptList, pinRawList, err := parser.ParsePinList(bytes, index, logger)
 		if err != nil {
-			logger.Error("Failed to parse pin list", zap.Error(err))
+			logger.Error("Failed to parse pin list", zap.Error(err), zap.Int("index", index), zap.String("url", next))
 			return fmt.Errorf("failed to parse pin list: %w", err)
 		}
 		logger.Info("Parse pin list successfully", zap.Int("index", index))

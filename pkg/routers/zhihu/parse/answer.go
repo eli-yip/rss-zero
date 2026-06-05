@@ -27,9 +27,13 @@ func (p *ParseService) ParseAnswerList(content []byte, index int, logger *zap.Lo
 
 	answerList := apiModels.AnswerList{}
 	if err = json.Unmarshal(content, &answerList); err != nil {
+		logListPayloadDiagnostics(logger, "answer", index, content, err)
 		return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal answer list: %w", err)
 	}
-	logger.Info("Unmarshal answer list successfully")
+	logger.Info("Unmarshal answer list successfully",
+		zap.Int("data_count", len(answerList.Data)),
+		zap.Int("paging_total", answerList.Paging.Totals),
+		zap.Bool("is_end", answerList.Paging.IsEnd))
 
 	for _, rawMessage := range answerList.Data {
 		answer := apiModels.Answer{}

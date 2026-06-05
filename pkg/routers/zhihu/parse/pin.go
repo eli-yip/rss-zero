@@ -29,9 +29,13 @@ func (p *ParseService) ParsePinList(content []byte, index int, logger *zap.Logge
 
 	pinList := apiModels.PinList{}
 	if err = json.Unmarshal(content, &pinList); err != nil {
+		logListPayloadDiagnostics(logger, "pin", index, content, err)
 		return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal content data in to pin list: %w", err)
 	}
-	logger.Info("Unmarshal pin list successfully")
+	logger.Info("Unmarshal pin list successfully",
+		zap.Int("data_count", len(pinList.Data)),
+		zap.Int("paging_total", pinList.Paging.Totals),
+		zap.Bool("is_end", pinList.Paging.IsEnd))
 
 	for _, rawMessage := range pinList.Data {
 		pin := apiModels.Pin{}

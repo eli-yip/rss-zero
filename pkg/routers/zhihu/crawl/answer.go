@@ -50,7 +50,7 @@ func CrawlAnswer(user string, rs request.Requester, parser parse.Parser,
 
 		paging, answerExcerptList, answerList, err := parser.ParseAnswerList(bytes, index, logger)
 		if err != nil {
-			logger.Error("Failed to parse answer list", zap.Error(err))
+			logger.Error("Failed to parse answer list", zap.Error(err), zap.Int("index", index), zap.String("url", next))
 			return fmt.Errorf("failed to parse answer list: %w", err)
 		}
 		logger.Info("Parse answer list successfully", zap.Int("index", index))

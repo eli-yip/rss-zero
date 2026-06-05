@@ -26,9 +26,13 @@ func (p *ParseService) ParseArticleList(apiResp []byte, index int, logger *zap.L
 
 	articleList := apiModels.ArticleList{}
 	if err = json.Unmarshal(apiResp, &articleList); err != nil {
+		logListPayloadDiagnostics(logger, "article", index, apiResp, err)
 		return apiModels.Paging{}, nil, nil, fmt.Errorf("failed to unmarshal article list: %w", err)
 	}
-	logger.Info("Unmarshal article list successfully")
+	logger.Info("Unmarshal article list successfully",
+		zap.Int("data_count", len(articleList.Data)),
+		zap.Int("paging_total", articleList.Paging.Totals),
+		zap.Bool("is_end", articleList.Paging.IsEnd))
 
 	for _, rawMessage := range articleList.Data {
 		article := apiModels.Article{}

@@ -54,7 +54,7 @@ func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 	}
 
 	go func() {
-		_, answerExcerptList, answers, err := zhihuParseService.ParseAnswerList(req.Data, 0, logger)
+		_, answerExcerptList, answers, err := zhihuParseService.ParseAnswerList(req.Data, 0, pLogger)
 		if err != nil {
 			pLogger.Error("failed to parse answer list", zap.Error(err))
 			return
