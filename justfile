@@ -5,6 +5,10 @@ next_version := `git tag | rg -v "\d{8}" | rg -v -F "v" | sort -Vr | head -n1 | 
 build:
     go build -o server-app ./cmd/server
 
+# 构建 Docker 镜像
+build-docker *args:
+    scripts/build-docker.sh {{ args }}
+
 # 清理构建产物
 clean:
     rm -rf server-app
