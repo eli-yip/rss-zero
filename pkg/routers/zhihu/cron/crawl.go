@@ -162,7 +162,13 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 		logger.Info("Subs need to crawl", zap.Int("count", len(subs)))
 
 		var path, content string
+		destroyedAuthors := make(map[string]struct{})
 		for _, sub := range subs {
+			if _, ok := destroyedAuthors[sub.AuthorID]; ok {
+				logger.Info("Skip destroyed zhihu account sub", zap.String("author_id", sub.AuthorID), zap.String("sub_id", sub.ID))
+				continue
+			}
+
 			ts := common.ZhihuTypeToString(sub.Type) // type in string
 			logger.Info("Start to crawl zhihu sub", zap.String("author_id", sub.AuthorID), zap.String("type", ts))
 
@@ -183,11 +189,15 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 					// enable one time mode because we do not know latest time in db(no answer found in db), and we do not want crawl all answers(this will cost too much time)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						handled, shouldReturn := handleCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger)
 						if shouldReturn {
 							return
 						}
+						if handled {
+							err = nil
+							continue
+						}
+						errCount++
 						logger.Error("Failed to crawl answer", zap.Error(err))
 						continue
 					}
@@ -199,11 +209,15 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 					// disable one time mode, as we know when to stop(latest answer's create time)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						handled, shouldReturn := handleCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger)
 						if shouldReturn {
 							return
 						}
+						if handled {
+							err = nil
+							continue
+						}
+						errCount++
 						logger.Error("Failed to crawl answer", zap.Error(err))
 						continue
 					}
@@ -231,11 +245,15 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 					// enable one time mode because we do not know latest time in db(no article found in db)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						handled, shouldReturn := handleCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger)
 						if shouldReturn {
 							return
 						}
+						if handled {
+							err = nil
+							continue
+						}
+						errCount++
 						logger.Error("Failed to crawl article", zap.Error(err))
 						continue
 					}
@@ -247,11 +265,15 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 					// disable one time mode, as we know when to stop(latest article's create time)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						handled, shouldReturn := handleCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger)
 						if shouldReturn {
 							return
 						}
+						if handled {
+							err = nil
+							continue
+						}
+						errCount++
 						logger.Error("Failed to crawl article", zap.Error(err))
 						continue
 					}
@@ -279,11 +301,15 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 					// enable one time mode as we do not know latest time in db(no pin found in db)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						handled, shouldReturn := handleCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger)
 						if shouldReturn {
 							return
 						}
+						if handled {
+							err = nil
+							continue
+						}
+						errCount++
 						logger.Error("Failed to crawl pin", zap.Error(err))
 						continue
 					}
@@ -295,11 +321,15 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 					// disable one time mode, as we know when to stop(latest pin's create time)
 					// set offset to 0 to disable backtrack mode
 					if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
-						errCount++
-						shouldReturn := handleErr(err, cookieService, notifier, logger)
+						handled, shouldReturn := handleCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger)
 						if shouldReturn {
 							return
 						}
+						if handled {
+							err = nil
+							continue
+						}
+						errCount++
 						logger.Error("Failed to crawl pin", zap.Error(err))
 						continue
 					}

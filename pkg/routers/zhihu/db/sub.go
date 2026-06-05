@@ -30,6 +30,7 @@ type DBSub interface {
 	SetSubID(authorID string, subType int, id string) error
 	SetStatus(authorID string, subType int, finished bool) error
 	DeleteSub(id string) error
+	DeleteSubsByAuthor(authorID string) error
 	ActivateSub(id string) error
 }
 
@@ -124,6 +125,10 @@ func SetEmptySubID(db *gorm.DB) (n int, err error) {
 
 func (d *DBService) DeleteSub(id string) (err error) {
 	return d.Where("id = ?", id).Delete(&Sub{}).Error
+}
+
+func (d *DBService) DeleteSubsByAuthor(authorID string) (err error) {
+	return d.Where("author_id = ?", authorID).Delete(&Sub{}).Error
 }
 
 func (d *DBService) ActivateSub(id string) (err error) {

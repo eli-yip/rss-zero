@@ -2,6 +2,7 @@ package cron
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
@@ -9,6 +10,28 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"go.uber.org/zap"
 )
+
+func handleCrawlErr(err error, authorID string, dbService zhihuDB.DB, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (handled, shouldReturn bool) {
+	if errors.Is(err, request.ErrAccountDestroyed) {
+		if _, ok := destroyedAuthors[authorID]; ok {
+			logger.Info("Zhihu account destroyed has already been handled", zap.String("author_id", authorID))
+			return true, false
+		}
+
+		if deleteErr := dbService.DeleteSubsByAuthor(authorID); deleteErr != nil {
+			logger.Error("Failed to delete destroyed zhihu account subs", zap.String("author_id", authorID), zap.Error(deleteErr))
+			notify.NoticeWithLogger(notifier, "Failed to delete destroyed zhihu account subs", fmt.Sprintf("author: %s, err: %s", authorID, deleteErr.Error()), logger)
+			return false, false
+		}
+
+		destroyedAuthors[authorID] = struct{}{}
+		notify.NoticeWithLogger(notifier, "Zhihu account destroyed", fmt.Sprintf("Deleted all subscriptions for author: %s", authorID), logger)
+		logger.Info("Deleted all subscriptions for destroyed zhihu account", zap.String("author_id", authorID))
+		return true, false
+	}
+
+	return false, handleErr(err, cookieService, notifier, logger)
+}
 
 // handleErr handles the error returned by crawlXXX functions.
 //

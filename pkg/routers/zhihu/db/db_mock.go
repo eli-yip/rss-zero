@@ -84,6 +84,10 @@ func (d *MockDB) GetSubs() ([]Sub, error) {
 	return nil, nil
 }
 
+func (d *MockDB) DeleteSubsByAuthor(authorID string) error {
+	return nil
+}
+
 func (d *MockDB) SetStatus(authorID string, subType int, finished bool) error {
 	return nil
 }

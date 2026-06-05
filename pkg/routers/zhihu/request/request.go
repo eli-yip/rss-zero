@@ -39,13 +39,14 @@ type Requester interface {
 }
 
 var (
-	ErrBadResponse  = errors.New("bad response")
-	ErrMaxRetry     = errors.New("max retry")
-	ErrUnreachable  = errors.New("unreachable")
-	ErrNeedZC0      = errors.New("need login")
-	ErrInvalidZSECK = errors.New("invalid zse_ck")
-	ErrInvalidZC0   = errors.New("invalid z_c0")
-	ErrForbidden    = errors.New("forbidden")
+	ErrBadResponse      = errors.New("bad response")
+	ErrMaxRetry         = errors.New("max retry")
+	ErrUnreachable      = errors.New("unreachable")
+	ErrNeedZC0          = errors.New("need login")
+	ErrInvalidZSECK     = errors.New("invalid zse_ck")
+	ErrInvalidZC0       = errors.New("invalid z_c0")
+	ErrForbidden        = errors.New("forbidden")
+	ErrAccountDestroyed = errors.New("account destroyed")
 )
 
 const (
@@ -115,6 +116,14 @@ type Error403 struct {
 }
 
 type Error401 struct {
+	Error struct {
+		Code    int    `json:"code"`
+		Name    string `json:"name"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
+
+type ErrorResp struct {
 	Error struct {
 		Code    int    `json:"code"`
 		Name    string `json:"name"`
@@ -193,6 +202,11 @@ func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Log
 			continue
 		}
 
+		if isAccountDestroyedResp(body) {
+			logger.Error("Zhihu account has been destroyed", zap.String("resp_body", string(body)))
+			return nil, ErrAccountDestroyed
+		}
+
 		switch resp.StatusCode {
 		case http.StatusOK:
 			logger.Info("Get zhihu raw data successfully")
@@ -267,6 +281,17 @@ func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Log
 
 	r.logger.Error("Failed to get zhihu raw data", zap.Error(err), zap.String("request_task_id", requestTaskID))
 	return nil, err
+}
+
+func isAccountDestroyedResp(body []byte) bool {
+	var errResp ErrorResp
+	if err := json.Unmarshal(body, &errResp); err != nil {
+		return false
+	}
+
+	return errResp.Error.Code == 310000 ||
+		errResp.Error.Name == "AccountDestroyError" ||
+		errResp.Error.Message == "该账号已注销"
 }
 
 func (r *RequestService) NoLimitStream(ctx context.Context, u string, logger *zap.Logger) (resp *http.Response, err error) {
