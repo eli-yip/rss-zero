@@ -3,15 +3,16 @@ package db
 import (
 	"time"
 
+	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/pgvector/pgvector-go"
 	"gorm.io/gorm"
 )
 
 type ContentEmbedding struct {
-	ID          string          `gorm:"primaryKey"`
-	ContentType int             `gorm:"type:int;index"`
-	ContentID   string          `gorm:"type:text;index"`
-	Embedding   pgvector.Vector `gorm:"type:vector(2048)"`
+	ID          string                  `gorm:"primaryKey"`
+	ContentType common.ZhihuContentType `gorm:"type:int;index"`
+	ContentID   string                  `gorm:"type:text;index"`
+	Embedding   pgvector.Vector         `gorm:"type:vector(2048)"`
 
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`

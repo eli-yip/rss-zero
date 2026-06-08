@@ -9,6 +9,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/pkg/common"
 	embeddingDB "github.com/eli-yip/rss-zero/pkg/embedding/db"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -134,7 +135,7 @@ func replaceImageLink(text, name, from, to string) (result string) {
 
 // parseHTML convert html content to markdown content
 // it also download images and replace image links in markdown content
-func (p *ParseService) parseHTML(html string, id int, t int, logger *zap.Logger) (string, error) {
+func (p *ParseService) parseHTML(html string, id int, t common.ZhihuContentType, logger *zap.Logger) (string, error) {
 	bytes, err := p.htmlToMarkdown.Convert([]byte(html))
 	if err != nil {
 		return "", fmt.Errorf("failed to convert html to markdown: %w", err)

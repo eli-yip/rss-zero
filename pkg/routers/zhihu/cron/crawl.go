@@ -248,7 +248,7 @@ func resolveLastCrawledSub(resumeJobInfo *ResumeJobInfo, dbService zhihuDB.DB, l
 func crawlSub(sub zhihuDB.Sub, dbService zhihuDB.DB, requestService request.Requester, parser parse.Parser, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (path, content string, skip, shouldReturn bool, err error) {
 	contentCrawler, ok := zhihuContentCrawlers[sub.Type]
 	if !ok {
-		return "", "", false, false, fmt.Errorf("unknown zhihu sub type: %s", common.ZhihuTypeToString(sub.Type))
+		return "", "", false, false, fmt.Errorf("unknown zhihu sub type: %q", sub.Type)
 	}
 
 	return crawlContentSub(sub, contentCrawler, dbService, requestService, parser, destroyedAuthors, cookieService, notifier, logger)
@@ -268,15 +268,15 @@ func handleSubCrawlErr(err error, authorID string, dbService zhihuDB.DB, destroy
 }
 
 type zhihuContentCrawler struct {
-	contentType int
+	contentType common.ZhihuContentType
 	name        string
 	latestTime  func(authorID string, dbService zhihuDB.DB) (time.Time, bool, error)
 	crawl       func(authorID string, requestService request.Requester, parser parse.Parser, targetTime time.Time, oneTime bool, logger *zap.Logger) error
 }
 
-var zhihuContentCrawlers = map[int]zhihuContentCrawler{
-	common.TypeZhihuAnswer: {
-		contentType: common.TypeZhihuAnswer,
+var zhihuContentCrawlers = map[common.ZhihuContentType]zhihuContentCrawler{
+	common.ZhihuAnswer: {
+		contentType: common.ZhihuAnswer,
 		name:        "answer",
 		latestTime: func(authorID string, dbService zhihuDB.DB) (time.Time, bool, error) {
 			answers, err := dbService.GetLatestNAnswer(1, authorID)
@@ -292,8 +292,8 @@ var zhihuContentCrawlers = map[int]zhihuContentCrawler{
 			return crawl.CrawlAnswer(authorID, requestService, parser, targetTime, 0, oneTime, logger)
 		},
 	},
-	common.TypeZhihuArticle: {
-		contentType: common.TypeZhihuArticle,
+	common.ZhihuArticle: {
+		contentType: common.ZhihuArticle,
 		name:        "article",
 		latestTime: func(authorID string, dbService zhihuDB.DB) (time.Time, bool, error) {
 			articles, err := dbService.GetLatestNArticle(1, authorID)
@@ -309,8 +309,8 @@ var zhihuContentCrawlers = map[int]zhihuContentCrawler{
 			return crawl.CrawlArticle(authorID, requestService, parser, targetTime, 0, oneTime, logger)
 		},
 	},
-	common.TypeZhihuPin: {
-		contentType: common.TypeZhihuPin,
+	common.ZhihuPin: {
+		contentType: common.ZhihuPin,
 		name:        "pin",
 		latestTime: func(authorID string, dbService zhihuDB.DB) (time.Time, bool, error) {
 			pins, err := dbService.GetLatestNPin(1, authorID)

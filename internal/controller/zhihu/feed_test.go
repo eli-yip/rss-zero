@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
+	pkgCommon "github.com/eli-yip/rss-zero/pkg/common"
 )
 
 func TestGenerateFreshRSSFeed(t *testing.T) {
@@ -26,4 +27,17 @@ func TestGenerateFreshRSSFeed(t *testing.T) {
 		assert.Nil(err)
 		assert.Equal(c.want, result)
 	}
+}
+
+func TestBuildZhihuFeedMap(t *testing.T) {
+	feeds := buildZhihuFeedMap("https://rss.example.com", "alice")
+
+	assert.Equal(t, "https://rss.example.com/rss/zhihu/answer/alice", feeds[pkgCommon.ZhihuAnswer.FeedKey()])
+	assert.Equal(t, "https://rss.example.com/rss/zhihu/article/alice", feeds[pkgCommon.ZhihuArticle.FeedKey()])
+	assert.Equal(t, "https://rss.example.com/rss/zhihu/pin/alice", feeds[pkgCommon.ZhihuPin.FeedKey()])
+
+	external := feeds.toExternalFeed()
+	assert.Equal(t, feeds[pkgCommon.ZhihuAnswer.FeedKey()], external.AnswerFeed)
+	assert.Equal(t, feeds[pkgCommon.ZhihuArticle.FeedKey()], external.ArticleFeed)
+	assert.Equal(t, feeds[pkgCommon.ZhihuPin.FeedKey()], external.PinFeed)
 }

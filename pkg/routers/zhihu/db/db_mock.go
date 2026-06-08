@@ -1,6 +1,10 @@
 package db
 
-import "time"
+import (
+	"time"
+
+	"github.com/eli-yip/rss-zero/pkg/common"
+)
 
 type MockDB struct{}
 
@@ -88,11 +92,11 @@ func (d *MockDB) DeleteSubsByAuthor(authorID string) error {
 	return nil
 }
 
-func (d *MockDB) SetStatus(authorID string, subType int, finished bool) error {
+func (d *MockDB) SetStatus(authorID string, subType common.ZhihuContentType, finished bool) error {
 	return nil
 }
 
-func (d *MockDB) AddSub(authorID string, subType int) error {
+func (d *MockDB) AddSub(authorID string, subType common.ZhihuContentType) error {
 	return nil
 }
 
@@ -108,7 +112,7 @@ func (d *MockDB) CountPin(authorID string) (int, error) {
 	return 0, nil
 }
 
-func (d *MockDB) CheckSub(authorID string, subType int) (bool, error) {
+func (d *MockDB) CheckSub(authorID string, subType common.ZhihuContentType) (bool, error) {
 	return false, nil
 }
 

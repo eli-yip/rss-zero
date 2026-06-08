@@ -5,6 +5,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/db"
+	"github.com/eli-yip/rss-zero/pkg/common"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +17,7 @@ func TestBookmarkDB(t *testing.T) {
 	assert.Nil(err)
 	dbService := &BookmarkDBImpl{postgresDB}
 	t.Run("TestSingleBookmark", func(t *testing.T) {
-		b, err := dbService.NewBookmark("jason", 0, "test single bookmarks")
+		b, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "test single bookmarks")
 		assert.Nil(err)
 		_, err = dbService.AddTag(b.ID, "test tag1")
 		assert.Nil(err)
@@ -39,9 +40,9 @@ func TestBookmarkDB(t *testing.T) {
 	})
 
 	t.Run("TestMultiBookmark", func(t *testing.T) {
-		b1, err := dbService.NewBookmark("jason", 0, "test multi bookmark1")
+		b1, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "test multi bookmark1")
 		assert.Nil(err)
-		b2, err := dbService.NewBookmark("jason", 0, "test multi bookmark2")
+		b2, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "test multi bookmark2")
 		assert.Nil(err)
 
 		_, err = dbService.AddTag(b1.ID, "test tag1")
@@ -88,7 +89,7 @@ func TestBookmarkDB(t *testing.T) {
 	})
 
 	t.Run("TestDeleteBookmark", func(t *testing.T) {
-		b1, err := dbService.NewBookmark("jason", 0, "test multi bookmark1")
+		b1, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "test multi bookmark1")
 		assert.Nil(err)
 
 		err = dbService.RemoveBookmark(b1.ID)
@@ -99,7 +100,7 @@ func TestBookmarkDB(t *testing.T) {
 	})
 
 	t.Run("TestDeleteTag", func(t *testing.T) {
-		b1, err := dbService.NewBookmark("jason", 0, "test multi bookmark1")
+		b1, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "test multi bookmark1")
 		assert.Nil(err)
 
 		_, err = dbService.AddTag(b1.ID, "test tag1")
@@ -120,7 +121,7 @@ func TestBookmarkDB(t *testing.T) {
 
 	t.Run("TestGetBookmarkByUser", func(t *testing.T) {
 		t.Run("SingleBookmark", func(t *testing.T) {
-			b1, err := dbService.NewBookmark("jason", 0, "test content")
+			b1, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "test content")
 			assert.Nil(err)
 
 			_, err = dbService.AddTag(b1.ID, "tag1")
@@ -207,21 +208,21 @@ func TestBookmarkDB(t *testing.T) {
 		})
 
 		t.Run("MultiBookmark", func(t *testing.T) {
-			b1, err := dbService.NewBookmark("jason", 0, "content 1")
+			b1, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "content 1")
 			assert.Nil(err)
 			_, err = dbService.AddTag(b1.ID, "tag1")
 			assert.Nil(err)
 			_, err = dbService.AddTag(b1.ID, "tag2")
 			assert.Nil(err)
 
-			b2, err := dbService.NewBookmark("jason", 0, "content 2")
+			b2, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "content 2")
 			assert.Nil(err)
 			_, err = dbService.AddTag(b2.ID, "tag2")
 			assert.Nil(err)
 			_, err = dbService.AddTag(b2.ID, "tag3")
 			assert.Nil(err)
 
-			b3, err := dbService.NewBookmark("jason", 0, "content 3")
+			b3, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "content 3")
 			assert.Nil(err)
 
 			t.Run("IncludeSingleTag", func(t *testing.T) {
@@ -295,9 +296,9 @@ func TestBookmarkDB(t *testing.T) {
 	})
 
 	t.Run("TestGetTag", func(t *testing.T) {
-		b1, err := dbService.NewBookmark("jason", 0, "test get tag")
+		b1, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "test get tag")
 		assert.Nil(err)
-		b2, err := dbService.NewBookmark("jason", 0, "test get tag")
+		b2, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "test get tag")
 		assert.Nil(err)
 		defer dbService.RemoveBookmark(b1.ID)
 		defer dbService.RemoveBookmark(b2.ID)
@@ -332,9 +333,9 @@ func TestBookmarkDB(t *testing.T) {
 	})
 
 	t.Run("GetTagCountByUser", func(t *testing.T) {
-		b1, err := dbService.NewBookmark("jason", 0, "test get tag count")
+		b1, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "test get tag count")
 		assert.Nil(err)
-		b2, err := dbService.NewBookmark("jason", 0, "test get tag count")
+		b2, err := dbService.NewBookmark("jason", common.ZhihuAnswer, "test get tag count")
 		assert.Nil(err)
 		defer dbService.RemoveBookmark(b1.ID)
 		defer dbService.RemoveBookmark(b2.ID)

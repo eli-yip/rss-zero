@@ -41,10 +41,6 @@ var (
 )
 
 func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
-	if opt.Type == nil {
-		return errors.New("type is required")
-	}
-
 	if opt.AuthorID == nil {
 		return ErrNoAuthor
 	}
@@ -53,12 +49,17 @@ func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
 		return ErrTimeOrder
 	}
 
-	switch *opt.Type {
-	case common.TypeZhihuAnswer:
+	contentType, err := opt.ZhihuContentType()
+	if err != nil {
+		return err
+	}
+
+	switch contentType {
+	case common.ZhihuAnswer:
 		return s.exportAnswer(writer, opt)
-	case common.TypeZhihuArticle:
+	case common.ZhihuArticle:
 		return s.exportArticle(writer, opt)
-	case common.TypeZhihuPin:
+	case common.ZhihuPin:
 		return s.exportPin(writer, opt)
 	default:
 		return errors.New("unknown type")
@@ -253,14 +254,11 @@ func (s *ExportService) exportPin(writer io.Writer, opt Option) (err error) {
 func (s ExportService) Filename(opt Option) (filename string, err error) {
 	fileNameArr := []string{"知乎合集"}
 
-	switch *opt.Type {
-	case common.TypeZhihuAnswer:
-		fileNameArr = append(fileNameArr, "回答")
-	case common.TypeZhihuArticle:
-		fileNameArr = append(fileNameArr, "文章")
-	case common.TypeZhihuPin:
-		fileNameArr = append(fileNameArr, "想法")
+	contentType, err := opt.ZhihuContentType()
+	if err != nil {
+		return "", err
 	}
+	fileNameArr = append(fileNameArr, contentType.TitleZH())
 
 	authorName, err := s.db.GetAuthorName(*opt.AuthorID)
 	if err != nil {

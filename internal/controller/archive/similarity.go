@@ -21,7 +21,7 @@ func (h *Controller) Similarity(c echo.Context) (err error) {
 		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "id is required"})
 	}
 
-	es, err := h.embeddingDBService.SearchEmbeddingByContent(pkgCommon.TypeZhihuAnswer, id, 1, 10)
+	es, err := h.embeddingDBService.SearchEmbeddingByContent(pkgCommon.ZhihuAnswer, id, 1, 10)
 	if err != nil {
 		logger.Error("Failed to search embedding", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to search embedding"})

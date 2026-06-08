@@ -8,15 +8,17 @@ import (
 	"github.com/rs/xid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/eli-yip/rss-zero/pkg/common"
 )
 
 type DBIface interface {
-	CreateEmbedding(contentType int, contentID string, embedding []float32) (*ContentEmbedding, error)
+	CreateEmbedding(contentType common.ZhihuContentType, contentID string, embedding []float32) (*ContentEmbedding, error)
 	GetEmbedding(id string) (*ContentEmbedding, error)
-	GetEmbeddingByContent(contentType int, contentID string) (*ContentEmbedding, error)
+	GetEmbeddingByContent(contentType common.ZhihuContentType, contentID string) (*ContentEmbedding, error)
 	SearchEmbedding(embedding []float32, page int, pageSize int) ([]ContentEmbedding, error)
 	SearchEmbeddingByID(id string, page int, pageSize int) ([]ContentEmbedding, error)
-	SearchEmbeddingByContent(contentType int, contentID string, page int, pageSize int) ([]ContentEmbedding, error)
+	SearchEmbeddingByContent(contentType common.ZhihuContentType, contentID string, page int, pageSize int) ([]ContentEmbedding, error)
 	UpdateEmbedding(id string, embedding []float32) error
 	DeleteEmbedding(id string) error
 
@@ -30,7 +32,7 @@ type DBService struct{ *gorm.DB }
 func NewDBService(db *gorm.DB) DBIface { return &DBService{db} }
 
 // CreateEmbedding 创建一个新的嵌入向量记录
-func (d *DBService) CreateEmbedding(contentType int, contentID string, embedding []float32) (*ContentEmbedding, error) {
+func (d *DBService) CreateEmbedding(contentType common.ZhihuContentType, contentID string, embedding []float32) (*ContentEmbedding, error) {
 	ce := &ContentEmbedding{
 		ID:          xid.New().String(),
 		ContentType: contentType,
@@ -61,7 +63,7 @@ func (d *DBService) GetEmbedding(id string) (*ContentEmbedding, error) {
 }
 
 // GetEmbeddingByContent 通过内容类型和内容 ID 获取嵌入向量
-func (d *DBService) GetEmbeddingByContent(contentType int, contentID string) (*ContentEmbedding, error) {
+func (d *DBService) GetEmbeddingByContent(contentType common.ZhihuContentType, contentID string) (*ContentEmbedding, error) {
 	var ce ContentEmbedding
 	err := d.First(&ce, "content_type = ? AND content_id = ?", contentType, contentID).Error
 	if err != nil {
@@ -113,7 +115,7 @@ func (d *DBService) SearchEmbeddingByID(id string, page int, pageSize int) ([]Co
 }
 
 // SearchEmbeddingByContent 通过内容类型和内容 ID 搜索相似嵌入，使用余弦相似度
-func (d *DBService) SearchEmbeddingByContent(contentType int, contentID string, page int, pageSize int) ([]ContentEmbedding, error) {
+func (d *DBService) SearchEmbeddingByContent(contentType common.ZhihuContentType, contentID string, page int, pageSize int) ([]ContentEmbedding, error) {
 	// 先获取指定内容的嵌入向量
 	ce, err := d.GetEmbeddingByContent(contentType, contentID)
 	if err != nil {

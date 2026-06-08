@@ -11,6 +11,8 @@ import (
 	"github.com/samber/lo"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/eli-yip/rss-zero/pkg/common"
 )
 
 var (
@@ -46,12 +48,12 @@ type TagCount struct {
 }
 
 type DB interface {
-	NewBookmark(userID string, contentType int, contentID string) (*Bookmark, error)
+	NewBookmark(userID string, contentType common.ZhihuContentType, contentID string) (*Bookmark, error)
 	GetBookmark(userID, bookmarkID string) (*Bookmark, error)
 	GetBookmarkByUser(userID string, q *BookmarkQuery) ([]Bookmark, error)
 	CountBookmarkByUser(userID string, q *BookmarkQuery) (int, error)
 	// GetBookmarkByContent returns ErrNoBookmark if no bookmark found
-	GetBookmarkByContent(userID string, contentType int, contentID string) (*Bookmark, error)
+	GetBookmarkByContent(userID string, contentType common.ZhihuContentType, contentID string) (*Bookmark, error)
 	GetBookmarkByTag(userID, tagName string) ([]Bookmark, error)
 	GetBookmarkByTags(userID string, tagNames []string) ([]Bookmark, error)
 	UpdateBookmark(id string, comment, note string) (*Bookmark, error)
@@ -79,7 +81,7 @@ type BookmarkDBImpl struct{ *gorm.DB }
 
 func NewBookMarkDBImpl(db *gorm.DB) DB { return &BookmarkDBImpl{db} }
 
-func (db *BookmarkDBImpl) NewBookmark(userID string, contentType int, contentID string) (*Bookmark, error) {
+func (db *BookmarkDBImpl) NewBookmark(userID string, contentType common.ZhihuContentType, contentID string) (*Bookmark, error) {
 	bookmark := &Bookmark{
 		ID:          xid.New().String(),
 		UserID:      userID,
@@ -232,7 +234,7 @@ func (db *BookmarkDBImpl) CountBookmarkByUser(userID string, q *BookmarkQuery) (
 	return int(count), nil
 }
 
-func (db *BookmarkDBImpl) GetBookmarkByContent(userID string, contentType int, contentID string) (*Bookmark, error) {
+func (db *BookmarkDBImpl) GetBookmarkByContent(userID string, contentType common.ZhihuContentType, contentID string) (*Bookmark, error) {
 	bookmark := &Bookmark{}
 	result := db.Where("user_id = ? AND content_type = ? AND content_id = ?", userID, contentType, contentID).First(&bookmark)
 	if result.Error != nil {

@@ -96,7 +96,7 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 		}
 	}
 
-	text, err = p.parseHTML(answer.HTML, answer.ID, common.TypeZhihuAnswer, logger)
+	text, err = p.parseHTML(answer.HTML, answer.ID, common.ZhihuAnswer, logger)
 	if err != nil {
 		return emptyString, fmt.Errorf("failed to parse html content: %w", err)
 	}
@@ -160,7 +160,7 @@ func (p *ParseService) saveEmbedding(answerID int, text string, logger *zap.Logg
 	}
 
 	answerIDStr := strconv.Itoa(answerID)
-	_, err = p.embeddingDB.CreateEmbedding(common.TypeZhihuAnswer, answerIDStr, embedding)
+	_, err = p.embeddingDB.CreateEmbedding(common.ZhihuAnswer, answerIDStr, embedding)
 	if err != nil {
 		logger.Error("Failed to create embedding", zap.Error(err))
 	}

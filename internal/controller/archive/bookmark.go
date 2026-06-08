@@ -72,7 +72,7 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 	}
 
-	answerBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == pkgCommon.TypeZhihuAnswer })
+	answerBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == pkgCommon.ZhihuAnswer })
 	answerIDs := lo.Map(answerBookmarks, func(b bookmarkDB.Bookmark, _ int) string { return b.ContentID })
 	err = nil
 	answerIDsInt := lo.Map(answerIDs, func(id string, _ int) int {
@@ -113,7 +113,7 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 	}
 
-	pinBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == pkgCommon.TypeZhihuPin })
+	pinBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == pkgCommon.ZhihuPin })
 	pinIDs := lo.Map(pinBookmarks, func(b bookmarkDB.Bookmark, _ int) string { return b.ContentID })
 	pinIDsInt := lo.Map(pinIDs, func(id string, _ int) int {
 		var idInt int
@@ -171,9 +171,9 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 
 	for b := range slices.Values(bookmarks) {
 		switch b.ContentType {
-		case pkgCommon.TypeZhihuAnswer:
+		case pkgCommon.ZhihuAnswer:
 			response.Topics = append(response.Topics, answerTopics[b.ContentID])
-		case pkgCommon.TypeZhihuPin:
+		case pkgCommon.ZhihuPin:
 			response.Topics = append(response.Topics, pinTopics[b.ContentID])
 		}
 	}
@@ -195,7 +195,13 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 	}
 	logger.Info("bind request successfully")
 
-	_, err = h.bookmarkDBService.GetBookmarkByContent(user, req.ContentType, req.ContentID)
+	contentType, err := pkgCommon.ParseZhihuLegacyID(req.ContentType)
+	if err != nil {
+		logger.Error("invalid content type", zap.Int("content_type", req.ContentType), zap.Error(err))
+		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid content type"))
+	}
+
+	_, err = h.bookmarkDBService.GetBookmarkByContent(user, contentType, req.ContentID)
 	if err == nil {
 		logger.Info("bookmark already exists, return now", zap.String("content_id", req.ContentID))
 		return c.JSON(http.StatusBadRequest, common.WrapResp("bookmark already exists"))
@@ -205,8 +211,8 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 	}
 
 	var b *bookmarkDB.Bookmark
-	switch req.ContentType {
-	case pkgCommon.TypeZhihuAnswer:
+	switch contentType {
+	case pkgCommon.ZhihuAnswer:
 		answerIDInt, err := strconv.Atoi(req.ContentID)
 		if err != nil {
 			logger.Error("failed to convert answer ID to int", zap.Error(err))
@@ -217,12 +223,12 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 			logger.Error("failed to get answer", zap.Error(err))
 			return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 		}
-		b, err = h.bookmarkDBService.NewBookmark(user, pkgCommon.TypeZhihuAnswer, req.ContentID)
+		b, err = h.bookmarkDBService.NewBookmark(user, pkgCommon.ZhihuAnswer, req.ContentID)
 		if err != nil {
 			logger.Error("failed to create bookmark", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
 		}
-	case pkgCommon.TypeZhihuPin:
+	case pkgCommon.ZhihuPin:
 		pinIDInt, err := strconv.Atoi(req.ContentID)
 		if err != nil {
 			logger.Error("failed to convert pin ID to int", zap.Error(err))
@@ -233,7 +239,7 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 			logger.Error("failed to get pin", zap.Error(err))
 			return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
 		}
-		b, err = h.bookmarkDBService.NewBookmark(user, pkgCommon.TypeZhihuPin, req.ContentID)
+		b, err = h.bookmarkDBService.NewBookmark(user, pkgCommon.ZhihuPin, req.ContentID)
 		if err != nil {
 			logger.Error("failed to create bookmark", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))

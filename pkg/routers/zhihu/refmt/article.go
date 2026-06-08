@@ -78,7 +78,7 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 					return
 				}
 
-				text, err := s.ParseImages(string(textBytes), a.ID, common.TypeZhihuArticle, logger)
+				text, err := s.ParseImages(string(textBytes), a.ID, common.ZhihuArticle, logger)
 				if err != nil {
 					logger.Error("failed to replace image links", zap.Error(err))
 					return

@@ -29,10 +29,10 @@ type RSS struct {
 
 type RSSRender interface {
 	// Render receive zhihu content type and rss items, return rss content in atom format
-	Render(contentType int, rs []RSS) (string, error)
+	Render(contentType common.ZhihuContentType, rs []RSS) (string, error)
 	// RenderEmpty receives zhihu content type, author id and name, returns rss content in atom format.
 	// It should be used when nothing is crawled to database.
-	RenderEmpty(contentType int, authorID string, authorName string) (string, error)
+	RenderEmpty(contentType common.ZhihuContentType, authorID string, authorName string) (string, error)
 }
 
 type RSSRenderService struct{ goldmark.Markdown }
@@ -44,15 +44,10 @@ func NewRSSRenderService() RSSRender {
 	)}
 }
 
-func (r *RSSRenderService) RenderEmpty(contentType int, authorID string, authorName string) (rss string, err error) {
-	titleType, linkType, err := r.generateTitleAndLinkType(contentType)
-	if err != nil {
-		return "", fmt.Errorf("%w: %d", err, contentType)
-	}
-
+func (r *RSSRenderService) RenderEmpty(contentType common.ZhihuContentType, authorID string, authorName string) (rss string, err error) {
 	rssFeed := &feeds.Feed{
-		Title:   "[知乎-" + titleType + "]" + authorName,
-		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", authorID, linkType)},
+		Title:   "[知乎-" + contentType.TitleZH() + "]" + authorName,
+		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", authorID, contentType.ProfilePath())},
 		Created: defaultTime,
 		Updated: defaultTime,
 	}
@@ -60,19 +55,14 @@ func (r *RSSRenderService) RenderEmpty(contentType int, authorID string, authorN
 	return rssFeed.ToAtom()
 }
 
-func (r *RSSRenderService) Render(contentType int, rs []RSS) (rss string, err error) {
+func (r *RSSRenderService) Render(contentType common.ZhihuContentType, rs []RSS) (rss string, err error) {
 	if len(rs) == 0 {
 		return "", errors.New("empty rss topics to render, use RenderEmpty() instead")
 	}
 
-	titleType, linkType, err := r.generateTitleAndLinkType(contentType)
-	if err != nil {
-		return "", fmt.Errorf("%w: %d", err, contentType)
-	}
-
 	rssFeed := &feeds.Feed{
-		Title:   "[知乎-" + titleType + "]" + rs[0].AuthorName,
-		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", rs[0].AuthorID, linkType)},
+		Title:   "[知乎-" + contentType.TitleZH() + "]" + rs[0].AuthorName,
+		Link:    &feeds.Link{Href: fmt.Sprintf("https://www.zhihu.com/people/%s/%s", rs[0].AuthorID, contentType.ProfilePath())},
 		Created: calculateTime(rs[0].CreateTime),
 		Updated: calculateTime(rs[0].CreateTime),
 	}
@@ -109,20 +99,4 @@ func calculateTime(t time.Time) time.Time {
 		return time.Now()
 	}
 	return t
-}
-
-// generateTitleAndLinkType returns title type and link type of zhihu item according to its type,
-// see pkg/common/type.go for type list
-func (r *RSSRenderService) generateTitleAndLinkType(t int) (titleType, linkType string, err error) {
-	linkType = common.ZhihuTypeToLinkType(t)
-	switch t {
-	case common.TypeZhihuAnswer:
-		return "回答", linkType, nil
-	case common.TypeZhihuArticle:
-		return "文章", linkType, nil
-	case common.TypeZhihuPin:
-		return "想法", linkType, nil
-	default:
-		return "", "", errors.New("unknow zhihu content type")
-	}
 }

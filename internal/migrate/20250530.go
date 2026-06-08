@@ -67,7 +67,7 @@ func Migrate20250530(db *gorm.DB, logger *zap.Logger) {
 			continue
 		}
 
-		_, err = embeddingDBService.CreateEmbedding(common.TypeZhihuAnswer, answerID, embedding)
+		_, err = embeddingDBService.CreateEmbedding(common.ZhihuAnswer, answerID, embedding)
 		if err != nil {
 			logger.Error("Failed to create embedding", zap.Error(err))
 			return

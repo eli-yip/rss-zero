@@ -47,5 +47,5 @@ func GenerateRandomCanglimoAnswerRSS(zhihuDBService db.DB, logger *zap.Logger) (
 		})
 	}
 
-	return textRender.Render(common.TypeZhihuAnswer, rssItemToRender)
+	return textRender.Render(common.ZhihuAnswer, rssItemToRender)
 }

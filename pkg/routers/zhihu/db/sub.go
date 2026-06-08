@@ -5,40 +5,41 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/rs/xid"
 	"gorm.io/gorm"
 )
 
 type Sub struct {
-	ID        string `gorm:"column:id;type:string"`
-	AuthorID  string `gorm:"column:author_id;type:text;primary_key"`
-	Type      int    `gorm:"column:type;type:int;primary_key"`
-	Finished  bool   `gorm:"column:finished;type:boolean"`
+	ID        string                  `gorm:"column:id;type:string"`
+	AuthorID  string                  `gorm:"column:author_id;type:text;primary_key"`
+	Type      common.ZhihuContentType `gorm:"column:type;type:int;primary_key"`
+	Finished  bool                    `gorm:"column:finished;type:boolean"`
 	DeletedAt gorm.DeletedAt
 }
 
 func (s *Sub) TableName() string { return "zhihu_sub" }
 
 type DBSub interface {
-	AddSub(authorID string, subType int) error
-	CheckSub(authorID string, subType int) (bool, error)
-	CheckSubIncludeDeleted(authorID string, subType int) (bool, error)
+	AddSub(authorID string, subType common.ZhihuContentType) error
+	CheckSub(authorID string, subType common.ZhihuContentType) (bool, error)
+	CheckSubIncludeDeleted(authorID string, subType common.ZhihuContentType) (bool, error)
 	CheckSubByID(id string) (bool, error)
 	GetSubs() ([]Sub, error)
 	GetSubsIncludeDeleted() ([]Sub, error)
 	GetSubsWithNoID() ([]Sub, error)
-	SetSubID(authorID string, subType int, id string) error
-	SetStatus(authorID string, subType int, finished bool) error
+	SetSubID(authorID string, subType common.ZhihuContentType, id string) error
+	SetStatus(authorID string, subType common.ZhihuContentType, finished bool) error
 	DeleteSub(id string) error
 	DeleteSubsByAuthor(authorID string) error
 	ActivateSub(id string) error
 }
 
-func (d *DBService) AddSub(authorID string, subType int) error {
+func (d *DBService) AddSub(authorID string, subType common.ZhihuContentType) error {
 	return d.Save(&Sub{ID: xid.New().String(), AuthorID: authorID, Type: subType}).Error
 }
 
-func (d *DBService) CheckSub(authorID string, subType int) (bool, error) {
+func (d *DBService) CheckSub(authorID string, subType common.ZhihuContentType) (bool, error) {
 	var sub Sub
 	if err := d.Where("author_id = ? and type = ?", authorID, subType).First(&sub).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -49,7 +50,7 @@ func (d *DBService) CheckSub(authorID string, subType int) (bool, error) {
 	return true, nil
 }
 
-func (d *DBService) CheckSubIncludeDeleted(authorID string, subType int) (bool, error) {
+func (d *DBService) CheckSubIncludeDeleted(authorID string, subType common.ZhihuContentType) (bool, error) {
 	var sub Sub
 	if err := d.Unscoped().Where("author_id = ? and type = ?", authorID, subType).First(&sub).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -97,11 +98,11 @@ func (d *DBService) GetSubsWithNoID() ([]Sub, error) {
 	return subs, nil
 }
 
-func (d *DBService) SetSubID(authorID string, subType int, id string) error {
+func (d *DBService) SetSubID(authorID string, subType common.ZhihuContentType, id string) error {
 	return d.Model(&Sub{}).Where("author_id = ? and type = ?", authorID, subType).Update("id", id).Error
 }
 
-func (d *DBService) SetStatus(authorID string, subType int, finished bool) error {
+func (d *DBService) SetStatus(authorID string, subType common.ZhihuContentType, finished bool) error {
 	return d.Model(&Sub{}).Where("author_id = ? and type = ?", authorID, subType).Update("finished", finished).Error
 }
 

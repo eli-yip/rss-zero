@@ -92,8 +92,8 @@ func (h *Controller) GetSubs(c echo.Context) error {
 
 		singleSub := SingleSubInfo{
 			ID:      sub.ID,
-			SubType: pkgCommon.ZhihuTypeToString(sub.Type),
-			Url:     fmt.Sprintf("https://www.zhihu.com/people/%s/%s", sub.AuthorID, pkgCommon.ZhihuTypeToLinkType(sub.Type)),
+			SubType: sub.Type.Slug(),
+			Url:     fmt.Sprintf("https://www.zhihu.com/people/%s/%s", sub.AuthorID, sub.Type.ProfilePath()),
 			Deleted: sub.DeletedAt.Valid,
 		}
 
@@ -131,7 +131,7 @@ func filterSubs(subs []db.Sub, config filterConfig) ([]db.Sub, error) {
 		}
 
 		for _, sub := range subs {
-			if slices.Contains(config.ContentType, pkgCommon.ZhihuTypeToString(sub.Type)) {
+			if slices.Contains(config.ContentType, sub.Type.Slug()) {
 				filteredSubs = append(filteredSubs, sub)
 			}
 		}
@@ -153,13 +153,12 @@ func filterSubs(subs []db.Sub, config filterConfig) ([]db.Sub, error) {
 // buildContentTypeFilter returns a function that filters sub by content type.
 //
 // Parameters contentType is a slice of content type string that user wants to filter.
-func buildContentTypeFilter(contentType []string) func(subContentType int) bool {
-	return func(subContentType int) bool {
+func buildContentTypeFilter(contentType []string) func(subContentType pkgCommon.ZhihuContentType) bool {
+	return func(subContentType pkgCommon.ZhihuContentType) bool {
 		if len(contentType) == 0 {
 			return true
 		}
-		subContentTypeStr := pkgCommon.ZhihuTypeToString(subContentType)
-		return slices.Contains(contentType, subContentTypeStr)
+		return slices.Contains(contentType, subContentType.Slug())
 	}
 }
 

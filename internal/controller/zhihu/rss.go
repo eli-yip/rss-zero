@@ -36,7 +36,7 @@ func (h *Controller) AnswerRSS(c echo.Context) (err error) {
 	authorID := c.Get("feed_id").(string)
 	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
 
-	if err = h.checkSub(common.TypeZhihuAnswer, authorID, logger); err != nil {
+	if err = h.checkSub(common.ZhihuAnswer, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
 			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
 			return c.JSON(http.StatusBadRequest, serverCommon.WrapResp("Author does not exist in zhihu website"))
@@ -45,7 +45,7 @@ func (h *Controller) AnswerRSS(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to check sub"))
 	}
 
-	rss, err := h.getRSS(fmt.Sprintf(redis.ZhihuAnswerPath, authorID), logger)
+	rss, err := h.getRSS(common.ZhihuAnswer.RedisKey(authorID), logger)
 	if err != nil {
 		logger.Error("Failed to get zhihu rss", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to get zhihu rss"))
@@ -65,7 +65,7 @@ func (h *Controller) ArticleRSS(c echo.Context) (err error) {
 	authorID := c.Get("feed_id").(string)
 	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
 
-	if err = h.checkSub(common.TypeZhihuArticle, authorID, logger); err != nil {
+	if err = h.checkSub(common.ZhihuArticle, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
 			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
 			return c.JSON(http.StatusBadRequest, serverCommon.WrapResp("Author does not exist in zhihu website"))
@@ -74,7 +74,7 @@ func (h *Controller) ArticleRSS(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to check sub"))
 	}
 
-	rss, err := h.getRSS(fmt.Sprintf(redis.ZhihuArticlePath, authorID), logger)
+	rss, err := h.getRSS(common.ZhihuArticle.RedisKey(authorID), logger)
 	if err != nil {
 		logger.Error("Failed to get zhihu rss", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to get zhihu rss"))
@@ -94,7 +94,7 @@ func (h *Controller) PinRSS(c echo.Context) (err error) {
 	authorID := c.Get("feed_id").(string)
 	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
 
-	if err = h.checkSub(common.TypeZhihuPin, authorID, logger); err != nil {
+	if err = h.checkSub(common.ZhihuPin, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
 			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
 			return c.JSON(http.StatusBadRequest, serverCommon.WrapResp("Author does not exist in zhihu website"))
@@ -103,7 +103,7 @@ func (h *Controller) PinRSS(c echo.Context) (err error) {
 		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to check sub"))
 	}
 
-	rss, err := h.getRSS(fmt.Sprintf(redis.ZhihuPinPath, authorID), logger)
+	rss, err := h.getRSS(common.ZhihuPin.RedisKey(authorID), logger)
 	if err != nil {
 		logger.Error("Failed to get zhihu rss", zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, serverCommon.WrapResp("Failed to get zhihu rss"))
@@ -184,21 +184,15 @@ func (r *RssGenerator) generateRandomCanglimoAnswers(logger *zap.Logger) (string
 // extractTypeAuthorFromKey extracts type and authorID from rss content key.
 //
 // key format: zhihu_rss_{type}_{authorID}
-func (r *RssGenerator) extractTypeAuthorFromKey(key string) (t int, authorID string, err error) {
+func (r *RssGenerator) extractTypeAuthorFromKey(key string) (t common.ZhihuContentType, authorID string, err error) {
 	strs := strings.Split(key, "_")
 	if len(strs) != 4 {
-		return 0, "", fmt.Errorf("invalid key: %s", key)
+		return "", "", fmt.Errorf("invalid key: %s", key)
 	}
 
-	switch strs[2] {
-	case "answer":
-		t = common.TypeZhihuAnswer
-	case "article":
-		t = common.TypeZhihuArticle
-	case "pin":
-		t = common.TypeZhihuPin
-	default:
-		return 0, "", fmt.Errorf("invalid type: %s", strs[2])
+	t, err = common.ParseZhihuSlug(strs[2])
+	if err != nil {
+		return "", "", fmt.Errorf("invalid type: %s", strs[2])
 	}
 
 	authorID = strs[3]
@@ -207,7 +201,7 @@ func (r *RssGenerator) extractTypeAuthorFromKey(key string) (t int, authorID str
 }
 
 // checkSub checks if the sub exists in db, if not, add it to db
-func (h *Controller) checkSub(t int, authorID string, logger *zap.Logger) (err error) {
+func (h *Controller) checkSub(t common.ZhihuContentType, authorID string, logger *zap.Logger) (err error) {
 	// check if sub exists
 	// Use CheckSubIncludeDeleted instead of CheckSubByID to check if the sub exists
 	// As we will return histroy rss content even if the sub is deleted

@@ -30,7 +30,8 @@ func TestExportSingle(t *testing.T) {
 
 		opt := Option{
 			Type: func() *int {
-				t := common.TypeZhihuAnswer
+				t, err := common.ZhihuLegacyID(common.ZhihuAnswer)
+				assert.Nil(err)
 				return &t
 			}(),
 			AuthorID: func() *string {

@@ -82,7 +82,7 @@ func (p *ParseService) ParseArticle(content []byte, logger *zap.Logger) (text st
 		}
 	}
 
-	text, err = p.parseHTML(article.HTML, article.ID, common.TypeZhihuArticle, logger)
+	text, err = p.parseHTML(article.HTML, article.ID, common.ZhihuArticle, logger)
 	if err != nil {
 		return emptyString, fmt.Errorf("failed to parse html content: %w", err)
 	}

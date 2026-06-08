@@ -212,7 +212,7 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 			if err = p.db.SaveObjectInfo(&db.Object{
 				ID:              picID,
 				Type:            db.ObjectTypeImage,
-				ContentType:     common.TypeZhihuPin,
+				ContentType:     common.ZhihuPin,
 				ContentID:       id,
 				ObjectKey:       objectKey,
 				URL:             imageContent.OriginalURL,

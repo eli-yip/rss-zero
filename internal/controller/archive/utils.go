@@ -77,7 +77,7 @@ func buildTopicsFromAnswer(answers []zhihuDB.Answer, userID string, d zhihuDB.DB
 		}
 
 		answerID := strconv.Itoa(answer.ID)
-		bookmark, err := bd.GetBookmarkByContent(userID, pkgCommon.TypeZhihuAnswer, answerID)
+		bookmark, err := bd.GetBookmarkByContent(userID, pkgCommon.ZhihuAnswer, answerID)
 		var custom *Custom
 		if err != nil {
 			if !errors.Is(err, bookmarkDB.ErrNoBookmark) {
@@ -105,7 +105,7 @@ func buildTopicsFromAnswer(answers []zhihuDB.Answer, userID string, d zhihuDB.DB
 			OriginalURL: zhihuRender.GenerateAnswerLink(question.ID, answer.ID),
 			ArchiveURL:  render.BuildArchiveLink(config.C.Settings.ServerURL, zhihuRender.GenerateAnswerLink(question.ID, answer.ID)),
 			Platform:    PlatformZhihu,
-			Type:        pkgCommon.TypeZhihuAnswer,
+			Type:        mustLegacyTopicType(pkgCommon.ZhihuAnswer),
 			Title:       question.Title,
 			CreatedAt:   answer.CreateAt.Format(time.RFC3339),
 			Body:        answer.Text,
@@ -162,7 +162,7 @@ func buildTopicMapFromAnswer(answers map[int]zhihuDB.Answer, bookmarks map[int]b
 			OriginalURL: zhihuRender.GenerateAnswerLink(question.ID, answer.ID),
 			ArchiveURL:  render.BuildArchiveLink(config.C.Settings.ServerURL, zhihuRender.GenerateAnswerLink(question.ID, answer.ID)),
 			Platform:    PlatformZhihu,
-			Type:        pkgCommon.TypeZhihuAnswer,
+			Type:        mustLegacyTopicType(pkgCommon.ZhihuAnswer),
 			Title:       question.Title,
 			CreatedAt:   answer.CreateAt.Format(time.RFC3339),
 			Body:        answer.Text,
@@ -183,7 +183,7 @@ func buildTopicsFromPin(pins []zhihuDB.Pin, userID string, d zhihuDB.DB, bd book
 
 	for p := range slices.Values(pins) {
 		pinID := strconv.Itoa(p.ID)
-		bookmark, err := bd.GetBookmarkByContent(userID, pkgCommon.TypeZhihuPin, pinID)
+		bookmark, err := bd.GetBookmarkByContent(userID, pkgCommon.ZhihuPin, pinID)
 		var custom *Custom
 		if err != nil {
 			if !errors.Is(err, bookmarkDB.ErrNoBookmark) {
@@ -211,7 +211,7 @@ func buildTopicsFromPin(pins []zhihuDB.Pin, userID string, d zhihuDB.DB, bd book
 			OriginalURL: zhihuRender.GeneratePinLink(p.ID),
 			ArchiveURL:  render.BuildArchiveLink(config.C.Settings.ServerURL, zhihuRender.GeneratePinLink(p.ID)),
 			Platform:    PlatformZhihu,
-			Type:        pkgCommon.TypeZhihuPin,
+			Type:        mustLegacyTopicType(pkgCommon.ZhihuPin),
 			Title: func() string {
 				if p.Title == "" {
 					return strconv.Itoa(p.ID)
@@ -261,7 +261,7 @@ func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, bookmarks map[int]bookmarkDB
 			OriginalURL: zhihuRender.GeneratePinLink(p.ID),
 			ArchiveURL:  render.BuildArchiveLink(config.C.Settings.ServerURL, zhihuRender.GeneratePinLink(p.ID)),
 			Platform:    PlatformZhihu,
-			Type:        pkgCommon.TypeZhihuPin,
+			Type:        mustLegacyTopicType(pkgCommon.ZhihuPin),
 			Title: func() string {
 				if p.Title == "" {
 					return strconv.Itoa(p.ID)
@@ -276,4 +276,12 @@ func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, bookmarks map[int]bookmarkDB
 	}
 
 	return topicMap, nil
+}
+
+func mustLegacyTopicType(t pkgCommon.ZhihuContentType) int {
+	id, err := pkgCommon.ZhihuLegacyID(t)
+	if err != nil {
+		panic(err)
+	}
+	return id
 }

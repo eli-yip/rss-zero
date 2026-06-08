@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
@@ -22,7 +21,7 @@ var errUnknownZhihuType = errors.New("unknown zhihu type")
 // return rss path, rss content and error
 //   - contentType: see type list in pkg/common.type.go
 //   - latestTimeInDB: latest time before crawl, if unknown, set it to time.Time{}
-func GenerateZhihu(contentType int, authorID string, latestTimeInDB time.Time, zhihuDBService zhihuDB.DB, logger *zap.Logger) (path, result string, err error) {
+func GenerateZhihu(contentType common.ZhihuContentType, authorID string, latestTimeInDB time.Time, zhihuDBService zhihuDB.DB, logger *zap.Logger) (path, result string, err error) {
 	logger.Info("Start to generate zhihu rss")
 
 	rssRender := render.NewRSSRenderService()
@@ -48,17 +47,17 @@ func GenerateZhihu(contentType int, authorID string, latestTimeInDB time.Time, z
 }
 
 // generateZhihuRSS generate zhihu rss content by content type
-func generateZhihuRSS(contentType int, authorID, authorName string, latestTimeInDB time.Time, render render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (output string, err error) {
+func generateZhihuRSS(contentType common.ZhihuContentType, authorID, authorName string, latestTimeInDB time.Time, render render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (output string, err error) {
 	switch contentType {
-	case common.TypeZhihuAnswer:
+	case common.ZhihuAnswer:
 		if output, err = generateZhihuAnswer(authorID, authorName, latestTimeInDB, render, zhihuDBService, logger); err != nil {
 			return emptyString, fmt.Errorf("failed to generate zhihu answer rss content: %w", err)
 		}
-	case common.TypeZhihuArticle:
+	case common.ZhihuArticle:
 		if output, err = generateZhihuArticle(authorID, authorName, latestTimeInDB, render, zhihuDBService, logger); err != nil {
 			return emptyString, fmt.Errorf("failed to generate zhihu article rss content: %w", err)
 		}
-	case common.TypeZhihuPin:
+	case common.ZhihuPin:
 		if output, err = generateZhihuPin(authorID, authorName, latestTimeInDB, render, zhihuDBService, logger); err != nil {
 			return emptyString, fmt.Errorf("failed to generate zhihu pin rss content: %w", err)
 		}
@@ -92,7 +91,7 @@ func generateZhihuAnswer(authorID, authorName string, latestTimeInDB time.Time, 
 
 	if len(answers) == 0 {
 		logger.Info("Found no answer, render empty rss")
-		return rssRender.RenderEmpty(common.TypeZhihuAnswer, authorID, authorName)
+		return rssRender.RenderEmpty(common.ZhihuAnswer, authorID, authorName)
 	}
 
 	var rs []render.RSS
@@ -113,7 +112,7 @@ func generateZhihuAnswer(authorID, authorName string, latestTimeInDB time.Time, 
 		})
 	}
 
-	return rssRender.Render(common.TypeZhihuAnswer, rs)
+	return rssRender.Render(common.ZhihuAnswer, rs)
 }
 
 func generateZhihuArticle(authorID, authorName string, latestTimeInDB time.Time, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
@@ -139,7 +138,7 @@ func generateZhihuArticle(authorID, authorName string, latestTimeInDB time.Time,
 
 	if len(articles) == 0 {
 		logger.Info("Found no article, render empty rss")
-		return rssRender.RenderEmpty(common.TypeZhihuArticle, authorID, authorName)
+		return rssRender.RenderEmpty(common.ZhihuArticle, authorID, authorName)
 	}
 
 	var rs []render.RSS
@@ -155,7 +154,7 @@ func generateZhihuArticle(authorID, authorName string, latestTimeInDB time.Time,
 		})
 	}
 
-	return rssRender.Render(common.TypeZhihuArticle, rs)
+	return rssRender.Render(common.ZhihuArticle, rs)
 }
 
 func generateZhihuPin(authorID, authorName string, latestTimeInDB time.Time, rssRender render.RSSRender, zhihuDBService zhihuDB.DB, logger *zap.Logger) (result string, err error) {
@@ -181,7 +180,7 @@ func generateZhihuPin(authorID, authorName string, latestTimeInDB time.Time, rss
 
 	if len(pins) == 0 {
 		logger.Info("Found no pin found, render empty rss")
-		return rssRender.RenderEmpty(common.TypeZhihuPin, authorID, authorName)
+		return rssRender.RenderEmpty(common.ZhihuPin, authorID, authorName)
 	}
 
 	var rs []render.RSS
@@ -201,20 +200,18 @@ func generateZhihuPin(authorID, authorName string, latestTimeInDB time.Time, rss
 		})
 	}
 
-	return rssRender.Render(common.TypeZhihuPin, rs)
+	return rssRender.Render(common.ZhihuPin, rs)
 }
 
 // generateZhihuRSSPath generate zhihu rss redis cache path by content type
 // if content type is unknown, return empty string
-func generateZhihuRSSPath(contentType int, authorID string) (string, error) {
-	switch contentType {
-	case common.TypeZhihuAnswer:
-		return fmt.Sprintf(redis.ZhihuAnswerPath, authorID), nil
-	case common.TypeZhihuArticle:
-		return fmt.Sprintf(redis.ZhihuArticlePath, authorID), nil
-	case common.TypeZhihuPin:
-		return fmt.Sprintf(redis.ZhihuPinPath, authorID), nil
-	default:
-		return "", errUnknownZhihuType
-	}
+func generateZhihuRSSPath(contentType common.ZhihuContentType, authorID string) (path string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			path = ""
+			err = fmt.Errorf("%w: %v", errUnknownZhihuType, r)
+		}
+	}()
+
+	return contentType.RedisKey(authorID), nil
 }
