@@ -1,12 +1,13 @@
 package crawl
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"slices"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
+	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
@@ -27,70 +28,37 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	crawlID := xid.New().String()
 	logger = logger.With(zap.String("crawl_id", crawlID))
-	logger.Info("Start to crawl zhihu pins", zap.String("user_url_token", user))
 
-	next := GeneratePinApiURL(user, offset)
-
-	index := 0
-	lastPinCount := 0
-	for {
-		bytes, err := request.LimitRaw(context.Background(), next, logger)
-		if err != nil {
-			logger.Error("Failed to request zhihu api", zap.Error(err), zap.String("url", next))
-			return fmt.Errorf("failed to request zhihu api: %w", err)
-		}
-		logger.Info("Request zhihu api successfully", zap.String("url", next))
-
-		paging, pinExcerptList, pinRawList, err := parser.ParsePinList(bytes, index, logger)
-		if err != nil {
-			logger.Error("Failed to parse pin list", zap.Error(err), zap.Int("index", index), zap.String("url", next))
-			return fmt.Errorf("failed to parse pin list: %w", err)
-		}
-		logger.Info("Parse pin list successfully", zap.Int("index", index))
-
-		if index != 0 && paging.Totals != lastPinCount {
-			logger.Error("Found new pin, break", zap.Int("new_pin_count", paging.Totals-lastPinCount))
-			return fmt.Errorf("found new pin")
-		}
-		lastPinCount = paging.Totals
-
-		next = paging.Next
-
-		for i, pin := range slices.Backward(pinExcerptList) {
-			logger := logger.With(zap.String("pin_id", pin.ID))
-
+	return crawlListPages(user, request, targetTime, offset, oneTime, logger, listCrawlOptions[apiModels.Pin]{
+		contentType:        "pin",
+		startMessage:       "Start to crawl zhihu pins",
+		reachTargetMessage: "Reached target time, break",
+		reachEndMessage:    "Reached the end of pins, break",
+		foundNewMessage:    "Found new pin, break",
+		foundNewCountField: "new_pin_count",
+		foundNewError:      "found new pin",
+		parseList: func(bytes []byte, index int, logger *zap.Logger) (apiModels.Paging, []apiModels.Pin, []json.RawMessage, error) {
+			return parser.ParsePinList(bytes, index, logger)
+		},
+		parseItem: func(_ apiModels.Pin, raw json.RawMessage, logger *zap.Logger) error {
+			_, err := parser.ParsePin(raw, logger)
+			return err
+		},
+		skipItem: func(pin apiModels.Pin, logger *zap.Logger) bool {
 			// see more in https://gitea.darkeli.com/yezi/rss-zero/issues/95 https://gitea.darkeli.com/yezi/rss-zero#140
 			skipPins := []string{"1762436566352252928", "1798834802864037889", "1801334621469818881"}
 			if slices.Contains(skipPins, pin.ID) {
 				logger.Info("skip pin because images in it returns 400 error")
-				continue
+				return true
 			}
-
-			if _, err = parser.ParsePin(pinRawList[i], logger); err != nil {
-				logger.Error("Failed to parse pin", zap.Error(err))
-				return fmt.Errorf("failed to parse pin: %w", err)
-			}
-
-			logger.Info("Parse pin successfully")
-		}
-
-		if len(pinExcerptList) > 0 && !time.Unix(pinExcerptList[len(pinExcerptList)-1].CreateAt, 0).After(targetTime) {
-			logger.Info("Reached target time, break")
-			return nil
-		}
-
-		if paging.IsEnd {
-			logger.Info("Reached the end of pins, break")
-			break
-		}
-
-		index++
-
-		if oneTime {
-			logger.Info("One time mode, break")
-			break
-		}
-	}
-
-	return nil
+			return false
+		},
+		createdAt: func(pin apiModels.Pin) int64 {
+			return pin.CreateAt
+		},
+		itemLogFields: func(pin apiModels.Pin) []zap.Field {
+			return []zap.Field{zap.String("pin_id", pin.ID)}
+		},
+		generateURL: GeneratePinApiURL,
+	})
 }

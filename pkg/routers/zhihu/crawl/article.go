@@ -1,13 +1,14 @@
 package crawl
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"slices"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
+	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
@@ -33,68 +34,39 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	crawlID := xid.New().String()
 	logger = logger.With(zap.String("crawl_id", crawlID))
-	logger.Info("Start to crawl zhihu articles", zap.String("user_url_token", user))
 
-	next := GenerateArticleApiURL(user, offset)
-
-	index := 0
-	lastArticleCount := 0
-	for {
-		bytes, err := request.LimitRaw(context.Background(), next, logger)
-		if err != nil {
-			logger.Error("Failed to request zhihu api", zap.Error(err), zap.String("url", next))
-			return fmt.Errorf("failed to request zhihu api: %w", err)
-		}
-		logger.Info("Request zhihu api successfully", zap.String("url", next))
-
-		paging, articleExcerptList, articleList, err := parser.ParseArticleList(bytes, index, logger)
-		if err != nil {
-			logger.Error("Failed to parse article list", zap.Error(err), zap.Int("index", index), zap.String("url", next))
-			return fmt.Errorf("failed to parse article list: %w", err)
-		}
-		logger.Info("Parse article list successfully", zap.Int("index", index), zap.String("next", next))
-
-		if index != 0 && paging.Totals != lastArticleCount {
-			logger.Error("Found new article, break", zap.Int("new_article_count", paging.Totals-lastArticleCount))
-			return fmt.Errorf("found new article")
-		}
-		lastArticleCount = paging.Totals
-
-		next = paging.Next
-
-		for i, article := range slices.Backward(articleExcerptList) {
-			logger := logger.With(zap.Int("article_id", article.ID))
-
+	return crawlListPages(user, request, targetTime, offset, oneTime, logger, listCrawlOptions[apiModels.Article]{
+		contentType:        "article",
+		startMessage:       "Start to crawl zhihu articles",
+		reachTargetMessage: "Reach target time, break",
+		reachEndMessage:    "Reach the end of articles, break",
+		foundNewMessage:    "Found new article, break",
+		foundNewCountField: "new_article_count",
+		foundNewError:      "found new article",
+		parseList: func(bytes []byte, index int, logger *zap.Logger) (apiModels.Paging, []apiModels.Article, []json.RawMessage, error) {
+			return parser.ParseArticleList(bytes, index, logger)
+		},
+		parseItem: func(_ apiModels.Article, raw json.RawMessage, logger *zap.Logger) error {
+			_, err := parser.ParseArticle(raw, logger)
+			return err
+		},
+		skipItem: func(article apiModels.Article, logger *zap.Logger) bool {
 			unsupportedArticleIDs := []int{1946529288879858682}
 			if slices.Contains(unsupportedArticleIDs, article.ID) {
 				logger.Info("Found unsupported article, skip", zap.Int("article_id", article.ID))
-				continue
+				return true
 			}
-
-			if _, err = parser.ParseArticle(articleList[i], logger); err != nil {
-				logger.Error("Failed to parse article", zap.Error(err))
-				return fmt.Errorf("failed to parse article: %w", err)
-			}
-			logger.Info("Parse article successfully")
-		}
-
-		if len(articleExcerptList) > 0 && !time.Unix(articleExcerptList[len(articleExcerptList)-1].CreateAt, 0).After(targetTime) {
-			logger.Info("Reach target time, break")
-			return nil
-		}
-
-		if paging.IsEnd {
-			logger.Info("Reach the end of articles, break")
-			break
-		}
-
-		index++
-
-		if oneTime {
-			logger.Info("One time mode, break")
-			break
-		}
-	}
-
-	return nil
+			return false
+		},
+		createdAt: func(article apiModels.Article) int64 {
+			return article.CreateAt
+		},
+		itemLogFields: func(article apiModels.Article) []zap.Field {
+			return []zap.Field{zap.Int("article_id", article.ID)}
+		},
+		parseListLogFields: func(next string) []zap.Field {
+			return []zap.Field{zap.String("next", next)}
+		},
+		generateURL: GenerateArticleApiURL,
+	})
 }

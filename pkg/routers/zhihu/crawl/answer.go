@@ -1,12 +1,12 @@
 package crawl
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
-	"slices"
 	"time"
 
+	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 
@@ -34,62 +34,28 @@ func CrawlAnswer(user string, rs request.Requester, parser parse.Parser,
 	targetTime time.Time, offset int, oneTime bool, logger *zap.Logger) (err error) {
 	crawlID := xid.New().String()
 	logger = logger.With(zap.String("crawl_id", crawlID))
-	logger.Info("Start to crawl zhihu answers", zap.String("user_url_token", user))
 
-	next := GenerateAnswerApiURL(user, offset)
-
-	index := 0
-	lastAnswerCount := 0 // count of answers in last page api response
-	for {
-		bytes, err := rs.LimitRaw(context.Background(), next, logger)
-		if err != nil {
-			logger.Error("Failed to request zhihu api", zap.Error(err), zap.String("url", next))
-			return fmt.Errorf("failed to request zhihu api: %w", err)
-		}
-		logger.Info("Request zhihu api successfully", zap.String("url", next))
-
-		paging, answerExcerptList, answerList, err := parser.ParseAnswerList(bytes, index, logger)
-		if err != nil {
-			logger.Error("Failed to parse answer list", zap.Error(err), zap.Int("index", index), zap.String("url", next))
-			return fmt.Errorf("failed to parse answer list: %w", err)
-		}
-		logger.Info("Parse answer list successfully", zap.Int("index", index))
-
-		if index != 0 && paging.Totals != lastAnswerCount {
-			logger.Error("Found new answers, break now", zap.Int("new_answers_count", paging.Totals-lastAnswerCount))
-			return fmt.Errorf("found new answers")
-		}
-		lastAnswerCount = paging.Totals
-
-		next = paging.Next
-
-		for i, answer := range slices.Backward(answerExcerptList) {
-			logger := logger.With(zap.Int("ans_id", answer.ID))
-
-			if _, err = parser.ParseAnswer(answerList[i], user, logger); err != nil {
-				logger.Error("Failed to parse answer", zap.Error(err))
-				return fmt.Errorf("failed to parse answer: %w", err)
-			}
-			logger.Info("Parse answer successfully")
-		}
-
-		if len(answerExcerptList) > 0 && !time.Unix(answerExcerptList[len(answerExcerptList)-1].CreateAt, 0).After(targetTime) {
-			logger.Info("Reach target time, break")
-			return nil
-		}
-
-		if paging.IsEnd {
-			logger.Info("Reach the end of answers, break")
-			break
-		}
-
-		index++
-
-		if oneTime {
-			logger.Info("One time mode, break")
-			break
-		}
-	}
-
-	return nil
+	return crawlListPages(user, rs, targetTime, offset, oneTime, logger, listCrawlOptions[apiModels.Answer]{
+		contentType:        "answer",
+		startMessage:       "Start to crawl zhihu answers",
+		reachTargetMessage: "Reach target time, break",
+		reachEndMessage:    "Reach the end of answers, break",
+		foundNewMessage:    "Found new answers, break now",
+		foundNewCountField: "new_answers_count",
+		foundNewError:      "found new answers",
+		parseList: func(bytes []byte, index int, logger *zap.Logger) (apiModels.Paging, []apiModels.Answer, []json.RawMessage, error) {
+			return parser.ParseAnswerList(bytes, index, logger)
+		},
+		parseItem: func(_ apiModels.Answer, raw json.RawMessage, logger *zap.Logger) error {
+			_, err := parser.ParseAnswer(raw, user, logger)
+			return err
+		},
+		createdAt: func(answer apiModels.Answer) int64 {
+			return answer.CreateAt
+		},
+		itemLogFields: func(answer apiModels.Answer) []zap.Field {
+			return []zap.Field{zap.Int("ans_id", answer.ID)}
+		},
+		generateURL: GenerateAnswerApiURL,
+	})
 }
