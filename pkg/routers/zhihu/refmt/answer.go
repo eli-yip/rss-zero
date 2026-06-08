@@ -13,6 +13,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
 )
 
@@ -86,6 +87,7 @@ func (s *RefmtService) refmtAnswer(authorID string) (err error) {
 					logger.Error("failed to replace image links", zap.Error(err))
 					return
 				}
+				text = parse.AddPaidColumnContentNotice(text, answer.AnswerType)
 
 				formattedText, err := s.mdfmt.FormatStr(text)
 				if err != nil {
