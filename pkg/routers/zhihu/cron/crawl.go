@@ -246,115 +246,12 @@ func resolveLastCrawledSub(resumeJobInfo *ResumeJobInfo, dbService zhihuDB.DB, l
 }
 
 func crawlSub(sub zhihuDB.Sub, dbService zhihuDB.DB, requestService request.Requester, parser parse.Parser, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (path, content string, skip, shouldReturn bool, err error) {
-	ts := common.ZhihuTypeToString(sub.Type) // type in string
-	logger.Info("Start to crawl zhihu sub", zap.String("author_id", sub.AuthorID), zap.String("type", ts))
-
-	switch ts {
-	case "answer":
-		return crawlAnswerSub(sub, dbService, requestService, parser, destroyedAuthors, cookieService, notifier, logger)
-	case "article":
-		return crawlArticleSub(sub, dbService, requestService, parser, destroyedAuthors, cookieService, notifier, logger)
-	case "pin":
-		return crawlPinSub(sub, dbService, requestService, parser, destroyedAuthors, cookieService, notifier, logger)
-	default:
-		return "", "", false, false, fmt.Errorf("unknown zhihu sub type: %s", ts)
-	}
-}
-
-func crawlAnswerSub(sub zhihuDB.Sub, dbService zhihuDB.DB, requestService request.Requester, parser parse.Parser, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (path, content string, skip, shouldReturn bool, err error) {
-	latestTimeInDB := time.Time{}
-	answers, err := dbService.GetLatestNAnswer(1, sub.AuthorID)
-	if err != nil {
-		logger.Error("Failed to get latest answer from database", zap.Error(err))
-		return "", "", false, false, err
+	contentCrawler, ok := zhihuContentCrawlers[sub.Type]
+	if !ok {
+		return "", "", false, false, fmt.Errorf("unknown zhihu sub type: %s", common.ZhihuTypeToString(sub.Type))
 	}
 
-	if len(answers) == 0 {
-		logger.Info("Found no answer in db, start to crawl answer in one time mode")
-		if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
-			return handleSubCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger, "answer")
-		}
-	} else {
-		latestTimeInDB = answers[0].CreateAt
-		logger.Info("Found answers in db, start to crawl article in normal mode",
-			zap.Time("latest_answer's_create_time", latestTimeInDB))
-		if err = crawl.CrawlAnswer(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
-			return handleSubCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger, "answer")
-		}
-	}
-	logger.Info("Crawl answer successfully")
-
-	path, content, err = rss.GenerateZhihu(common.TypeZhihuAnswer, sub.AuthorID, latestTimeInDB, dbService, logger)
-	if err != nil {
-		logger.Error("Failed to generate zhihu rss content", zap.Error(err))
-		return "", "", false, false, err
-	}
-	logger.Info("Generate rss content successfully")
-	return path, content, false, false, nil
-}
-
-func crawlArticleSub(sub zhihuDB.Sub, dbService zhihuDB.DB, requestService request.Requester, parser parse.Parser, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (path, content string, skip, shouldReturn bool, err error) {
-	latestTimeInDB := time.Time{}
-	articles, err := dbService.GetLatestNArticle(1, sub.AuthorID)
-	if err != nil {
-		logger.Error("Failed to get latest article from database", zap.Error(err))
-		return "", "", false, false, err
-	}
-
-	if len(articles) == 0 {
-		logger.Info("Found no article in db, start to crawl article in one time mode")
-		if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
-			return handleSubCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger, "article")
-		}
-	} else {
-		latestTimeInDB = articles[0].CreateAt
-		logger.Info("Found article in db, start to crawl article in normal mode",
-			zap.Time("latest_article's_create_time", latestTimeInDB))
-		if err = crawl.CrawlArticle(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
-			return handleSubCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger, "article")
-		}
-	}
-	logger.Info("Crawl article successfully")
-
-	path, content, err = rss.GenerateZhihu(common.TypeZhihuArticle, sub.AuthorID, latestTimeInDB, dbService, logger)
-	if err != nil {
-		logger.Error("Failed to generate rss content", zap.Error(err))
-		return "", "", false, false, err
-	}
-	logger.Info("Generate rss content successfully")
-	return path, content, false, false, nil
-}
-
-func crawlPinSub(sub zhihuDB.Sub, dbService zhihuDB.DB, requestService request.Requester, parser parse.Parser, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (path, content string, skip, shouldReturn bool, err error) {
-	latestTimeInDB := time.Time{}
-	pins, err := dbService.GetLatestNPin(1, sub.AuthorID)
-	if err != nil {
-		logger.Error("Failed to get latest pin from database", zap.Error(err))
-		return "", "", false, false, err
-	}
-
-	if len(pins) == 0 {
-		logger.Info("Foundno pin in db, start to crawl pin in one time mode")
-		if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, cron.LongLongAgo, 0, true, logger); err != nil {
-			return handleSubCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger, "pin")
-		}
-	} else {
-		latestTimeInDB = pins[0].CreateAt
-		logger.Info("Found pin in db, start to crawl pin in normal mode",
-			zap.Time("latest_pin's_create_time", latestTimeInDB))
-		if err = crawl.CrawlPin(sub.AuthorID, requestService, parser, latestTimeInDB, 0, false, logger); err != nil {
-			return handleSubCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger, "pin")
-		}
-	}
-	logger.Info("Crawl pin successfully")
-
-	path, content, err = rss.GenerateZhihu(common.TypeZhihuPin, sub.AuthorID, latestTimeInDB, dbService, logger)
-	if err != nil {
-		logger.Error("Failed to generate rss content", zap.Error(err))
-		return "", "", false, false, err
-	}
-	logger.Info("Generate rss content and save to redis successfully")
-	return path, content, false, false, nil
+	return crawlContentSub(sub, contentCrawler, dbService, requestService, parser, destroyedAuthors, cookieService, notifier, logger)
 }
 
 func handleSubCrawlErr(err error, authorID string, dbService zhihuDB.DB, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger, contentType string) (string, string, bool, bool, error) {
@@ -368,6 +265,101 @@ func handleSubCrawlErr(err error, authorID string, dbService zhihuDB.DB, destroy
 
 	logger.Error(fmt.Sprintf("Failed to crawl %s", contentType), zap.Error(err))
 	return "", "", false, false, err
+}
+
+type zhihuContentCrawler struct {
+	contentType int
+	name        string
+	latestTime  func(authorID string, dbService zhihuDB.DB) (time.Time, bool, error)
+	crawl       func(authorID string, requestService request.Requester, parser parse.Parser, targetTime time.Time, oneTime bool, logger *zap.Logger) error
+}
+
+var zhihuContentCrawlers = map[int]zhihuContentCrawler{
+	common.TypeZhihuAnswer: {
+		contentType: common.TypeZhihuAnswer,
+		name:        "answer",
+		latestTime: func(authorID string, dbService zhihuDB.DB) (time.Time, bool, error) {
+			answers, err := dbService.GetLatestNAnswer(1, authorID)
+			if err != nil {
+				return time.Time{}, false, err
+			}
+			if len(answers) == 0 {
+				return time.Time{}, false, nil
+			}
+			return answers[0].CreateAt, true, nil
+		},
+		crawl: func(authorID string, requestService request.Requester, parser parse.Parser, targetTime time.Time, oneTime bool, logger *zap.Logger) error {
+			return crawl.CrawlAnswer(authorID, requestService, parser, targetTime, 0, oneTime, logger)
+		},
+	},
+	common.TypeZhihuArticle: {
+		contentType: common.TypeZhihuArticle,
+		name:        "article",
+		latestTime: func(authorID string, dbService zhihuDB.DB) (time.Time, bool, error) {
+			articles, err := dbService.GetLatestNArticle(1, authorID)
+			if err != nil {
+				return time.Time{}, false, err
+			}
+			if len(articles) == 0 {
+				return time.Time{}, false, nil
+			}
+			return articles[0].CreateAt, true, nil
+		},
+		crawl: func(authorID string, requestService request.Requester, parser parse.Parser, targetTime time.Time, oneTime bool, logger *zap.Logger) error {
+			return crawl.CrawlArticle(authorID, requestService, parser, targetTime, 0, oneTime, logger)
+		},
+	},
+	common.TypeZhihuPin: {
+		contentType: common.TypeZhihuPin,
+		name:        "pin",
+		latestTime: func(authorID string, dbService zhihuDB.DB) (time.Time, bool, error) {
+			pins, err := dbService.GetLatestNPin(1, authorID)
+			if err != nil {
+				return time.Time{}, false, err
+			}
+			if len(pins) == 0 {
+				return time.Time{}, false, nil
+			}
+			return pins[0].CreateAt, true, nil
+		},
+		crawl: func(authorID string, requestService request.Requester, parser parse.Parser, targetTime time.Time, oneTime bool, logger *zap.Logger) error {
+			return crawl.CrawlPin(authorID, requestService, parser, targetTime, 0, oneTime, logger)
+		},
+	},
+}
+
+func crawlContentSub(sub zhihuDB.Sub, contentCrawler zhihuContentCrawler, dbService zhihuDB.DB, requestService request.Requester, parser parse.Parser, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (path, content string, skip, shouldReturn bool, err error) {
+	logger.Info("Start to crawl zhihu sub", zap.String("author_id", sub.AuthorID), zap.String("type", contentCrawler.name))
+
+	latestTimeInDB, hasLatest, err := contentCrawler.latestTime(sub.AuthorID, dbService)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to get latest %s from database", contentCrawler.name), zap.Error(err))
+		return "", "", false, false, err
+	}
+
+	targetTime := cron.LongLongAgo
+	oneTime := true
+	if hasLatest {
+		targetTime = latestTimeInDB
+		oneTime = false
+		logger.Info(fmt.Sprintf("Found %s in db, start to crawl %s in normal mode", contentCrawler.name, contentCrawler.name),
+			zap.Time(fmt.Sprintf("latest_%s's_create_time", contentCrawler.name), latestTimeInDB))
+	} else {
+		logger.Info(fmt.Sprintf("Found no %s in db, start to crawl %s in one time mode", contentCrawler.name, contentCrawler.name))
+	}
+
+	if err = contentCrawler.crawl(sub.AuthorID, requestService, parser, targetTime, oneTime, logger); err != nil {
+		return handleSubCrawlErr(err, sub.AuthorID, dbService, destroyedAuthors, cookieService, notifier, logger, contentCrawler.name)
+	}
+	logger.Info(fmt.Sprintf("Crawl %s successfully", contentCrawler.name))
+
+	path, content, err = rss.GenerateZhihu(contentCrawler.contentType, sub.AuthorID, latestTimeInDB, dbService, logger)
+	if err != nil {
+		logger.Error("Failed to generate rss content", zap.Error(err))
+		return "", "", false, false, err
+	}
+	logger.Info("Generate rss content successfully")
+	return path, content, false, false, nil
 }
 
 func initZhihuServices(db *gorm.DB, aiService ai.AI, cs cookie.CookieIface, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {
