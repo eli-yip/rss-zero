@@ -1,0 +1,4 @@
+interface:
+  display_name: "RSS Zero Release"
+  short_description: "Release rss-zero server Docker images"
+  default_prompt: "Use $rss-zero-release to tag the current rss-zero server version, build Docker images through just, and push them."
