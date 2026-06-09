@@ -149,6 +149,15 @@ type EncryptErrResp struct {
 	Error string `json:"error"`
 }
 
+// UpstreamNotJSONResp is the body the encryption service returns with a 502
+// when zhihu responded with a non-JSON body. It forwards zhihu's real status
+// code and raw body so we can decide whether to retry or refresh cookies.
+type UpstreamNotJSONResp struct {
+	ZhihuStatus int    `json:"zhihu_status"`
+	RawBody     string `json:"raw_body"`
+	Error       string `json:"error"`
+}
+
 // Send request with limiter, used for all zhihu api requests
 func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Logger) (respByte []byte, err error) {
 	requestTaskID := xid.New().String()
@@ -273,14 +282,35 @@ func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Log
 			}
 			logger.Error("501 error", zap.String("error", encryptErrResp.Error))
 			return nil, ErrBadResponse
+		case http.StatusBadGateway:
+			// 502 means the encryption service could not parse zhihu's response
+			// as JSON. It forwards zhihu's real status code and raw body. For now
+			// just log it and retry with a fresh service, rather than guessing the
+			// cause (e.g. assuming __zse_ck expired) — we need real-world samples
+			// of zhihu_status/raw_body before deciding how to branch on them.
+			var upstream UpstreamNotJSONResp
+			if uerr := json.Unmarshal(body, &upstream); uerr != nil {
+				logger.Error("Failed to unmarshal 502 error", zap.Error(uerr), zap.String("resp_body", string(body)))
+			}
+			logger.Error("Zhihu returned non-json body, will retry",
+				zap.Int("zhihu_status", upstream.ZhihuStatus),
+				zap.String("raw_body", upstream.RawBody))
+			if ferr := r.dbService.IncreaseFailedCount(es.ID); ferr != nil {
+				logger.Error("Failed to increase failed count", zap.Error(ferr))
+			}
+			continue
 		default:
 			logger.Error("Bad status code", zap.Int("status_code", resp.StatusCode), zap.String("resp_body", string(body)))
 			continue
 		}
 	}
 
-	r.logger.Error("Failed to get zhihu raw data", zap.Error(err), zap.String("request_task_id", requestTaskID))
-	return nil, err
+	// NOTE: err here is the function-level named return, which the loop body
+	// shadows via `:=` (line `es, err := r.dbService.SelectService()`), so it is
+	// always nil. Return ErrMaxRetry so callers get a meaningful, non-nil error
+	// when all retries are exhausted instead of (nil, nil).
+	r.logger.Error("Failed to get zhihu raw data after exhausting retries", zap.String("request_task_id", requestTaskID))
+	return nil, ErrMaxRetry
 }
 
 func isAccountDestroyedResp(body []byte) bool {
