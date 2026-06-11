@@ -27,6 +27,10 @@ func (a *AIService) TranslateToZh(text string) (result string, err error) {
 	return a.askGPT(fmt.Sprintf(translatePrompt, text))
 }
 
+func (a *AIService) Classify(prompt string) (reply string, err error) {
+	return a.askGPT(prompt)
+}
+
 // askGPT will ask model to generate a reply based on the prompt.
 func (a *AIService) askGPT(prompt string) (reply string, err error) {
 	req := openai.ChatCompletionRequest{

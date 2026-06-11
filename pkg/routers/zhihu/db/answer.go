@@ -15,6 +15,12 @@ type DBAnswer interface {
 	// Save answer info to zhihu_answer table
 	SaveAnswer(a *Answer) error
 	GetLatestNAnswer(n int, userID string) ([]Answer, error)
+	// GetLatestNVisibleAnswer is GetLatestNAnswer excluding answers hidden by
+	// content detection (detect_status = DetectStatusSkipped). Used by RSS generation.
+	GetLatestNVisibleAnswer(n int, userID string) ([]Answer, error)
+	// GetVisibleAnswerAfter is GetAnswerAfter excluding answers hidden by content
+	// detection (detect_status = DetectStatusSkipped). Used by RSS generation.
+	GetVisibleAnswerAfter(userID string, t time.Time) ([]Answer, error)
 	// FetchNAnswers get n answers from zhihu_answer table,
 	// then return the answers for text generating.
 	FetchNAnswer(int, FetchAnswerOption) ([]Answer, error)
@@ -68,12 +74,25 @@ type Answer struct {
 	Status int    `gorm:"column:status;type:int"`
 
 	WordCount int `gorm:"column:word_count;type:int"`
+
+	// DetectStatus is the AI content-detection result for this answer.
+	// See DetectStatus* constants. Default 0 (DetectStatusNone) covers
+	// historical rows and answers whose author is not registered for detection.
+	DetectStatus int    `gorm:"column:detect_status;type:int;default:0"`
+	DetectReason string `gorm:"column:detect_reason;type:text"`
 }
 
 const (
 	AnswerStatusUncompleted = iota
 	AnswerStatusCompleted
 	AnswerStatusUnreachable
+)
+
+const (
+	DetectStatusNone    = iota // 0 not detected (default / unregistered author / historical)
+	DetectStatusPassed         // 1 detected, passed, shown normally
+	DetectStatusSkipped        // 2 detected, hit, hidden from RSS
+	DetectStatusFailed         // 3 detection errored; fail-open, still shown
 )
 
 func (a *Answer) TableName() string { return "zhihu_answer" }
@@ -96,6 +115,22 @@ func (d *DBService) SaveAnswer(a *Answer) error { return d.Save(a).Error }
 func (d *DBService) GetLatestNAnswer(n int, userID string) ([]Answer, error) {
 	as := make([]Answer, 0, n)
 	if err := d.Where("author_id = ?", userID).Order("create_at desc").Limit(n).Find(&as).Error; err != nil {
+		return nil, err
+	}
+	return as, nil
+}
+
+func (d *DBService) GetLatestNVisibleAnswer(n int, userID string) ([]Answer, error) {
+	as := make([]Answer, 0, n)
+	if err := d.Where("author_id = ?", userID).Where("detect_status <> ?", DetectStatusSkipped).Order("create_at desc").Limit(n).Find(&as).Error; err != nil {
+		return nil, err
+	}
+	return as, nil
+}
+
+func (d *DBService) GetVisibleAnswerAfter(userID string, t time.Time) ([]Answer, error) {
+	as := make([]Answer, 0)
+	if err := d.Where("author_id = ? and create_at > ?", userID, t).Where("detect_status <> ?", DetectStatusSkipped).Order("create_at desc").Find(&as).Error; err != nil {
 		return nil, err
 	}
 	return as, nil

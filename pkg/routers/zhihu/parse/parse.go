@@ -32,6 +32,7 @@ type ParseService struct {
 	embeddingDB    embeddingDB.DBIface
 	ai             ai.AI
 	mdfmt          *md.MarkdownFormatter
+	detector       *ContentDetector
 	Imager
 }
 
@@ -71,6 +72,7 @@ func InitParser(aiService ai.AI, imageParser Imager,
 		WithFile(fileService),
 		WithDB(dbService),
 		WithEmbeddingDB(embeddingDBService),
+		WithContentDetector(NewContentDetector(aiService)),
 	)
 }
 
@@ -92,6 +94,10 @@ func WithEmbeddingDB(e embeddingDB.DBIface) Option {
 
 func WithAI(ai ai.AI) Option {
 	return func(s *ParseService) { s.ai = ai }
+}
+
+func WithContentDetector(d *ContentDetector) Option {
+	return func(s *ParseService) { s.detector = d }
 }
 
 func WithImager(i Imager) Option {

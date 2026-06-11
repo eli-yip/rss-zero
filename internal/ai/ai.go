@@ -24,6 +24,9 @@ type AI interface {
 	Conclude(text string) (result string, err error)
 	TranslateToZh(text string) (result string, err error)
 	Embed(text string) (result []float32, err error)
+	// Classify sends a single prompt to the chat model and returns the raw reply.
+	// Callers own the prompt construction and reply parsing.
+	Classify(prompt string) (reply string, err error)
 }
 
 // AIService implements AI interface.
@@ -59,3 +62,7 @@ func (s *AIServiceWithoutAPI) Conclude(text string) (result string, err error) {
 func (s *AIServiceWithoutAPI) TranslateToZh(text string) (result string, err error) { return text, nil }
 
 func (s *AIServiceWithoutAPI) Embed(text string) (result []float32, err error) { return nil, nil }
+
+func (s *AIServiceWithoutAPI) Classify(prompt string) (reply string, err error) {
+	return `{"skip": false}`, nil
+}

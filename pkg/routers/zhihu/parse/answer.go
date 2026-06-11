@@ -109,6 +109,25 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 	}
 	logger.Info("Format markdown content successfully")
 
+	detectStatus := db.DetectStatusNone
+	detectReason := ""
+	if p.detector != nil {
+		res, detected, derr := p.detector.Detect(authorID, formattedText)
+		switch {
+		case !detected:
+			// author not registered for detection; leave DetectStatusNone
+		case derr != nil:
+			logger.Error("Content detect failed, fail-open", zap.Error(derr))
+			detectStatus = db.DetectStatusFailed
+		case res.Skip:
+			detectStatus = db.DetectStatusSkipped
+			detectReason = res.Reason
+			logger.Info("Answer hit content detection, will be hidden from rss", zap.String("reason", res.Reason))
+		default:
+			detectStatus = db.DetectStatusPassed
+		}
+	}
+
 	if err = p.db.SaveQuestion(&db.Question{
 		ID:       answer.Question.ID,
 		CreateAt: time.Unix(answer.Question.CreateAt, 0),
@@ -119,15 +138,17 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 	logger.Info("Save question info to db successfully", zap.String("question_title", answer.Question.Title))
 
 	if err = p.db.SaveAnswer(&db.Answer{
-		ID:         answer.ID,
-		QuestionID: answer.Question.ID,
-		AuthorID:   authorID,
-		CreateAt:   time.Unix(answer.CreateAt, 0),
-		UpdateAt:   time.Unix(answer.UpdateAt, 0),
-		Text:       formattedText,
-		Raw:        content, // NOTE: see db.Answer.Raw comment
-		Status:     db.AnswerStatusCompleted,
-		WordCount:  md.Count(text),
+		ID:           answer.ID,
+		QuestionID:   answer.Question.ID,
+		AuthorID:     authorID,
+		CreateAt:     time.Unix(answer.CreateAt, 0),
+		UpdateAt:     time.Unix(answer.UpdateAt, 0),
+		Text:         formattedText,
+		Raw:          content, // NOTE: see db.Answer.Raw comment
+		Status:       db.AnswerStatusCompleted,
+		WordCount:    md.Count(text),
+		DetectStatus: detectStatus,
+		DetectReason: detectReason,
 	}); err != nil {
 		return emptyString, fmt.Errorf("failed to save answer to db: %w", err)
 	}
