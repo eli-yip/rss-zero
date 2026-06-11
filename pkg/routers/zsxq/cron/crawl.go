@@ -33,78 +33,19 @@ type ResumeJobInfo struct {
 
 func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []string, exclude []string, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier) func(chan cron.CronJobInfo) {
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
-		cronJobInfo := cron.CronJobInfo{}
-
-		var cronJobID string
-		if resumeJobInfo == nil {
-			cronJobID = xid.New().String()
-		} else {
-			cronJobID = resumeJobInfo.JobID
-		}
-
-		// Init services
+		cronJobID := resolveCronJobID(resumeJobInfo)
 		logger := log.DefaultLogger.With(zap.String("cron_job_id", cronJobID))
-
-		var err error
-		var errCount = 0
-
 		cronDBService := cronDB.NewDBService(db)
-		runningJobID, err := cronDBService.CheckRunningJob(taskID)
-		if err != nil {
-			logger.Error("Failed to check job", zap.Error(err), zap.String("task_id", taskID))
-			cronJobInfo.Err = fmt.Errorf("failed to check job: %w", err)
-			cronJobInfoChan <- cronJobInfo
+		jobCtx := newZsxqCrawlJobContext(cronJobID, taskID, resumeJobInfo, cronDBService, notifier, logger)
+		if !jobCtx.prepare(cronJobInfoChan) {
 			return
 		}
-		logger.Info("Check job according to task type successfully", zap.String("task_type", taskID))
-
-		// If there is another job running and this job is a new job(rawCronID is empty), skip this job.
-		if runningJobID != "" && resumeJobInfo == nil {
-			logger.Info("There is another job running, skip this", zap.String("task_type", taskID))
-			cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", runningJobID)
-			cronJobInfoChan <- cronJobInfo
-			return
-		}
-
-		if runningJobID == "" && resumeJobInfo == nil {
-			logger.Info("New job, start to add it to db")
-			var job *cronDB.CronJob
-			if job, err = cronDBService.AddJob(cronJobID, taskID); err != nil {
-				logger.Error("Failed to add job", zap.Error(err), zap.String("task_id", taskID))
-				cronJobInfo.Err = fmt.Errorf("failed to add job: %w", err)
-				cronJobInfoChan <- cronJobInfo
-				return
-			}
-			logger.Info("Add job to db successfully", zap.Any("job", job))
-			cronJobInfo.Job = job
-			cronJobInfoChan <- cronJobInfo
-		}
-
-		defer func() {
-			if errCount > 0 || err != nil {
-				notify.NoticeWithLogger(notifier, "Failed to crawl zsxq content", cronJobID, logger)
-				if err = cronDBService.UpdateStatus(cronJobID, cronDB.StatusError); err != nil {
-					logger.Error("Failed to update cron job status", zap.Error(err))
-				}
-				return
-			}
-			if err := recover(); err != nil {
-				logger.Error("CrawlZsxq() panic", zap.Any("err", err))
-				if err = cronDBService.UpdateStatus(cronJobID, cronDB.StatusError); err != nil {
-					logger.Error("Failed to update cron job status", zap.Any("err", err))
-				}
-				return
-			}
-
-			logger.Info("There is no error during zsxq crawl, set status to finished")
-			if err = cronDBService.UpdateStatus(cronJobID, cronDB.StatusFinished); err != nil {
-				logger.Error("Failed to update cron job status", zap.Error(err))
-			}
-		}()
+		defer jobCtx.finish()
 
 		// Get zsxqAccessToken from db, if not exist, log an zsxqAccessToken error.
-		var zsxqAccessToken string
-		if zsxqAccessToken, err = getZsxqCookie(cookieService, notifier, logger); err != nil {
+		zsxqAccessToken, err := getZsxqCookie(cookieService, notifier, logger)
+		if err != nil {
+			jobCtx.err = err
 			logger.Error("Failed to get zsxq cookie from db", zap.Error(err))
 			return
 		}
@@ -113,56 +54,25 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 		// init services needed by cron crawl and render job
 		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(zsxqAccessToken, db, ai, logger)
 		if err != nil {
+			jobCtx.err = err
 			logger.Error("Failed to init zsxq services", zap.Error(err))
 			return
 		}
 		logger.Info("Init zsxq services successfully")
 
-		// Get group IDs from database, which is a list of int.
-		var groupIDs []int
-		if groupIDs, err = dbService.GetZsxqGroupIDs(); err != nil {
-			logger.Error("Failed to get group IDs from database", zap.Error(err))
-			return
-		}
-		logger.Info("Get group IDs from db successfully", zap.Int("count", len(groupIDs)))
-
-		var lastCrawlInt int
-		if resumeJobInfo != nil && resumeJobInfo.LastCrawled != "" {
-			logger.Info("Resume job info has last crawled group id", zap.String("id", resumeJobInfo.LastCrawled))
-			lastCrawlInt, err = strconv.Atoi(resumeJobInfo.LastCrawled)
-			if err != nil {
-				logger.Error("Failed to convert lastCrawl to group id", zap.Error(err), zap.String("last_crawl", resumeJobInfo.LastCrawled))
-				return
-			}
-			if !slices.Contains(groupIDs, lastCrawlInt) {
-				logger.Error("Last crawl group id not in group ids", zap.String("last_crawl", resumeJobInfo.LastCrawled))
-				lastCrawlInt = 0
-			}
-		}
-
-		filteredGroupIDs, err := FilterGroupIDs(include, exclude, groupIDs)
+		groupIDs, err := loadGroupIDsToCrawl(resumeJobInfo, include, exclude, dbService, logger)
 		if err != nil {
-			logger.Error("Failed to filter group ids", zap.Error(err))
+			jobCtx.err = err
 			return
 		}
-		logger.Info("Filter group ids successfully", zap.Int("count", len(filteredGroupIDs)))
 
-		groupIDs = CutGroups(filteredGroupIDs, lastCrawlInt)
-		logger.Info("Group need to crawl", zap.Int("count", len(groupIDs)))
-
-		// Iterate group IDs
 		for groupID := range slices.Values(groupIDs) {
 			if err = crawlGroup(groupID, requestService, parseService, redisService, rssRenderer, dbService, logger); err != nil {
-				errCount++
+				jobCtx.errCount++
 				logger.Error("Failed to do cron job on group", zap.Error(err))
 				if errors.Is(err, request.ErrInvalidCookie) {
-					logger.Error("Cookie is invalid, delete it and notice user now")
-					var message string
-					if err = cookieService.Del(cookie.CookieTypeZsxqAccessToken); err != nil {
-						logger.Error("Failed to delete zsxq cookie in redis", zap.Error(err))
-						message = "Failed to delete zsxq cookie in redis"
-					}
-					notify.NoticeWithLogger(notifier, "Invalid zsxq cookie", message, logger)
+					handleInvalidZsxqCookie(cookieService, notifier, logger)
+					jobCtx.err = err
 					return
 				}
 				continue
@@ -170,7 +80,8 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 
 			if err = cronDBService.RecordDetail(cronJobID, strconv.Itoa(groupID)); err != nil {
 				logger.Error("Failed to record job detail", zap.Error(err), zap.Int("group_id", groupID))
-				errCount++
+				jobCtx.errCount++
+				jobCtx.err = err
 				return
 			}
 			logger.Info("Record job detail successfully", zap.Int("group_id", groupID))
@@ -178,6 +89,164 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 
 		logger.Info("Crawl zsxq successfully")
 	}
+}
+
+func resolveCronJobID(resumeJobInfo *ResumeJobInfo) string {
+	if resumeJobInfo == nil {
+		return xid.New().String()
+	}
+	return resumeJobInfo.JobID
+}
+
+// zsxqCrawlJobContext owns the cron job lifecycle (running-job check, db
+// registration and final status update), keeping it separate from the crawl
+// business logic in BuildCrawlFunc.
+type zsxqCrawlJobContext struct {
+	cronJobID     string
+	taskID        string
+	resumeJobInfo *ResumeJobInfo
+	cronDBService cronDB.DB
+	notifier      notify.Notifier
+	logger        *zap.Logger
+	err           error
+	errCount      int
+}
+
+func newZsxqCrawlJobContext(cronJobID, taskID string, resumeJobInfo *ResumeJobInfo, cronDBService cronDB.DB, notifier notify.Notifier, logger *zap.Logger) *zsxqCrawlJobContext {
+	return &zsxqCrawlJobContext{
+		cronJobID:     cronJobID,
+		taskID:        taskID,
+		resumeJobInfo: resumeJobInfo,
+		cronDBService: cronDBService,
+		notifier:      notifier,
+		logger:        logger,
+	}
+}
+
+// prepare decides whether this run should proceed and registers a new job in
+// db when needed. It reports its outcome on cronJobInfoChan and returns false
+// when the caller must stop.
+func (ctx *zsxqCrawlJobContext) prepare(cronJobInfoChan chan cron.CronJobInfo) bool {
+	var cronJobInfo cron.CronJobInfo
+
+	runningJobID, err := ctx.cronDBService.CheckRunningJob(ctx.taskID)
+	if err != nil {
+		ctx.logger.Error("Failed to check job", zap.Error(err), zap.String("task_id", ctx.taskID))
+		cronJobInfo.Err = fmt.Errorf("failed to check job: %w", err)
+		cronJobInfoChan <- cronJobInfo
+		return false
+	}
+	ctx.logger.Info("Check job according to task type successfully", zap.String("task_type", ctx.taskID))
+
+	// If there is another job running and this job is a new job(resumeJobInfo is nil), skip this job.
+	if runningJobID != "" && ctx.resumeJobInfo == nil {
+		ctx.logger.Info("There is another job running, skip this", zap.String("task_type", ctx.taskID))
+		cronJobInfo.Err = fmt.Errorf("there is another job running, skip this: %s", runningJobID)
+		cronJobInfoChan <- cronJobInfo
+		return false
+	}
+
+	if runningJobID == "" && ctx.resumeJobInfo == nil {
+		ctx.logger.Info("New job, start to add it to db")
+		job, err := ctx.cronDBService.AddJob(ctx.cronJobID, ctx.taskID)
+		if err != nil {
+			ctx.logger.Error("Failed to add job", zap.Error(err), zap.String("task_id", ctx.taskID))
+			cronJobInfo.Err = fmt.Errorf("failed to add job: %w", err)
+			cronJobInfoChan <- cronJobInfo
+			return false
+		}
+		ctx.logger.Info("Add job to db successfully", zap.Any("job", job))
+		cronJobInfo.Job = job
+		cronJobInfoChan <- cronJobInfo
+	}
+
+	return true
+}
+
+// finish recovers from a panic and records the terminal job status. It is meant
+// to be deferred; the crawl loop only sets ctx.err / ctx.errCount.
+func (ctx *zsxqCrawlJobContext) finish() {
+	if err := recover(); err != nil {
+		ctx.logger.Error("CrawlZsxq() panic", zap.Any("err", err))
+		if err = ctx.cronDBService.UpdateStatus(ctx.cronJobID, cronDB.StatusError); err != nil {
+			ctx.logger.Error("Failed to update cron job status", zap.Any("err", err))
+		}
+		return
+	}
+
+	if ctx.errCount > 0 || ctx.err != nil {
+		notify.NoticeWithLogger(ctx.notifier, "Failed to crawl zsxq content", ctx.cronJobID, ctx.logger)
+		if err := ctx.cronDBService.UpdateStatus(ctx.cronJobID, cronDB.StatusError); err != nil {
+			ctx.logger.Error("Failed to update cron job status", zap.Error(err))
+		}
+		return
+	}
+
+	ctx.logger.Info("There is no error during zsxq crawl, set status to finished")
+	if err := ctx.cronDBService.UpdateStatus(ctx.cronJobID, cronDB.StatusFinished); err != nil {
+		ctx.logger.Error("Failed to update cron job status", zap.Error(err))
+	}
+}
+
+// loadGroupIDsToCrawl loads the group ids from db and reduces them to the set
+// that actually needs crawling for this run (resume breakpoint + include/exclude).
+func loadGroupIDsToCrawl(resumeJobInfo *ResumeJobInfo, include, exclude []string, dbService zsxqDB.DB, logger *zap.Logger) ([]int, error) {
+	groupIDs, err := dbService.GetZsxqGroupIDs()
+	if err != nil {
+		logger.Error("Failed to get group IDs from database", zap.Error(err))
+		return nil, err
+	}
+	logger.Info("Get group IDs from db successfully", zap.Int("count", len(groupIDs)))
+
+	lastCrawlInt, err := resolveLastCrawledGroup(resumeJobInfo, groupIDs, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	filteredGroupIDs, err := FilterGroupIDs(include, exclude, groupIDs)
+	if err != nil {
+		logger.Error("Failed to filter group ids", zap.Error(err))
+		return nil, err
+	}
+	logger.Info("Filter group ids successfully", zap.Int("count", len(filteredGroupIDs)))
+
+	groupIDs = CutGroups(filteredGroupIDs, lastCrawlInt)
+	logger.Info("Group need to crawl", zap.Int("count", len(groupIDs)))
+
+	return groupIDs, nil
+}
+
+// resolveLastCrawledGroup returns the group id to resume from, or 0 to start
+// from the beginning when there is no usable breakpoint.
+func resolveLastCrawledGroup(resumeJobInfo *ResumeJobInfo, groupIDs []int, logger *zap.Logger) (int, error) {
+	if resumeJobInfo == nil || resumeJobInfo.LastCrawled == "" {
+		return 0, nil
+	}
+
+	logger.Info("Resume job info has last crawled group id", zap.String("id", resumeJobInfo.LastCrawled))
+	lastCrawlInt, err := strconv.Atoi(resumeJobInfo.LastCrawled)
+	if err != nil {
+		logger.Error("Failed to convert lastCrawl to group id", zap.Error(err), zap.String("last_crawl", resumeJobInfo.LastCrawled))
+		return 0, err
+	}
+	if !slices.Contains(groupIDs, lastCrawlInt) {
+		logger.Error("Last crawl group id not in group ids", zap.String("last_crawl", resumeJobInfo.LastCrawled))
+		return 0, nil
+	}
+
+	return lastCrawlInt, nil
+}
+
+// handleInvalidZsxqCookie deletes the stale cookie and notifies the user when a
+// crawl fails because of an invalid zsxq access token.
+func handleInvalidZsxqCookie(cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) {
+	logger.Error("Cookie is invalid, delete it and notice user now")
+	var message string
+	if err := cookieService.Del(cookie.CookieTypeZsxqAccessToken); err != nil {
+		logger.Error("Failed to delete zsxq cookie in redis", zap.Error(err))
+		message = "Failed to delete zsxq cookie in redis"
+	}
+	notify.NoticeWithLogger(notifier, "Invalid zsxq cookie", message, logger)
 }
 
 func prepareZsxqServices(cookie string, db *gorm.DB, ai ai.AI, logger *zap.Logger,

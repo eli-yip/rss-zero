@@ -33,96 +33,133 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 	return func(cronJobInfoChan chan cron.CronJobInfo) {
 		cronJobID := xid.New().String()
 		logger := log.DefaultLogger.With(zap.String("cron_job_id", cronJobID))
+		jobCtx := newXiaobotCrawlJobContext(cronJobID, notifier, logger)
+		jobCtx.start(cronJobInfoChan)
+		defer jobCtx.finish()
 
-		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: cronJobID}}
-
-		var err error
-		var errCount = 0
-
-		defer func() {
-			if errCount > 0 {
-				notify.NoticeWithLogger(notifier, "Failed to crawl xiaobot content", cronJobID, logger)
-			}
-			if err := recover(); err != nil {
-				logger.Error("Xiaobot crawl function panic", zap.Any("err", err))
-			}
-		}()
-
-		var token string
-		if token, err = cookieService.Get(cookie.CookieTypeXiaobotAccessToken); err != nil {
-			if errors.Is(err, cookie.ErrKeyNotExist) {
-				notify.NoticeWithLogger(notifier, "No token for xiaobot", "", logger)
-				logger.Error("Xiaobot token not found in cookie")
-			} else {
-				logger.Error("Failed to get xiaobot token from cookie", zap.Error(err))
-			}
+		token, err := getXiaobotToken(cookieService, notifier, logger)
+		if err != nil {
 			return
 		}
-		logger.Info("Get xiaobot token from cookie successfully")
 
-		var (
-			xiaobotDBService      xiaobotDB.DB
-			xiaobotRequestService request.Requester
-			xiaobotParser         parse.Parser
-		)
-
-		xiaobotDBService, xiaobotRequestService, xiaobotParser, err = initXiaobotServices(db, logger, cookieService, token)
+		xiaobotDBService, xiaobotRequestService, xiaobotParser, err := initXiaobotServices(db, logger, cookieService, token)
 		if err != nil {
 			logger.Error("Failed to init xiaobot crawl services", zap.Error(err))
 			return
 		}
 		logger.Info("Init xiaobot crawl services successfully")
 
-		var papers []xiaobotDB.Paper
-		if papers, err = xiaobotDBService.GetPapers(); err != nil {
-			logger.Error("Failed to get xiaobot paper subs from database", zap.Error(err))
+		papers, err := loadPapersToCrawl(xiaobotDBService, fConfig, logger)
+		if err != nil {
 			return
-		}
-		logger.Info("Get xiaobot papers subs from database")
-
-		// TODO: handle both include and exclude using set
-		if fConfig != nil {
-			papers = lo.FilterMap(papers, func(paper xiaobotDB.Paper, _ int) (xiaobotDB.Paper, bool) {
-				if slices.Contains(fConfig.Exclude, paper.ID) {
-					return paper, false
-				}
-				return paper, true
-			})
 		}
 
 		for _, paper := range papers {
-			logger := logger.With(zap.String("paper_id", paper.ID))
-			logger.Info("Start to crawl xiaobot paper")
-
-			var latestPostTimeInDB time.Time
-			if latestPostTimeInDB, err = getXiaobotPaperLatestTime(xiaobotDBService, &paper, logger); err != nil {
-				errCount++
+			if err := crawlPaper(paper, xiaobotDBService, xiaobotRequestService, xiaobotParser, r, logger); err != nil {
+				jobCtx.errCount++
 				continue
 			}
-
-			if err = crawl.Crawl(paper.ID, xiaobotRequestService, xiaobotParser, latestPostTimeInDB, 0, true, logger); err != nil {
-				errCount++
-				logger.Error("Failed to crawl xiaobot paper", zap.Error(err))
-				continue
-			}
-			logger.Info("Crawl xiaobot paper successfully")
-
-			var path, content string
-			if path, content, err = rss.GenerateXiaobot(paper.ID, xiaobotDBService, logger); err != nil {
-				errCount++
-				logger.Error("Failed to generate rss for xiaobot paper", zap.Error(err))
-				continue
-			}
-			logger.Info("Generate rss for xiaobot paper successfully")
-
-			if err = r.Set(path, content, redis.RSSDefaultTTL); err != nil {
-				errCount++
-				logger.Error("Failed to cache xiaobot rss", zap.Error(err))
-				continue
-			}
-			logger.Info("Cache xiaobot rss successfully")
 		}
 	}
+}
+
+// xiaobotCrawlJobContext owns the cron job lifecycle (job registration, panic
+// recovery and failure notification), keeping it separate from the per-paper
+// crawl business logic in BuildCronCrawlFunc.
+type xiaobotCrawlJobContext struct {
+	cronJobID string
+	notifier  notify.Notifier
+	logger    *zap.Logger
+	errCount  int
+}
+
+func newXiaobotCrawlJobContext(cronJobID string, notifier notify.Notifier, logger *zap.Logger) *xiaobotCrawlJobContext {
+	return &xiaobotCrawlJobContext{cronJobID: cronJobID, notifier: notifier, logger: logger}
+}
+
+func (ctx *xiaobotCrawlJobContext) start(cronJobInfoChan chan cron.CronJobInfo) {
+	cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: ctx.cronJobID}}
+}
+
+// finish notifies on accumulated errors and recovers from a panic. It is meant
+// to be deferred; the crawl loop only bumps ctx.errCount.
+func (ctx *xiaobotCrawlJobContext) finish() {
+	if ctx.errCount > 0 {
+		notify.NoticeWithLogger(ctx.notifier, "Failed to crawl xiaobot content", ctx.cronJobID, ctx.logger)
+	}
+	if err := recover(); err != nil {
+		ctx.logger.Error("Xiaobot crawl function panic", zap.Any("err", err))
+	}
+}
+
+func getXiaobotToken(cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (string, error) {
+	token, err := cookieService.Get(cookie.CookieTypeXiaobotAccessToken)
+	if err != nil {
+		if errors.Is(err, cookie.ErrKeyNotExist) {
+			notify.NoticeWithLogger(notifier, "No token for xiaobot", "", logger)
+			logger.Error("Xiaobot token not found in cookie")
+		} else {
+			logger.Error("Failed to get xiaobot token from cookie", zap.Error(err))
+		}
+		return "", err
+	}
+	logger.Info("Get xiaobot token from cookie successfully")
+	return token, nil
+}
+
+// loadPapersToCrawl loads the paper subs from db and applies the exclude filter.
+func loadPapersToCrawl(dbService xiaobotDB.DB, fConfig *Filter, logger *zap.Logger) ([]xiaobotDB.Paper, error) {
+	papers, err := dbService.GetPapers()
+	if err != nil {
+		logger.Error("Failed to get xiaobot paper subs from database", zap.Error(err))
+		return nil, err
+	}
+	logger.Info("Get xiaobot papers subs from database")
+
+	// TODO: handle both include and exclude using set
+	if fConfig != nil {
+		papers = lo.FilterMap(papers, func(paper xiaobotDB.Paper, _ int) (xiaobotDB.Paper, bool) {
+			if slices.Contains(fConfig.Exclude, paper.ID) {
+				return paper, false
+			}
+			return paper, true
+		})
+	}
+
+	return papers, nil
+}
+
+// crawlPaper crawls a single paper, renders its rss and caches it. Errors are
+// logged here so the caller only needs to count them.
+func crawlPaper(paper xiaobotDB.Paper, dbService xiaobotDB.DB, requestService request.Requester, parser parse.Parser, r redis.Redis, logger *zap.Logger) error {
+	logger = logger.With(zap.String("paper_id", paper.ID))
+	logger.Info("Start to crawl xiaobot paper")
+
+	latestPostTimeInDB, err := getXiaobotPaperLatestTime(dbService, &paper, logger)
+	if err != nil {
+		return err
+	}
+
+	if err = crawl.Crawl(paper.ID, requestService, parser, latestPostTimeInDB, 0, true, logger); err != nil {
+		logger.Error("Failed to crawl xiaobot paper", zap.Error(err))
+		return err
+	}
+	logger.Info("Crawl xiaobot paper successfully")
+
+	path, content, err := rss.GenerateXiaobot(paper.ID, dbService, logger)
+	if err != nil {
+		logger.Error("Failed to generate rss for xiaobot paper", zap.Error(err))
+		return err
+	}
+	logger.Info("Generate rss for xiaobot paper successfully")
+
+	if err = r.Set(path, content, redis.RSSDefaultTTL); err != nil {
+		logger.Error("Failed to cache xiaobot rss", zap.Error(err))
+		return err
+	}
+	logger.Info("Cache xiaobot rss successfully")
+
+	return nil
 }
 
 func initXiaobotServices(db *gorm.DB, logger *zap.Logger, cs cookie.CookieIface, token string) (xiaobotDB.DB, request.Requester, parse.Parser, error) {
