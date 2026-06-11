@@ -406,7 +406,3 @@ func initZhihuServices(db *gorm.DB, aiService ai.AI, cs cookie.CookieIface, logg
 
 	return dbService, requestService, parser, nil
 }
-
-func removeZSECKCookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuZSECK) }
-
-func removeZC0Cookie(cs cookie.CookieIface) (err error) { return cs.Del(cookie.CookieTypeZhihuZC0) }

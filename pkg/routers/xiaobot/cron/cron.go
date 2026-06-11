@@ -37,10 +37,11 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 		jobCtx.start(cronJobInfoChan)
 		defer jobCtx.finish()
 
-		token, err := getXiaobotToken(cookieService, notifier, logger)
+		cookies, err := cookie.Bundle(cookieService, "xiaobot", notifier, logger)
 		if err != nil {
 			return
 		}
+		token := cookies["token"]
 
 		xiaobotDBService, xiaobotRequestService, xiaobotParser, err := initXiaobotServices(db, logger, cookieService, token)
 		if err != nil {
@@ -56,6 +57,10 @@ func BuildCronCrawlFunc(r redis.Redis, cookieService cookie.CookieIface, db *gor
 
 		for _, paper := range papers {
 			if err := crawlPaper(paper, xiaobotDBService, xiaobotRequestService, xiaobotParser, r, logger); err != nil {
+				if errors.Is(err, request.ErrNeedLogin) {
+					cookie.Invalidate(cookieService, cookie.CookieTypeXiaobotAccessToken, notifier, logger)
+					return
+				}
 				jobCtx.errCount++
 				continue
 			}
@@ -90,21 +95,6 @@ func (ctx *xiaobotCrawlJobContext) finish() {
 	if err := recover(); err != nil {
 		ctx.logger.Error("Xiaobot crawl function panic", zap.Any("err", err))
 	}
-}
-
-func getXiaobotToken(cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (string, error) {
-	token, err := cookieService.Get(cookie.CookieTypeXiaobotAccessToken)
-	if err != nil {
-		if errors.Is(err, cookie.ErrKeyNotExist) {
-			notify.NoticeWithLogger(notifier, "No token for xiaobot", "", logger)
-			logger.Error("Xiaobot token not found in cookie")
-		} else {
-			logger.Error("Failed to get xiaobot token from cookie", zap.Error(err))
-		}
-		return "", err
-	}
-	logger.Info("Get xiaobot token from cookie successfully")
-	return token, nil
 }
 
 // loadPapersToCrawl loads the paper subs from db and applies the exclude filter.

@@ -199,21 +199,16 @@ func addJobToCronService(cronService *cron.CronService, cronDBService cronDB.DB,
 
 func checkCookies(cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) func() {
 	return func() {
-		cookieTypes, err := cookieService.GetCookieTypes()
-		if err != nil {
-			logger.Error("Failed to get cookie types", zap.Error(err))
-			notify.NoticeWithLogger(notifier, "Failed to get cookie types", err.Error(), logger)
-		}
-
-		for _, cookieType := range cookieTypes {
-			typeStr := cookie.TypeToStr(cookieType)
-			err = cookieService.CheckTTL(cookieType, 48*time.Hour)
+		// Iterate the registry (not GetCookieTypes) so a never-set cookie is flagged too.
+		for _, spec := range cookie.AllSpecs() {
+			label := spec.Label()
+			err := cookieService.CheckTTL(spec.Type, 48*time.Hour)
 			if errors.Is(err, cookie.ErrKeyNotExist) {
-				logger.Error("Need to update cookies", zap.String("cookie_type", typeStr))
-				notify.NoticeWithLogger(notifier, "Need to update cookies", fmt.Sprintf("Cookie type: %s", typeStr), logger)
+				logger.Error("Need to update cookies", zap.String("cookie_type", label))
+				notify.NoticeWithLogger(notifier, "Need to update cookies", fmt.Sprintf("Cookie type: %s", label), logger)
 			} else if err != nil {
-				logger.Error("Failed to check cookie", zap.String("cookie_type", typeStr), zap.Error(err))
-				notify.NoticeWithLogger(notifier, "Failed to check cookie", fmt.Sprintf("Cookie type: %s", typeStr), logger)
+				logger.Error("Failed to check cookie", zap.String("cookie_type", label), zap.Error(err))
+				notify.NoticeWithLogger(notifier, "Failed to check cookie", fmt.Sprintf("Cookie type: %s", label), logger)
 			}
 		}
 	}

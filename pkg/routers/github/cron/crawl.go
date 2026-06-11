@@ -20,6 +20,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/github/crawl"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	githubParse "github.com/eli-yip/rss-zero/pkg/routers/github/parse"
+	githubRequest "github.com/eli-yip/rss-zero/pkg/routers/github/request"
 )
 
 func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, aiService ai.AI, notifier notify.Notifier) func(chan cron.CronJobInfo) {
@@ -41,17 +42,12 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, aiServi
 			}
 		}()
 
-		var token string
-		if token, err = cookieService.Get(cookie.CookieTypeGitHubAccessToken); err != nil {
+		cookies, err := cookie.Bundle(cookieService, "github", notifier, logger)
+		if err != nil {
 			errCount++
-			if errors.Is(err, cookie.ErrKeyNotExist) {
-				notify.NoticeWithLogger(notifier, "No token for github", "", logger)
-				logger.Error("github token not found in cookie")
-			} else {
-				logger.Error("failed to get github token from cookie", zap.Error(err))
-			}
 			return
 		}
+		token := cookies["access_token"]
 
 		dbService := githubDB.NewDBService(db)
 		parseService := githubParse.NewParseService(dbService, aiService)
@@ -77,6 +73,10 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, aiServi
 			if err = crawl.CrawlRepo(repo.GithubUser, repo.Name, repo.ID, token, parseService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to crawl github release", zap.Error(err))
+				if errors.Is(err, githubRequest.ErrUnauthorized) {
+					cookie.Invalidate(cookieService, cookie.CookieTypeGitHubAccessToken, notifier, logger)
+					return
+				}
 				continue
 			}
 			logger.Info("Crawl github release successfully")

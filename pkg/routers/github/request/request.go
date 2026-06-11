@@ -21,7 +21,12 @@ type Release struct {
 	PublishedAt time.Time `json:"published_at"`
 }
 
-var ErrNoRelease = errors.New("releases API response is empty")
+var (
+	ErrNoRelease = errors.New("releases API response is empty")
+	// ErrUnauthorized is returned on HTTP 401 (bad credentials). 403 is deliberately
+	// excluded — GitHub also uses it for rate limiting, where the token is still valid.
+	ErrUnauthorized = errors.New("github token unauthorized")
+)
 
 func GetRepoReleases(user, repo, token string) (releases []Release, err error) {
 	releases = make([]Release, 0)
@@ -37,6 +42,9 @@ func GetRepoReleases(user, repo, token string) (releases []Release, err error) {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get releases API response: %w", err)
+	}
+	if resp.StatusCode == http.StatusUnauthorized {
+		return nil, fmt.Errorf("%w: status %d", ErrUnauthorized, resp.StatusCode)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to get releases API response, bad status code: %d", resp.StatusCode)

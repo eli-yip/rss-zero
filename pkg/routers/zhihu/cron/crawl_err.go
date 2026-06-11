@@ -39,24 +39,15 @@ func handleCrawlErr(err error, authorID string, dbService zhihuDB.DB, destroyedA
 func handleErr(err error, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (shouldReturn bool) {
 	switch {
 	case errors.Is(err, request.ErrNeedZC0):
-		if err = removeZC0Cookie(cookieService); err != nil {
-			logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-		}
-		notify.NoticeWithLogger(notifier, "Zhihu need login", "please provide z_c0 cookie", logger)
+		cookie.Invalidate(cookieService, cookie.CookieTypeZhihuZC0, notifier, logger)
 		logger.Error("Need login, break")
 		return true
 	case errors.Is(err, request.ErrInvalidZSECK):
-		if err = removeZSECKCookie(cookieService); err != nil {
-			logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-		}
-		notify.NoticeWithLogger(notifier, "Zhihu need new __zse_ck", "please provide __zse_ck cookie", logger)
+		cookie.Invalidate(cookieService, cookie.CookieTypeZhihuZSECK, notifier, logger)
 		logger.Error("Need new __zse_ck, break")
 		return true
 	case errors.Is(err, request.ErrInvalidZC0):
-		if err = removeZC0Cookie(cookieService); err != nil {
-			logger.Error("Failed to remove z_c0 cookie", zap.Error(err))
-		}
-		notify.NoticeWithLogger(notifier, "Zhihu need new z_c0", "please provide z_c0 cookie", logger)
+		cookie.Invalidate(cookieService, cookie.CookieTypeZhihuZC0, notifier, logger)
 		logger.Error("Need new z_c0, break")
 		return true
 	case errors.Is(err, zhihuDB.ErrNoAvailableService):

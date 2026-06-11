@@ -42,14 +42,14 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 		}
 		defer jobCtx.finish()
 
-		// Get zsxqAccessToken from db, if not exist, log an zsxqAccessToken error.
-		zsxqAccessToken, err := getZsxqCookie(cookieService, notifier, logger)
+		// Get zsxqAccessToken from db; Bundle notifies the user if it is missing.
+		cookies, err := cookie.Bundle(cookieService, "zsxq", notifier, logger)
 		if err != nil {
 			jobCtx.err = err
-			logger.Error("Failed to get zsxq cookie from db", zap.Error(err))
 			return
 		}
-		logger.Info("Get zsxq cookie successfully", zap.String("cookie", zsxqAccessToken))
+		zsxqAccessToken := cookies["zsxq_access_token"]
+		logger.Info("Get zsxq cookie successfully")
 
 		// init services needed by cron crawl and render job
 		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(zsxqAccessToken, db, ai, logger)
@@ -71,7 +71,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 				jobCtx.errCount++
 				logger.Error("Failed to do cron job on group", zap.Error(err))
 				if errors.Is(err, request.ErrInvalidCookie) {
-					handleInvalidZsxqCookie(cookieService, notifier, logger)
+					cookie.Invalidate(cookieService, cookie.CookieTypeZsxqAccessToken, notifier, logger)
 					jobCtx.err = err
 					return
 				}
@@ -237,18 +237,6 @@ func resolveLastCrawledGroup(resumeJobInfo *ResumeJobInfo, groupIDs []int, logge
 	return lastCrawlInt, nil
 }
 
-// handleInvalidZsxqCookie deletes the stale cookie and notifies the user when a
-// crawl fails because of an invalid zsxq access token.
-func handleInvalidZsxqCookie(cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) {
-	logger.Error("Cookie is invalid, delete it and notice user now")
-	var message string
-	if err := cookieService.Del(cookie.CookieTypeZsxqAccessToken); err != nil {
-		logger.Error("Failed to delete zsxq cookie in redis", zap.Error(err))
-		message = "Failed to delete zsxq cookie in redis"
-	}
-	notify.NoticeWithLogger(notifier, "Invalid zsxq cookie", message, logger)
-}
-
 func prepareZsxqServices(cookie string, db *gorm.DB, ai ai.AI, logger *zap.Logger,
 ) (dbService zsxqDB.DB, requestService request.Requester, parseService parse.Parser, rssRenderService render.RSSRenderer, err error) {
 	dbService = zsxqDB.NewDBService(db)
@@ -276,31 +264,6 @@ func prepareZsxqServices(cookie string, db *gorm.DB, ai ai.AI, logger *zap.Logge
 	return dbService, requestService, parseService, rssRenderService, nil
 }
 
-func getZsxqCookie(cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (accessToken string, err error) {
-	if accessToken, err = cookieService.Get(cookie.CookieTypeZsxqAccessToken); err != nil {
-		if errors.Is(err, cookie.ErrKeyNotExist) {
-			logger.Error("Found no zsxq cookie in db, notify user now")
-			notify.NoticeWithLogger(notifier, "Found no zsxq cookie in db", "", logger)
-		}
-		logger.Error("Failed to get zsxq cookie from db", zap.Error(err))
-		return "", fmt.Errorf("failed to get zsxq cookie from db: %w", err)
-	}
-
-	if accessToken != "" {
-		return accessToken, nil
-	}
-
-	logger.Error("Found empty zsxq cookie in db, notify user now")
-	notify.NoticeWithLogger(notifier, "Found empty zsxq cookie in db", "", logger)
-
-	if err := cookieService.Del(cookie.CookieTypeZsxqAccessToken); err != nil {
-		logger.Error("Failed to delete empty zsxq cookie in db", zap.Error(err))
-		notify.NoticeWithLogger(notifier, "Failed to delete empty zsxq cookie in db", "", logger)
-		return "", fmt.Errorf("failed to delete empty zsxq cookie key in db: %w", err)
-	}
-
-	return "", fmt.Errorf("found empty zsxq cookie in db")
-}
 
 func crawlGroup(groupID int, requestService request.Requester, parseService parse.Parser, redisService redis.Redis, rssRenderService render.RSSRenderer, dbService zsxqDB.DB, logger *zap.Logger) (err error) {
 	// Get latest topic time from database

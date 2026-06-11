@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"slices"
@@ -11,8 +12,10 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/ai"
 	archiveController "github.com/eli-yip/rss-zero/internal/controller/archive"
+	cookieController "github.com/eli-yip/rss-zero/internal/controller/cookie"
 	endoflifeController "github.com/eli-yip/rss-zero/internal/controller/endoflife"
 	githubController "github.com/eli-yip/rss-zero/internal/controller/github"
 	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
@@ -35,7 +38,9 @@ import (
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
+	xiaobotRequest "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	zsxqRequest "github.com/eli-yip/rss-zero/pkg/routers/zsxq/request"
 )
 
 func setupEcho(redisService redis.Redis,
@@ -106,6 +111,8 @@ func setupEcho(redisService redis.Redis,
 	archiveHandler := archiveController.NewController(db)
 	githubDBService := githubDB.NewDBService(db)
 	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)
+	cookieHandler := cookieController.NewController(cookieService)
+	registerCookieProbes(cookieService)
 	mHandler := mackedHandler.NewHandler(redisService, macked.NewDBService(db), logger)
 	parseHandler := parseHandler.NewHandler(db, ai, cookieService, fileService, notifier)
 	migrateHandler := migrateController.NewController(logger, db)
@@ -138,7 +145,7 @@ func setupEcho(redisService redis.Redis,
 
 	cookieApi := apiGroup.Group("/cookie")
 	groupNeedAuth = append(groupNeedAuth, cookieApi)
-	registerCookie(cookieApi, zsxqHandler, xiaobotHandler, zhihuHandler, githubController)
+	registerCookie(cookieApi, cookieHandler)
 
 	encryptionServiceApi := apiGroup.Group("/es")
 	groupNeedAuth = append(groupNeedAuth, encryptionServiceApi)
@@ -313,29 +320,27 @@ func registerReformat(refmtApi *echo.Group, zsxqHandler *zsxqController.Controll
 	refmtXiaobotApi.Name = "Reformat route for xiaobot"
 }
 
-// /api/v1/cookie
-// /api/v1/cookie/zsxq
-// /api/v1/cookie/xiaobot
-// /api/v1/cookie/zhihu
-// /api/v1/cookie/zhihu/check
-func registerCookie(apiGroup *echo.Group, zsxqHandler *zsxqController.Controller, xiaobotHandler *xiaobotController.Controller, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
-	zsxqCookieApi := apiGroup.POST("/zsxq", zsxqHandler.UpdateCookie)
-	zsxqCookieApi.Name = "Cookie updating route for zsxq"
+// registerCookieProbes wires the optional per-cookie validators into the registry at
+// startup. Done here (not in pkg/cookie) because the probes call the platform request
+// packages, which themselves import pkg/cookie — embedding them would create a cycle.
+func registerCookieProbes(cs cookie.CookieIface) {
+	cookie.RegisterProbe(cookie.CookieTypeZsxqAccessToken, func(value string, l *zap.Logger) error {
+		_, err := zsxqRequest.NewRequestService(value, l).Limit(context.Background(), config.C.TestURL.Zsxq, l)
+		return err
+	})
+	cookie.RegisterProbe(cookie.CookieTypeXiaobotAccessToken, func(value string, l *zap.Logger) error {
+		_, err := xiaobotRequest.NewRequestService(cs, value, l).Limit(config.C.TestURL.Xiaobot)
+		return err
+	})
+}
 
-	zsxqCheckCookieApi := apiGroup.GET("/zsxq", zsxqHandler.CheckCookie)
-	zsxqCheckCookieApi.Name = "Cookie checking route for zsxq"
+// /api/v1/cookie  (POST: generic update for any registered cookie, GET: status of all)
+func registerCookie(apiGroup *echo.Group, cookieHandler *cookieController.Controller) {
+	updateCookiesApi := apiGroup.POST("", cookieHandler.UpdateCookies)
+	updateCookiesApi.Name = "Generic cookie updating route"
 
-	xiaobotCookieApi := apiGroup.POST("/xiaobot", xiaobotHandler.UpdateToken)
-	xiaobotCookieApi.Name = "Token updating route for xiaobot"
-
-	zhihuCookieApi := apiGroup.POST("/zhihu", zhihuHandler.UpdateCookie)
-	zhihuCookieApi.Name = "Cookie updating route for zhihu"
-
-	zhihuCheckCookieApi := apiGroup.GET("/zhihu", zhihuHandler.CheckCookie)
-	zhihuCheckCookieApi.Name = "Cookie checking route for zhihu"
-
-	githubCookieApi := apiGroup.POST("/github", githubController.UpdateToken)
-	githubCookieApi.Name = "Token updating route for github"
+	checkCookiesApi := apiGroup.GET("", cookieHandler.CheckCookies)
+	checkCookiesApi.Name = "Generic cookie status route"
 }
 
 // /rss

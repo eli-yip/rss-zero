@@ -32,21 +32,11 @@ const (
 
 var ErrKeyNotExist = errors.New("Cookie key not exist")
 
+// TypeToStr returns a human-readable "platform/name" label for a cookie type,
+// derived from the registry (the single source of truth).
 func TypeToStr(cookieType int) string {
-	switch cookieType {
-	case CookieTypeZsxqAccessToken:
-		return "zsxq_access_token"
-	case CookieTypeZhihuZC0:
-		return "zhihu_z_c0"
-	case CookieTypeZhihuZSECK:
-		return "zhihu_zse_ck"
-	case CookieTypeZhihuDC0:
-		return "zhihu_dc0"
-	case CookieTypeXiaobotAccessToken:
-		return "xiaobot_access_token"
-	case CookieTypeGitHubAccessToken:
-		return "github_access_token"
-	default:
-		return "unknown"
+	if s, ok := SpecByType(cookieType); ok {
+		return s.Label()
 	}
+	return "unknown"
 }
