@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"go.uber.org/zap"
 
+	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/parse/models"
 	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
@@ -26,8 +28,11 @@ func (s *ParseService) parseTalk(logger *zap.Logger, topic *models.Topic) (autho
 	}
 	logger.Info("Parse author successfully", zap.Int("author_id", authorID), zap.String("author_name", authorName))
 
-	if authorID == 184544455455452 || authorName == `庄太云` {
-		logger.Info("Skip crawling topic, as it's from zhuangtaiyun", zap.Int("topic_id", topic.TopicID))
+	if slices.Contains(config.C.Zsxq.BlockedAuthorIDs, authorID) ||
+		slices.Contains(config.C.Zsxq.BlockedAuthorNames, authorName) {
+		logger.Info("Skip crawling topic, blocked author",
+			zap.Int("topic_id", topic.TopicID),
+			zap.Int("author_id", authorID), zap.String("author_name", authorName))
 		return 0, "", ErrNoText
 	}
 

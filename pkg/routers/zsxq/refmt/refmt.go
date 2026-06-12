@@ -20,6 +20,10 @@ type RefmtIface interface {
 	Reformat(int)
 }
 
+// reformatFloorTime is the lower bound for reformatting: topics created before
+// this date are not reprocessed (no zsxq data predates it worth reformatting).
+var reformatFloorTime = time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
+
 type RefmtService struct {
 	logger   *zap.Logger
 	db       zsxqDB.DB
@@ -75,8 +79,8 @@ func (s *RefmtService) Reformat(gid int) {
 	)
 
 	for {
-		if lastTime.Before(time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)) {
-			s.logger.Info("last time before 2021-01-01, break")
+		if lastTime.Before(reformatFloorTime) {
+			s.logger.Info("last time before reformat floor time, break", zap.Time("floor_time", reformatFloorTime))
 			break
 		}
 

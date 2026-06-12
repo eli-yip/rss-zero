@@ -45,8 +45,18 @@ type TomlConfig struct {
 	Utils struct {
 		RsshubURL string `toml:"rsshub_url"`
 	} `toml:"utils"`
+	Zsxq ZsxqConfig `toml:"zsxq"`
 
 	BJT *time.Location
+}
+
+// ZsxqConfig holds operational rules for the zsxq router that change by
+// business decision rather than code. Absent section -> empty lists (no-op).
+type ZsxqConfig struct {
+	// BlockedAuthorIDs / BlockedAuthorNames: topics from these authors are
+	// skipped during parsing. Matched by OR (either id or name).
+	BlockedAuthorIDs   []int    `toml:"blocked_author_ids"`
+	BlockedAuthorNames []string `toml:"blocked_author_names"`
 }
 
 type OpenAIConfig struct {

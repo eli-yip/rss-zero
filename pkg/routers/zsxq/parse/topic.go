@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"go.uber.org/zap"
@@ -16,6 +15,21 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 	zsxqTime "github.com/eli-yip/rss-zero/pkg/routers/zsxq/time"
 )
+
+// topicIDSkip lists topics that are skipped during parsing because their
+// article content crashes / times out the markdown converter.
+var topicIDSkip = map[int]struct{}{
+	2855142121821411:  {},
+	4848142822512458:  {}, // Cause article markdown converter error
+	1525884245581542:  {}, // Cause article markdown converter error
+	1524441421222552:  {}, // Same
+	8852488254285212:  {}, // Same
+	14588211152588222: {}, // Same
+	22811844581522481: {}, // Same
+	14588584821842242: {}, // Same
+	14588442484115242: {}, // Same
+	14588445248825242: {}, // Same
+}
 
 // SplitTopics split the api response bytes from zsxq api to raw topics
 func (s *ParseService) SplitTopics(respBytes []byte, logger *zap.Logger) (rawTopics []json.RawMessage, err error) {
@@ -30,19 +44,7 @@ func (s *ParseService) SplitTopics(respBytes []byte, logger *zap.Logger) (rawTop
 
 // ParseTopics parse the raw topics to topic parse result
 func (s *ParseService) ParseTopic(topic *models.TopicParseResult, logger *zap.Logger) (text string, err error) {
-	topicIDSkip := []int{
-		2855142121821411,
-		4848142822512458,  // Cause ariticle markdown converter error
-		1525884245581542,  // Cause ariticle markdown converter error
-		1524441421222552,  // Same
-		8852488254285212,  // Same
-		14588211152588222, // Same
-		22811844581522481, // Same
-		14588584821842242, // Same
-		14588442484115242, // Same
-		14588445248825242, // Same
-	}
-	if slices.Contains(topicIDSkip, topic.TopicID) {
+	if _, skip := topicIDSkip[topic.TopicID]; skip {
 		logger.Info("Skip crawling topic, as it will cause markdown parser timeout", zap.Int("topic_id", topic.TopicID))
 		return
 	}

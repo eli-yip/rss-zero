@@ -106,6 +106,16 @@ type dataSystemResp struct {
 	Error     string `json:"error"`
 }
 
+// zsxq API business codes carried in a 200 response body.
+const (
+	codeInvalidCookie   = 401  // invalid cookie
+	codeTooManyRequests = 1059 // too many requests due to no sign
+	codeDataSystemBusy  = 1050 // data system upgrading
+)
+
+// noSignBackoff is how long to wait after a too-many-requests (1059) response.
+const noSignBackoff = 60 * time.Second
+
 // doWithRetry runs a limited+retried GET that must yield HTTP 200, and is the
 // single source of truth for the retry loop shared by Limit/LimitRaw/LimitStream.
 //
@@ -198,14 +208,14 @@ func (r *RequestService) Limit(ctx context.Context, u string, logger *zap.Logger
 		}
 
 		switch badResp.Code {
-		case 401:
+		case codeInvalidCookie:
 			logger.Error("Invalid zsxq cookie")
 			return false, ErrInvalidCookie
-		case 1059:
+		case codeTooManyRequests:
 			logger.Warn("Too many requests due to no sign, sleep 60s")
-			time.Sleep(60 * time.Second)
+			time.Sleep(noSignBackoff)
 			return false, nil
-		case 1050:
+		case codeDataSystemBusy:
 			var dataSystemResp dataSystemResp
 			if err = json.Unmarshal(bytes, &dataSystemResp); err != nil {
 				logger.Error("Failed to unmarshal data system resp", zap.Error(err))

@@ -41,3 +41,7 @@ xiaobot = ''
 
 [utils]
 rsshub_url = ''
+
+[zsxq]
+blocked_author_ids = [184544455455452]
+blocked_author_names = ['庄太云']
