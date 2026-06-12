@@ -275,7 +275,7 @@ func crawlGroup(groupID int, requestService request.Requester, parseService pars
 
 	// Get latest topics from zsxq
 	if err = crawl.CrawlGroup(groupID, requestService, parseService,
-		latestTopicTimeInDB, false, false, time.Time{}, logger); err != nil {
+		latestTopicTimeInDB, false, logger); err != nil {
 		return fmt.Errorf("failed to crawl group: %w", err)
 	}
 	logger.Info("Crawl zsxq group successfully")

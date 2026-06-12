@@ -27,8 +27,6 @@ type DBTopic interface {
 	SaveTopic(t *Topic) error
 	// Get latest topic time from zsxq_topic table
 	GetLatestTopicTime(gid int) (t time.Time, err error)
-	// Get earliest topic time from zsxq_topic table
-	GetEarliestTopicTime(gid int) (t time.Time, err error)
 	// Get latest n topics from zsxq_topic table
 	GetLatestNTopics(gid int, n int) (ts []Topic, err error)
 	// Get All ids from zsxq_topic table
@@ -63,17 +61,6 @@ func (s *ZsxqDBService) GetLatestTopicTime(gid int) (time.Time, error) {
 func (s *ZsxqDBService) GetTopicByID(id int) (t Topic, err error) {
 	err = s.db.Where("id = ?", id).First(&t).Error
 	return t, err
-}
-
-func (s *ZsxqDBService) GetEarliestTopicTime(gid int) (time.Time, error) {
-	var topic Topic
-	if err := s.db.Where("group_id = ?", gid).Order("time asc").First(&topic).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return time.Time{}, nil
-		}
-		return time.Time{}, err
-	}
-	return topic.Time, nil
 }
 
 func (s *ZsxqDBService) GetLatestNTopics(gid, n int) (ts []Topic, err error) {
