@@ -161,7 +161,10 @@ type UpstreamNotJSONResp struct {
 // Send request with limiter, used for all zhihu api requests
 func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Logger) (respByte []byte, err error) {
 	requestTaskID := xid.New().String()
-	logger.Info("Start to get zhihu raw data with limit, waiting for limiter", zap.String("url", u), zap.String("request_task_id", requestTaskID))
+	// Bind url to the logger context once so every line in this call — including
+	// each retry's error — carries it without re-stating it at each log site.
+	logger = logger.With(zap.String("url", u))
+	logger.Info("Start to get zhihu raw data with limit, waiting for limiter", zap.String("request_task_id", requestTaskID))
 
 	for i := range r.maxRetry {
 		currentRequestTaskID := fmt.Sprintf("%s_%d", requestTaskID, i)
@@ -294,7 +297,7 @@ func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Log
 			}
 			logger.Error("Zhihu returned non-json body, will retry",
 				zap.Int("zhihu_status", upstream.ZhihuStatus),
-				zap.String("raw_body", upstream.RawBody))
+				zap.String("raw_body", truncateBody(upstream.RawBody)))
 			if ferr := r.dbService.IncreaseFailedCount(es.ID); ferr != nil {
 				logger.Error("Failed to increase failed count", zap.Error(ferr))
 			}
@@ -311,6 +314,19 @@ func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Log
 	// when all retries are exhausted instead of (nil, nil).
 	r.logger.Error("Failed to get zhihu raw data after exhausting retries", zap.String("request_task_id", requestTaskID))
 	return nil, ErrMaxRetry
+}
+
+// truncateBody caps an upstream raw body before logging so we don't write a
+// full HTML error page on every retry. The prefix keeps the diagnostic signal
+// (status line / error message) without the bulk. Truncation is rune-aware to
+// avoid emitting invalid UTF-8 when the body is Chinese (e.g. zhihu error text).
+func truncateBody(s string) string {
+	const maxRunes = 512
+	r := []rune(s)
+	if len(r) <= maxRunes {
+		return s
+	}
+	return string(r[:maxRunes]) + "…(truncated)"
 }
 
 func isAccountDestroyedResp(body []byte) bool {
