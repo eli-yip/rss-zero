@@ -21,16 +21,10 @@ func loadOrAbsent[T any](get func(int) (*T, error), id int) (*T, error) {
 // storedIsCurrent reports whether an already-stored record still reflects the
 // incoming payload, i.e. it does NOT need re-parsing. stored is the timestamp in
 // the database; incoming is the updated_at carried by the freshly fetched
-// content.
+// content. A record is current unless the incoming payload was edited after it.
 //
-// A zero stored timestamp marks a row written before zhihu content carried an
-// updated_at (pre-2024-11-09 AutoMigrate left those rows NULL). Its freshness is
-// unknown, so we conservatively treat it as current and skip re-parsing. Once the
-// 20260612 backfill has filled those rows in production this branch is dead and
-// can be removed, collapsing the rule to `return !incoming.After(stored)`.
+// A zero stored timestamp (which the 20260612 migration backfilled away) now
+// sorts as the oldest possible time, so such a row would be re-parsed once.
 func storedIsCurrent(stored, incoming time.Time) bool {
-	if stored.IsZero() {
-		return true
-	}
 	return !incoming.After(stored)
 }

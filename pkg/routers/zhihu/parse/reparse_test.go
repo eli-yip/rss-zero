@@ -20,8 +20,7 @@ func TestStoredIsCurrent(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{"zero stored is treated as current", time.Time{}, base, true},
-		{"zero stored stays current even with newer incoming", time.Time{}, base.Add(time.Hour), true},
+		{"zero stored sorts as oldest, needs re-parse", time.Time{}, base, false},
 		{"incoming newer needs re-parse", base, base.Add(time.Second), false},
 		{"incoming equal is current", base, base, true},
 		{"incoming older is current", base, base.Add(-time.Second), true},
