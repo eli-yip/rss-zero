@@ -59,3 +59,13 @@ func (h *Controller) Migrate20250530(c echo.Context) (err error) {
 
 	return c.JSON(http.StatusOK, "Start to migrate db 20250530")
 }
+
+func (h *Controller) Migrate20260612(c echo.Context) (err error) {
+	logger := common.ExtractLogger(c)
+
+	logger.Info("Start to migrate db 20260612")
+
+	go migrate.Migrate20260612(h.db, logger)
+
+	return c.JSON(http.StatusOK, "Start to migrate db 20260612")
+}

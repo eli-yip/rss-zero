@@ -424,6 +424,8 @@ func registerMigrate(migrateApi *echo.Group, migrateHandler *migrateController.C
 	migrate20240929Api.Name = "Migrate db 20240929 route"
 	migrate20250530Api := migrateApi.POST("/20250530", migrateHandler.Migrate20250530)
 	migrate20250530Api.Name = "Migrate db 20250530 route"
+	migrate20260612Api := migrateApi.POST("/20260612", migrateHandler.Migrate20260612)
+	migrate20260612Api.Name = "Migrate db 20260612 route"
 }
 
 func registerParse(parseApi *echo.Group, parseHandler *parseHandler.Handler) {
