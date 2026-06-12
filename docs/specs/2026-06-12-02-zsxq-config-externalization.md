@@ -1,9 +1,11 @@
-# SPEC Draft：知识星球（zsxq）配置即代码收敛
+# SPEC：知识星球（zsxq）配置即代码收敛
 
-> 状态：**Draft / 待讨论**
+> 状态：**已定稿 / 待实现**
 > 范围：`pkg/routers/zsxq/parse/**`、`pkg/routers/zsxq/request/**`、`pkg/routers/zsxq/refmt/**`、`config/**`
 > 目标：把散落在解析/请求/重排链路里的硬编码"规则与魔法值"按性质分类处理——运营规则外置到配置，协议常量/一次性边界提为带注释的具名常量——使"改一条运营规则"不再等于"改代码 + 发布"。
-> 前置：源自 [2026-06-12-01-zsxq-maintainability-refactor.md](2026-06-12-01-zsxq-maintainability-refactor.md) 附录"配置即代码（后续项）"。本文为讨论稿，方案为方向而非定稿。
+> 前置：源自 [2026-06-12-01-zsxq-maintainability-refactor.md](2026-06-12-01-zsxq-maintainability-refactor.md) 附录"配置即代码（后续项）"。四处待决点已与作者确认，方案已定稿。
+>
+> 讨论结论：① 作者屏蔽用**全局**列表（非按 group）；② topicIDSkip **很少新增** → 仅提包级 var，**不进配置**；③ refmt **仍在使用**（不常用）→ 项 4 正经做具名常量，不降级。
 
 ---
 
@@ -13,10 +15,10 @@
 
 | 项 | 位置 | 性质 | 变化驱动 | 建议处理 |
 |---|---|---|---|---|
-| 1. 作者过滤 `庄太云` | parse/talk.go:29 | **运营/业务规则** | 业务决定（屏蔽某作者） | **外置到配置** |
-| 2. topicIDSkip 黑名单 | parse/topic.go:33 | parser 崩溃 workaround | 发现新的崩溃 topic（低频） | **包级 var；是否进配置待议** |
+| 1. 作者过滤 `庄太云` | parse/talk.go:29 | **运营/业务规则** | 业务决定（屏蔽某作者） | **外置到配置（全局列表）** |
+| 2. topicIDSkip 黑名单 | parse/topic.go:33 | parser 崩溃 workaround | 发现新的崩溃 topic（**很少**） | **包级 var（map 查找）；不进配置** |
 | 3. 业务码 401/1059/1050 + Sleep(60s) | request.go:201–214 | **协议常量** | zsxq 改 API（极罕见） | **具名常量**（进配置是反模式） |
-| 4. 魔法日期 2021-01-01 | refmt/refmt.go:78 | 一次性 backfill 下界 | 基本不变 | **具名常量** |
+| 4. 魔法日期 2021-01-01 | refmt/refmt.go:78 | 一次性 backfill 下界 | 基本不变（refmt 仍在用） | **具名常量** |
 
 判断准则：**会因运营/业务决定而变的 → 配置；只因外部协议或历史事实而变的 → 具名常量**。把协议码丢进 TOML 反而让运维有机会改坏不该碰的东西。
 
@@ -52,22 +54,23 @@ if authorID == 184544455455452 || authorName == `庄太云` {
 
 ---
 
-## 方案（待定）
+## 方案（已定稿）
 
-### 项 1：作者屏蔽外置到配置（建议优先做）
+### 项 1：作者屏蔽外置到配置（全局，优先做）
 在 `TomlConfig` 增加 zsxq 段：
 ```toml
 [zsxq]
   blocked_author_ids   = [184544455455452]
   blocked_author_names = ["庄太云"]
 ```
+- `config/toml.go` 增 `Zsxq` 块：`BlockedAuthorIDs []int` / `BlockedAuthorNames []string`。
 - parse 层从 `config.C.Zsxq` 读取，命中任一即跳过（保持现有"或"语义与 `ErrNoText` 返回）。
-- **待决**：屏蔽是全局还是按 group？当前是全局单作者，倾向先做全局列表，按 group 留作后续。
+- **全局**（非按 group）；按 group 不做。
+- 缺省安全：旧 config.toml 无 `[zsxq]` 段时降级为空列表（不屏蔽任何人，等价于"屏蔽功能未启用"）。
 
-### 项 2：topicIDSkip
-- **最小**：提为包级 `var topicIDSkip = map[int]struct{}{...}`（顺带把 O(n) `slices.Contains` 换成 map 查找），加注释说明用途。
-- **可选**：若希望"加一个崩溃 topic 不发版"，再外置到 `[zsxq] skip_topic_ids = [...]`。
-- **待决**：这类崩溃 ID 多久新增一次？低频则具名 var 足够；若运营常加则进配置。
+### 项 2：topicIDSkip → 包级 var（不进配置）
+- 提为包级 `var topicIDSkip = map[int]struct{}{...}`，把 O(n) `slices.Contains` 换成 map 查找，加注释说明用途（多数是 markdown 转换器超时/报错的 topic）。
+- **不进配置**：新增很少，包级 var + 发版即可，无需运维外置。
 
 ### 项 3：业务码 + Sleep → 具名常量
 在 request 包定义：
@@ -83,8 +86,7 @@ const noSignBackoff = 60 * time.Second
 - **不进配置**：协议码不该让运维改。
 
 ### 项 4：魔法日期 → 具名常量
-- refmt 包定义 `var reformatFloorTime = time.Date(2021, 1, 1, ...)`（或具名常量 + 注释说明为何是 2021-01-01）。
-- **待决**：确认 refmt 是否仍在使用；若是历史一次性工具，可能连这步都不必做（仅加注释）。
+- refmt 仍在使用（不常用），正经做：refmt 包定义具名常量/var `reformatFloorTime = time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)`，加注释说明为何是该下界；循环判断改用之。
 
 ---
 
@@ -98,20 +100,20 @@ const noSignBackoff = 60 * time.Second
 
 ---
 
-## 风险/待决汇总
+## 风险/待决汇总（已收敛）
 
-1. 作者屏蔽：全局 vs 按 group？（建议先全局）
-2. topicIDSkip：是否值得进配置，取决于新增频率（需你提供运营经验）。
-3. refmt：是否仍在用？若废弃则项 4 降级为"加注释"或不做。
-4. 配置缺省值：新增 `[zsxq]` 段在旧 config.toml 缺失时应安全降级为空列表（不 panic、不改变现网行为）。
+1. 作者屏蔽：**全局**（已定）。
+2. topicIDSkip：很少新增 → **不进配置**，包级 var（已定）。
+3. refmt：仍在用 → 项 4 **正经做具名常量**（已定）。
+4. 配置缺省值：新增 `[zsxq]` 段在旧 config.toml 缺失时安全降级为空列表（不 panic、不改变现网行为）——实现时需保证。同时需在现网 config.toml 补上 `[zsxq]` 段以保留对 `庄太云` 的屏蔽（否则行为回归）。
 
 ---
 
 ## 实施顺序建议
 
-1. **项 1（作者屏蔽外置）** —— 唯一真正的运营规则，价值最高。
+1. **项 1（作者屏蔽外置）** —— 唯一真正的运营规则，价值最高。需同步更新现网 config.toml。
 2. **项 3（业务码具名常量）** —— 纯 in-code，零风险。
 3. **项 2（topicIDSkip 包级 var）** —— 顺带修 O(n)。
-4. **项 4（魔法日期）** —— 视 refmt 是否在用，可能仅加注释。
+4. **项 4（魔法日期）** —— refmt 包具名常量。
 
-可合并为一个 PR（量都不大），或项 1 单独成 PR、其余打包。
+项 2/3/4 都是纯 in-code 重命名/挪动，可合并为一个 PR；项 1 涉及配置 + 现网同步，建议单独成 PR。
