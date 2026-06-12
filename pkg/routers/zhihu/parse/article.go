@@ -2,14 +2,12 @@ package parse
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
-	"gorm.io/gorm"
 
 	"go.uber.org/zap"
 )
@@ -64,22 +62,13 @@ func (p *ParseService) ParseArticle(content []byte, logger *zap.Logger) (text st
 		return emptyString, fmt.Errorf("failed to convert article id from any to int: %w", err)
 	}
 
-	articleInDB, exist, err := checkArticleExist(article.ID, p.db)
+	articleInDB, err := loadOrAbsent(p.db.GetArticle, article.ID)
 	if err != nil {
-		return emptyString, fmt.Errorf("failed to check article exist: %w", err)
+		return emptyString, fmt.Errorf("failed to get article from db: %w", err)
 	}
-	if exist {
-		if articleInDB.UpdateAt.IsZero() {
-			logger.Info("Article already exist, updated_at is zero, skip this article")
-			return articleInDB.Text, nil
-		}
-		articleUpdateAt := time.Unix(article.UpdateAt, 0)
-		if articleUpdateAt.After(articleInDB.UpdateAt) {
-			logger.Info("Article already exist, but updated_at is newer, re-parse it")
-		} else {
-			logger.Info("Article already exist, skip")
-			return articleInDB.Text, nil
-		}
+	if articleInDB != nil && storedIsCurrent(articleInDB.UpdateAt, time.Unix(article.UpdateAt, 0)) {
+		logger.Info("Article already up-to-date, skip re-parsing")
+		return articleInDB.Text, nil
 	}
 
 	text, err = p.parseHTML(article.HTML, article.ID, common.ZhihuArticle, logger)
@@ -116,15 +105,4 @@ func (p *ParseService) ParseArticle(content []byte, logger *zap.Logger) (text st
 	logger.Info("Save article info to db successfully")
 
 	return formattedText, nil
-}
-
-func checkArticleExist(articleID int, db db.DB) (article *db.Article, exist bool, err error) {
-	article, err = db.GetArticle(articleID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, false, nil
-		}
-		return nil, false, fmt.Errorf("failed to get article from db: %w", err)
-	}
-	return article, true, nil
 }

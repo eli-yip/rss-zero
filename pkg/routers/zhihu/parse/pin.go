@@ -2,14 +2,12 @@ package parse
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/md"
@@ -60,22 +58,13 @@ func (p *ParseService) ParsePin(content []byte, logger *zap.Logger) (text string
 	}
 	logger.Info("Unmarshal pin successfully")
 
-	pinInDB, exist, err := checkPinExist(pinID, p.db)
+	pinInDB, err := loadOrAbsent(p.db.GetPin, pinID)
 	if err != nil {
-		return emptyString, fmt.Errorf("failed to check pin exist: %w", err)
+		return emptyString, fmt.Errorf("failed to get pin from db: %w", err)
 	}
-	if exist {
-		if pinInDB.UpdateAt.IsZero() {
-			logger.Info("Pin already exist, updated_at is zero, skip this pin")
-			return pinInDB.Text, nil
-		}
-		pinUpdateAt := time.Unix(pin.UpdateAt, 0)
-		if pinUpdateAt.After(pinInDB.UpdateAt) {
-			logger.Info("Pin already exist, but updated_at is newer, update this pin")
-		} else {
-			logger.Info("Pin already exist, but updated_at is older, skip this pin")
-			return pinInDB.Text, nil
-		}
+	if pinInDB != nil && storedIsCurrent(pinInDB.UpdateAt, time.Unix(pin.UpdateAt, 0)) {
+		logger.Info("Pin already up-to-date, skip re-parsing")
+		return pinInDB.Text, nil
 	}
 
 	text, err = p.parseAndSavePin(&pin, content, pinID, logger)
@@ -284,15 +273,4 @@ func tryToFindTitle(text string) (title, content string) {
 		return title, content
 	}
 	return "", text
-}
-
-func checkPinExist(articleID int, db db.DB) (pin *db.Pin, exist bool, err error) {
-	pin, err = db.GetPin(articleID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, false, nil
-		}
-		return nil, false, fmt.Errorf("failed to get pin from db: %w", err)
-	}
-	return pin, true, nil
 }

@@ -2,14 +2,12 @@ package parse
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/common"
@@ -78,22 +76,13 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 		return emptyString, fmt.Errorf("failed to convert question id from any to int: %w", err)
 	}
 
-	answerInDB, exist, err := checkAnswerExist(answer.ID, p.db)
+	answerInDB, err := loadOrAbsent(p.db.GetAnswer, answer.ID)
 	if err != nil {
-		return emptyString, fmt.Errorf("failed to check answer exist: %w", err)
+		return emptyString, fmt.Errorf("failed to get answer from db: %w", err)
 	}
-	if exist {
-		if answerInDB.UpdateAt.IsZero() {
-			logger.Info("Answer already exist, updated_at is zero, skip this answer")
-			return answerInDB.Text, nil
-		}
-		answerUpdateAt := time.Unix(answer.UpdateAt, 0)
-		if answerUpdateAt.After(answerInDB.UpdateAt) {
-			logger.Info("Answer already exist, updated_at is newer, update this answer")
-		} else {
-			logger.Info("Answer already exist, updated_at is older, skip this answer")
-			return answerInDB.Text, nil
-		}
+	if answerInDB != nil && storedIsCurrent(answerInDB.UpdateAt, time.Unix(answer.UpdateAt, 0)) {
+		logger.Info("Answer already up-to-date, skip re-parsing")
+		return answerInDB.Text, nil
 	}
 
 	text, err = p.parseHTML(answer.HTML, answer.ID, common.ZhihuAnswer, logger)
@@ -186,15 +175,4 @@ func (p *ParseService) saveEmbedding(answerID int, text string, logger *zap.Logg
 		logger.Error("Failed to create embedding", zap.Error(err))
 	}
 	logger.Info("Save embedding to db successfully", zap.String("answer_id", answerIDStr))
-}
-
-func checkAnswerExist(answerID int, db db.DB) (answer *db.Answer, exist bool, err error) {
-	answer, err = db.GetAnswer(answerID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, false, nil
-		}
-		return nil, false, fmt.Errorf("failed to get answer from db: %w", err)
-	}
-	return answer, true, nil
 }
