@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"strconv"
 
 	"github.com/eli-yip/rss-zero/internal/md"
@@ -166,12 +165,12 @@ func (m *MarkdownRenderService) generateFilePartText(files []models.File) (strin
 		if err != nil {
 			return "", fmt.Errorf("failed to get object %d info from database: %w", file.FileID, err)
 		}
-		if object.StorageProvider == nil {
-			return "", fmt.Errorf("no storage provider in object %d info", file.FileID)
+		uri, err := object.URI()
+		if err != nil {
+			return "", fmt.Errorf("failed to build object %d uri: %w", file.FileID, err)
 		}
 
-		text := fmt.Sprintf("第%d个文件：[%s](%s)", i+1, file.Name,
-			fmt.Sprintf("%s/%s", object.StorageProvider[0], url.PathEscape(object.ObjectKey)))
+		text := fmt.Sprintf("第%d个文件：[%s](%s)", i+1, file.Name, uri)
 
 		filePart = render.TrimRightSpace(md.Join(filePart, text))
 	}
@@ -188,15 +187,15 @@ func (m *MarkdownRenderService) generateImagePartText(images []models.Image) (st
 
 	for i, image := range images {
 		object, err := m.db.GetObjectInfo(image.ImageID)
-		if err != nil || object.StorageProvider == nil {
+		if err != nil {
 			return "", fmt.Errorf("failed to get object %d info from database: %w", image.ImageID, err)
 		}
-		if object.StorageProvider == nil {
-			return "", fmt.Errorf("no storage provider in object %d info", image.ImageID)
+		uri, err := object.URI()
+		if err != nil {
+			return "", fmt.Errorf("failed to build object %d uri: %w", image.ImageID, err)
 		}
 
-		text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID,
-			fmt.Sprintf("%s/%s", object.StorageProvider[0], object.ObjectKey))
+		text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
 		imagePart = render.TrimRightSpace(md.Join(imagePart, text))
 	}
 
@@ -215,10 +214,13 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 		questionImagePart = "这个提问的图片如下："
 		for i, image := range q.Images {
 			object, err := m.db.GetObjectInfo(image.ImageID)
-			if err != nil || object.StorageProvider == nil {
-				return err
+			if err != nil {
+				return fmt.Errorf("failed to get object %d info from database: %w", image.ImageID, err)
 			}
-			uri := fmt.Sprintf("%s/%s", object.StorageProvider[0], object.ObjectKey)
+			uri, err := object.URI()
+			if err != nil {
+				return fmt.Errorf("failed to build object %d uri: %w", image.ImageID, err)
+			}
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
 			questionImagePart = render.TrimRightSpace(md.Join(questionImagePart, text))
 		}
@@ -231,10 +233,13 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 	answerVoicePart := ""
 	if a.Voice != nil {
 		object, err := m.db.GetObjectInfo(a.Voice.VoiceID)
-		if err != nil || object.StorageProvider == nil {
-			return err
+		if err != nil {
+			return fmt.Errorf("failed to get object %d info from database: %w", a.Voice.VoiceID, err)
 		}
-		uri := fmt.Sprintf("%s/%s", object.StorageProvider[0], object.ObjectKey)
+		uri, err := object.URI()
+		if err != nil {
+			return fmt.Errorf("failed to build object %d uri: %w", a.Voice.VoiceID, err)
+		}
 		answerVoicePart = render.TrimRightSpace(md.Join(answerVoicePart,
 			fmt.Sprintf("这个[回答](%s)的语音转文字结果：", uri),
 			object.Transcript))
@@ -254,10 +259,13 @@ func (m *MarkdownRenderService) renderQA(q *models.Question, a *models.Answer, a
 		answerImagePart = "这个回答的图片如下："
 		for i, image := range a.Images {
 			object, err := m.db.GetObjectInfo(image.ImageID)
-			if err != nil || object.StorageProvider == nil {
-				return err
+			if err != nil {
+				return fmt.Errorf("failed to get object %d info from database: %w", image.ImageID, err)
 			}
-			uri := fmt.Sprintf("%s/%s", object.StorageProvider[0], object.ObjectKey)
+			uri, err := object.URI()
+			if err != nil {
+				return fmt.Errorf("failed to build object %d uri: %w", image.ImageID, err)
+			}
 			text := fmt.Sprintf("第%d张图片：![%d](%s)", i+1, image.ImageID, uri)
 			answerImagePart = render.TrimRightSpace(md.Join(answerImagePart, text))
 		}

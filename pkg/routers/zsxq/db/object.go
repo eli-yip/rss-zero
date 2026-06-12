@@ -1,11 +1,19 @@
 package db
 
 import (
+	"errors"
+	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
+
+// ErrNoStorageProvider is returned by Object.URI when an object has no
+// storage provider recorded, so callers can distinguish it from a DB error.
+var ErrNoStorageProvider = errors.New("object has no storage provider")
 
 type Object struct {
 	ID              int            `gorm:"column:id;primary_key"`
@@ -25,6 +33,23 @@ type Object struct {
 }
 
 func (o *Object) TableName() string { return "zsxq_object" }
+
+// URI builds the public URL for this object: the first storage provider
+// joined with the object key. Each path segment of the key is PathEscaped
+// while "/" separators are preserved (image/voice keys have no special
+// characters, so they stay byte-identical; file keys with non-ASCII names
+// get their filename segment escaped). Returns ErrNoStorageProvider if no
+// provider is recorded.
+func (o *Object) URI() (string, error) {
+	if len(o.StorageProvider) == 0 {
+		return "", fmt.Errorf("%w: object_key=%s", ErrNoStorageProvider, o.ObjectKey)
+	}
+	segs := strings.Split(o.ObjectKey, "/")
+	for i, s := range segs {
+		segs[i] = url.PathEscape(s)
+	}
+	return o.StorageProvider[0] + "/" + strings.Join(segs, "/"), nil
+}
 
 type DBObject interface {
 	// Save object info to zsxq_object table
