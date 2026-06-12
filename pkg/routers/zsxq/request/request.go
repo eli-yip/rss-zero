@@ -153,16 +153,15 @@ func (r *RequestService) doWithRetry(ctx context.Context, u string,
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			err = fmt.Errorf("bad response status code: %d", resp.StatusCode)
 			logger.Error("Bad status code", zap.Error(err))
 			continue
 		}
 
-		// 200 reached: transport succeeded. Clear err so a subsequent business
-		// retry (validate -> done=false) ends as ErrMaxRetry, not a stale error.
-		err = nil
-
+		// 200 reached: validate decides done/retry/fatal and (for read paths)
+		// closes the body. Its return value reassigns err, so a business retry
+		// (done=false, err=nil) ends the loop as ErrMaxRetry, not a stale error.
 		var done bool
 		if done, err = validate(resp); err != nil {
 			return nil, err
@@ -185,7 +184,7 @@ func (r *RequestService) Limit(ctx context.Context, u string, logger *zap.Logger
 	var body []byte
 	validate := func(resp *http.Response) (bool, error) {
 		bytes, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil {
 			logger.Error("Failed to read response body", zap.Error(err))
 			return false, nil
@@ -240,7 +239,7 @@ func (r *RequestService) LimitRaw(ctx context.Context, u string, logger *zap.Log
 	var body []byte
 	validate := func(resp *http.Response) (bool, error) {
 		bytes, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil {
 			logger.Error("Failed to read response body", zap.Error(err))
 			return false, nil
