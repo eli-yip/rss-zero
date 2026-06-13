@@ -12,6 +12,7 @@ Documentation lives under `docs/`. Use the following layout and naming conventio
 - **PLANs** go in `docs/plans/`, named `YYYY-MM-DD-NO-<topic>.md`. A PLAN breaks a SPEC into concrete implementation steps.
 - **LESSONs** go in `docs/lessons/`, named `YYYY-MM-DD-NO-<topic>.md`. While executing a PLAN, append experience and lessons learned as you go; once the PLAN is complete, reorganize the file into a coherent summary.
 - **`docs/PROGRESS.md`** tracks current progress. Update it in the *same commit* as any SPEC/PLAN/LESSON change — never later.
+- **`docs/TODO.md`** collects follow-up work that falls *outside* the current PLAN — anything, large or small, that the author wants to revisit later (deferred fixes, tech debt, ideas surfaced mid-task). When you notice such an item but it is not part of the PLAN being executed, record it here with enough context to act on later rather than expanding the current change.
 
 ## Development workflow
 
