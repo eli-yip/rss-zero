@@ -27,7 +27,11 @@ tidy:
 
 # 运行代码检查
 lint:
-    golangci-lint run -v --timeout 5m
+    autocorrect --lint .
+    dprint check
+    go mod tidy -diff
+    golangci-lint run -v --timeout 30s
+    go fix --diff ./...
 
 # 更新依赖
 update:
