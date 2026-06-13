@@ -13,6 +13,7 @@ import (
 	utils "github.com/eli-yip/rss-zero/internal/utils"
 	bookmarkDB "github.com/eli-yip/rss-zero/pkg/bookmark/db"
 	pkgCommon "github.com/eli-yip/rss-zero/pkg/common"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -25,7 +26,7 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 	var req BookmarkRequest
 	if err = c.Bind(&req); err != nil {
 		logger.Error("failed to bind request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	logger.Info("bind request successfully")
 
@@ -34,12 +35,12 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 	startDate, err = utils.ParseStartTime(req.StartDate)
 	if err != nil {
 		logger.Error("Failed to parse start date", zap.Error(err), zap.String("start_date", req.StartDate))
-		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid start date"})
+		return httputil.NewHTTPError(http.StatusBadRequest, "Invalid start date")
 	}
 	endDate, err = utils.ParseEndTime(req.EndDate)
 	if err != nil {
 		logger.Error("Failed to parse end date", zap.Error(err), zap.String("end_date", req.EndDate))
-		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid end date"})
+		return httputil.NewHTTPError(http.StatusBadRequest, "Invalid end date")
 	}
 	queryParam := &bookmarkDB.BookmarkQuery{
 		StartTime: startDate,
@@ -63,13 +64,13 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 	bookmarks, err := h.bookmarkDBService.GetBookmarkByUser(username, queryParam)
 	if err != nil {
 		logger.Error("failed to get bookmarks", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	bookmarkIDs := lo.Map(bookmarks, func(b bookmarkDB.Bookmark, _ int) string { return b.ID })
 	bookmarkIDToTags, err := h.bookmarkDBService.GetTags(bookmarkIDs)
 	if err != nil {
 		logger.Error("failed to get tags", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	answerBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == pkgCommon.ZhihuAnswer })
@@ -87,12 +88,12 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 	})
 	if err != nil {
 		logger.Error("failed to convert answer ID to int", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	answers, err := h.zhihuDBService.FetchAnswerByIDs(answerIDsInt)
 	if err != nil {
 		logger.Error("failed to fetch answers by IDs", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	answerIDToBookmark := lo.SliceToMap(answerBookmarks, func(b bookmarkDB.Bookmark) (int, bookmarkDB.Bookmark) {
 		var answerID int
@@ -105,12 +106,12 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 	})
 	if err != nil {
 		logger.Error("failed to convert bookmark ID to int", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	answerTopics, err := buildTopicMapFromAnswer(answers, answerIDToBookmark, bookmarkIDToTags, h.zhihuDBService)
 	if err != nil {
 		logger.Error("failed to build topic map from answers", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	pinBookmarks := lo.Filter(bookmarks, func(b bookmarkDB.Bookmark, _ int) bool { return b.ContentType == pkgCommon.ZhihuPin })
@@ -126,12 +127,12 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 	})
 	if err != nil {
 		logger.Error("failed to convert pin ID to int", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	pins, err := h.zhihuDBService.FetchPinByIDs(pinIDsInt)
 	if err != nil {
 		logger.Error("failed to fetch pins by IDs", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	pinIDToBookmarkMap := lo.SliceToMap(pinBookmarks, func(b bookmarkDB.Bookmark) (int, bookmarkDB.Bookmark) {
 		var pinID int
@@ -144,18 +145,18 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 	})
 	if err != nil {
 		logger.Error("failed to convert bookmark ID to int", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	pinTopics, err := buildTopicMapFromPin(pins, pinIDToBookmarkMap, bookmarkIDToTags, h.zhihuDBService)
 	if err != nil {
 		logger.Error("failed to build topic map from pins", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	count, err := h.bookmarkDBService.CountBookmarkByUser(username, queryParam)
 	if err != nil {
 		logger.Error("failed to count bookmarks", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	const pageSize = 20
@@ -180,7 +181,7 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 
 	logger.Info("Get bookmark list successfully", zap.Int("page", req.Page), zap.Int("total_page", totalPage))
 
-	return c.JSON(http.StatusOK, common.WrapRespWithData("success", response))
+	return c.JSON(http.StatusOK, httputil.NewResp("success", response))
 }
 
 // PutBookmark handles the request to create a new bookmark
@@ -191,23 +192,23 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 	var req NewBookmarkRequest
 	if err = c.Bind(&req); err != nil {
 		logger.Error("failed to bind request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	logger.Info("bind request successfully")
 
 	contentType, err := pkgCommon.ParseZhihuLegacyID(req.ContentType)
 	if err != nil {
 		logger.Error("invalid content type", zap.Int("content_type", req.ContentType), zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid content type"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid content type")
 	}
 
 	_, err = h.bookmarkDBService.GetBookmarkByContent(user, contentType, req.ContentID)
 	if err == nil {
 		logger.Info("bookmark already exists, return now", zap.String("content_id", req.ContentID))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("bookmark already exists"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "bookmark already exists")
 	} else if !errors.Is(err, bookmarkDB.ErrNoBookmark) {
 		logger.Error("failed to get bookmark", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var b *bookmarkDB.Bookmark
@@ -216,42 +217,42 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 		answerIDInt, err := strconv.Atoi(req.ContentID)
 		if err != nil {
 			logger.Error("failed to convert answer ID to int", zap.Error(err))
-			return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
+			return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 		_, err = h.zhihuDBService.GetAnswer(answerIDInt)
 		if err != nil {
 			logger.Error("failed to get answer", zap.Error(err))
-			return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
+			return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 		b, err = h.bookmarkDBService.NewBookmark(user, pkgCommon.ZhihuAnswer, req.ContentID)
 		if err != nil {
 			logger.Error("failed to create bookmark", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+			return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	case pkgCommon.ZhihuPin:
 		pinIDInt, err := strconv.Atoi(req.ContentID)
 		if err != nil {
 			logger.Error("failed to convert pin ID to int", zap.Error(err))
-			return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
+			return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 		_, err = h.zhihuDBService.GetPin(pinIDInt)
 		if err != nil {
 			logger.Error("failed to get pin", zap.Error(err))
-			return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
+			return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 		b, err = h.bookmarkDBService.NewBookmark(user, pkgCommon.ZhihuPin, req.ContentID)
 		if err != nil {
 			logger.Error("failed to create bookmark", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+			return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	default:
 		logger.Error("invalid content type", zap.Int("content_type", req.ContentType))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid content type"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid content type")
 	}
 
 	logger.Info("Create bookmark successfully", zap.String("bookmark_id", b.ID))
 
-	return c.JSON(http.StatusOK, common.WrapRespWithData("success", &NewBookmarkResponse{BookmarkID: b.ID}))
+	return c.JSON(http.StatusOK, httputil.NewResp("success", &NewBookmarkResponse{BookmarkID: b.ID}))
 }
 
 func (h *Controller) PatchBookmark(c echo.Context) (err error) {
@@ -260,12 +261,12 @@ func (h *Controller) PatchBookmark(c echo.Context) (err error) {
 	bookmarkID := c.Param("id")
 	if bookmarkID == "" {
 		logger.Error("bookmark ID is empty")
-		return c.JSON(http.StatusBadRequest, common.WrapResp("bookmark ID is empty"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "bookmark ID is empty")
 	}
 	var req PutBookmarkRequest
 	if err = c.Bind(&req); err != nil {
 		logger.Error("failed to bind request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	logger.Info("bind request successfully")
 
@@ -273,15 +274,15 @@ func (h *Controller) PatchBookmark(c echo.Context) (err error) {
 	if err != nil {
 		if errors.Is(err, bookmarkDB.ErrNoBookmark) {
 			logger.Error("bookmark not found", zap.Error(err))
-			return c.JSON(http.StatusNotFound, common.WrapResp("bookmark not found"))
+			return httputil.NewHTTPError(http.StatusNotFound, "bookmark not found")
 		}
 		logger.Error("failed to get bookmark", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if req.Comment == nil && req.Note == nil && req.Tags == nil {
 		logger.Error("no fields to update")
-		return c.JSON(http.StatusBadRequest, common.WrapResp("no fields to update"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "no fields to update")
 	}
 
 	comment, note := b.Comment, b.Note
@@ -296,7 +297,7 @@ func (h *Controller) PatchBookmark(c echo.Context) (err error) {
 	_, err = h.bookmarkDBService.UpdateBookmark(bookmarkID, comment, note)
 	if err != nil {
 		logger.Error("failed to update bookmark", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	logger.Info("Update bookmark comment/note successfully", zap.String("bookmark_id", bookmarkID))
 
@@ -305,12 +306,12 @@ func (h *Controller) PatchBookmark(c echo.Context) (err error) {
 		err = h.bookmarkDBService.UpdateTag(bookmarkID, req.Tags)
 		if err != nil {
 			logger.Error("failed to update tags", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+			return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
 	logger.Info("Update bookmark tags successfully", zap.String("bookmark_id", bookmarkID))
 
-	return c.JSON(http.StatusOK, common.WrapResp("success"))
+	return c.JSON(http.StatusOK, httputil.NewMessage("success"))
 }
 
 func (h *Controller) DeleteBookmark(c echo.Context) (err error) {
@@ -320,27 +321,27 @@ func (h *Controller) DeleteBookmark(c echo.Context) (err error) {
 
 	if bookmarkID == "" {
 		logger.Error("bookmark ID is empty")
-		return c.JSON(http.StatusBadRequest, common.WrapResp("bookmark ID is empty"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "bookmark ID is empty")
 	}
 
 	_, err = h.bookmarkDBService.GetBookmark(user, bookmarkID)
 	if err != nil {
 		if errors.Is(err, bookmarkDB.ErrNoBookmark) {
 			logger.Error("bookmark not found", zap.Error(err))
-			return c.JSON(http.StatusNotFound, common.WrapResp("bookmark not found"))
+			return httputil.NewHTTPError(http.StatusNotFound, "bookmark not found")
 		}
 		logger.Error("failed to get bookmark", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if err = h.bookmarkDBService.RemoveBookmark(bookmarkID); err != nil {
 		logger.Error("failed to remove bookmark", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	logger.Info("Delete bookmark successfully", zap.String("bookmark_id", bookmarkID))
 
-	return c.JSON(http.StatusOK, common.WrapResp("success"))
+	return c.JSON(http.StatusOK, httputil.NewMessage("success"))
 }
 
 func (h *Controller) GetAllTags(c echo.Context) (err error) {
@@ -350,7 +351,7 @@ func (h *Controller) GetAllTags(c echo.Context) (err error) {
 	tagCounts, err := h.bookmarkDBService.GetTagCountByUser(user)
 	if err != nil {
 		logger.Error("failed to get tag counts", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	logger.Info("Get tag counts successfully", zap.Int("count", len(tagCounts)))
 
@@ -360,5 +361,5 @@ func (h *Controller) GetAllTags(c echo.Context) (err error) {
 		Tags: tagCounts,
 	}
 
-	return c.JSON(http.StatusOK, common.WrapRespWithData("success", response))
+	return c.JSON(http.StatusOK, httputil.NewResp("success", response))
 }

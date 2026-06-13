@@ -7,6 +7,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -21,10 +22,10 @@ func (h *Controller) GetStatistics(c echo.Context) (err error) {
 	var statistics map[string]int
 	if statistics, err = calculateStatistics(PlatformZhihu, "canglimo", h.zhihuDBService); err != nil {
 		logger.Error("Failed to calculate statistics", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to calculate statistics"})
+		return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to calculate statistics")
 	}
 
-	return c.JSON(http.StatusOK, statistics)
+	return c.JSON(http.StatusOK, httputil.NewResp("success", statistics))
 }
 
 func calculateStatistics(_, author string, d zhihuDB.DB) (map[string]int, error) {

@@ -18,6 +18,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	utils "github.com/eli-yip/rss-zero/internal/utils"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/render"
 )
@@ -39,7 +40,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	var req XiaobotExportReq
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Error exporting xiaobot", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 	logger.Info("Retrieved xiaobot export request", zap.Any("req", req))
 
@@ -47,7 +48,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	if err != nil {
 		err = errors.Join(err, errors.New("parse xiaobot export option error"))
 		logger.Error("Error parse xiaobot export option", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid export option"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid export option")
 	}
 	logger.Info("Parse export option success", zap.Any("options", options))
 
@@ -152,7 +153,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 		}
 	}()
 
-	return c.JSON(http.StatusOK, common.WrapRespWithData("start to export xiaobot content, you'll be notified when it's done", XiaobotExportResp{
+	return c.JSON(http.StatusOK, httputil.NewResp("start to export xiaobot content, you'll be notified when it's done", XiaobotExportResp{
 		FileName: fileName,
 		URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
 	}))

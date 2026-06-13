@@ -35,6 +35,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
@@ -97,6 +98,8 @@ func setupEcho(redisService redis.Redis,
 		myMiddleware.LogRequest(logger),   // log request
 		myMiddleware.InjectLogger(logger), // inject logger to context
 	)
+	// Render all errors as the unified {message} envelope.
+	e.HTTPErrorHandler = httputil.NewHTTPErrorHandler(logger)
 
 	zsxqHandler := zsxqController.NewZsxqController(redisService, cookieService, db, notifier, logger)
 	zhihuDBService := zhihuDB.NewDBService(db)
@@ -179,10 +182,10 @@ func setupEcho(redisService redis.Redis,
 	}
 
 	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{
+		return c.JSON(http.StatusOK, httputil.NewResp("ok", map[string]string{
 			"status":  "ok",
 			"version": version.Version,
-		})
+		}))
 	})
 	healthEndpoint.Name = "Health check route"
 

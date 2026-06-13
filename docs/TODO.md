@@ -40,3 +40,8 @@
 `go fix --diff ./...` 建议的现代化改写，涉及 `strings.Builder` 替代 `+=` 字符串拼接、`new(expr)`（Go 1.26）替代 `getStringPtr` 泛型辅助并加 `//go:fix inline` 等。逐文件审阅后用 `go fix ./...` 应用：
 
 `cmd/cli/view.go`、`internal/controller/archive/zsxq_archive.go`、`internal/controller/zhihu/export.go`、`internal/controller/zsxq/export.go`、`internal/md/basic.go`、`internal/redis/redis.go`、`pkg/render/html.go`、`pkg/render/html_test.go`、`pkg/routers/xiaobot/refmt/refmt.go`、`pkg/routers/zhihu/cron/export.go`、`pkg/routers/zhihu/refmt/answer.go`、`pkg/routers/zhihu/refmt/article.go`、`pkg/routers/zhihu/refmt/pin.go`、`pkg/routers/zhihu/render/html_convert.go`、`pkg/routers/zsxq/random/random.go`、`pkg/routers/zsxq/refmt/refmt.go`、`pkg/routers/zsxq/render/html.go`
+
+## 统一响应格式后续（unified-response-format）
+
+- **`/statistics` 页面在统计数据为空时白屏崩溃**（预存 bug，与统一响应格式无关）。webapp 的 `<ActivityCalendar>`（react-activity-calendar）在收到空数据时抛异常，且无 error boundary，导致整页不渲染。复现：当 canglimo 在"过去一年"窗口内没有回答时（如本地 DB 数据陈旧），`GET /api/v1/archive/statistics` 返回空 `data`，前端解包为空 → 组件崩溃。生产环境有近一年数据故正常。修复方向：`StatisticsPage`/`Statistics` 组件加空数据 guard（空时显示占位/提示），或包一层 error boundary。
+- **后续 API 设计议题**（首性原理讨论结论，留作后续 SPEC）：读操作 POST→GET、content_type 字符串/整数枚举统一、bookmark 子资源化（`PUT/DELETE /topics/{id}/bookmark`）、`/sub/sub/zhihu` 笔误路径修复。

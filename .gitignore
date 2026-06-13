@@ -364,3 +364,7 @@ Temporary Items
 !.gitignore
 !.gitsubmodules
 .claude/worktrees
+
+# direnv local secrets
+.env.local
+.envrc

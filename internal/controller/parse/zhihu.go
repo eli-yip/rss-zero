@@ -10,6 +10,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
@@ -21,8 +22,7 @@ type ZhihuParseRequest struct {
 }
 
 type Response struct {
-	TaskID  string `json:"task_id"`
-	Message string `json:"message"`
+	TaskID string `json:"task_id"`
 }
 
 func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
@@ -31,7 +31,7 @@ func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 	var req ZhihuParseRequest
 	if err := c.Bind(&req); err != nil {
 		logger.Error("failed to bind request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, Response{Message: "invalid request"})
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
 	taskID := xid.New().String()
@@ -39,18 +39,18 @@ func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 	zhihuCookies, err := cookie.GetZhihuCookies(h.cookieService, pLogger)
 	if err != nil {
 		logger.Error("failed to get zhihu cookies", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, Response{Message: "failed to get zhihu cookies"})
+		return httputil.NewHTTPError(http.StatusInternalServerError, "failed to get zhihu cookies")
 	}
 	requestService, err := request.NewRequestService(pLogger, h.zhihuDbService, h.notifier, zhihuCookies)
 	if err != nil {
 		logger.Error("failed to init request service", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, Response{Message: "failed to init request service"})
+		return httputil.NewHTTPError(http.StatusInternalServerError, "failed to init request service")
 	}
 	imageParser := parse.NewOnlineImageParser(requestService, h.fileService, h.zhihuDbService)
 	zhihuParseService, err := parse.InitParser(h.aiService, imageParser, h.zhihuHtmlToMarkdown, h.fileService, h.zhihuDbService, h.embeddingDBService)
 	if err != nil {
 		logger.Error("failed to init zhihu parse service", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, Response{Message: "failed to init zhihu parse service"})
+		return httputil.NewHTTPError(http.StatusInternalServerError, "failed to init zhihu parse service")
 	}
 
 	go func() {
@@ -72,5 +72,5 @@ func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 		}
 	}()
 
-	return c.JSON(http.StatusOK, Response{Message: "start to parse answers", TaskID: taskID})
+	return c.JSON(http.StatusOK, httputil.NewResp("start to parse answers", Response{TaskID: taskID}))
 }

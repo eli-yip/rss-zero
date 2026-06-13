@@ -15,6 +15,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 )
 
 type Controller struct {
@@ -53,7 +54,7 @@ func (h *Controller) UpdateCookies(c echo.Context) (err error) {
 	}
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Failed to bind cookies request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
 	names := make([]string, len(req.Cookies))
@@ -72,7 +73,7 @@ func (h *Controller) UpdateCookies(c echo.Context) (err error) {
 	logger.Info("Processed cookies", zap.Int("received", len(req.Cookies)),
 		zap.Strings("names", names), zap.Int("stored", storedCount))
 
-	return c.JSON(http.StatusOK, common.WrapRespWithData("cookies processed", struct {
+	return c.JSON(http.StatusOK, httputil.NewResp("cookies processed", struct {
 		Results []Result `json:"results"`
 	}{Results: results}))
 }
@@ -156,7 +157,7 @@ func (h *Controller) CheckCookies(c echo.Context) (err error) {
 			// not stored (or expired) — leave defaults
 		case err != nil:
 			logger.Error("Failed to get cookie status", zap.String("cookie", s.Label()), zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, common.WrapResp(err.Error()))
+			return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
 		default:
 			st.Stored = true
 			if ttl, terr := h.cookie.GetTTL(s.Type); terr == nil {
@@ -167,7 +168,7 @@ func (h *Controller) CheckCookies(c echo.Context) (err error) {
 		out = append(out, st)
 	}
 
-	return c.JSON(http.StatusOK, common.WrapRespWithData("cookie status", struct {
+	return c.JSON(http.StatusOK, httputil.NewResp("cookie status", struct {
 		Cookies []Status `json:"cookies"`
 	}{Cookies: out}))
 }

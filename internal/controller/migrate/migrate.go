@@ -7,6 +7,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/migrate"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -30,14 +31,14 @@ func (h *Controller) Migrate20240905(c echo.Context) (err error) {
 	minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {
 		logger.Error("Failed to create minio service", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, "Failed to create minio service")
+		return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to create minio service")
 	}
 
 	logger.Info("Start to migrate minio files")
 
 	go migrate.MigrateMinio20240905(minioService, h.db, logger)
 
-	return c.JSON(http.StatusOK, "Start to migrate minio files")
+	return c.JSON(http.StatusOK, httputil.NewMessage("Start to migrate minio files"))
 }
 
 func (h *Controller) Migrate20240929(c echo.Context) (err error) {
@@ -47,7 +48,7 @@ func (h *Controller) Migrate20240929(c echo.Context) (err error) {
 
 	go migrate.MigrateDB20240929(h.db, logger)
 
-	return c.JSON(http.StatusOK, "Start to migrate db 20240929")
+	return c.JSON(http.StatusOK, httputil.NewMessage("Start to migrate db 20240929"))
 }
 
 func (h *Controller) Migrate20250530(c echo.Context) (err error) {
@@ -57,7 +58,7 @@ func (h *Controller) Migrate20250530(c echo.Context) (err error) {
 
 	go migrate.Migrate20250530(h.db, logger)
 
-	return c.JSON(http.StatusOK, "Start to migrate db 20250530")
+	return c.JSON(http.StatusOK, httputil.NewMessage("Start to migrate db 20250530"))
 }
 
 func (h *Controller) Migrate20260612(c echo.Context) (err error) {
@@ -67,5 +68,5 @@ func (h *Controller) Migrate20260612(c echo.Context) (err error) {
 
 	go migrate.Migrate20260612(h.db, logger)
 
-	return c.JSON(http.StatusOK, "Start to migrate db 20260612")
+	return c.JSON(http.StatusOK, httputil.NewMessage("Start to migrate db 20260612"))
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/refmt"
@@ -29,7 +30,7 @@ func (h *Controller) Reformat(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		err = errors.Join(err, errors.New("read reformat request error"))
 		logger.Error("Error reformatting zhihu", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 	logger.Info("Retieved zhihu reformat request", zap.String("author_id", req.AuthorID))
 
@@ -38,5 +39,5 @@ func (h *Controller) Reformat(c echo.Context) error {
 	refmtService := refmt.NewRefmtService(logger, h.db, htmlToMarkdown, imageParser, h.notifier, md.NewMarkdownFormatter())
 	go refmtService.ReFmt(req.AuthorID)
 
-	return c.JSON(http.StatusOK, common.WrapResp("start to reformat zhihu content"))
+	return c.JSON(http.StatusOK, httputil.NewMessage("start to reformat zhihu content"))
 }

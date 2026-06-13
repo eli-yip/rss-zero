@@ -14,6 +14,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 )
 
@@ -24,7 +25,7 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 	userRepo := strings.Split(feed, "/")
 	if len(userRepo) != 2 {
 		logger.Error("Error getting user and repo, length not equal to 2", zap.String("feed", feed))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 	user, repo := userRepo[0], userRepo[1]
 

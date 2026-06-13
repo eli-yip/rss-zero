@@ -3,7 +3,7 @@ package user
 import (
 	"net/http"
 
-	"github.com/eli-yip/rss-zero/internal/controller/common"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/labstack/echo/v4"
 )
 
@@ -13,7 +13,7 @@ type UserResponse struct {
 }
 
 func GetUserInfo(c echo.Context) (err error) {
-	return c.JSON(http.StatusOK, common.WrapRespWithData("found user", &UserResponse{
+	return c.JSON(http.StatusOK, httputil.NewResp("found user", &UserResponse{
 		Username: c.Get("username").(string),
 		Nickname: c.Get("nickname").(string),
 	}))

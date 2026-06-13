@@ -8,6 +8,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/refmt"
@@ -24,14 +25,14 @@ func (h *Controller) Reformat(c echo.Context) error {
 	var req XiaobotReformatReq
 	if err := c.Bind(&req); err != nil {
 		logger.Error("Error reformatting xiaobot", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 	logger.Info("Retieved xiaobot reformat request", zap.String("paper_id", req.PaperID))
 
 	parser, err := parse.NewParseService(parse.WithDB(h.db))
 	if err != nil {
 		logger.Error("Failed to init xiaobot parse service", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, common.WrapResp("failed to init xiaobot parse service"))
+		return httputil.NewHTTPError(http.StatusInternalServerError, "failed to init xiaobot parse service")
 	}
 
 	htmlConverter := renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
@@ -40,5 +41,5 @@ func (h *Controller) Reformat(c echo.Context) error {
 
 	go reformatService.Reformat(req.PaperID)
 
-	return c.JSON(http.StatusOK, common.WrapResp("start to reformat xiaobot content"))
+	return c.JSON(http.StatusOK, httputil.NewMessage("start to reformat xiaobot content"))
 }

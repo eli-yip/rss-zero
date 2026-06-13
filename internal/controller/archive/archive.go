@@ -15,6 +15,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	utils "github.com/eli-yip/rss-zero/internal/utils"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/eli-yip/rss-zero/pkg/render"
 )
 
@@ -25,7 +26,7 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 	var req ArchiveRequest
 	if err = c.Bind(&req); err != nil {
 		logger.Error("Failed to bind request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid request"})
+		return httputil.NewHTTPError(http.StatusBadRequest, "Invalid request")
 	}
 	logger.Info("Retrieved archive request successfully")
 
@@ -33,19 +34,19 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 	if req.Platform != PlatformZhihu ||
 		!slices.Contains(supportedAuthors, req.Author) {
 		logger.Error("Invalid request parameters", zap.Any("request", req))
-		return c.JSON(http.StatusBadRequest, &ErrResponse{Message: "invalid request"})
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
 	var startDate, endDate time.Time
 	startDate, err = utils.ParseStartTime(req.StartDate)
 	if err != nil {
 		logger.Error("Failed to parse start date", zap.Error(err), zap.String("start_date", req.StartDate))
-		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid start date"})
+		return httputil.NewHTTPError(http.StatusBadRequest, "Invalid start date")
 	}
 	endDate, err = utils.ParseEndTime(req.EndDate)
 	if err != nil {
 		logger.Error("Failed to parse end date", zap.Error(err), zap.String("end_date", req.EndDate))
-		return c.JSON(http.StatusBadRequest, ErrResponse{Message: "Invalid end date"})
+		return httputil.NewHTTPError(http.StatusBadRequest, "Invalid end date")
 	}
 
 	offset := req.Count * (req.Page - 1)
@@ -60,37 +61,37 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 		answers, err := h.zhihuDBService.FetchAnswerWithDateRange(req.Author, req.Count, offset, req.Order, startDate, endDate)
 		if err != nil {
 			logger.Error("Failed to fetch answer", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch answer"})
+			return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to fetch answer")
 		}
 
 		topics, err = buildTopicsFromAnswer(answers, username, h.zhihuDBService, h.bookmarkDBService)
 		if err != nil {
 			logger.Error("Failed to build topics", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to build topics"})
+			return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to build topics")
 		}
 
 		count, err = h.zhihuDBService.CountAnswerWithDateRange(req.Author, startDate, endDate)
 		if err != nil {
 			logger.Error("Failed to count answer", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to count answer"})
+			return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to count answer")
 		}
 	case ContentTypePin:
 		pins, err := h.zhihuDBService.FetchPinWithDateRange(req.Author, req.Count, offset, req.Order, startDate, endDate)
 		if err != nil {
 			logger.Error("Failed to fetch pin", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to fetch pin"})
+			return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to fetch pin")
 		}
 
 		topics, err = buildTopicsFromPin(pins, username, h.zhihuDBService, h.bookmarkDBService)
 		if err != nil {
 			logger.Error("Failed to build topics", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to build topics"})
+			return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to build topics")
 		}
 
 		count, err = h.zhihuDBService.CountPinWithDateRange(req.Author, startDate, endDate)
 		if err != nil {
 			logger.Error("Failed to count pin", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to count pin"})
+			return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to count pin")
 		}
 	case ContentTypeArticle:
 	default:
@@ -99,10 +100,10 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 	// calculate page counts (ceil)
 	totalPage := (count + req.Count - 1) / req.Count
 
-	return c.JSON(http.StatusOK, ArchiveResponse{
+	return c.JSON(http.StatusOK, httputil.NewResp("success", ArchiveResponse{
 		Count:        count,
 		Paging:       Paging{Total: totalPage, Current: req.Page},
-		ResponseBase: ResponseBase{Topics: topics}})
+		ResponseBase: ResponseBase{Topics: topics}}))
 }
 
 type archiveResult struct {

@@ -17,6 +17,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	utils "github.com/eli-yip/rss-zero/internal/utils"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	zsxqExport "github.com/eli-yip/rss-zero/pkg/routers/zsxq/export"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
@@ -43,7 +44,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(err, errors.New("invalid request"))
 		logger.Error("Error exporting zsxq", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 	logger.Info("Retrieved zsxq export", zap.Int("group_id", req.GroupID))
 
@@ -51,7 +52,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	if err != nil {
 		err = errors.Join(err, errors.New("parse option error"))
 		logger.Error("Error exporting zsxq", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid export option"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid export option")
 	}
 	logger.Info("Parsed zsxq export option", zap.Any("options", options))
 
@@ -158,7 +159,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 		}
 	}()
 
-	return c.JSON(http.StatusOK, common.WrapRespWithData("start to export zsxq content, you'll be notified when it's done", ZsxqExportResp{
+	return c.JSON(http.StatusOK, httputil.NewResp("start to export zsxq content, you'll be notified when it's done", ZsxqExportResp{
 		FileName: fileName,
 		URL:      config.C.Minio.AssetsPrefix + "/" + objectKey,
 	}))

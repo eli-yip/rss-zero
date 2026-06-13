@@ -34,13 +34,3 @@ type (
 	CrawlFunc        func(chan cron.CronJobInfo)
 	DefinitionToFunc map[string]CrawlFunc
 )
-
-type (
-	Resp struct {
-		Message string         `json:"message"`
-		JobInfo cronDB.CronJob `json:"job_info"`
-	}
-	ErrResp struct {
-		Message string `json:"message"`
-	}
-)

@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
 	zsxqRefmt "github.com/eli-yip/rss-zero/pkg/routers/zsxq/refmt"
 	zsxqRender "github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
@@ -24,7 +25,7 @@ func (h *Controller) Reformat(c echo.Context) (err error) {
 	if err = c.Bind(&req); err != nil {
 		err = errors.Join(err, errors.New("invalid request"))
 		logger.Error("Error reformat zsxq", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp("invalid request"))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 	logger.Info("Retrieved zsxq reformat group", zap.Int("group_id", req.GroupID))
 
@@ -35,5 +36,5 @@ func (h *Controller) Reformat(c echo.Context) (err error) {
 	go refmtService.Reformat(req.GroupID)
 	logger.Info("Start to reformat zsxq")
 
-	return c.JSON(http.StatusOK, common.WrapResp("start to reformat zsxq content, you'll be notified when it's done"))
+	return c.JSON(http.StatusOK, httputil.NewMessage("start to reformat zsxq content, you'll be notified when it's done"))
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	pkgCommon "github.com/eli-yip/rss-zero/pkg/common"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 )
 
 // FeedResp represents the response structure for the feed data.
@@ -55,10 +56,10 @@ func (h *Controller) Feed(c echo.Context) error {
 	freshRSSFeeds, err := buildZhihuFreshRSSFeedMap(config.C.Settings.FreshRssURL, internalFeeds)
 	if err != nil {
 		logger.Error("Failed generate zhihu fresh rss feed", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, common.WrapResp(err.Error()))
+		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, common.WrapRespWithData("success", FeedResp{
+	return c.JSON(http.StatusOK, httputil.NewResp("success", FeedResp{
 		External: externalFeeds.toExternalFeed(),
 		Internal: internalFeeds.toInternalFeed(),
 		FreshRSS: freshRSSFeeds.toFreshRSSFeed(),

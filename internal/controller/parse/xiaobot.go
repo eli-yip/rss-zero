@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
 	"github.com/labstack/echo/v4"
@@ -25,7 +26,7 @@ func (h *Handler) ParseXiaobotPaper(c echo.Context) (err error) {
 	var req XiaobotParseRequest
 	if err := c.Bind(&req); err != nil {
 		logger.Error("failed to bind request", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, Response{Message: "invalid request"})
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
 	taskID := xid.New().String()
@@ -61,5 +62,5 @@ func (h *Handler) ParseXiaobotPaper(c echo.Context) (err error) {
 		}
 	}()
 
-	return c.JSON(http.StatusOK, Response{Message: "start to parse xiaobot paper", TaskID: taskID})
+	return c.JSON(http.StatusOK, httputil.NewResp("start to parse xiaobot paper", Response{TaskID: taskID}))
 }

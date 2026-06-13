@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -19,7 +20,7 @@ func (h *Controller) ZvideoList(c echo.Context) (err error) {
 	zvideos, err := h.zhihuDBService.GetZvideos()
 	if err != nil {
 		logger.Error("Failed to get zvideo list from db", zap.Error(err))
-		return c.JSON(http.StatusInternalServerError, ErrResponse{Message: "Failed to get zvideo list from db"})
+		return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to get zvideo list from db")
 	}
 
 	resp := ZvideoResponse{
@@ -33,5 +34,5 @@ func (h *Controller) ZvideoList(c echo.Context) (err error) {
 		}),
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, httputil.NewResp("success", resp))
 }

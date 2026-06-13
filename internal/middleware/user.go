@@ -5,6 +5,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -22,7 +23,7 @@ func InjectUser() echo.MiddlewareFunc {
 			}
 			if username == "" || nickname == "" {
 				logger.Error("missing username or nickname")
-				return c.JSON(http.StatusBadRequest, common.WrapResp("missing username or nickname"))
+				return httputil.NewHTTPError(http.StatusBadRequest, "missing username or nickname")
 			}
 			logger.Info("user info", zap.String("username", username), zap.String("nickname", nickname))
 			c.Set("username", username)

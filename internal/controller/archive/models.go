@@ -61,10 +61,6 @@ type ArchiveResponse struct {
 	ResponseBase
 }
 
-type ErrResponse struct {
-	Message string `json:"message"`
-}
-
 type Author struct {
 	ID       string `json:"id"`
 	Nickname string `json:"nickname"`
