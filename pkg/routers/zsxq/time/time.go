@@ -43,6 +43,7 @@ func DecodeZsxqAPITime(ts string) (result time.Time, err error) {
 	return result.In(config.C.BJT), nil
 }
 
+// autocorrect-disable -- Go time layout, not prose
 // FmtForRead format time.Time to a time string like "2006年1月2日".
 func FmtForRead(t time.Time) string {
 	const ZsxqTimeLayoutForRead = "2006年1月2日"
@@ -51,3 +52,5 @@ func FmtForRead(t time.Time) string {
 
 	return t.Format(ZsxqTimeLayoutForRead)
 }
+
+// autocorrect-enable

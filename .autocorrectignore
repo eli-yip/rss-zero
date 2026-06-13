@@ -1,0 +1,10 @@
+# AutoCorrect ignore (gitignore syntax)
+
+# Golden/snapshot HTML fixtures — autocorrect spacing changes would break
+# the render snapshot tests that compare against these byte-for-byte.
+pkg/render/test/
+
+# Captured API-response fixtures (JSON/HTML). These must faithfully mirror the
+# upstream payloads (real nicknames, content, etc.); reformatting corrupts the
+# test data and can break parsers that match on exact strings.
+**/example/

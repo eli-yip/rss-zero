@@ -347,7 +347,9 @@ func escapeFilename(filename string) string {
 }
 
 func (s ExportService) FilenameSingle(opt Option) (filename string, err error) {
+	// autocorrect-disable -- export filename, keep verbatim
 	fileNameArr := []string{"知乎合集-单文件版"}
+	// autocorrect-enable
 
 	contentType, err := opt.ZhihuContentType()
 	if err != nil {

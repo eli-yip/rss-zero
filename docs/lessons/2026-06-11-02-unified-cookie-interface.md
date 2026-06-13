@@ -15,11 +15,11 @@
 - (pre-impl) The new generic endpoints reuse the existing `/api/v1/cookie` group root, which is
   already in `groupNeedAuth` → inherits `AllowAdmin` with no extra middleware wiring.
 - (Step 5) `GetZhihuCookies` has 5 callers — two are RSS-read / parse-controller paths and one is
-  a request test, where a push notification would be *wrong*. So `Bundle` (which notifies) is the
+  a request test, where a push notification would be _wrong_. So `Bundle` (which notifies) is the
   right tool for the single-cookie cron consumers but not for zhihu's loader. Kept
   `GetZhihuCookies` non-notifying with a stable signature (collapsed via the registry, returns
   `ErrCookieMissing`); only the cron path notifies, via the simplified `HandleZhihuCookiesErr`.
-- (Step 6) zsxq's old `getZsxqCookie` deleted an *empty* cookie row. Dropped that: the new write
+- (Step 6) zsxq's old `getZsxqCookie` deleted an _empty_ cookie row. Dropped that: the new write
   path never stores empty values, and deleting during a read is a side effect best avoided. Legacy
   empty rows just keep getting flagged by Bundle until re-set.
 - (Step 6) xiaobot request service has no notifier and threading one in would touch 3 call sites

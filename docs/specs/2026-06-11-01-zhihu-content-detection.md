@@ -44,7 +44,7 @@ other states (0/1/3) are shown — consistent with fail-open.
 ## 4. Detection: fixed template + per-author criteria
 
 The classification **prompt structure and output contract are fixed**. The only thing
-that varies per author is *what counts as a hit* — the skip **criteria**. So we do not
+that varies per author is _what counts as a hit_ — the skip **criteria**. So we do not
 carry a full prompt per author; we carry only the criteria text, injected into a
 single shared prompt template (§5).
 

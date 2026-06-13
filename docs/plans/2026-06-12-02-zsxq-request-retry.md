@@ -22,6 +22,7 @@
 ## 实现设计（来自 SPEC 定稿）
 
 核心：
+
 ```go
 // doWithRetry runs a limited+retried GET that must yield HTTP 200.
 // On each 200 it calls validate(resp):
@@ -38,12 +39,14 @@ func (r *RequestService) doWithRetry(
 ```
 
 要点：
+
 - taskID 生成、per-attempt 子 logger、`for i < maxRetry`、终态 `if err==nil { err = ErrMaxRetry }` 全部进核心，唯一真相。
 - 非 200：`resp.Body.Close()` 后 `continue`（修掉现在的 defer 泄漏）。
 - 200：调 `validate`；`err!=nil` 直接返回；`done` 返回 resp；否则 continue。
 - 核心**不关** 200 且交给 validate 的 body——读字节的包装在 validate 内即时 Close，stream 包装故意不 Close。
 
 薄包装：
+
 - `Limit`：闭包变量 `body`；validate 读 body→Close→解析 `apiResp.Succeeded`；成功存 body 返回 done。失败解析 `badAPIResp.Code`：401→`return false, ErrInvalidCookie`；1059→`Sleep(60s); return false,nil`；1050（保留现有 dataSystemResp 日志）及 default→`return false,nil`。最后 `return body, nil`。
 - `LimitRaw`：闭包 `body`；validate 读 body→Close→存 body→done。
 - `LimitStream`：`validate = func(*http.Response)(bool,error){ return true,nil }`，直接返回核心结果。
@@ -55,12 +58,15 @@ func (r *RequestService) doWithRetry(
 ## 步骤
 
 ### 1. 建分支
+
 ```
 git checkout -b feat-zsxq-request-retry
 ```
 
 ### 2. 先补回归测试（重构前锁定行为）
+
 新增 `pkg/routers/zsxq/request/request_test.go`，白盒（package request），用 `httptest.Server` + 注入非阻塞 limiter：
+
 - 构造 helper：`newTestService(t, handler)` → 直接 `&RequestService{client: srv.Client()/&http.Client{}, maxRetry: N, logger: zap.NewNop(), limiter: ready}`，其中 `ready` 为已预填满的 buffered channel 或一个持续供给的 goroutine。
 - 用例：
   1. `Limit` 200 `{"succeeded":true,...}` → 返回原始 body。
@@ -75,10 +81,12 @@ git checkout -b feat-zsxq-request-retry
 > 注：1059 的 `time.Sleep(60s)` 不在单测覆盖（会拖慢）。如需覆盖，可在后续把 sleep 提为 `RequestService` 可注入的字段；本 PR 不动，避免扩大范围。
 
 ### 3. 实现 `doWithRetry` 并改写四方法
+
 - 加入核心方法，按上面设计改写四个公开方法为薄包装。
 - 删除四处重复循环。
 
 ### 4. 跑测试，确认行为不变
+
 ```
 go test ./pkg/routers/zsxq/request/...
 go build ./...
@@ -86,6 +94,7 @@ go vet ./pkg/routers/zsxq/...
 ```
 
 ### 5. 真实链路冒烟（可选但建议）
+
 - `cmd/server/echo.go` 的 zsxq cookie 测试端点会用 `Limit` 打 `config.C.TestURL.Zsxq`，本地起服务点一次确认 200 路径正常。
 
 ## 验收

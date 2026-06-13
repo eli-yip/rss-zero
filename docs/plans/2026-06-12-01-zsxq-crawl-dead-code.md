@@ -19,27 +19,33 @@
 ## 步骤
 
 ### 1. 建分支
+
 ```
 git checkout -b feat-zsxq-drop-backtrack
 ```
 
 ### 2. 改 `pkg/routers/zsxq/crawl/group.go`
+
 - 删除回溯循环及其引导语句：`group.go:92–144`（`if !backtrack { return nil }` 起，到回溯 `for` 结束）。正向循环结束后直接 `return nil`。
 - 从 `CrawlGroup` 签名删除 `backtrack bool` 与 `earliestTopicTimeInDB time.Time` 两个参数（L25）。
 - 函数体内若有 `finished = false` / `createTime = earliestTopicTimeInDB` 的回溯重置语句，一并随循环删除。
 
 ### 3. 改唯一调用点 `pkg/routers/zsxq/cron/crawl.go:277`
+
 - 调用从 `crawl.CrawlGroup(groupID, requestService, parseService, latestTopicTimeInDB, false, false, time.Time{}, logger)` 改为去掉末两个布尔/时间实参：`crawl.CrawlGroup(groupID, requestService, parseService, latestTopicTimeInDB, false, logger)`。
 - 检查该文件是否因此产生 unused 的 `time` import（`latestTopicTimeInDB` 仍用 `time.Time`，预计仍需保留——以 `go build` 为准）。
 
 ### 4. 删除 `GetEarliestTopicTime`
+
 - `pkg/routers/zsxq/db/topic.go`：删除接口声明（L30–31 注释 + 方法）与实现（L68–77）。
 
 ### 5. 校验
+
 ```
 go build ./...
 go vet ./pkg/routers/zsxq/...
 ```
+
 - 针对性测试（若有）：`go test ./pkg/routers/zsxq/crawl/... ./pkg/routers/zsxq/db/...`
 - 不跑全量测试套件（遵循 AGENTS.md）。
 

@@ -17,7 +17,7 @@ func GetHtmlRules() []convertRule {
 				imgTag := selec.Find("img")
 				dataOriginal, exists := imgTag.Attr("data-original")
 				if exists {
-					return md.String("![](" + dataOriginal + ")")
+					return new("![](" + dataOriginal + ")")
 				}
 				return nil
 			},

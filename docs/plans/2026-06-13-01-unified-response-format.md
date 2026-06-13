@@ -27,8 +27,8 @@
 
 1. `git checkout -b feat-unified-response`。
 2. 新建 `pkg/httputil/resp.go`：
-   - `Resp[T any]{Message string `json:"message"`; Data T `json:"data"`}`（**无 omitempty**）
-   - `EmptyResp{Message string `json:"message"`}`
+   - `Resp[T any]{Message string`json:"message"`; Data T`json:"data"`}`（**无 omitempty**）
+   - `EmptyResp{Message string`json:"message"`}`
    - `NewResp[T](msg, data) Resp[T]`、`NewMessage(msg) EmptyResp`
 3. 新建 `pkg/httputil/error.go`：
    - `ResponseError{Code int; Message string}` + `Error()` + `NewHTTPError(code, msg)`
@@ -47,6 +47,7 @@
 ## 阶段 1 — 迁移 controller（小步，分批提交）
 
 每个 handler 两类改动：
+
 - 成功：`return c.JSON(http.StatusOK, httputil.NewResp("success", data))`（或 `NewMessage(...)`）。
 - 错误：把 `return c.JSON(4xx/5xx, ErrResponse{Message: m})` → `return httputil.NewHTTPError(4xx/5xx, m)`。
 
@@ -91,6 +92,7 @@
 **手法**：逐接口 `readEntityDetails`(endpoint) 取当前 `definition` → 在其基础上改 → `updateHttpEndpoint` 提交。**不**用 `importData` 整体覆盖（会冲掉标题/描述/示例/状态/`x-apifox-*` 等元数据）。
 
 每个 `/api/v1` JSON 接口的改动：
+
 1. **成功响应**：把现有 `responses.<2xx>.content.application/json.schema`（记为 `S`）替换为：
    ```jsonc
    {
@@ -107,6 +109,7 @@
 3. 范围：仅 `/api/v1` 的 ~53 个接口;**跳过** `/rss/*`(XML) 与按需评估 `/data`。
 
 **执行约束**：
+
 - 写 Apifox 是对线上外部服务的变更——**每批 update 前把"改前→改后 schema diff"列给作者确认**，确认后再调用 `updateHttpEndpoint`。
 - 分批：先批 A 的 webapp 直连接口（archive/bookmark/tag/user/statistics/zvideo/random/similarity），核对无误后再批 B 运维接口。
 - 可在 `.apifox/3807162_RSS-ZERO.settings.json` 落结构缓存 (MCP 建议，加 `fetchedAt`);把 `.apifox/` 加进 `.gitignore`。
@@ -129,7 +132,7 @@
 2. **echo 自身错误**:绑定失败/404/405 会进 `HTTPErrorHandler`,需 `errors.As(*echo.HTTPError)` 兜底成 `{message}`,否则漏网为 echo 默认响应。
 3. **`/data` 与 `/api/v1/health`**:`/data` 是知乎加密内部端点，确认调用方 (加密服务) 是否容忍信封;`/health` 已确认无探活依赖，套信封安全。
 4. **Apifox 测试用例**:项目有 5 个用例分类 (正向/负向/边界/安全/其他)。若用例断言了响应结构，改信封后需同步用例 (`listTestCases`/`updateTestCase`)——实现阶段先 `readEntityDetails ... with=testCase` 评估影响面。
-5. **Apifox 写入幂等**:`updateHttpEndpoint` 以完整 definition 提交，务必"读 - 改-写",避免漏字段导致覆盖丢失;每批先 diff 确认。
+5. **Apifox 写入幂等**:`updateHttpEndpoint` 以完整 definition 提交，务必"读 - 改 - 写",避免漏字段导致覆盖丢失;每批先 diff 确认。
 
 ---
 

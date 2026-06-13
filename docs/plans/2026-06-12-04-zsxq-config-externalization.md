@@ -20,12 +20,15 @@
 ## 步骤
 
 ### 0. 建分支
+
 ```
 git checkout -b feat-zsxq-config
 ```
 
 ### 项 3：业务码 + backoff → 具名常量（先做，零风险）
+
 `pkg/routers/zsxq/request/request.go`：
+
 ```go
 const (
     codeInvalidCookie   = 401  // invalid cookie
@@ -34,25 +37,32 @@ const (
 )
 const noSignBackoff = 60 * time.Second
 ```
+
 - `Limit.validate` 的 `case 401/1059/1050` 改用常量；`time.Sleep(60 * time.Second)` → `time.Sleep(noSignBackoff)`。
 - 行为不变；现有 request_test.go 应仍全绿。
 
 ### 项 4：refmt 魔法日期 → 具名常量
+
 `pkg/routers/zsxq/refmt/refmt.go`：
+
 ```go
 // reformatFloorTime is the lower bound for reformatting: topics older than
 // this are not reprocessed.
 var reformatFloorTime = time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
 ```
+
 - L78 `lastTime.Before(time.Date(2021,...))` → `lastTime.Before(reformatFloorTime)`；日志文案保留或引用常量。
 
 ### 项 2：topicIDSkip → 包级 map var
+
 `pkg/routers/zsxq/parse/topic.go`：
+
 - 把函数内 `topicIDSkip := []int{...}` 提为包级 `var topicIDSkip = map[int]struct{}{ 2855142121821411: {}, ... }`，保留注释（多为 markdown 转换器超时/报错的 topic）。
 - `ParseTopic` 内 `slices.Contains(topicIDSkip, id)` → `_, skip := topicIDSkip[topic.TopicID]; if skip { ... }`。
 - 若 `slices` 在该文件无其它用处则移除其 import。
 
 ### 项 1：作者屏蔽外置到全局配置
+
 1. `config/toml.go`：新增结构与字段
    ```go
    type ZsxqConfig struct {
@@ -84,11 +94,13 @@ var reformatFloorTime = time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
      **先备份再改**；旧二进制忽略该段，安全。部署新镜像后生效。
 
 ### 校验
+
 ```
 go build ./...
 go vet ./pkg/routers/zsxq/... ./config/...
 go test ./pkg/routers/zsxq/request/... ./pkg/routers/zsxq/db/...
 ```
+
 - 可选：为项 1 加一个针对屏蔽判断的小测试（设置 `config.C.Zsxq` 后断言命中/不命中）。
 
 ## 验收

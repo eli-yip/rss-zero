@@ -65,9 +65,9 @@ func Quote(text string) string {
 	}
 
 	var buffer strings.Builder
-	lines := strings.Split(strings.TrimRight(text, "\n"), "\n")
+	lines := strings.SplitSeq(strings.TrimRight(text, "\n"), "\n")
 
-	for _, line := range lines {
+	for line := range lines {
 		buffer.WriteString("> ")
 		buffer.WriteString(line)
 		buffer.WriteString("\n")

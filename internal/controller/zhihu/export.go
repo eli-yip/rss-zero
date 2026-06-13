@@ -138,7 +138,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 		}()
 
 		var exportErr, uploadErr error
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			select {
 			case exportErr = <-exportErrCh:
 				if exportErr != nil {

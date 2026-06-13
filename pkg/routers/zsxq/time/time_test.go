@@ -63,6 +63,7 @@ func TestDecodeZsxqAPITime(t *testing.T) {
 }
 
 func TestFmtForRead(t *testing.T) {
+	// autocorrect-disable -- expected render output, must match FmtForRead verbatim
 	testCases := []testCase{
 		{
 			// equals to zsxq api time str "2023-08-30T19:59:22.593+0800"
@@ -75,6 +76,7 @@ func TestFmtForRead(t *testing.T) {
 			"2023年1月2日",
 		},
 	}
+	// autocorrect-enable
 
 	assert := assert.New(t)
 	for _, tc := range testCases {

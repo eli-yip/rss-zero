@@ -22,7 +22,7 @@ func getArticleRules() []convertRule {
 					!selec.HasClass("title") { // h1
 					return nil
 				}
-				return md.String("")
+				return new("")
 			},
 		},
 	}

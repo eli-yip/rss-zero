@@ -69,7 +69,7 @@ func (s *ReformatService) Reformat(paperID string) {
 	var (
 		wg    sync.WaitGroup
 		count int64
-		idSet  = mapset.NewSet[string]()
+		idSet = mapset.NewSet[string]()
 	)
 
 	for {
@@ -92,7 +92,6 @@ func (s *ReformatService) Reformat(paperID string) {
 			zap.Time("end_time", latestTime))
 
 		for i, p := range posts {
-			p := p
 			idSet.Add(p.ID)
 			wg.Add(1)
 			latestTime = p.CreateAt

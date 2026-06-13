@@ -55,6 +55,7 @@ func TestExport(t *testing.T) {
 		expect string
 	}
 
+	// autocorrect-disable -- expected render output, must match Export verbatim
 	testCases := []testCase{
 		{
 			option: Option{},
@@ -76,6 +77,7 @@ text
 `,
 		},
 	}
+	// autocorrect-enable
 
 	assert := assert.New(t)
 
@@ -133,6 +135,7 @@ func TestExportOptionError(t *testing.T) {
 func TestFileName(t *testing.T) {
 	exportService := ExportService{}
 
+	// autocorrect-disable -- expected export filenames, keep verbatim
 	options := []struct {
 		Option Option
 		Expect string
@@ -160,6 +163,7 @@ func TestFileName(t *testing.T) {
 			Expect: "知识星球合集-28855218411241-q&a-digest-2022-11-20-2022-11-24.md",
 		},
 	}
+	// autocorrect-enable
 
 	assert := assert.New(t)
 

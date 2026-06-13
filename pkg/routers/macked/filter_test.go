@@ -21,11 +21,13 @@ func TestIsSubscribed(t *testing.T) {
 		"Text Workflow",
 	}
 
+	// autocorrect-disable -- real macked.com titles, keep verbatim as test fixtures
 	cases := []testCase{
 		{`MacWhisper 11.10 破解版 &#8211; macOS好用的转录软件`, 0},
 		{`Parallels Desktop 20 20.2.2-55879(修复盗版弹窗/激活工具6.8.0) 破解版 &#8211; PD虚拟机破解工具/激活补丁/破解补丁`, 1},
 		{`Color Wheel 8.5 破解版 &#8211; macOS数字色轮工具`, -1},
 	}
+	// autocorrect-enable
 
 	assert := assert.New(t)
 

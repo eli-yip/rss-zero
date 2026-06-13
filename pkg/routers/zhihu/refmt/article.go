@@ -54,7 +54,6 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 			zap.Time("end_time", latestTime), zap.Int("limit", config.DefaultFetchCount))
 
 		for i, a := range articles {
-			a := a
 			idSet.Add(a.ID)
 			wg.Add(1)
 			latestTime = a.CreateAt

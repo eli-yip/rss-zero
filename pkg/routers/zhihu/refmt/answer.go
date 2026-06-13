@@ -58,7 +58,6 @@ func (s *RefmtService) refmtAnswer(authorID string) (err error) {
 
 		// iterate answers
 		for i, a := range answers {
-			a := a
 			idSet.Add(a.ID)
 			wg.Add(1)
 			latestTime = a.CreateAt

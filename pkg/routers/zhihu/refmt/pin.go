@@ -58,7 +58,6 @@ func (s *RefmtService) refmtPin(authorID string) (err error) {
 			zap.Time("end_time", latestTime), zap.Int("limit", config.DefaultFetchCount))
 
 		for i, p := range pins {
-			p := p
 			idSet.Add(p.ID)
 			wg.Add(1)
 			latestTime = p.CreateAt

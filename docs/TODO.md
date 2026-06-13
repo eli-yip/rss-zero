@@ -4,42 +4,40 @@
 
 ## Lint 现代化后待清理项
 
-2026-06-13 将 `just lint` 对齐 maestro-engine，新增 `autocorrect`、`dprint check`、`go mod tidy -diff`、`go fix --diff` 四道检查（`golangci-lint` 本身 0 issue）。本轮只接入工具、不修存量问题，待清理如下：
+2026-06-13 将 `just lint` 对齐 maestro-engine，新增 `autocorrect`、`dprint check`、`go mod tidy -diff`、`go fix --diff` 四道检查，并新增 `just fix-lint` 一键自动修复。**下列四项已于 2026-06-13 全部清理，`just lint` 现已 0 issue。** 保留在此作为处理记录。
 
-### 1. autocorrect（CJK/Latin 间距，233 处）
+> 修正：当初记的「`golangci-lint` 本身 0 issue」并不准确——见下方 [issue B](#b-golangci-lint-并非-0-issue已修正)。
 
-`autocorrect --lint .` 报 233 处中英文/数字间距问题。大头在渲染测试的 golden HTML，**改前需确认是否会破坏快照测试**：
+清理过程中另发现两点需留意：
 
-- `pkg/render/test/test_article_1.html`（14）、`pkg/render/test/test_inline_article_1.html`（13）
-- `pkg/routers/zhihu/example/content_html/answer_with_pic_and_card.html`（4）、`pin_with_title.html`（1）
+- **issue A — autocorrect 对 Go 运行时字符串不安全**：见第 1 项。`xiaobot/render/full_text.go` 等处的日期渲染格式、`zhihu/export/single.go` 的导出文件名都是运行时输出而非散文，autocorrect 会插入 CJK 空格（如 `2006 年 1 月 2 日`）改变实际行为，并把 `export_test.go` 期望误改成源码无法拼出的 `知识星球合集 -28855…`。已用 `// autocorrect-disable`/`-enable` 就地豁免、保持行为不变。**后续若再跑 `just fix-lint`/`autocorrect --fix`，务必保留这些 guard，不要删除。** 是否在渲染输出里正式采用 CJK 加空格，属产品决定，留待后续单独讨论。
+- **issue B — golangci-lint 并非 0 issue（已修正）**：`go fix` 把 `getStringPtr`/`GetPtr` 的调用点全部内联到 `new(expr)` 后，这两个辅助函数变为死代码，被 `unused` 检出并删除；同时发现一个与本轮无关的预存死类型 `internal/controller/zhihu/author.go` 的 `ErrResponse`（统一响应封装 d9d2d20 重构后遗留），一并移除。`golangci-lint` 现 0 issue。
 
-以下为普通源码/测试，可安全 `autocorrect --fix`：
+### 1. autocorrect（CJK/Latin 间距）— ✅ 已处理（2026-06-13）
 
-- `pkg/routers/macked/filter_test.go`（3）
-- `pkg/routers/zsxq/export/export_test.go`（4）
-- `pkg/routers/zsxq/time/time.go`（2）、`time_test.go`（2）
-- `pkg/routers/xiaobot/render/full_text.go`（1）
-- `pkg/routers/zhihu/export/single.go`（1）、`pkg/routers/zhihu/render/time.go`（1）
-- `docs/plans/2026-06-12-03-zsxq-object-uri.md`（1）
+处理方式：
 
-### 2. dprint（Markdown 格式化，12 个文件）
+- **快照/捕获类 fixture 加入 `.autocorrectignore`**：`pkg/render/test/`（golden HTML）与 `**/example/`（捕获的 API 响应 JSON/HTML，须与上游字节一致，autocorrect 会破坏真实昵称/内容并误改 `合集-数字` 之类文件名）。
+- **源码里被误判的字符串/数据用 `// autocorrect-disable`/`-enable` 就地豁免，保持运行时行为不变**：日期渲染格式（`xiaobot/render/full_text.go`、`zhihu/render/time.go`、`zsxq/time/time.go`）、导出文件名（`zhihu/export/single.go`），以及对应的测试期望（`zsxq/export/export_test.go`、`zsxq/time/time_test.go`）和真实站点标题 fixture（`macked/filter_test.go`）。注：autocorrect 曾把 `export_test.go` 期望误改为 `知识星球合集 -28855…`，而源码 `export.go:130` 的 `"知识星球合集"` 在运行时拼接，二者无法一致——证实这些字符串不能盲改。
+- **真正的散文（docs 计划文档）已 `autocorrect --fix`**。
 
-`dprint check` 报 12 个 Markdown 未格式化，`dprint fmt` 可一键修复（注意会改动既有 docs 排版）：
+`just lint` 的 autocorrect 一步现已 0 issue。
 
-- `AGENTS.md`、`docs/PROGRESS.md`
-- `docs/specs/`：`2026-06-11-01`、`2026-06-11-02`、`2026-06-12-01`、`2026-06-12-02`
-- `docs/plans/`：`2026-06-11-02`、`2026-06-12-01`、`2026-06-12-02`、`2026-06-12-03`、`2026-06-12-04`
-- `docs/lessons/2026-06-11-02-unified-cookie-interface.md`
+### 2. dprint（Markdown 格式化）— ✅ 已处理（2026-06-13）
 
-### 3. go.sum 未 tidy
+`dprint fmt` 已格式化 14 个 Markdown（强调风格、间距等），`dprint check` 现已通过。
 
-`go mod tidy -diff` 显示 `go.sum` 缺少若干哈希条目（`go.uber.org/goleak`、`golang.org/x/exp`、`gopkg.in/check.v1` 等）。运行 `go mod tidy` 补齐。
+### 3. go.sum 未 tidy — ✅ 已处理（2026-06-13）
 
-### 4. go fix 现代化建议（17 个文件）
+`go mod tidy` 已补齐缺失的 `go.sum` 哈希条目，`go mod tidy -diff` 现已干净。
 
-`go fix --diff ./...` 建议的现代化改写，涉及 `strings.Builder` 替代 `+=` 字符串拼接、`new(expr)`（Go 1.26）替代 `getStringPtr` 泛型辅助并加 `//go:fix inline` 等。逐文件审阅后用 `go fix ./...` 应用：
+### 4. go fix 现代化建议（17 个文件）— ✅ 已处理（2026-06-13）
 
-`cmd/cli/view.go`、`internal/controller/archive/zsxq_archive.go`、`internal/controller/zhihu/export.go`、`internal/controller/zsxq/export.go`、`internal/md/basic.go`、`internal/redis/redis.go`、`pkg/render/html.go`、`pkg/render/html_test.go`、`pkg/routers/xiaobot/refmt/refmt.go`、`pkg/routers/zhihu/cron/export.go`、`pkg/routers/zhihu/refmt/answer.go`、`pkg/routers/zhihu/refmt/article.go`、`pkg/routers/zhihu/refmt/pin.go`、`pkg/routers/zhihu/render/html_convert.go`、`pkg/routers/zsxq/random/random.go`、`pkg/routers/zsxq/refmt/refmt.go`、`pkg/routers/zsxq/render/html.go`
+`go fix ./...` 已应用：`interface{}`→`any`、`for i := 0; i < n; i++`→`for range n`、`strings.Split`→`strings.SplitSeq`（range-over-func）、`HasPrefix`+`TrimPrefix`→`CutPrefix`、去除多余的 `x := x` loop-var 拷贝、用 `new(expr)`（Go 1.26）内联 `&v` 指针辅助。内联后空置的 `getStringPtr`/`GetPtr` 已删除（见 [issue B](#b-golangci-lint-并非-0-issue已修正)）。
+
+## 既有测试失败（与 lint 无关，待查）
+
+`go test ./pkg/render/` 的 `TestHtmlRender` 在本地一直失败：实际输出比 golden 多包一层 `<div class="content">…</div>`。在 lint 现代化之前的 commit 上即可复现，属预存问题，非本轮改动引入。需确认是 golden 陈旧还是渲染逻辑回归。
 
 ## 统一响应格式后续（unified-response-format）
 

@@ -88,7 +88,7 @@ func getDefaultRules() []ConvertRule {
 			Filter: []string{"strong"},
 			Replacement: func(content string, selec *goquery.Selection, opt *md.Options) *string {
 				content = strings.TrimSpace(content)
-				return md.String("**" + content + "**")
+				return new("**" + content + "**")
 			},
 		},
 	}

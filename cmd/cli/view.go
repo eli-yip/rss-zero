@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 func (m model) View() string {
@@ -20,37 +21,39 @@ func (m model) View() string {
 }
 
 func (m model) renderMainMenu() string {
-	s := "RSS-ZERO CLI" + "\n\n"
+	var s strings.Builder
+	s.WriteString("RSS-ZERO CLI" + "\n\n")
 
 	for i, choice := range m.mainMenu {
 		cursor := " "
 		if m.cursor == i {
 			cursor = ">"
-			s += fmt.Sprintf("%s %s", cursor, choice) + "\n"
+			s.WriteString(fmt.Sprintf("%s %s", cursor, choice) + "\n")
 		} else {
-			s += fmt.Sprintf("%s %s", cursor, choice) + "\n"
+			s.WriteString(fmt.Sprintf("%s %s", cursor, choice) + "\n")
 		}
 	}
 
-	s += "\n" + "Press q to exit"
-	return s
+	s.WriteString("\n" + "Press q to exit")
+	return s.String()
 }
 
 func (m model) renderSubMenu() string {
-	s := "RSS Feed Generator" + "\n\n"
+	var s strings.Builder
+	s.WriteString("RSS Feed Generator" + "\n\n")
 
 	for i, choice := range m.subMenu {
 		cursor := " "
 		if m.cursor == i {
 			cursor = ">"
-			s += fmt.Sprintf("%s %s", cursor, choice) + "\n"
+			s.WriteString(fmt.Sprintf("%s %s", cursor, choice) + "\n")
 		} else {
-			s += fmt.Sprintf("%s %s", cursor, choice) + "\n"
+			s.WriteString(fmt.Sprintf("%s %s", cursor, choice) + "\n")
 		}
 	}
 
-	s += "\n" + "Press q to exit"
-	return s
+	s.WriteString("\n" + "Press q to exit")
+	return s.String()
 }
 
 func (m model) renderInput() string {

@@ -11,16 +11,10 @@ import (
 )
 
 func (h *Controller) AuthorName(c echo.Context) (err error) {
-	type (
-		Response struct {
-			ID       string `json:"id"`
-			Nickname string `json:"nickname"`
-		}
-
-		ErrResponse struct {
-			Message string `json:"message"`
-		}
-	)
+	type Response struct {
+		ID       string `json:"id"`
+		Nickname string `json:"nickname"`
+	}
 
 	logger := common.ExtractLogger(c)
 

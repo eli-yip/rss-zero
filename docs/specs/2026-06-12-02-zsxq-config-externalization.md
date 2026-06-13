@@ -13,12 +13,12 @@
 
 附录把四处硬编码笼统归为"外置到配置或至少提为带注释的具名常量"。但这四处**性质不同，处理方式不应一刀切**：
 
-| 项 | 位置 | 性质 | 变化驱动 | 建议处理 |
-|---|---|---|---|---|
-| 1. 作者过滤 `庄太云` | parse/talk.go:29 | **运营/业务规则** | 业务决定（屏蔽某作者） | **外置到配置（全局列表）** |
-| 2. topicIDSkip 黑名单 | parse/topic.go:33 | parser 崩溃 workaround | 发现新的崩溃 topic（**很少**） | **包级 var（map 查找）；不进配置** |
-| 3. 业务码 401/1059/1050 + Sleep(60s) | request.go:201–214 | **协议常量** | zsxq 改 API（极罕见） | **具名常量**（进配置是反模式） |
-| 4. 魔法日期 2021-01-01 | refmt/refmt.go:78 | 一次性 backfill 下界 | 基本不变（refmt 仍在用） | **具名常量** |
+| 项                                   | 位置               | 性质                   | 变化驱动                       | 建议处理                           |
+| ------------------------------------ | ------------------ | ---------------------- | ------------------------------ | ---------------------------------- |
+| 1. 作者过滤 `庄太云`                 | parse/talk.go:29   | **运营/业务规则**      | 业务决定（屏蔽某作者）         | **外置到配置（全局列表）**         |
+| 2. topicIDSkip 黑名单                | parse/topic.go:33  | parser 崩溃 workaround | 发现新的崩溃 topic（**很少**） | **包级 var（map 查找）；不进配置** |
+| 3. 业务码 401/1059/1050 + Sleep(60s) | request.go:201–214 | **协议常量**           | zsxq 改 API（极罕见）          | **具名常量**（进配置是反模式）     |
+| 4. 魔法日期 2021-01-01               | refmt/refmt.go:78  | 一次性 backfill 下界   | 基本不变（refmt 仍在用）       | **具名常量**                       |
 
 判断准则：**会因运营/业务决定而变的 → 配置；只因外部协议或历史事实而变的 → 具名常量**。把协议码丢进 TOML 反而让运维有机会改坏不该碰的东西。
 
@@ -27,29 +27,38 @@
 ## 现状证据
 
 ### 项 1：作者过滤（运营规则，最高价值）
+
 `parse/talk.go:29`：
+
 ```go
 if authorID == 184544455455452 || authorName == `庄太云` {
     logger.Info("Skip crawling topic, as it's from zhuangtaiyun", ...)
     return 0, "", ErrNoText
 }
 ```
+
 - 单一作者、ID 与名字"或"匹配，命中即整条 talk 当作无文本跳过。
 - 这是典型的"运营要屏蔽某人"规则，改它目前要改代码 + 发版。
 
 ### 项 2：topicIDSkip 黑名单
+
 `parse/topic.go:33`：10 个 topicID 的 `[]int{...}` **定义在 `ParseTopic` 函数体内，每次调用重建**；用 `slices.Contains` 线性查找。注释说明多数是"会让 markdown 转换器超时/报错"的 topic。
+
 - 性质是 parser bug 的规避清单，不是运营规则；变化低频。
 - 当前实现有微劣化：局部 slice 每次重建、O(n) 查找。
 
 ### 项 3：业务码 + Sleep（项一后现状）
+
 `request.go` 的 `Limit.validate` switch（L201–214）：裸数字 `401` / `1059` / `1050` 与 `time.Sleep(60 * time.Second)`。
+
 - 这些是 zsxq API 协议语义，已有类型 `apiResp`/`badAPIResp`/`dataSystemResp` 承载，但分支判断仍用裸字面量。
 
 ### 项 4：魔法日期
+
 `refmt/refmt.go:78`：`time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)` 作为 reformat 回溯下界，裸写在循环里。
 
 ### 配置载体
+
 `config/toml.go`：全局 `var C TomlConfig`，TOML 反序列化的扁平结构（已有 `Minio`/`Openai`/`Database`/`TestURL.Zsxq` 等块）。新增一个 `[zsxq]` 段是自然的扩展点。
 
 ---
@@ -57,23 +66,29 @@ if authorID == 184544455455452 || authorName == `庄太云` {
 ## 方案（已定稿）
 
 ### 项 1：作者屏蔽外置到配置（全局，优先做）
+
 在 `TomlConfig` 增加 zsxq 段：
+
 ```toml
 [zsxq]
   blocked_author_ids   = [184544455455452]
   blocked_author_names = ["庄太云"]
 ```
+
 - `config/toml.go` 增 `Zsxq` 块：`BlockedAuthorIDs []int` / `BlockedAuthorNames []string`。
 - parse 层从 `config.C.Zsxq` 读取，命中任一即跳过（保持现有"或"语义与 `ErrNoText` 返回）。
 - **全局**（非按 group）；按 group 不做。
 - 缺省安全：旧 config.toml 无 `[zsxq]` 段时降级为空列表（不屏蔽任何人，等价于"屏蔽功能未启用"）。
 
 ### 项 2：topicIDSkip → 包级 var（不进配置）
+
 - 提为包级 `var topicIDSkip = map[int]struct{}{...}`，把 O(n) `slices.Contains` 换成 map 查找，加注释说明用途（多数是 markdown 转换器超时/报错的 topic）。
 - **不进配置**：新增很少，包级 var + 发版即可，无需运维外置。
 
 ### 项 3：业务码 + Sleep → 具名常量
+
 在 request 包定义：
+
 ```go
 const (
     codeInvalidCookie   = 401  // invalid cookie
@@ -82,10 +97,12 @@ const (
 )
 const noSignBackoff = 60 * time.Second
 ```
+
 - `Limit.validate` 的 switch 改用常量；`Sleep` 用 `noSignBackoff`。
 - **不进配置**：协议码不该让运维改。
 
 ### 项 4：魔法日期 → 具名常量
+
 - refmt 仍在使用（不常用），正经做：refmt 包定义具名常量/var `reformatFloorTime = time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)`，加注释说明为何是该下界；循环判断改用之。
 
 ---

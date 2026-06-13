@@ -12,15 +12,16 @@
 
 当前 rss-zero 的 JSON 响应是**三套并存**：
 
-| 形态 | 出处 | 端点举例 |
-|---|---|---|
-| `common.ApiResp[T]{message,data}`（**带 `omitempty`**） | `internal/controller/common/http_models.go` | bookmark / tag / user |
-| 裸 payload（无信封） | `archive/models.go` 的 `ArchiveResponse`/`ResponseBase`/`ZvideoResponse` | archive / random / similarity / zvideo |
-| 裸 map | `archive/statistics.go` | statistics |
+| 形态                                                    | 出处                                                                     | 端点举例                               |
+| ------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------- |
+| `common.ApiResp[T]{message,data}`（**带 `omitempty`**） | `internal/controller/common/http_models.go`                              | bookmark / tag / user                  |
+| 裸 payload（无信封）                                    | `archive/models.go` 的 `ArchiveResponse`/`ResponseBase`/`ZvideoResponse` | archive / random / similarity / zvideo |
+| 裸 map                                                  | `archive/statistics.go`                                                  | statistics                             |
 
 错误处理则**完全手写**：每个 handler 自己 `c.JSON(http.StatusXxx, ErrResponse{...})`，`ErrResponse` 在 `archive` 包内重复定义；**没有任何集中式 `HTTPErrorHandler`**。全仓 219 处 `c.JSON`（约 56 成功 / 165 错误）散落在 14 个 controller。
 
 后果：
+
 - 前端 `request<T>`（`client.ts:35`）对不同端点要区别对待——`fetchUserInfo`/`fetchZvideos` 手动 `.data` 解包，archive 系列又不解包；类型层 `BookmarkListResponse`/`AllTagsResponse`/`NewBookmarkResponse` 各自多包一层。
 - `omitempty` 使空 `data` 直接消失，client 的 `.data` 取值不可靠。
 - 错误形状靠各 handler 自觉，无单一出口、无统一日志。
@@ -126,6 +127,7 @@ async function request<T>(call: () => Promise<AxiosResponse<Envelope<T>>>): Prom
 ```
 
 随之：
+
 - `fetchUserInfo` / `fetchZvideos`：去掉手动 `.data` / 中间类型，直接 `request<{username,nickname}>` / `request<{zvideos:Zvideo[]}>`。
 - `fetchBookmarkList` / `fetchAllTags` / `addBookmark` / `removeBookmark` / `updateBookmark`：删掉响应类型里多包的那层（`BookmarkListResponse`/`AllTagsResponse`/`NewBookmarkResponse` 拍平成内层 `data` 的形状）。
 - archive / random / similarity / statistics：fetch 函数签名不变（仍返回内层形状），但因服务端现在套了信封、`request` 统一拆信封而保持正确。

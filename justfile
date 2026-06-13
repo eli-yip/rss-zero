@@ -33,6 +33,14 @@ lint:
     golangci-lint run -v --timeout 30s
     go fix --diff ./...
 
+# 自动修复代码检查问题
+fix-lint:
+    autocorrect --fix .
+    dprint fmt
+    go mod tidy
+    golangci-lint run -v --fix --timeout 30s
+    go fix ./...
+
 # 更新依赖
 update:
     go get -u ./...

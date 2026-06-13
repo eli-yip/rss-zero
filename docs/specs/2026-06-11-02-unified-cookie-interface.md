@@ -173,7 +173,8 @@ cookie.Invalidate(cs, cookie.CookieTypeZhihuZSECK, notifier, logger)
 ```
 
 zsxq / xiaobot / github single-cookie loaders become a one-line `Bundle(cs, "<platform>", …)`
-+ map read. github gains the invalid-token cleanup it currently lacks.
+
+- map read. github gains the invalid-token cleanup it currently lacks.
 
 ## 7. Check path — one dashboard endpoint
 
@@ -190,11 +191,11 @@ about already-present-but-expiring cookies).
 
 ## 8. Migration order (nothing breaks at any point)
 
-| Phase | Action | Risk |
-| --- | --- | --- |
-| P1 server | Add registry + `POST/GET /api/v1/cookies` + `Bundle`/`Invalidate`; refactor the four consumers. **Keep old `/cookie/{platform}` endpoints.** | none — old+new coexist |
-| P2 extension | Switch to `chrome.cookies.getAll({domain})` + POST the generic endpoint; install & verify. | none — old endpoints still back it |
-| P3 cleanup | After the new path is confirmed live, delete the four old controllers + DTOs + routes. | low |
+| Phase        | Action                                                                                                                                       | Risk                               |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| P1 server    | Add registry + `POST/GET /api/v1/cookies` + `Bundle`/`Invalidate`; refactor the four consumers. **Keep old `/cookie/{platform}` endpoints.** | none — old+new coexist             |
+| P2 extension | Switch to `chrome.cookies.getAll({domain})` + POST the generic endpoint; install & verify.                                                   | none — old endpoints still back it |
+| P3 cleanup   | After the new path is confirmed live, delete the four old controllers + DTOs + routes.                                                       | low                                |
 
 ## 9. Open items
 

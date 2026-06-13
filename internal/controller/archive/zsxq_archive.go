@@ -62,8 +62,8 @@ func isOldStyleZsxqLink(link string) bool {
 }
 
 func extractTopicIDFromLink(link string) (topicID string, found bool) {
-	if strings.HasPrefix(link, "https://wx.zsxq.com/dweb2/index/topic_detail/") {
-		return strings.TrimPrefix(link, "https://wx.zsxq.com/dweb2/index/topic_detail/"), true
+	if after, ok := strings.CutPrefix(link, "https://wx.zsxq.com/dweb2/index/topic_detail/"); ok {
+		return after, true
 	}
 
 	re := regexp.MustCompile(`https://wx.zsxq.com/group/\d+/topic/(\d+)`)

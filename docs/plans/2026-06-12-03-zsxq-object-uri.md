@@ -17,11 +17,12 @@
   4. L233–237 `renderQA` 语音（同上静默吞错）
   5. L256–260 `renderQA` 回答图片（同上静默吞错）
 - 写入侧 `StorageProvider` 恒为单元素（parse/image.go:58、talk.go:81、q&a.go:83 均 `[]string{s.file.AssetsDomain()}`），`[0]` 实践安全但无防护。
-- 线上 `zsxq_object`：image 509 / voice 39 全是 `zsxq/<数字>.<ext>`（零特殊字符）；file 45 全含中文+全角 `：`。按段转义后 image/voice 字节不变，file `%2F`→`/`（两形态实测 200）。
+- 线上 `zsxq_object`：image 509 / voice 39 全是 `zsxq/<数字>.<ext>`（零特殊字符）；file 45 全含中文 + 全角 `：`。按段转义后 image/voice 字节不变，file `%2F`→`/`（两形态实测 200）。
 
 ## 实现设计（来自 SPEC 定稿）
 
 `pkg/routers/zsxq/db/object.go` 增加：
+
 ```go
 var ErrNoStorageProvider = errors.New("object has no storage provider")
 
@@ -36,16 +37,19 @@ func (o *Object) URI() (string, error) {
     return o.StorageProvider[0] + "/" + strings.Join(segs, "/"), nil
 }
 ```
+
 新增 import：`errors`、`fmt`、`net/url`、`strings`。
 
 ## 步骤
 
 ### 1. 建分支
+
 ```
 git checkout -b feat-zsxq-object-uri
 ```
 
 ### 2. 加 `Object.URI()` + 单测
+
 - 在 db/object.go 实现上述方法。
 - 新增 `pkg/routers/zsxq/db/object_test.go`（白盒），用例：
   - image-like：`provider=["https://oss.x/rss"]`, key=`zsxq/123.jpg` → `https://oss.x/rss/zsxq/123.jpg`（分隔符保留、无转义）。
@@ -54,7 +58,9 @@ git checkout -b feat-zsxq-object-uri
 - 先跑通单测。
 
 ### 3. 改 markdown.go 5 处调用点
+
 统一为：
+
 ```go
 object, err := m.db.GetObjectInfo(id)
 if err != nil {
@@ -65,19 +71,23 @@ if err != nil {
     return ..., fmt.Errorf("failed to build object %d uri: %w", id, err)
 }
 ```
+
 - generateFilePartText / generateImagePartText：返回 `("", err)`；去掉 image 的重复 nil 判断。
 - renderQA 三处：返回 `err`（**修静默吞错**：原 `if err!=nil || provider==nil { return err }` 在 provider nil 时返回 nil）。
 - 删除 markdown.go 中变为未使用的 `net/url` import（PathEscape 已移入 URI()，需确认无其它 url 用法）。
 
 ### 4. 校验
+
 ```
 go build ./...
 go vet ./pkg/routers/zsxq/...
 go test ./pkg/routers/zsxq/db/... ./pkg/routers/zsxq/render/...
 ```
+
 - 若 render 包有渲染快照/golden 测试，确认 image/voice 输出字节不变。
 
 ### 5. 线上产物复核（可选）
+
 - image/voice 字节不变（设计保证），file 链接形态变更已在 SPEC 阶段实测 200，无需重复。
 
 ## 验收

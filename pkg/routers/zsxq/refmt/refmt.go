@@ -73,9 +73,9 @@ func (s *RefmtService) Reformat(gid int) {
 
 	var (
 		wg       sync.WaitGroup
-		count    int64                                  // atomic, count how many topics are formatted
-		topicSet  = mapset.NewSet[int]() // store topicIDs formatted
-		errCh     = make(chan errMessage, 100)
+		count    int64                  // atomic, count how many topics are formatted
+		topicSet = mapset.NewSet[int]() // store topicIDs formatted
+		errCh    = make(chan errMessage, 100)
 	)
 
 	for {
@@ -91,7 +91,6 @@ func (s *RefmtService) Reformat(gid int) {
 		}
 
 		for _, topic := range topics {
-			topic := topic
 			topicSet.Add(topic.ID)
 			wg.Add(1)
 			lastTime = topic.Time

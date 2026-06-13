@@ -36,7 +36,7 @@ const (
 )
 
 type Redis interface {
-	Set(key string, value interface{}, duration time.Duration) (err error)
+	Set(key string, value any, duration time.Duration) (err error)
 	Get(key string) (value string, err error)
 	Del(key string) (err error)
 	TTL(key string) (time.Duration, error)
@@ -66,7 +66,7 @@ func NewRedisService(c config.RedisConfig) (service Redis, err error) {
 	return s, nil
 }
 
-func (s *RedisService) Set(key string, value interface{}, duration time.Duration) (err error) {
+func (s *RedisService) Set(key string, value any, duration time.Duration) (err error) {
 	_, err = s.client.Set(s.ctx, key, value, duration).Result()
 	return
 }

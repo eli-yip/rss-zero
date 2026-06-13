@@ -22,10 +22,10 @@ func Export() func() {
 		logger.Info("Get start date and end date", zap.String("start_date", startDate), zap.String("end_date", endDate))
 
 		exportReq := &zhihuController.ZhihuExportReq{
-			Author:    getStringPtr("canglimo"),
-			Type:      getStringPtr("answer"),
-			StartTime: getStringPtr(startDate),
-			EndTime:   getStringPtr(endDate),
+			Author:    new("canglimo"),
+			Type:      new("answer"),
+			StartTime: new(startDate),
+			EndTime:   new(endDate),
 		}
 
 		reqData, err := json.Marshal(exportReq)
@@ -50,5 +50,3 @@ func getStartDateEndDate(now time.Time) (startDate, endDate string) {
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 	return firstOfMonth.Format("2006-01-02"), lastOfMonth.Format("2006-01-02")
 }
-
-func getStringPtr[T ~string](s T) *T { return &s }

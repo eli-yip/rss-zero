@@ -102,7 +102,7 @@ Each step: files, change, verify. Ordered by dependency. Commit per step.
 - Drop `HandleZhihuCookiesErr`’s three-way switch in favor of the sentinel from `Bundle`
   (caller already notified) — update `pkg/routers/zhihu/cron/crawl.go:52-60` accordingly.
 - File: `pkg/routers/zhihu/cron/crawl_err.go` — replace `removeZC0Cookie`/`removeZSECKCookie`
-  + notify pairs with `cookie.Invalidate(cs, type, notifier, logger)`.
+  - notify pairs with `cookie.Invalidate(cs, type, notifier, logger)`.
 - Verify: `go build ./...`; `go test ./pkg/routers/zhihu/...` (targeted, if cheap).
 
 ### Step 6 — Refactor zsxq / xiaobot / github consumers
