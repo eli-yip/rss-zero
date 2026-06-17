@@ -39,6 +39,8 @@
 
 `go test ./pkg/render/` 的 `TestHtmlRender` 在本地一直失败：实际输出比 golden 多包一层 `<div class="content">…</div>`。在 lint 现代化之前的 commit 上即可复现，属预存问题，非本轮改动引入。需确认是 golden 陈旧还是渲染逻辑回归。
 
+`go test ./internal/controller/archive/` 的 `TestExtractAnswerID` 也是**预存**失败（在 master 上即可复现，非 archive-format 改动引入）：`ExtractAnswerID` 早已改为返回 `*zhihuAnswer`，但该用例仍按旧签名拿它和字符串 `answerID` 比较，必然 not-equal。修复方向：把用例改成 `result.answerID`（或 `strconv.Itoa(result.answerID)`）再断言。
+
 ## 统一响应格式后续（unified-response-format）
 
 - **`/statistics` 页面在统计数据为空时白屏崩溃**（预存 bug，与统一响应格式无关）。webapp 的 `<ActivityCalendar>`（react-activity-calendar）在收到空数据时抛异常，且无 error boundary，导致整页不渲染。复现：当 canglimo 在"过去一年"窗口内没有回答时（如本地 DB 数据陈旧），`GET /api/v1/archive/statistics` 返回空 `data`，前端解包为空 → 组件崩溃。生产环境有近一年数据故正常。修复方向：`StatisticsPage`/`Statistics` 组件加空数据 guard（空时显示占位/提示），或包一层 error boundary。

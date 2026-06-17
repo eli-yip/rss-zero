@@ -107,7 +107,60 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 }
 
 type archiveResult struct {
-	html, redirectTo string
+	// title is the page title (used for the HTML <title>); markdown is the
+	// full-text markdown that every output format is derived from.
+	title, markdown, redirectTo string
+}
+
+// archive output formats, selected via the `format` query parameter.
+const (
+	formatHTML     = "html"
+	formatMarkdown = "md"
+	formatText     = "txt"
+)
+
+// parseArchiveFormat normalizes the `format` query parameter. Unknown or empty
+// values fall back to HTML to preserve the original behaviour of the endpoint.
+func parseArchiveFormat(s string) string {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "md", "markdown":
+		return formatMarkdown
+	case "txt", "text", "plain":
+		return formatText
+	default:
+		return formatHTML
+	}
+}
+
+// buildFormatLinks returns the archive links for all three output formats of the
+// same source URL. The source URL is path-escaped so it round-trips back through
+// the `:url` route segment (which the handler PathUnescapes).
+func buildFormatLinks(sourceURL string) (htmlLink, mdLink, txtLink string) {
+	base := fmt.Sprintf("%s/api/v1/archive/%s", config.C.Settings.ServerURL, url.PathEscape(sourceURL))
+	return base, base + "?format=md", base + "?format=txt"
+}
+
+// formatSwitcherMarkdown renders a one-line cross-format navigation in markdown,
+// with the current format shown in bold (not linked) and the others as links.
+func formatSwitcherMarkdown(current, htmlLink, mdLink, txtLink string) string {
+	htmlPart := fmt.Sprintf("[HTML](%s)", htmlLink)
+	mdPart := fmt.Sprintf("[Markdown](%s)", mdLink)
+	txtPart := fmt.Sprintf("[纯文本](%s)", txtLink)
+	switch current {
+	case formatHTML:
+		htmlPart = "**HTML**"
+	case formatMarkdown:
+		mdPart = "**Markdown**"
+	case formatText:
+		txtPart = "**纯文本**"
+	}
+	return fmt.Sprintf("格式：%s · %s · %s", htmlPart, mdPart, txtPart)
+}
+
+// formatSwitcherText renders the cross-format navigation as plain text (no
+// markdown markers), keeping the full URLs so they stay reachable.
+func formatSwitcherText(htmlLink, mdLink string) string {
+	return fmt.Sprintf("格式：HTML %s · Markdown %s · 纯文本（当前）", htmlLink, mdLink)
 }
 
 func (h *Controller) History(c echo.Context) (err error) {
@@ -137,9 +190,21 @@ func (h *Controller) History(c echo.Context) (err error) {
 
 	logger.Info("Get history url", zap.String("url", u))
 
+	format := parseArchiveFormat(c.QueryParam("format"))
+
+	// The `format` parameter selects the output format; any *other* query
+	// parameter still triggers the original redirect (it strips tracking
+	// params off the source link). The chosen format is preserved across it.
 	params := c.QueryParams()
-	if len(params) > 0 {
-		return c.Redirect(http.StatusFound, render.BuildArchiveLink(config.C.Settings.ServerURL, u))
+	for k := range params {
+		if k == "format" {
+			continue
+		}
+		redirectTo := render.BuildArchiveLink(config.C.Settings.ServerURL, u)
+		if format != formatHTML {
+			redirectTo += "?format=" + format
+		}
+		return c.Redirect(http.StatusFound, redirectTo)
 	}
 
 	result, err := h.handleRequestArchiveLink(u)
@@ -150,7 +215,32 @@ func (h *Controller) History(c echo.Context) (err error) {
 	if result.redirectTo != "" {
 		return c.Redirect(http.StatusFound, result.redirectTo)
 	}
-	return c.HTML(http.StatusOK, result.html)
+
+	htmlLink, mdLink, txtLink := buildFormatLinks(u)
+
+	switch format {
+	case formatMarkdown:
+		switcher := formatSwitcherMarkdown(formatMarkdown, htmlLink, mdLink, txtLink)
+		body := switcher + "\n\n---\n\n" + result.markdown
+		return c.Blob(http.StatusOK, "text/markdown; charset=utf-8", []byte(body))
+	case formatText:
+		plain, err := render.Markdown2Text(result.markdown)
+		if err != nil {
+			logger.Error("Failed to convert markdown to text", zap.Error(err))
+			return c.HTML(http.StatusInternalServerError, renderErrorPage(err, requestID))
+		}
+		body := formatSwitcherText(htmlLink, mdLink) + "\n\n" + plain
+		return c.Blob(http.StatusOK, "text/plain; charset=utf-8", []byte(body))
+	default:
+		switcher := formatSwitcherMarkdown(formatHTML, htmlLink, mdLink, txtLink)
+		mdWithNav := switcher + "\n\n---\n\n" + result.markdown
+		html, err := h.htmlRender.Render(result.title, mdWithNav)
+		if err != nil {
+			logger.Error("Failed to render html", zap.Error(err))
+			return c.HTML(http.StatusInternalServerError, renderErrorPage(err, requestID))
+		}
+		return c.HTML(http.StatusOK, html)
+	}
 }
 
 func (h *Controller) handleRequestArchiveLink(link string) (result *archiveResult, err error) {

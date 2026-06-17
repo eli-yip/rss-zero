@@ -50,11 +50,7 @@ func (h *Controller) HandleZsxqWebTopic(link string) (result *archiveResult, err
 		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
 
-	html, err := h.htmlRender.Render(zsxqRender.BuildTitle(topicToRender), fullTextMd)
-	if err != nil {
-		return nil, fmt.Errorf("failed to render html: %w", err)
-	}
-	return &archiveResult{html: html}, nil
+	return &archiveResult{title: zsxqRender.BuildTitle(topicToRender), markdown: fullTextMd}, nil
 }
 
 func isOldStyleZsxqLink(link string) bool {

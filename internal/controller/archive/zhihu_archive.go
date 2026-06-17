@@ -47,12 +47,7 @@ func (h *Controller) HandleZhihuAnswer(link string) (result *archiveResult, err 
 		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
 
-	html, err := h.htmlRender.Render(question.Title, fullText)
-	if err != nil {
-		return nil, fmt.Errorf("failed to render html: %w", err)
-	}
-
-	return &archiveResult{html: html}, nil
+	return &archiveResult{title: question.Title, markdown: fullText}, nil
 }
 
 func (h *Controller) HandleZhihuArticle(link string) (result *archiveResult, err error) {
@@ -88,11 +83,7 @@ func (h *Controller) HandleZhihuArticle(link string) (result *archiveResult, err
 		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
 
-	html, err := h.htmlRender.Render(article.Title, fullText)
-	if err != nil {
-		return nil, fmt.Errorf("failed to render html: %w", err)
-	}
-	return &archiveResult{html: html}, nil
+	return &archiveResult{title: article.Title, markdown: fullText}, nil
 }
 
 func (h *Controller) HandleZhihuPin(link string) (result *archiveResult, err error) {
@@ -127,11 +118,7 @@ func (h *Controller) HandleZhihuPin(link string) (result *archiveResult, err err
 		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
 
-	html, err := h.htmlRender.Render(pin.Title, fullText)
-	if err != nil {
-		return nil, fmt.Errorf("failed to render html: %w", err)
-	}
-	return &archiveResult{html: html}, nil
+	return &archiveResult{title: pin.Title, markdown: fullText}, nil
 }
 
 type zhihuAnswer struct{ questionID, answerID int }
