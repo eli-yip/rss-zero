@@ -7,7 +7,18 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+
+	"github.com/eli-yip/rss-zero/internal/notify"
 )
+
+// notifyFailure sends a Bark notification for a migration failure. It is a no-op
+// when no notifier is wired (e.g. tests), so callers need not guard nil.
+func notifyFailure(notifier notify.Notifier, logger *zap.Logger, content string) {
+	if notifier == nil {
+		return
+	}
+	notify.NoticeWithLogger(notifier, "Migration failed", content, logger)
+}
 
 // RunAuto validates the registry and runs every eligible Auto migration on
 // startup, in ascending version order. Failures are logged, never fatal — the
@@ -17,21 +28,22 @@ import (
 // Single-instance only: this is called once at startup and dedupes via the
 // applied set. Multi-instance deployments would need a pg_advisory_xact_lock
 // around the run.
-func RunAuto(db *gorm.DB, logger *zap.Logger) {
+func RunAuto(db *gorm.DB, logger *zap.Logger, notifier notify.Notifier) {
 	if err := validateRegistry(registry); err != nil {
 		logger.Panic("invalid migration registry", zap.Error(err))
 	}
 	applied, err := loadApplied(db)
 	if err != nil {
 		logger.Error("Failed to load applied migrations; skipping auto-migration", zap.Error(err))
+		notifyFailure(notifier, logger, fmt.Sprintf("failed to load applied migrations: %v", err))
 		return
 	}
-	runSchedule(registry, applied, true, runWith(db, logger), logger)
+	runSchedule(registry, applied, true, runWith(db, logger, notifier), logger)
 }
 
 // RunPending runs all eligible migrations (including non-Auto), for manual
 // catch-up. Failures are logged, not returned.
-func RunPending(db *gorm.DB, logger *zap.Logger) {
+func RunPending(db *gorm.DB, logger *zap.Logger, notifier notify.Notifier) {
 	if err := validateRegistry(registry); err != nil {
 		logger.Error("Invalid migration registry", zap.Error(err))
 		return
@@ -39,14 +51,15 @@ func RunPending(db *gorm.DB, logger *zap.Logger) {
 	applied, err := loadApplied(db)
 	if err != nil {
 		logger.Error("Failed to load applied migrations", zap.Error(err))
+		notifyFailure(notifier, logger, fmt.Sprintf("failed to load applied migrations: %v", err))
 		return
 	}
-	runSchedule(registry, applied, false, runWith(db, logger), logger)
+	runSchedule(registry, applied, false, runWith(db, logger, notifier), logger)
 }
 
 // RunVersion manually runs a single migration by version, enforcing the same
 // eligibility rules (not already applied; predecessors satisfied when required).
-func RunVersion(db *gorm.DB, logger *zap.Logger, version int64) error {
+func RunVersion(db *gorm.DB, logger *zap.Logger, version int64, notifier notify.Notifier) error {
 	if err := validateRegistry(registry); err != nil {
 		return err
 	}
@@ -70,7 +83,7 @@ func RunVersion(db *gorm.DB, logger *zap.Logger, version int64) error {
 	if target.RequiresPredecessors && !predecessorsDone(*target, registry, applied) {
 		return fmt.Errorf("migration %d requires all earlier migrations to be applied first", version)
 	}
-	return runWith(db, logger)(*target)
+	return runWith(db, logger, notifier)(*target)
 }
 
 // runSchedule is the pure scheduling core: it walks migrations in ascending
@@ -108,12 +121,15 @@ func runSchedule(all []Migration, applied mapset.Set[int64], autoOnly bool,
 
 // runWith returns the side-effecting runner: recover-wrapped Run, recording the
 // version only on success.
-func runWith(db *gorm.DB, logger *zap.Logger) func(Migration) error {
+func runWith(db *gorm.DB, logger *zap.Logger, notifier notify.Notifier) func(Migration) error {
 	return func(m Migration) (err error) {
 		l := logger.With(zap.Int64("version", m.Version), zap.String("name", m.Name))
 		defer func() {
 			if r := recover(); r != nil {
 				err = fmt.Errorf("migration panicked: %v", r)
+			}
+			if err != nil {
+				notifyFailure(notifier, l, fmt.Sprintf("migration %d (%s) failed: %v", m.Version, m.Name, err))
 			}
 		}()
 		l.Info("Running migration")

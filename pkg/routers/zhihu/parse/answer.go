@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -13,11 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
-)
-
-const (
-	answerTypePaidColumnContent = "paid_column_content"
-	paidColumnContentNotice     = "**该文章为付费专栏内容**"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
 
 type AnswerParser interface {
@@ -89,7 +84,9 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 	if err != nil {
 		return emptyString, fmt.Errorf("failed to parse html content: %w", err)
 	}
-	text = AddPaidColumnContentNotice(text, answer.AnswerType)
+	if IsPaidAnswer(answer.AnswerType) {
+		text = AddPaidNotice(text, render.GenerateAnswerLink(answer.Question.ID, answer.ID))
+	}
 	logger.Info("Parse html content successfully")
 
 	formattedText, err := p.mdfmt.FormatStr(text)
@@ -148,18 +145,6 @@ func (p *ParseService) ParseAnswer(content []byte, authorID string, logger *zap.
 	}
 
 	return formattedText, nil
-}
-
-func AddPaidColumnContentNotice(text, answerType string) string {
-	if answerType != answerTypePaidColumnContent {
-		return text
-	}
-
-	text = strings.TrimLeft(text, " \n")
-	if text == "" {
-		return paidColumnContentNotice
-	}
-	return md.Join(paidColumnContentNotice, text)
 }
 
 func (p *ParseService) saveEmbedding(answerID int, text string, logger *zap.Logger) {

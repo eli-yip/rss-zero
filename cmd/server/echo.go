@@ -118,7 +118,7 @@ func setupEcho(redisService redis.Redis,
 	registerCookieProbes(cookieService)
 	mHandler := mackedHandler.NewHandler(redisService, macked.NewDBService(db), logger)
 	parseHandler := parseHandler.NewHandler(db, ai, cookieService, fileService, notifier)
-	migrateHandler := migrateController.NewController(logger, db)
+	migrateHandler := migrateController.NewController(logger, db, notifier)
 
 	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mHandler)
 	// /api/v1

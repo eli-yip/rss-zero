@@ -15,6 +15,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
 
 // refmtAnswer formats all answers in db for the authorID
@@ -86,7 +87,9 @@ func (s *RefmtService) refmtAnswer(authorID string) (err error) {
 					logger.Error("failed to replace image links", zap.Error(err))
 					return
 				}
-				text = parse.AddPaidColumnContentNotice(text, answer.AnswerType)
+				if parse.IsPaidAnswer(answer.AnswerType) {
+					text = parse.AddPaidNotice(text, render.GenerateAnswerLink(a.QuestionID, a.ID))
+				}
 
 				formattedText, err := s.mdfmt.FormatStr(text)
 				if err != nil {

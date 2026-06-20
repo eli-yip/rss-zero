@@ -9,6 +9,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/migrate"
+	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -16,14 +17,16 @@ import (
 )
 
 type Controller struct {
-	logger *zap.Logger
-	db     *gorm.DB
+	logger   *zap.Logger
+	db       *gorm.DB
+	notifier notify.Notifier
 }
 
-func NewController(logger *zap.Logger, db *gorm.DB) *Controller {
+func NewController(logger *zap.Logger, db *gorm.DB, notifier notify.Notifier) *Controller {
 	return &Controller{
-		logger: logger,
-		db:     db,
+		logger:   logger,
+		db:       db,
+		notifier: notifier,
 	}
 }
 
@@ -96,7 +99,7 @@ func (h *Controller) RunMigration(c echo.Context) (err error) {
 		return httputil.NewHTTPError(http.StatusBadRequest, "Invalid migration version")
 	}
 
-	if err = migrate.RunVersion(h.db, logger, version); err != nil {
+	if err = migrate.RunVersion(h.db, logger, version, h.notifier); err != nil {
 		logger.Error("Failed to run migration", zap.Int64("version", version), zap.Error(err))
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -110,7 +113,7 @@ func (h *Controller) RunPendingMigrations(c echo.Context) (err error) {
 
 	logger.Info("Start to run pending migrations")
 
-	go migrate.RunPending(h.db, logger)
+	go migrate.RunPending(h.db, logger, h.notifier)
 
 	return c.JSON(http.StatusOK, httputil.NewMessage("Start to run pending migrations"))
 }

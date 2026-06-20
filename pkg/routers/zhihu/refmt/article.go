@@ -10,7 +10,9 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	"go.uber.org/zap"
 )
 
@@ -87,6 +89,10 @@ func (s *RefmtService) refmtArticle(authorID string) (err error) {
 				if err != nil {
 					logger.Error("failed to format markdown content", zap.Error(err))
 					return
+				}
+
+				if parse.IsPaidArticle(article.ArticleType, article.PaidInfo) {
+					formattedText = parse.AddPaidNotice(formattedText, render.GenerateArticleLink(a.ID))
 				}
 
 				if err = s.db.SaveArticle(&db.Article{

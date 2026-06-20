@@ -8,6 +8,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	apiModels "github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse/api_models"
+	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 
 	"go.uber.org/zap"
 )
@@ -82,6 +83,10 @@ func (p *ParseService) ParseArticle(content []byte, logger *zap.Logger) (text st
 		return emptyString, fmt.Errorf("failed to format markdown text: %w", err)
 	}
 	logger.Info("Format markdown text successfully")
+
+	if IsPaidArticle(article.ArticleType, article.PaidInfo) {
+		formattedText = AddPaidNotice(formattedText, render.GenerateArticleLink(article.ID))
+	}
 
 	if err = p.db.SaveAuthor(&db.Author{
 		ID:   article.Author.ID,
