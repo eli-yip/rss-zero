@@ -4,6 +4,11 @@
 - Unless explicitly requested, do not run the full existing project test suite. Prefer targeted tests for the files or packages changed in the current step.
 - Run lint with `just lint`; do not write your own lint command. To auto-fix lint issues, run `just fix-lint`.
 
+## Related repositories
+
+- `../webapp` — this project's frontend; the two are a paired backend/frontend.
+- `../../zhihu-encrypt` — the Zhihu encryption service.
+
 ## Project documentation workflow
 
 Documentation lives under `docs/`. Use the following layout and naming conventions. `NO` is a zero-padded sequence number (`01`, `02`, …) that disambiguates documents created on the same date; `<topic>` is a short kebab-case slug.
