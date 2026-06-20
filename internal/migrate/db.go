@@ -54,5 +54,7 @@ func MigrateDB(db *gorm.DB) (err error) {
 
 		&bookmark.Bookmark{},
 		&bookmark.Tag{},
+
+		&SchemaMigration{},
 	)
 }

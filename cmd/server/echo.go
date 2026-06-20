@@ -429,6 +429,13 @@ func registerMigrate(migrateApi *echo.Group, migrateHandler *migrateController.C
 	migrate20250530Api.Name = "Migrate db 20250530 route"
 	migrate20260612Api := migrateApi.POST("/20260612", migrateHandler.Migrate20260612)
 	migrate20260612Api.Name = "Migrate db 20260612 route"
+
+	migrateRegistryApi := migrateApi.GET("/registry", migrateHandler.MigrationRegistry)
+	migrateRegistryApi.Name = "Migration registry status route"
+	migrateRunApi := migrateApi.POST("/run/:version", migrateHandler.RunMigration)
+	migrateRunApi.Name = "Run migration by version route"
+	migrateRunPendingApi := migrateApi.POST("/run-pending", migrateHandler.RunPendingMigrations)
+	migrateRunPendingApi.Name = "Run pending migrations route"
 }
 
 func registerParse(parseApi *echo.Group, parseHandler *parseHandler.Handler) {

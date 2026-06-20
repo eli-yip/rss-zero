@@ -136,6 +136,10 @@ func initService(logger *zap.Logger) (redisService redis.Redis,
 		return nil, nil, nil, nil, fmt.Errorf("failed to migrate db: %w", err)
 	}
 
+	// Apply registry data migrations marked Auto. Failures are logged inside,
+	// never fatal, so the server still starts.
+	migrate.RunAuto(dbService, logger)
+
 	cookieService = cookie.NewCookieService(dbService)
 
 	notifier = notify.NewBarkNotifier(config.C.Bark.URL)
