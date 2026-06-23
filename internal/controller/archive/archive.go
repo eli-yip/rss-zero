@@ -1,6 +1,7 @@
 package archive
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -17,6 +18,7 @@ import (
 	utils "github.com/eli-yip/rss-zero/internal/utils"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/eli-yip/rss-zero/pkg/render"
+	tk "github.com/eli-yip/rss-zero/pkg/routers/tombkeeper"
 )
 
 // POST /api/v1/archive
@@ -210,7 +212,11 @@ func (h *Controller) History(c echo.Context) (err error) {
 	result, err := h.handleRequestArchiveLink(u)
 	if err != nil {
 		logger.Error("Failed to get webarchive", zap.Error(err))
-		return c.HTML(http.StatusBadRequest, renderErrorPage(err, requestID))
+		status := http.StatusBadRequest
+		if errors.Is(err, ErrArchiveNotFound) {
+			status = http.StatusNotFound
+		}
+		return c.HTML(status, renderErrorPage(err, requestID))
 	}
 	if result.redirectTo != "" {
 		return c.Redirect(http.StatusFound, result.redirectTo)
@@ -243,6 +249,10 @@ func (h *Controller) History(c echo.Context) (err error) {
 	}
 }
 
+// ErrArchiveNotFound signals that the link was well-formed but the resource is
+// not archived. History maps it to 404 (other handler errors map to 400).
+var ErrArchiveNotFound = errors.New("archive: resource not found")
+
 func (h *Controller) handleRequestArchiveLink(link string) (result *archiveResult, err error) {
 	switch {
 	case regexp.MustCompile(`/question/\d+/answer/\d+`).MatchString(link):
@@ -257,6 +267,8 @@ func (h *Controller) handleRequestArchiveLink(link string) (result *archiveResul
 		return h.HandleZsxqWebTopic(link)
 	case regexp.MustCompile(`t\.zsxq\.com/\w+`).MatchString(link):
 		return h.HandleZsxqShareLink(link)
+	case tk.IsWeiboArchiveLink(link):
+		return h.HandleTombkeeperWeibo(link)
 	}
 	return nil, fmt.Errorf("unknown link: %s", link)
 }

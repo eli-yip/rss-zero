@@ -7,6 +7,7 @@ import (
 	bookmarkDB "github.com/eli-yip/rss-zero/pkg/bookmark/db"
 	embeddingDB "github.com/eli-yip/rss-zero/pkg/embedding/db"
 	"github.com/eli-yip/rss-zero/pkg/render"
+	tombkeeperDB "github.com/eli-yip/rss-zero/pkg/routers/tombkeeper"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 	zsxqDB "github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
@@ -22,6 +23,7 @@ type Controller struct {
 	zhihuFullTextRenderService zhihuRender.FullTextRenderIface
 	zsxqDBService              zsxqDB.DB
 	zsxqFullTextRenderService  zsxqRender.FullTextRenderer
+	tombkeeperDBService        tombkeeperDB.DB
 
 	htmlRender render.HtmlRenderIface
 }
@@ -36,6 +38,7 @@ func NewController(db *gorm.DB) *Controller {
 		zhihuFullTextRenderService: zhihuRender.NewFullTextRender(md.NewMarkdownFormatter()),
 		zsxqDBService:              zsxqDBService,
 		zsxqFullTextRenderService:  zsxqRender.NewFullTextRenderService(),
+		tombkeeperDBService:        tombkeeperDB.NewDBService(db),
 
 		htmlRender: render.NewHtmlRenderService(),
 	}

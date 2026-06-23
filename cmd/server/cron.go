@@ -11,6 +11,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/ai"
 	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
+	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
@@ -19,13 +20,14 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/routers/douyu"
 	githubCron "github.com/eli-yip/rss-zero/pkg/routers/github/cron"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
+	"github.com/eli-yip/rss-zero/pkg/routers/tombkeeper"
 	xiaobotCron "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/cron"
 	zhihuCron "github.com/eli-yip/rss-zero/pkg/routers/zhihu/cron"
 	zsxqCron "github.com/eli-yip/rss-zero/pkg/routers/zsxq/cron"
 )
 
 // setupCronCrawlJob sets up cron jobs
-func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier,
+func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier, fileService file.File,
 ) (cronService *cron.CronService, definitionToFunc jobController.DefinitionToFunc, err error) {
 	cronService, err = cron.NewCronService(logger)
 	if err != nil {
@@ -59,6 +61,11 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 			name:     "macked_crawl",
 			schedule: "0 * * * *",
 			fn:       macked.CrawlFunc(redisService, macked.NewDBService(db), logger),
+		},
+		{
+			name:     "tombkeeper_crawl",
+			schedule: "0 * * * *",
+			fn:       tombkeeper.CrawlFunc(redisService, tombkeeper.NewDBService(db), fileService, logger),
 		},
 		{
 			name:     "canglimo_random_select",

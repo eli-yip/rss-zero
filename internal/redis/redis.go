@@ -27,6 +27,8 @@ const (
 	GitHubRSSPath = "github_rss_%s"
 
 	RssMackedPath = "macked_rss"
+
+	RssTombkeeperPath = "tombkeeper_rss"
 )
 
 const (

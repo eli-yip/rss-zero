@@ -1,19 +1,17 @@
 package db
 
 import (
-	"errors"
-	"fmt"
-	"net/url"
-	"strings"
 	"time"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
+
+	"github.com/eli-yip/rss-zero/internal/file"
 )
 
 // ErrNoStorageProvider is returned by Object.URI when an object has no
 // storage provider recorded, so callers can distinguish it from a DB error.
-var ErrNoStorageProvider = errors.New("object has no storage provider")
+var ErrNoStorageProvider = file.ErrNoStorageProvider
 
 type Object struct {
 	ID              int            `gorm:"column:id;primary_key"`
@@ -41,14 +39,7 @@ func (o *Object) TableName() string { return "zsxq_object" }
 // get their filename segment escaped). Returns ErrNoStorageProvider if no
 // provider is recorded.
 func (o *Object) URI() (string, error) {
-	if len(o.StorageProvider) == 0 {
-		return "", fmt.Errorf("%w: object_key=%s", ErrNoStorageProvider, o.ObjectKey)
-	}
-	segs := strings.Split(o.ObjectKey, "/")
-	for i, s := range segs {
-		segs[i] = url.PathEscape(s)
-	}
-	return o.StorageProvider[0] + "/" + strings.Join(segs, "/"), nil
+	return file.ObjectURI(o.StorageProvider, o.ObjectKey)
 }
 
 type DBObject interface {

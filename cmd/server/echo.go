@@ -23,6 +23,7 @@ import (
 	migrateController "github.com/eli-yip/rss-zero/internal/controller/migrate"
 	parseHandler "github.com/eli-yip/rss-zero/internal/controller/parse"
 	rsshubController "github.com/eli-yip/rss-zero/internal/controller/rsshub"
+	tombkeeperHandler "github.com/eli-yip/rss-zero/internal/controller/tombkeeper"
 	userController "github.com/eli-yip/rss-zero/internal/controller/user"
 	xiaobotController "github.com/eli-yip/rss-zero/internal/controller/xiaobot"
 	zhihuController "github.com/eli-yip/rss-zero/internal/controller/zhihu"
@@ -38,6 +39,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
+	tombkeeperRouter "github.com/eli-yip/rss-zero/pkg/routers/tombkeeper"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	xiaobotRequest "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -117,10 +119,11 @@ func setupEcho(redisService redis.Redis,
 	cookieHandler := cookieController.NewController(cookieService)
 	registerCookieProbes(cookieService)
 	mHandler := mackedHandler.NewHandler(redisService, macked.NewDBService(db), logger)
+	tombkeeperH := tombkeeperHandler.NewController(redisService, tombkeeperRouter.NewDBService(db), logger)
 	parseHandler := parseHandler.NewHandler(db, ai, cookieService, fileService, notifier)
 	migrateHandler := migrateController.NewController(logger, db, notifier)
 
-	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mHandler)
+	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mHandler, tombkeeperH)
 	// /api/v1
 	apiGroup := e.Group("/api/v1")
 	registerArchive(apiGroup, archiveHandler)
@@ -347,7 +350,7 @@ func registerCookie(apiGroup *echo.Group, cookieHandler *cookieController.Contro
 }
 
 // /rss
-func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedHandler.Handler) {
+func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller, endOfLifeHandler *endoflifeController.Controller, githubController *githubController.Controller, mackedController *mackedHandler.Handler, tombkeeperController *tombkeeperHandler.Controller) {
 	rssGroup := e.Group("/rss")
 	rssGroup.Use(
 		myMiddleware.SetRSSContentType(), // set content type to application/atom+xml
@@ -386,6 +389,13 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controller, zhihuHand
 	// Add :feed here to fit the ExtractFeedID middleware
 	rssMacked := rssGroup.GET("/macked/:feed", mackedController.RSS)
 	rssMacked.Name = "RSS route for macked"
+
+	rssTombkeeperBare := rssGroup.GET("/tombkeeper", tombkeeperController.RSS)
+	rssTombkeeperBare.Name = "RSS bare route for tombkeeper"
+
+	// Add :feed here to fit the ExtractFeedID middleware
+	rssTombkeeper := rssGroup.GET("/tombkeeper/:feed", tombkeeperController.RSS)
+	rssTombkeeper.Name = "RSS route for tombkeeper"
 
 	rssGithub := rssGroup.GET("/github/:feed", githubController.RSS)
 	rssGithub.Name = "RSS route for github"

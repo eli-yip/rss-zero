@@ -17,9 +17,15 @@ type HtmlRenderService struct {
 	md goldmark.Markdown
 }
 
+// NewMarkdown returns the project's standard goldmark renderer (GFM + CJK). It
+// is the single source for the markdown extension set, shared by the HTML and
+// text renderers and by feed-content rendering.
+func NewMarkdown() goldmark.Markdown {
+	return goldmark.New(goldmark.WithExtensions(extension.GFM, extension.CJK))
+}
+
 func NewHtmlRenderService() HtmlRenderIface {
-	md := goldmark.New(goldmark.WithExtensions(extension.GFM, extension.CJK))
-	return &HtmlRenderService{md: md}
+	return &HtmlRenderService{md: NewMarkdown()}
 }
 
 func (s *HtmlRenderService) Render(title, content string) (html string, err error) {

@@ -45,3 +45,32 @@
 
 - **`/statistics` 页面在统计数据为空时白屏崩溃**（预存 bug，与统一响应格式无关）。webapp 的 `<ActivityCalendar>`（react-activity-calendar）在收到空数据时抛异常，且无 error boundary，导致整页不渲染。复现：当 canglimo 在"过去一年"窗口内没有回答时（如本地 DB 数据陈旧），`GET /api/v1/archive/statistics` 返回空 `data`，前端解包为空 → 组件崩溃。生产环境有近一年数据故正常。修复方向：`StatisticsPage`/`Statistics` 组件加空数据 guard（空时显示占位/提示），或包一层 error boundary。
 - **后续 API 设计议题**（首性原理讨论结论，留作后续 SPEC）：读操作 POST→GET、content_type 字符串/整数枚举统一、bookmark 子资源化（`PUT/DELETE /topics/{id}/bookmark`）、`/sub/sub/zhihu` 笔误路径修复。
+
+## tombkeeper 订阅源后续
+
+来源：2026-06-18 tombkeeper-rss 实现后的对抗式评审（确认项已修复，下列为有意延后的加固/增强）。
+
+- **图片抓取的纵深 SSRF 加固（低优先）**：已对「完整 URL 形态的 `pics`」加 host 允许名单、并约束图片下载的重定向 host。残留风险（评审指出）：被允许的 CDN 若 302 到内网、或 DNS rebinding。彻底防御需在拨号层（`net.Dialer.Control`）阻断私有/环回/链路本地网段（10/8、172.16/12、192.168/16、127/8、169.254/16、::1、fc00::/7）。鉴于上游 `tombkeeper.io` 单一可信、且为 blind SSRF（响应直接入 OSS 不回显），按低优先处理。
+- **`title` 用 LLM 细化（SPEC 后期项）**：当前 `tombkeeper_post.title` = 正文前 10 字。后续接 `internal/ai` 的 LLM 概括为更可读的标题，可加一次性 backfill 迁移。
+- **被内联帖的 `url_info` 缺失**：嵌入的转发原文对象有时不带 `url_info`（其 `t.cn` 短链不展开，正文里保留裸 `t.cn`，由 GFM 自动链接）。如需完整展开，可对原文补一次详情抓取，但会增加请求量，暂不做。
+
+## tombkeeper 评审修复（2026-06-23）
+
+来源：2026-06-23 对 `feat-tombkeeper-rss` 分支的 xhigh 代码评审。下列为已确认的修复项及商定方案，逐条一提交，完成即勾选。
+
+- [x] **#8 图像抓取限流（option B）**：新增独立 pic 限流器（0.25s + 0.25s 抖动），在 `downloadFirstAvailable` 每张图探测**前**取一个令牌；单图内仍 16 路并发取首个成功，图间 0.25–0.5s。`Requester` 接口加 `WaitPicSlot()`。
+- [x] **CDN 探测取消/提前返回**：`GetPicStream` 改为带 `context.Context`（`NewRequestWithContext`），`downloadFirstAvailable` 拿到首个成功即 `cancel()` 中止其余在途请求并立即返回，后台 drain 关闭竞速到的 body。修复「等最慢候选（最坏 ~20s）才返回」。（每个候选用独立 context，仅取消败者；胜者 context 随其 body 关闭而释放——`cancelOnClose`。）
+- [x] **#7 SSRF 加固**：主 `client` 加与 `picClient` 同款 `CheckRedirect`（≤5 跳 + 重定向目标 host 校验），覆盖 `GetReppic`/`GetDetail`/`GetPage`。共享 `redirectGuard(allow)` 助手，页面客户端用 `pageHostAllowed`（tombkeeper.io / *.weibo.com）。
+- [x] **#1 BidToMid 越界 panic**：非最左组解码值 >7 位（≥10^7）时返回 error，而非 `strings.Repeat` 负数 panic。不引 base62 库（分组逻辑为 weibo 专有，库无益）。
+- [x] **#2 微博归档路由 + uid 校验**：tombkeeper 包导出唯一匹配器 `WeiboArchiveMid`（预编译正则，uid/bid 形态校验 `IsTombkeeperUID`），派发器三 case 合一、未命中落 unknown link；删重复的 `tombkeeperMidFromLink`。测试随匹配器迁到 tombkeeper 包（`TestWeiboArchiveMid`，有序、含非本人 uid 拒绝用例）。
+- [x] **#12 未找到返回 404**：archive 包加哨兵 `ErrArchiveNotFound`，`HandleTombkeeperWeibo` 命中 `gorm.ErrRecordNotFound` 时 `%w` 包它，`History` 用 `errors.Is` 映射成 404。
+- [x] **#13 OSS 保存失败无记录丢图**：`SaveStream` 失败时退化到放弃记录（`status=Abandoned`、`object_key` 空、`URL=原链`），返回原链而非 error；正文保留图 + 落记录 + 下次跳过。
+- [x] **#4 列表/表格不转义**：行首正则扩 `-`/`+`/`*`/`数字.`（列表），inline replacer 加 `|`（GFM 表格）。`数字.` 仅在其后为空白/行尾时转义（不动 `3.14`）。
+- [x] **#6 时间解析失败记当前时间**：在 `buildPost` 处理（`parseFlightTime` 失败返回零值，零值即解析失败信号）。`CreatedAt` 为零时改用 `time.Now()` 并 warn（带 post id，用 Renderer 已有 logger），避免存成 year-0001 污染 feed。
+- [x] **#10 objStartRe 漂移可见化**：正则容忍空白 `\{\s*"id"\s*:\s*"\d`（加 whitespace 用例）。抓取层对账并入 #11。
+- [x] **#11 timelineIDs 两源对账**：Crawl 里 `timelineIDs==0` 而 flight 有对象 → 记 error；timelineID 不在 pageMap → warn（含 #10 的「抽取缺失」对账）。pageMap 多出的对象是内联转发原文，属正常、不告警。放宽兼容 `/weibo/{bid}` 留作后续（已在 TODO「tombkeeper 订阅源后续」语境）。
+- [x] **#15 导出 FeedSize 常量**：`tombkeeper.FeedSize = 30`，crawl.go 与 controller/tombkeeper/rss.go 共用。
+- [x] **重构（复用/去重）**：goldmark 配置抽 `render.NewMarkdown()`（md2html/md2text/RSS 三处共用）；`imageEmbeds` 用 `md.Image`；删死字段 `RawPost.VideoURL`（恒空、无人读）——**`Post.VideoURL` 实为有效数据**（`videoLink(url_info)` 填充、有测试），保留；`Object.URI()` 抽 `internal/file.ObjectURI`，tombkeeper 与 zsxq 共用（zsxq 的 `ErrNoStorageProvider` 改为别名，保留其测试）。
+- [x] **测试完善**：补 `BidToMid` 越界用例（`AZZZZ`）；`fakeDB.GetLatestPosts` 按 `PostTime` DESC 排序 + 截断（贴近生产）；路由错误分支 + 有序断言已随 #2 的 `TestWeiboArchiveMid`（含非本人 uid 拒绝）、#4 的转义用例、#10 的 whitespace 用例落地。
+
+已确认不修：图片放弃后永久固定原链（#5，预期行为）；视频 `strings.Contains` 去重（#9）。

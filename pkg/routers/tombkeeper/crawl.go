@@ -1,0 +1,144 @@
+package tombkeeper
+
+import (
+	"fmt"
+	"regexp"
+	"strconv"
+	"sync"
+
+	"github.com/rs/xid"
+	"go.uber.org/zap"
+
+	"github.com/eli-yip/rss-zero/config"
+	"github.com/eli-yip/rss-zero/internal/file"
+	"github.com/eli-yip/rss-zero/internal/redis"
+)
+
+const (
+	pagesPerCrawl = 2  // fetch the two most recent list pages each run
+	// FeedSize is the number of latest posts rendered into the feed, shared by the
+	// cron warm path (here) and the controller's cache-miss regeneration.
+	FeedSize = 30
+)
+
+var (
+	crawlMu      sync.Mutex
+	detailLinkRe = regexp.MustCompile(`/weibo/(\d+)`)
+)
+
+// CrawlFunc returns the hourly cron closure (matches the macked job shape).
+func CrawlFunc(redisService redis.Redis, db DB, fileService file.File, logger *zap.Logger) func() {
+	return func() {
+		l := logger.With(zap.String("cron_job_id", xid.New().String()))
+		if err := Crawl(redisService, db, fileService, l); err != nil {
+			l.Error("failed to crawl tombkeeper", zap.Error(err))
+		}
+	}
+}
+
+// Crawl fetches the latest pages, ingests new timeline posts, and refreshes the
+// cached RSS. Only the timeline posts (the page's /weibo/{id} detail links) are
+// stored as feed items; embedded retweet originals are used only for inlining.
+func Crawl(redisService redis.Redis, db DB, fileService file.File, logger *zap.Logger) error {
+	crawlMu.Lock()
+	defer crawlMu.Unlock()
+
+	req := NewRequestService(logger)
+	defer req.Close()
+	renderer := NewRenderer(req, fileService, db, config.C.Settings.ServerURL, logger)
+
+	var newCount int
+	for page := 1; page <= pagesPerCrawl; page++ {
+		html, err := req.GetPage(page)
+		if err != nil {
+			return fmt.Errorf("get page %d: %w", page, err)
+		}
+		posts, err := ExtractPosts(html)
+		if err != nil {
+			logger.Error("failed to extract posts", zap.Int("page", page), zap.Error(err))
+			continue
+		}
+		pageMap := make(map[string]RawPost, len(posts))
+		for _, p := range posts {
+			pageMap[p.ID] = p
+		}
+
+		// Two independent parsers read the same page: timelineIDs scrapes the SSR
+		// /weibo/{id} detail links, pageMap comes from the flight payload. When they
+		// disagree the markup has drifted, so surface it instead of silently
+		// ingesting nothing. (pageMap legitimately holds extra objects — inlined
+		// retweet originals — so only the timeline-id direction is a problem.)
+		ids := timelineIDs(html)
+		if len(ids) == 0 && len(posts) > 0 {
+			logger.Error("no timeline detail links found but flight has posts; page markup may have changed",
+				zap.Int("page", page), zap.Int("flight_posts", len(posts)))
+		}
+		for _, id := range ids {
+			raw, ok := pageMap[id]
+			if !ok {
+				logger.Warn("timeline id missing from flight payload",
+					zap.Int("page", page), zap.String("id", id))
+				continue
+			}
+			mid, err := strconv.ParseInt(id, 10, 64)
+			if err != nil {
+				continue
+			}
+			exists, err := db.PostExists(mid)
+			if err != nil {
+				logger.Error("post exists check", zap.String("id", id), zap.Error(err))
+				continue
+			}
+			if exists {
+				continue
+			}
+
+			post, err := renderer.Render(raw, pageMap)
+			if err != nil {
+				logger.Error("render post", zap.String("id", id), zap.Error(err))
+				continue
+			}
+			if err := db.SavePost(post); err != nil {
+				logger.Error("save post", zap.String("id", id), zap.Error(err))
+				continue
+			}
+			newCount++
+			logger.Info("saved tombkeeper post", zap.String("id", id))
+		}
+	}
+	logger.Info("tombkeeper crawl done", zap.Int("new_posts", newCount))
+
+	return renderAndCacheRSS(redisService, db, logger)
+}
+
+func renderAndCacheRSS(redisService redis.Redis, db DB, logger *zap.Logger) error {
+	posts, err := db.GetLatestPosts(FeedSize)
+	if err != nil {
+		return fmt.Errorf("get latest posts: %w", err)
+	}
+	content, err := NewRSSRenderService().RenderRSS(posts)
+	if err != nil {
+		return fmt.Errorf("render rss: %w", err)
+	}
+	if err := redisService.Set(redis.RssTombkeeperPath, content, redis.RSSDefaultTTL); err != nil {
+		return fmt.Errorf("cache rss: %w", err)
+	}
+	logger.Info("cached tombkeeper rss", zap.Int("posts", len(posts)))
+	return nil
+}
+
+// timelineIDs returns the page's timeline post ids in order, taken from the
+// /weibo/{id} "详情" links (excludes embedded retweet originals).
+func timelineIDs(html []byte) []string {
+	var ids []string
+	seen := make(map[string]struct{})
+	for _, m := range detailLinkRe.FindAllSubmatch(html, -1) {
+		id := string(m[1])
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	return ids
+}

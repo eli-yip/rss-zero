@@ -8,6 +8,7 @@ import (
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
+	"github.com/eli-yip/rss-zero/pkg/routers/tombkeeper"
 	weiboDB "github.com/eli-yip/rss-zero/pkg/routers/weibo/db"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
@@ -49,6 +50,9 @@ func MigrateDB(db *gorm.DB) (err error) {
 
 		&macked.TimeInfo{},
 		&macked.AppInfo{},
+
+		&tombkeeper.Post{},
+		&tombkeeper.Object{},
 
 		&cookie.Cookie{},
 

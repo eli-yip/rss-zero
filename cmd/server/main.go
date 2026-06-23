@@ -75,18 +75,18 @@ func main() {
 		logger.Info("No empty sub id found")
 	}
 
-	var definitionToFunc jobController.DefinitionToFunc
-	var cronService *cron.CronService
-	ai := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
-	if cronService, definitionToFunc, err = setupCronCrawlJob(logger, redisService, cookieService, db, ai, bark); err != nil {
-		logger.Fatal("Failed to setup cron jobs", zap.Error(err))
-	}
-	logger.Info("Init cron service and jobs successfully")
-
 	fileService, err := file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {
 		logger.Fatal("Failed to init file service", zap.Error(err))
 	}
+
+	var definitionToFunc jobController.DefinitionToFunc
+	var cronService *cron.CronService
+	ai := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
+	if cronService, definitionToFunc, err = setupCronCrawlJob(logger, redisService, cookieService, db, ai, bark, fileService); err != nil {
+		logger.Fatal("Failed to setup cron jobs", zap.Error(err))
+	}
+	logger.Info("Init cron service and jobs successfully")
 
 	e := setupEcho(redisService, cookieService, db, ai, bark, fileService, definitionToFunc, cronService, logger)
 	logger.Info("Init echo server successfully")

@@ -6,9 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
-	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/text"
 )
 
@@ -20,7 +18,7 @@ import (
 // Block-level nodes are separated by blank lines so the result stays readable.
 func Markdown2Text(content string) (plain string, err error) {
 	source := []byte(content)
-	md := goldmark.New(goldmark.WithExtensions(extension.GFM, extension.CJK))
+	md := NewMarkdown()
 	doc := md.Parser().Parse(text.NewReader(source))
 
 	var buf bytes.Buffer
