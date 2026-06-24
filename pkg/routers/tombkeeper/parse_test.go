@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/eli-yip/rss-zero/internal/md"
 )
 
 func newTestRenderer(req Requester, f *fakeFile, db DB) *Renderer {
@@ -64,7 +66,7 @@ func TestRenderMultiImageOrdered(t *testing.T) {
 	}
 }
 
-func TestRenderImageAllCDNFailKeepsOriginalLink(t *testing.T) {
+func TestRenderImageAllCDNFailShowsSourceNotice(t *testing.T) {
 	raw := loadRawPost(t, "single_image.json")
 	f := newFakeFile()
 	db := newFakeDB()
@@ -75,9 +77,17 @@ func TestRenderImageAllCDNFailKeepsOriginalLink(t *testing.T) {
 		t.Fatal(err)
 	}
 	picID := picIDOf(splitPics(raw.Pics)[0])
-	originalLink := "https://wx1.sinaimg.cn/large/" + picID + ".jpg"
-	if !strings.Contains(post.TextMarkdown, "![微博图片 1]("+originalLink+")") {
-		t.Errorf("markdown should keep original link %s:\n%s", originalLink, post.TextMarkdown)
+	// The fabricated sinaimg link is one of the candidates we just failed to
+	// download, so it must never be embedded as an image.
+	deadLink := "https://wx1.sinaimg.cn/large/" + picID + ".jpg"
+	if strings.Contains(post.TextMarkdown, "![微博图片 1]("+deadLink+")") {
+		t.Errorf("must not embed the dead sinaimg link:\n%s", post.TextMarkdown)
+	}
+	// Instead the body carries a notice pointing at the source weibo.
+	src := WeiboPostURL(raw.UserID, raw.Bid, raw.ID)
+	wantNotice := md.Quote("微博图片 1 下载失败，请前往 [源微博](" + src + ") 查看")
+	if !strings.Contains(post.TextMarkdown, wantNotice) {
+		t.Errorf("markdown should carry source notice %q:\n%s", wantNotice, post.TextMarkdown)
 	}
 	if o, _ := db.GetObject(picID); o == nil || o.Status != ObjectStatusAbandoned {
 		t.Errorf("object should be abandoned: %+v", o)
@@ -210,6 +220,44 @@ func TestRenderViewPicFallsBackToOriginalLinkWhenUnresolved(t *testing.T) {
 	originalURL := "https://oss.test/rss/tombkeeper/" + picIDOf(splitPics(original.Pics)[0]) + ".jpg"
 	if !strings.Contains(out, "![微博图片 1]("+originalURL+")") {
 		t.Errorf("original image should still render inside the quote:\n%s", out)
+	}
+}
+
+func TestRenderViewPicFallsBackToOriginalLinkWhenImageDownloadFails(t *testing.T) {
+	repost, original := loadRetweetPair(t, "view_pic_retweet.json")
+	const reppicID = "53899d01ly1ief0r5kg95j210o2q6npd"
+	viewPicLong := repost.URLInfo[0].LongURL
+	// The H5 page resolves to the reposter's pic id, but every CDN download fails:
+	// the only sinaimg link we could form is the candidate we just failed on, so the
+	// 查看图片 short link must degrade to the photo.weibo.com page, not a broken embed.
+	req := &fakeRequester{
+		picAvailable: false,
+		reppics:      map[string][]string{viewPicLong: {reppicID}},
+	}
+	db := newFakeDB()
+	r := newTestRenderer(req, newFakeFile(), db)
+
+	post, err := r.Render(repost, map[string]RawPost{original.ID: original})
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := post.TextMarkdown
+
+	// The fabricated, already-dead reppic sinaimg link must never be referenced.
+	deadLink := "https://wx1.sinaimg.cn/large/" + reppicID + ".jpg"
+	if strings.Contains(out, deadLink) {
+		t.Errorf("must not reference the dead reppic sinaimg link:\n%s", out)
+	}
+	// Instead the in-text 查看图片 link degrades to the original H5 page.
+	// autocorrect-disable (the label must match the renderer's exact output, no spaces)
+	want := "[查看图片|原始链接](" + viewPicLong + ")"
+	// autocorrect-enable
+	if !strings.Contains(out, want) {
+		t.Errorf("expected fallback link %q in:\n%s", want, out)
+	}
+	// The reppic is recorded abandoned so the next crawl skips it.
+	if o, _ := db.GetObject(reppicID); o == nil || o.Status != ObjectStatusAbandoned {
+		t.Errorf("reppic object should be abandoned: %+v", o)
 	}
 }
 

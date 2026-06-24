@@ -18,45 +18,61 @@ import (
 
 var errAllCDNFailed = errors.New("all cdn candidates failed")
 
-// saveImage rehosts one pic (a bare pic id or a full sinaimg URL) to OSS and
-// returns the markdown image URL to embed. On total CDN failure it records an
-// abandoned object and returns the original sinaimg link, so the body still
-// references the image. It is idempotent: an already-recorded object is reused.
-func saveImage(req Requester, f file.File, db DB, postID int64, picField string, logger *zap.Logger) (markdownURL string, err error) {
+// saveImage rehosts one pic (a bare pic id or a full sinaimg URL) to OSS and, on
+// success, returns the markdown image URL to embed with ok=true. On total CDN
+// failure or OSS failure it records an abandoned object and returns ok=false with
+// no URL: the only link we could offer is a fabricated sinaimg URL that is one of
+// the candidates already proven dead, so the caller points readers at the source
+// weibo instead of embedding a broken image. It is idempotent: an already-recorded
+// object is reused (ok mirrors its stored status). err is reserved for unexpected
+// failures (empty pic id, object persistence).
+func saveImage(req Requester, f file.File, db DB, postID int64, picField string, logger *zap.Logger) (markdownURL string, ok bool, err error) {
 	picID := picIDOf(picField)
 	if picID == "" {
-		return "", fmt.Errorf("empty pic id from %q", picField)
+		return "", false, fmt.Errorf("empty pic id from %q", picField)
 	}
 
 	if exists, _ := db.ObjectExists(picID); exists {
 		if o, e := db.GetObject(picID); e == nil {
-			return objectMarkdownURL(o), nil
+			if o.Status == ObjectStatusOK {
+				if uri, uerr := o.URI(); uerr == nil {
+					return uri, true, nil
+				}
+			}
+			return "", false, nil // previously abandoned (or URI unbuildable): do not embed
 		}
 	}
 
 	cands, originalLink := candidateURLs(picField)
+	if len(cands) == 0 {
+		// A full-URL pics entry on a non-allowlisted host: we deliberately do not
+		// proxy it (anti-SSRF), but it is a genuine, possibly-live link rather than a
+		// fabricated dead one, so embed it directly. The reader's client fetches it,
+		// not our server. Nothing is rehosted, so no object is recorded.
+		return originalLink, true, nil
+	}
 	resp, usedURL, derr := downloadFirstAvailable(req, cands)
 	if derr != nil {
-		logger.Warn("all CDNs failed, keeping original link", zap.String("pic_id", picID))
+		logger.Warn("all CDNs failed, abandoning image", zap.String("pic_id", picID))
 		_ = db.SaveObject(&Object{
 			ID: picID, PostID: postID, Type: ObjectTypeImage,
 			URL: originalLink, Status: ObjectStatusAbandoned,
 		})
-		return originalLink, nil
+		return "", false, nil
 	}
 	// resp.Body is handed to SaveStream, which closes it.
 	ext := extFromContentType(resp.Header.Get("Content-Type"))
 	objectKey := fmt.Sprintf("tombkeeper/%s.%s", picID, ext)
 	if err = f.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
-		// OSS write failed: degrade like total-CDN-failure rather than dropping the
-		// image. Record it abandoned (keeping the original link) so the body still
-		// shows the image and the next crawl skips it instead of re-downloading.
-		logger.Warn("oss save failed, keeping original link", zap.String("pic_id", picID), zap.Error(err))
+		// OSS write failed: record abandoned (like total-CDN-failure) so the next
+		// crawl skips it instead of re-downloading, and report ok=false so the body
+		// carries a source-weibo notice rather than a broken embed.
+		logger.Warn("oss save failed, abandoning image", zap.String("pic_id", picID), zap.Error(err))
 		_ = db.SaveObject(&Object{
 			ID: picID, PostID: postID, Type: ObjectTypeImage,
 			URL: originalLink, Status: ObjectStatusAbandoned,
 		})
-		return originalLink, nil
+		return "", false, nil
 	}
 
 	obj := &Object{
@@ -65,20 +81,13 @@ func saveImage(req Requester, f file.File, db DB, postID int64, picField string,
 		StorageProvider: []string{f.AssetsDomain()}, Status: ObjectStatusOK,
 	}
 	if err = db.SaveObject(obj); err != nil {
-		return "", fmt.Errorf("save object: %w", err)
+		return "", false, fmt.Errorf("save object: %w", err)
 	}
-	return obj.URI()
-}
-
-// objectMarkdownURL returns the OSS URI for a stored object, or its original link
-// when the object was abandoned.
-func objectMarkdownURL(o *Object) string {
-	if o.Status == ObjectStatusOK {
-		if uri, err := o.URI(); err == nil {
-			return uri
-		}
+	uri, err := obj.URI()
+	if err != nil {
+		return "", false, fmt.Errorf("object uri: %w", err)
 	}
-	return o.URL
+	return uri, true, nil
 }
 
 // candidateURLs expands a pics entry into download candidates, plus the original

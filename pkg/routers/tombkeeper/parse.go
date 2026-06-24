@@ -65,7 +65,7 @@ func (r *Renderer) renderContent(raw RawPost, pageMap map[string]RawPost, depth 
 	body, tailQuotes := r.processShortLinks(escapeMarkdown(raw.Text), raw.URLInfo, depth, viewPicURLs)
 
 	sections := []string{body}
-	sections = append(sections, imageEmbeds(r.rehostImages(raw.Pics, mid))...)
+	sections = append(sections, r.renderPics(raw, mid)...)
 	// Append the video link only if it was not already expanded inline by a t.cn
 	// short link (otherwise the same video shows twice — the stray extra line).
 	if v, vurl := videoLink(raw.URLInfo); v != "" && !strings.Contains(body, vurl) {
@@ -101,9 +101,14 @@ func (r *Renderer) resolveViewPics(urlInfo []URLInfoEntry, postID int64) []strin
 			continue
 		}
 		for _, id := range picIDs {
-			u, err := saveImage(r.req, r.file, r.db, postID, id, r.logger)
+			u, ok, err := saveImage(r.req, r.file, r.db, postID, id, r.logger)
 			if err != nil {
 				r.logger.Warn("failed to rehost reppic image", zap.String("pic", id), zap.Error(err))
+				continue
+			}
+			if !ok {
+				// Download/OSS failed: drop it so the in-text 查看图片 short link falls
+				// back to its original photo.weibo.com page instead of a broken embed.
 				continue
 			}
 			urls = append(urls, u)
@@ -137,20 +142,38 @@ func (r *Renderer) buildPost(raw RawPost, body string) *Post {
 	}
 }
 
-// rehostImages rehosts every pic in a pics field and returns the ordered list of
-// resolved markdown URLs (the OSS copy, or the original sinaimg link for an
-// abandoned image). Rehosting is idempotent: an already-stored object is reused.
-func (r *Renderer) rehostImages(pics string, mid int64) []string {
-	var urls []string
-	for _, p := range splitPics(pics) {
-		u, err := saveImage(r.req, r.file, r.db, mid, p, r.logger)
+// renderPics rehosts every pic in a pics field and renders them in order: a pic
+// that rehosts successfully becomes an inline image embed; one that fails becomes a
+// notice pointing readers at the source weibo. The failure path deliberately does
+// NOT embed the original sinaimg link — that link is a fabricated CDN URL already
+// proven dead during download, so embedding it only yields a broken image. Pic
+// numbering ("微博图片 N") follows the source order, including failed ones, so the
+// reader can tell which image is missing. Rehosting is idempotent.
+func (r *Renderer) renderPics(raw RawPost, mid int64) []string {
+	pics := splitPics(raw.Pics)
+	if len(pics) == 0 {
+		return nil
+	}
+	src := WeiboPostURL(raw.UserID, raw.Bid, raw.ID)
+	out := make([]string, 0, len(pics))
+	for i, p := range pics {
+		u, ok, err := saveImage(r.req, r.file, r.db, mid, p, r.logger)
 		if err != nil {
 			r.logger.Warn("failed to rehost image", zap.String("pic", p), zap.Error(err))
+		}
+		if ok {
+			out = append(out, md.Image(fmt.Sprintf("微博图片 %d", i+1), u))
 			continue
 		}
-		urls = append(urls, u)
+		out = append(out, imageFailedNotice(i+1, src))
 	}
-	return urls
+	return out
+}
+
+// imageFailedNotice renders the "image N could not be fetched, go to the source"
+// placeholder shown in place of a pic whose download failed.
+func imageFailedNotice(n int, srcURL string) string {
+	return md.Quote(fmt.Sprintf("微博图片 %d 下载失败，请前往 [源微博](%s) 查看", n, srcURL))
 }
 
 // imageEmbeds renders resolved image URLs as numbered inline images
