@@ -17,6 +17,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/log"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
@@ -52,7 +53,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 		logger.Info("Get zsxq cookie successfully")
 
 		// init services needed by cron crawl and render job
-		dbService, requestService, parseService, rssRenderer, err := prepareZsxqServices(zsxqAccessToken, db, ai, logger)
+		dbService, requestService, parseService, err := prepareZsxqServices(zsxqAccessToken, db, ai, logger)
 		if err != nil {
 			jobCtx.err = err
 			logger.Error("Failed to init zsxq services", zap.Error(err))
@@ -67,7 +68,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include []strin
 		}
 
 		for groupID := range slices.Values(groupIDs) {
-			if err = crawlGroup(groupID, requestService, parseService, redisService, rssRenderer, dbService, logger); err != nil {
+			if err = crawlGroup(groupID, requestService, parseService, redisService, dbService, logger); err != nil {
 				jobCtx.errCount++
 				logger.Error("Failed to do cron job on group", zap.Error(err))
 				if errors.Is(err, request.ErrInvalidCookie) {
@@ -238,14 +239,14 @@ func resolveLastCrawledGroup(resumeJobInfo *ResumeJobInfo, groupIDs []int, logge
 }
 
 func prepareZsxqServices(cookie string, db *gorm.DB, ai ai.AI, logger *zap.Logger,
-) (dbService zsxqDB.DB, requestService request.Requester, parseService parse.Parser, rssRenderService render.RSSRenderer, err error) {
+) (dbService zsxqDB.DB, requestService request.Requester, parseService parse.Parser, err error) {
 	dbService = zsxqDB.NewDBService(db)
 
 	requestService = request.NewRequestService(cookie, logger)
 
 	var fileService file.File
 	if fileService, err = file.NewFileServiceMinio(config.C.Minio, logger); err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to init zsxq file service: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to init zsxq file service: %w", err)
 	}
 
 	markdownRender := render.NewMarkdownRenderService(dbService)
@@ -256,16 +257,14 @@ func prepareZsxqServices(cookie string, db *gorm.DB, ai ai.AI, logger *zap.Logge
 		dbService,
 		ai,
 		markdownRender); err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to init zsxq parse service: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to init zsxq parse service: %w", err)
 	}
 
-	rssRenderService = render.NewRSSRenderService()
-
-	return dbService, requestService, parseService, rssRenderService, nil
+	return dbService, requestService, parseService, nil
 }
 
 
-func crawlGroup(groupID int, requestService request.Requester, parseService parse.Parser, redisService redis.Redis, rssRenderService render.RSSRenderer, dbService zsxqDB.DB, logger *zap.Logger) (err error) {
+func crawlGroup(groupID int, requestService request.Requester, parseService parse.Parser, redisService redis.Redis, dbService zsxqDB.DB, logger *zap.Logger) (err error) {
 	// Get latest topic time from database
 	var latestTopicTimeInDB time.Time
 	if latestTopicTimeInDB, err = getTargetTime(groupID, dbService); err != nil {
@@ -285,23 +284,9 @@ func crawlGroup(groupID int, requestService request.Requester, parseService pars
 	}
 	logger.Info("Update crawl time successfully")
 
-	var topics []zsxqDB.Topic
-	if topics, err = fetchTopics(groupID, latestTopicTimeInDB, dbService); err != nil {
-		return fmt.Errorf("failed to get latest topics from database: %w", err)
-	}
-
-	var groupName string
-	if groupName, err = dbService.GetGroupName(groupID); err != nil {
-		return fmt.Errorf("failed to get group %d name from database: %w", groupID, err)
-	}
-
-	var rssTopics []render.RSSItem
-	if rssTopics, err = buildRSSTopic(topics, dbService, groupName, logger); err != nil {
-		return fmt.Errorf("failed to build rss topics: %w", err)
-	}
-
-	if err = renderAndSaveRSSContent(groupID, rssTopics, rssRenderService, redisService); err != nil {
-		return fmt.Errorf("failed to render and save rss content: %w", err)
+	if err = rss.WarmCache(redisService, fmt.Sprintf(redis.ZsxqRSSPath, strconv.Itoa(groupID)), redis.RSSDefaultTTL,
+		func() (rss.FeedMeta, []rss.Item, error) { return rss.FetchZSXQ(groupID, dbService, logger) }); err != nil {
+		return fmt.Errorf("failed to warm zsxq rss cache: %w", err)
 	}
 
 	return nil
@@ -317,64 +302,4 @@ func getTargetTime(groupID int, dbService zsxqDB.DB) (targetTime time.Time, err 
 		targetTime = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 	}
 	return targetTime, nil
-}
-
-// fetchTopics gets all unrendered(if topics count is less then 20) or 20 topics,
-// the length of slice will be multiples of 10.
-func fetchTopics(groupID int, latestTopicTimeInDB time.Time, dbService zsxqDB.DB) (topics []zsxqDB.Topic, err error) {
-	fetchCount := config.DefaultFetchCount
-	if topics, err = dbService.GetLatestNTopics(groupID, fetchCount); err != nil {
-		return nil, fmt.Errorf("failed to get latest %d topic from database: %w", fetchCount, err)
-	}
-
-	for topics[len(topics)-1].Time.After(latestTopicTimeInDB) && len(topics) == fetchCount {
-		fetchCount += 10
-		if topics, err = dbService.GetLatestNTopics(groupID, fetchCount); err != nil {
-			return nil, fmt.Errorf("failed to get latest %d topic from database: %w", fetchCount, err)
-		}
-	}
-
-	return topics, nil
-}
-
-// buildRSSTopic returns rss topics slice for render service
-func buildRSSTopic(topics []zsxqDB.Topic, dbService zsxqDB.DB, groupName string, logger *zap.Logger) (rssTopics []render.RSSItem, err error) {
-	for _, topic := range topics {
-		logger := logger.With(zap.Int("topic_id", topic.ID))
-
-		if !render.Support(topic.Type) {
-			logger.Info("found unsupported topic type", zap.String("topic type", topic.Type))
-			continue
-		}
-
-		var authorName string
-		if authorName, err = dbService.GetAuthorName(topic.AuthorID); err != nil {
-			return nil, fmt.Errorf("failed to get author %d name from database: %w", topic.AuthorID, err)
-		}
-
-		rssTopics = append(rssTopics, render.RSSItem{
-			TopicID:    topic.ID,
-			GroupName:  groupName,
-			GroupID:    topic.GroupID,
-			Title:      topic.Title,
-			AuthorName: authorName,
-			CreateTime: topic.Time,
-			Text:       topic.Text,
-		})
-	}
-
-	return rssTopics, nil
-}
-
-func renderAndSaveRSSContent(groupID int, rssTopics []render.RSSItem, rssRenderService render.RSSRenderer, redisService redis.Redis) (err error) {
-	var rssContent string
-	if rssContent, err = rssRenderService.RenderRSS(rssTopics); err != nil {
-		return fmt.Errorf("failed to render rss content: %w", err)
-	}
-
-	if err = redisService.Set(fmt.Sprintf(redis.ZsxqRSSPath, strconv.Itoa(groupID)), rssContent, redis.RSSDefaultTTL); err != nil {
-		return fmt.Errorf("failed to save rss content to cache: %w", err)
-	}
-
-	return nil
 }

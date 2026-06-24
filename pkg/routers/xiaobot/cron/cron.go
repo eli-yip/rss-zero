@@ -2,6 +2,7 @@ package crawl
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 	"time"
 
@@ -136,18 +137,12 @@ func crawlPaper(paper xiaobotDB.Paper, dbService xiaobotDB.DB, requestService re
 	}
 	logger.Info("Crawl xiaobot paper successfully")
 
-	path, content, err := rss.GenerateXiaobot(paper.ID, dbService, logger)
-	if err != nil {
-		logger.Error("Failed to generate rss for xiaobot paper", zap.Error(err))
+	if err = rss.WarmCache(r, fmt.Sprintf(redis.XiaobotRSSPath, paper.ID), redis.RSSDefaultTTL,
+		func() (rss.FeedMeta, []rss.Item, error) { return rss.FetchXiaobot(paper.ID, dbService, logger) }); err != nil {
+		logger.Error("Failed to warm xiaobot rss cache", zap.Error(err))
 		return err
 	}
-	logger.Info("Generate rss for xiaobot paper successfully")
-
-	if err = r.Set(path, content, redis.RSSDefaultTTL); err != nil {
-		logger.Error("Failed to cache xiaobot rss", zap.Error(err))
-		return err
-	}
-	logger.Info("Cache xiaobot rss successfully")
+	logger.Info("Warmed xiaobot rss cache successfully")
 
 	return nil
 }

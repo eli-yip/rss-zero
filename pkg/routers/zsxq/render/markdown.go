@@ -44,6 +44,11 @@ func BuildLink(groupID, topicID int) string {
 	return fmt.Sprintf("https://wx.zsxq.com/group/%d/topic/%d", groupID, topicID)
 }
 
+// BuildGroupLink builds the official link for a zsxq group.
+func BuildGroupLink(groupID int) string {
+	return fmt.Sprintf("https://wx.zsxq.com/group/%d", groupID)
+}
+
 func BuildTitle(t *Topic) string {
 	titlePart := func() string {
 		if t.Title == nil {

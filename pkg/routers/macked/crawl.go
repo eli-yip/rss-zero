@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/rs/xid"
 	"github.com/samber/lo"
 )
@@ -106,24 +107,14 @@ func Crawl(redisService redis.Redis, db DB, logger *zap.Logger) (err error) {
 	return nil
 }
 
-func renderAndSaveRSS(redisService redis.Redis, posts []ParsedPost) (err error) {
-	var rssContent string
-	renderService := NewRSSRenderService()
-	if len(posts) == 0 {
-		rssContent, err = renderService.RenderEmptyRSS()
-		if err != nil {
-			return fmt.Errorf("failed to render empty rss content: %w", err)
-		}
-	} else {
-		rssContent, err = renderService.RenderRSS(posts)
-		if err != nil {
-			return fmt.Errorf("failed to render rss content: %w", err)
-		}
+// renderAndSaveRSS caches the unread batch as items (the macked cache is the only
+// persistence; the controller reads it as-is). An empty batch caches an empty feed,
+// preserving the prior "go empty when nothing is new" behaviour.
+func renderAndSaveRSS(redisService redis.Redis, posts []ParsedPost) error {
+	meta, items := feedFromPosts(posts)
+	if err := rss.WarmCache(redisService, redis.RssMackedPath, redis.RSSDefaultTTL,
+		func() (rss.FeedMeta, []rss.Item, error) { return meta, items, nil }); err != nil {
+		return fmt.Errorf("failed to warm macked rss cache: %w", err)
 	}
-
-	if err = redisService.Set(redis.RssMackedPath, rssContent, redis.RSSDefaultTTL); err != nil {
-		return fmt.Errorf("failed to set rss content to redis: %w", err)
-	}
-
 	return nil
 }

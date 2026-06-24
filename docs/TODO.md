@@ -41,6 +41,8 @@
 
 `go test ./internal/controller/archive/` 的 `TestExtractAnswerID` 也是**预存**失败（在 master 上即可复现，非 archive-format 改动引入）：`ExtractAnswerID` 早已改为返回 `*zhihuAnswer`，但该用例仍按旧签名拿它和字符串 `answerID` 比较，必然 not-equal。修复方向：把用例改成 `result.answerID`（或 `strconv.Itoa(result.answerID)`）再断言。
 
+`go test ./pkg/routers/endoflife/` 的 `TestParseCycles` 也是**预存**失败（在 master 50e088c 即可复现，非 unified-rss-pipeline 改动引入）：用例期望 `ParseCycles` 返回 3 条 versionInfo，实际 `filterCycles` 只保留 `latest==最新版` 或 `lts` 的 cycle，返回 1 条。需确认是 fixture/期望陈旧还是 `filterCycles` 过滤逻辑回归。
+
 ## 统一响应格式后续（unified-response-format）
 
 - **`/statistics` 页面在统计数据为空时白屏崩溃**（预存 bug，与统一响应格式无关）。webapp 的 `<ActivityCalendar>`（react-activity-calendar）在收到空数据时抛异常，且无 error boundary，导致整页不渲染。复现：当 canglimo 在"过去一年"窗口内没有回答时（如本地 DB 数据陈旧），`GET /api/v1/archive/statistics` 返回空 `data`，前端解包为空 → 组件崩溃。生产环境有近一年数据故正常。修复方向：`StatisticsPage`/`Statistics` 组件加空数据 guard（空时显示占位/提示），或包一层 error boundary。
@@ -53,6 +55,7 @@
 - **图片抓取的纵深 SSRF 加固（低优先）**：已对「完整 URL 形态的 `pics`」加 host 允许名单、并约束图片下载的重定向 host。残留风险（评审指出）：被允许的 CDN 若 302 到内网、或 DNS rebinding。彻底防御需在拨号层（`net.Dialer.Control`）阻断私有/环回/链路本地网段（10/8、172.16/12、192.168/16、127/8、169.254/16、::1、fc00::/7）。鉴于上游 `tombkeeper.io` 单一可信、且为 blind SSRF（响应直接入 OSS 不回显），按低优先处理。
 - **`title` 用 LLM 细化（SPEC 后期项）**：当前 `tombkeeper_post.title` = 正文前 10 字。后续接 `internal/ai` 的 LLM 概括为更可读的标题，可加一次性 backfill 迁移。
 - **被内联帖的 `url_info` 缺失**：嵌入的转发原文对象有时不带 `url_info`（其 `t.cn` 短链不展开，正文里保留裸 `t.cn`，由 GFM 自动链接）。如需完整展开，可对原文补一次详情抓取，但会增加请求量，暂不做。
+- **微博换行被连排（East Asian Line Breaks 的既有行为，与 A6 无关）**：tombkeeper 正文把多行微博用单 `\n` 拼接（[`render_markdown.go:46`](../../pkg/routers/tombkeeper/render_markdown.go) `strings.Join(lines, "\n")`），而 feed 的 goldmark（A6 后 CSS3Draft、A6 前 `extension.CJK`/Simple **同样**）会去掉 CJK 软换行，导致多行微博在 RSS/归档 HTML 里**连排成一行**。这是 East Asian Line Breaks 扩展的设计行为（避免 CJK 软折行在 HTML 里渲染成字间空格），A6 前后**一致**、非本次引入。若要让微博换行**可见保留**，应在**解析层**把微博的 `\n` 转成硬换行（行尾两空格 `\n`）或段落 `\n\n`（改 `escapeMarkdown`），而非改 goldmark 配置。取舍：硬换行会让每条多行微博每行都带 `<br>`，需先确认这是期望呈现。来源：2026-06-24 unified-rss-pipeline A6 讨论。
 
 ## tombkeeper 评审修复（2026-06-23）
 

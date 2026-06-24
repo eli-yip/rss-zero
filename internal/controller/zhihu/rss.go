@@ -5,11 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
-	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/rs/xid"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -21,23 +18,24 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	zhihuCrawl "github.com/eli-yip/rss-zero/pkg/routers/zhihu/crawl"
-	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/parse"
-	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/random"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/request"
 )
 
-// AnswerRSS handles the HTTP request for retrieving the RSS feed of a Zhihu author's answers.
-// It will check if the author exists in the database and add it if it doesn't.
-// If the author does not exist in Zhihu, it will return a bad request response.
-// If the author exists, it will retrieve the RSS feed from Redis and return it in the response.
-func (h *Controller) AnswerRSS(c echo.Context) (err error) {
+// AnswerRSS / ArticleRSS / PinRSS serve a zhihu author's feed of that content type
+// through the unified pipeline. Each ensures the subscription exists (adding the
+// author on first request, 400 if the author is unknown to zhihu) before Serve.
+func (h *Controller) AnswerRSS(c echo.Context) error  { return h.serveZhihu(c, common.ZhihuAnswer) }
+func (h *Controller) ArticleRSS(c echo.Context) error { return h.serveZhihu(c, common.ZhihuArticle) }
+func (h *Controller) PinRSS(c echo.Context) error     { return h.serveZhihu(c, common.ZhihuPin) }
+
+func (h *Controller) serveZhihu(c echo.Context, contentType common.ZhihuContentType) error {
 	logger := serverCommon.ExtractLogger(c)
 
 	authorID := c.Get("feed_id").(string)
 	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
 
-	if err = h.checkSub(common.ZhihuAnswer, authorID, logger); err != nil {
+	if err := h.checkSub(contentType, authorID, logger); err != nil {
 		if errors.Is(err, errAuthorNotExistInZhihu) {
 			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
 			return httputil.NewHTTPError(http.StatusBadRequest, "Author does not exist in zhihu website")
@@ -46,166 +44,22 @@ func (h *Controller) AnswerRSS(c echo.Context) (err error) {
 		return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to check sub")
 	}
 
-	rss, err := h.getRSS(common.ZhihuAnswer.RedisKey(authorID), logger)
-	if err != nil {
-		logger.Error("Failed to get zhihu rss", zap.Error(err))
-		return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to get zhihu rss")
-	}
-	logger.Info("Get rss from successfully")
-
-	return c.String(http.StatusOK, rss)
+	return rss.Serve(c, rss.ServeOptions{
+		Redis:        h.redis,
+		Logger:       logger,
+		Key:          contentType.RedisKey(authorID),
+		TTL:          redis.RSSDefaultTTL,
+		DefaultLimit: 20,
+		Fetch: func() (rss.FeedMeta, []rss.Item, error) {
+			return rss.FetchZhihu(contentType, authorID, h.db, logger)
+		},
+	})
 }
 
-// ArticleRSS handles the HTTP request for retrieving the RSS feed of a Zhihu author's articles.
-// It will check if the author exists in the database and add it if it doesn't.
-// If the author does not exist in Zhihu, it will return a bad request response.
-// If the author exists, it will retrieve the RSS feed from Redis and return it in the response.
-func (h *Controller) ArticleRSS(c echo.Context) (err error) {
-	logger := serverCommon.ExtractLogger(c)
-
-	authorID := c.Get("feed_id").(string)
-	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
-
-	if err = h.checkSub(common.ZhihuArticle, authorID, logger); err != nil {
-		if errors.Is(err, errAuthorNotExistInZhihu) {
-			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
-			return httputil.NewHTTPError(http.StatusBadRequest, "Author does not exist in zhihu website")
-		}
-		logger.Error("Failed to check sub", zap.Error(err))
-		return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to check sub")
-	}
-
-	rss, err := h.getRSS(common.ZhihuArticle.RedisKey(authorID), logger)
-	if err != nil {
-		logger.Error("Failed to get zhihu rss", zap.Error(err))
-		return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to get zhihu rss")
-	}
-	logger.Info("Get rss from successfully")
-
-	return c.String(http.StatusOK, rss)
-}
-
-// PinRSS handles the HTTP request for retrieving the RSS feed of a Zhihu author's pins.
-// It will check if the author exists in the database and add it if it doesn't.
-// If the author does not exist in Zhihu, it will return a bad request response.
-// If the author exists, it will retrieve the RSS feed from Redis and return it in the response.
-func (h *Controller) PinRSS(c echo.Context) (err error) {
-	logger := serverCommon.ExtractLogger(c)
-
-	authorID := c.Get("feed_id").(string)
-	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
-
-	if err = h.checkSub(common.ZhihuPin, authorID, logger); err != nil {
-		if errors.Is(err, errAuthorNotExistInZhihu) {
-			logger.Error("Failed to find author in zhihu website", zap.String("author_id", authorID))
-			return httputil.NewHTTPError(http.StatusBadRequest, "Author does not exist in zhihu website")
-		}
-		logger.Error("Failed to check sub", zap.Error(err))
-		return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to check sub")
-	}
-
-	rss, err := h.getRSS(common.ZhihuPin.RedisKey(authorID), logger)
-	if err != nil {
-		logger.Error("Failed to get zhihu rss", zap.Error(err))
-		return httputil.NewHTTPError(http.StatusInternalServerError, "Failed to get zhihu rss")
-	}
-	logger.Info("Get rss from successfully")
-
-	return c.String(http.StatusOK, rss)
-}
-
-// getRSS gets the RSS content from Redis.
-// It will send a task to the task channel and wait for the result.
-func (h *Controller) getRSS(key string, logger *zap.Logger) (content string, err error) {
-	logger = logger.With(zap.String("task_id", xid.New().String()))
-	logger.Info("Start to get rss from redis", zap.String("key", key))
-	defer logger.Info("Close task channel")
-
-	task := serverCommon.Task{TextCh: make(chan string), ErrCh: make(chan error), Logger: logger}
-	defer close(task.TextCh)
-	defer close(task.ErrCh)
-
-	h.taskCh <- task
-	task.TextCh <- key
-	logger.Info("Send task to task channel successfully")
-
-	select {
-	case content := <-task.TextCh:
-		return content, nil
-	case err := <-task.ErrCh:
-		return "", err
-	}
-}
-
-type RssGenerator struct {
-	redis redis.Redis
-	db    zhihuDB.DB
-}
-
-func NewRssGenerator(redis redis.Redis, db zhihuDB.DB) *RssGenerator {
-	return &RssGenerator{redis: redis, db: db}
-}
-
-// GenerateRSS generates rss content and set it to redis.
-func (r *RssGenerator) GenerateRSS(key string, logger *zap.Logger) (content string, err error) {
-	if key == redis.ZhihuRandomCanglimoAnswersPath {
-		return r.generateRandomCanglimoAnswers(logger)
-	}
-
-	contentType, authorID, err := r.extractTypeAuthorFromKey(key)
-	if err != nil {
-		return "", fmt.Errorf("failed to extract type and authorID from key: %w", err)
-	}
-
-	_, content, err = rss.GenerateZhihu(contentType, authorID, time.Time{}, r.db, logger)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate zhihu rss: %w", err)
-	}
-
-	if err := r.redis.Set(key, content, redis.RSSDefaultTTL); err != nil {
-		return "", fmt.Errorf("failed to set rss to redis: %w", err)
-	}
-
-	return content, nil
-}
-
-func (r *RssGenerator) generateRandomCanglimoAnswers(logger *zap.Logger) (string, error) {
-	rssContent, err := random.GenerateRandomCanglimoAnswerRSS(r.db, logger)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate random canglimo answers: %w", err)
-	}
-
-	if err := r.redis.Set(redis.ZhihuRandomCanglimoAnswersPath, rssContent, redis.RSSRandomTTL); err != nil {
-		return "", fmt.Errorf("failed to set random canglimo answers to redis: %w", err)
-	}
-
-	return rssContent, nil
-}
-
-// extractTypeAuthorFromKey extracts type and authorID from rss content key.
-//
-// key format: zhihu_rss_{type}_{authorID}
-func (r *RssGenerator) extractTypeAuthorFromKey(key string) (t common.ZhihuContentType, authorID string, err error) {
-	strs := strings.Split(key, "_")
-	if len(strs) != 4 {
-		return "", "", fmt.Errorf("invalid key: %s", key)
-	}
-
-	t, err = common.ParseZhihuSlug(strs[2])
-	if err != nil {
-		return "", "", fmt.Errorf("invalid type: %s", strs[2])
-	}
-
-	authorID = strs[3]
-
-	return t, authorID, nil
-}
-
-// checkSub checks if the sub exists in db, if not, add it to db
+// checkSub checks if the sub exists in db, if not, add it to db.
 func (h *Controller) checkSub(t common.ZhihuContentType, authorID string, logger *zap.Logger) (err error) {
-	// check if sub exists
-	// Use CheckSubIncludeDeleted instead of CheckSubByID to check if the sub exists
-	// As we will return histroy rss content even if the sub is deleted
+	// Use CheckSubIncludeDeleted instead of CheckSubByID to check if the sub exists,
+	// as we will return history rss content even if the sub is deleted.
 	exist, err := h.db.CheckSubIncludeDeleted(authorID, t)
 	if err != nil {
 		return fmt.Errorf("failed to check sub: %w", err)
@@ -216,7 +70,6 @@ func (h *Controller) checkSub(t common.ZhihuContentType, authorID string, logger
 		return nil
 	}
 
-	// if not exist, add sub and author to db
 	logger.Info("Start to add zhihu subscription")
 	if _, err = h.parseAuthorName(authorID, logger); err != nil {
 		return fmt.Errorf("failed to parse author name: %w", err)
@@ -232,7 +85,6 @@ func (h *Controller) checkSub(t common.ZhihuContentType, authorID string, logger
 var errAuthorNotExistInZhihu = errors.New("author does not exist in zhihu")
 
 // parseAuthorName parses author name from authorID, and returns the author name.
-//
 // It will save the author name to db if it's not found in db.
 func (h *Controller) parseAuthorName(authorID string, logger *zap.Logger) (authorName string, err error) {
 	zhihuCookies, err := cookie.GetZhihuCookies(h.cookie, logger)

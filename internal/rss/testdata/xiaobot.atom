@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom">
+  <title>测试专栏</title>
+  <id>https://xiaobot.net/p/paper1</id>
+  <updated>2026-06-22T10:00:00Z</updated>
+  <link href="https://xiaobot.net/p/paper1"></link>
+  <entry>
+    <title>标题一</title>
+    <updated>2026-06-22T10:00:00Z</updated>
+    <id>p1</id>
+    <content type="html">&lt;p&gt;正文一段落&lt;/p&gt;&#xA;</content>
+    <link href="https://xiaobot.net/post/p1" rel="alternate"></link>
+    <summary type="html">正文一段落</summary>
+    <author>
+      <name>作者名</name>
+    </author>
+  </entry>
+  <entry>
+    <title>标题二</title>
+    <updated>2026-06-21T09:00:00Z</updated>
+    <id>p2</id>
+    <content type="html">&lt;p&gt;正文二段落&lt;/p&gt;&#xA;</content>
+    <link href="https://xiaobot.net/post/p2" rel="alternate"></link>
+    <summary type="html">正文二段落</summary>
+    <author>
+      <name>作者名</name>
+    </author>
+  </entry>
+</feed>

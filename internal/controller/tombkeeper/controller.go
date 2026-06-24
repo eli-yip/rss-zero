@@ -10,7 +10,6 @@ import (
 type Controller struct {
 	redis  redis.Redis
 	db     tk.DB
-	render tk.RSSRenderer
 	logger *zap.Logger
 }
 
@@ -18,7 +17,6 @@ func NewController(redisService redis.Redis, db tk.DB, logger *zap.Logger) *Cont
 	return &Controller{
 		redis:  redisService,
 		db:     db,
-		render: tk.NewRSSRenderService(),
 		logger: logger,
 	}
 }

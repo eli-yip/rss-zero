@@ -2,6 +2,7 @@ package cron
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -81,20 +82,13 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, aiServi
 			}
 			logger.Info("Crawl github release successfully")
 
-			var path, content string
-			if path, content, err = rss.GenerateGitHub(sub.ID, dbService, logger); err != nil {
+			if err = rss.WarmCache(r, fmt.Sprintf(redis.GitHubRSSPath, sub.ID), redis.RSSDefaultTTL,
+				func() (rss.FeedMeta, []rss.Item, error) { return rss.FetchGitHub(sub.ID, dbService, logger) }); err != nil {
 				errCount++
-				logger.Error("Failed to generate github rss", zap.Error(err))
+				logger.Error("Failed to warm github rss cache", zap.Error(err))
 				continue
 			}
-			logger.Info("Generate rss for github release successfully")
-
-			if err = r.Set(path, content, redis.RSSDefaultTTL); err != nil {
-				errCount++
-				logger.Error("Failed to set rss to redis", zap.Error(err))
-				continue
-			}
-			logger.Info("Set rss to redis successfully")
+			logger.Info("Warmed github rss cache successfully")
 
 			// TODO: Use token pool to avoid rate limit
 			time.Sleep(5 * time.Second)

@@ -102,6 +102,13 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 		logger.Info(fmt.Sprintf("Add %s job successfully", job.name), zap.String("job_id", jobID))
 	}
 
+	// macked has no content DB: its items cache is populated only by the hourly
+	// cron, so a fresh deploy would serve an empty feed until the next run. Prewarm
+	// once at startup to close that window.
+	if !config.C.Settings.Debug {
+		go macked.CrawlFunc(redisService, macked.NewDBService(db), logger)()
+	}
+
 	return cronService, definitionToFunc, nil
 }
 

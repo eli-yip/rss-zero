@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom">
+  <title>[GitHub]Repo</title>
+  <id>https://github.com/owner/repo/releases/tag/v1.2.0</id>
+  <updated>2026-06-20T12:00:00Z</updated>
+  <link href="https://github.com/owner/repo/releases/tag/v1.2.0"></link>
+  <entry>
+    <title>Repo: Release 1.2.0</title>
+    <updated>2026-06-20T12:00:00Z</updated>
+    <id>101</id>
+    <content type="html">&lt;p&gt;Tag: v1.2.0&lt;/p&gt;&#xA;&lt;p&gt;body &lt;strong&gt;md&lt;/strong&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://github.com/owner/repo/releases/tag/v1.2.0" rel="alternate"></link>
+    <summary type="html">body **md**</summary>
+    <author>
+      <name>repo</name>
+    </author>
+  </entry>
+  <entry>
+    <title>Repo: v1.1.0</title>
+    <updated>2026-06-10T08:00:00Z</updated>
+    <id>102</id>
+    <content type="html">&lt;p&gt;Tag: v1.1.0&lt;/p&gt;&#xA;&lt;p&gt;raw body only&lt;/p&gt;&#xA;</content>
+    <link href="https://github.com/owner/repo/releases/tag/v1.1.0" rel="alternate"></link>
+    <summary type="html">raw body only</summary>
+    <author>
+      <name>repo</name>
+    </author>
+  </entry>
+</feed>

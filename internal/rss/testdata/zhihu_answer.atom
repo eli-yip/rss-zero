@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom">
+  <title>[知乎-回答]墨苍离</title>
+  <id>https://www.zhihu.com/people/canglimo/answers</id>
+  <updated>2026-06-22T10:00:00Z</updated>
+  <link href="https://www.zhihu.com/people/canglimo/answers"></link>
+  <entry>
+    <title>问题标题一</title>
+    <updated>2026-06-22T10:00:00Z</updated>
+    <id>111</id>
+    <content type="html">&lt;p&gt;回答正文一段&lt;a href=&#34;https://www.zhihu.com/question/1/answer/111&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://srv.test/api/v1/archive/https://www.zhihu.com/question/1/answer/111" rel="alternate"></link>
+    <summary type="html">回答正文一段</summary>
+    <author>
+      <name>墨苍离</name>
+    </author>
+  </entry>
+  <entry>
+    <title>问题标题二</title>
+    <updated>2026-06-21T09:00:00Z</updated>
+    <id>222</id>
+    <content type="html">&lt;p&gt;回答正文二段&lt;a href=&#34;https://www.zhihu.com/question/2/answer/222&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://srv.test/api/v1/archive/https://www.zhihu.com/question/2/answer/222" rel="alternate"></link>
+    <summary type="html">回答正文二段</summary>
+    <author>
+      <name>墨苍离</name>
+    </author>
+  </entry>
+</feed>

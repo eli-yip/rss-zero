@@ -12,6 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/rss"
 )
 
 const (
@@ -111,19 +112,15 @@ func Crawl(redisService redis.Redis, db DB, fileService file.File, logger *zap.L
 	return renderAndCacheRSS(redisService, db, logger)
 }
 
+// renderAndCacheRSS re-warms the items cache after a crawl (1:1 replacement of the
+// old "render XML and Set" step), so a reader sees freshly crawled posts without
+// waiting for the cache to expire.
 func renderAndCacheRSS(redisService redis.Redis, db DB, logger *zap.Logger) error {
-	posts, err := db.GetLatestPosts(FeedSize)
-	if err != nil {
-		return fmt.Errorf("get latest posts: %w", err)
+	if err := rss.WarmCache(redisService, redis.RssTombkeeperPath, redis.RSSDefaultTTL,
+		func() (rss.FeedMeta, []rss.Item, error) { return BuildFeed(db) }); err != nil {
+		return fmt.Errorf("warm tombkeeper rss cache: %w", err)
 	}
-	content, err := NewRSSRenderService().RenderRSS(posts)
-	if err != nil {
-		return fmt.Errorf("render rss: %w", err)
-	}
-	if err := redisService.Set(redis.RssTombkeeperPath, content, redis.RSSDefaultTTL); err != nil {
-		return fmt.Errorf("cache rss: %w", err)
-	}
-	logger.Info("cached tombkeeper rss", zap.Int("posts", len(posts)))
+	logger.Info("cached tombkeeper rss items")
 	return nil
 }
 

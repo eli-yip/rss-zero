@@ -1,64 +1,29 @@
 package handler
 
 import (
-	"errors"
-	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
+	"github.com/eli-yip/rss-zero/internal/rss"
 )
 
-func (h *Handler) RSS(c echo.Context) (err error) {
+// RSS serves the macked feed through the unified pipeline. macked has no content
+// DB: its items cache is populated only by the hourly cron (and a startup
+// prewarm), so Fetch is nil and a cache miss renders an empty feed rather than
+// regenerating. The empty fallback is not cached, so a later cron write shows
+// through immediately.
+func (h *Handler) RSS(c echo.Context) error {
 	logger := common.ExtractLogger(c)
 
-	rss, err := h.getRSS(logger)
-	if err != nil {
-		logger.Error("Failed to get rss from redis", zap.Error(err))
-		return c.String(http.StatusInternalServerError, "Failed to get rss content from redis")
-	}
-	logger.Info("retrieved rss from redis")
-
-	return c.String(http.StatusOK, rss)
-}
-
-func (h *Handler) getRSS(logger *zap.Logger) (output string, err error) {
-	logger = logger.With(zap.String("rss_path", "macked"))
-	defer logger.Info("task chnnel closes")
-
-	task := common.Task{TextCh: make(chan string), ErrCh: make(chan error)}
-	defer close(task.TextCh)
-	defer close(task.ErrCh)
-
-	h.taskCh <- task
-	logger.Info("task sent to task channel")
-
-	select {
-	case output := <-task.TextCh:
-		return output, nil
-	case err := <-task.ErrCh:
-		return "", err
-	}
-}
-
-func (h *Handler) processTask() {
-	for task := range h.taskCh {
-		key := redis.RssMackedPath
-
-		content, err := h.redis.Get(key)
-		if err == nil {
-			task.TextCh <- content
-			continue
-		}
-
-		if errors.Is(err, redis.ErrKeyNotExist) {
-			task.TextCh <- ""
-			continue
-		}
-
-		task.ErrCh <- err
-		continue
-	}
+	return rss.Serve(c, rss.ServeOptions{
+		Redis:        h.redis,
+		Logger:       logger,
+		Key:          redis.RssMackedPath,
+		TTL:          redis.RSSDefaultTTL,
+		DefaultLimit: 0, // all cached unread posts
+		EmptyMeta:    rss.FeedMeta{Title: "Macked Release", Link: "https://macked.app", Updated: time.Now()},
+	})
 }

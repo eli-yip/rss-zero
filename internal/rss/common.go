@@ -1,3 +1,0 @@
-package rss
-
-const emptyString = ""

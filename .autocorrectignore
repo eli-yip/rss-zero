@@ -8,3 +8,7 @@ pkg/render/test/
 # upstream payloads (real nicknames, content, etc.); reformatting corrupts the
 # test data and can break parsers that match on exact strings.
 **/example/
+
+# Golden snapshots compared byte-for-byte (RSS Atom feeds with mixed CJK/latin).
+# autocorrect spacing would break the comparison.
+**/testdata/

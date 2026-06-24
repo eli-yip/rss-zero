@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Macked Release</title>
+  <id>https://macked.app</id>
+  <updated>2026-06-22T10:00:00Z</updated>
+  <link href="https://macked.app"></link>
+  <entry>
+    <title>AppOne 2.3.4</title>
+    <updated>2026-06-22T10:00:00Z</updated>
+    <id>5001-1782122400</id>
+    <content type="html">&lt;p&gt;AppOne cracked&lt;/p&gt;</content>
+    <link href="https://macked.app/appone" rel="alternate"></link>
+    <summary type="html">&lt;p&gt;AppOne cracked&lt;/p&gt;</summary>
+    <author>
+      <name>Macked</name>
+    </author>
+  </entry>
+  <entry>
+    <title>AppTwo 1.0.0</title>
+    <updated>2026-06-21T09:00:00Z</updated>
+    <id>4002-1782032400</id>
+    <content type="html">&lt;p&gt;AppTwo cracked&lt;/p&gt;</content>
+    <link href="https://macked.app/apptwo" rel="alternate"></link>
+    <summary type="html">&lt;p&gt;AppTwo cracked&lt;/p&gt;</summary>
+    <author>
+      <name>Macked</name>
+    </author>
+  </entry>
+</feed>

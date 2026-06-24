@@ -72,7 +72,7 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 				continue
 			}
 
-			path, content, skip, shouldReturn, err := crawlSub(sub, dbService, requestService, parser, destroyedAuthors, cookieService, notifier, logger)
+			skip, shouldReturn, err := crawlSub(sub, redisService, dbService, requestService, parser, destroyedAuthors, cookieService, notifier, logger)
 			if shouldReturn {
 				jobCtx.err = err
 				return
@@ -84,12 +84,6 @@ func BuildCrawlFunc(resumeJobInfo *ResumeJobInfo, taskID string, include, exclud
 				jobCtx.errCount++
 				continue
 			}
-
-			if err = redisService.Set(path, content, redis.RSSDefaultTTL); err != nil {
-				jobCtx.errCount++
-				logger.Error("Failed to save rss content to redis", zap.Error(err))
-			}
-			logger.Info("Save to redis successfully")
 
 			if err = cronDBService.RecordDetail(cronJobID, sub.ID); err != nil {
 				logger.Error("Failed to record job detail", zap.String("sub_id", sub.ID), zap.Error(err))
@@ -245,26 +239,26 @@ func resolveLastCrawledSub(resumeJobInfo *ResumeJobInfo, dbService zhihuDB.DB, l
 	return resumeJobInfo.LastCrawled, nil
 }
 
-func crawlSub(sub zhihuDB.Sub, dbService zhihuDB.DB, requestService request.Requester, parser parse.Parser, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (path, content string, skip, shouldReturn bool, err error) {
+func crawlSub(sub zhihuDB.Sub, redisService redis.Redis, dbService zhihuDB.DB, requestService request.Requester, parser parse.Parser, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (skip, shouldReturn bool, err error) {
 	contentCrawler, ok := zhihuContentCrawlers[sub.Type]
 	if !ok {
-		return "", "", false, false, fmt.Errorf("unknown zhihu sub type: %q", sub.Type)
+		return false, false, fmt.Errorf("unknown zhihu sub type: %q", sub.Type)
 	}
 
-	return crawlContentSub(sub, contentCrawler, dbService, requestService, parser, destroyedAuthors, cookieService, notifier, logger)
+	return crawlContentSub(sub, contentCrawler, redisService, dbService, requestService, parser, destroyedAuthors, cookieService, notifier, logger)
 }
 
-func handleSubCrawlErr(err error, authorID string, dbService zhihuDB.DB, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger, contentType string) (string, string, bool, bool, error) {
+func handleSubCrawlErr(err error, authorID string, dbService zhihuDB.DB, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger, contentType string) (skip, shouldReturn bool, retErr error) {
 	handled, shouldReturn := handleCrawlErr(err, authorID, dbService, destroyedAuthors, cookieService, notifier, logger)
 	if shouldReturn {
-		return "", "", false, true, err
+		return false, true, err
 	}
 	if handled {
-		return "", "", true, false, nil
+		return true, false, nil
 	}
 
 	logger.Error(fmt.Sprintf("Failed to crawl %s", contentType), zap.Error(err))
-	return "", "", false, false, err
+	return false, false, err
 }
 
 type zhihuContentCrawler struct {
@@ -328,13 +322,13 @@ var zhihuContentCrawlers = map[common.ZhihuContentType]zhihuContentCrawler{
 	},
 }
 
-func crawlContentSub(sub zhihuDB.Sub, contentCrawler zhihuContentCrawler, dbService zhihuDB.DB, requestService request.Requester, parser parse.Parser, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (path, content string, skip, shouldReturn bool, err error) {
+func crawlContentSub(sub zhihuDB.Sub, contentCrawler zhihuContentCrawler, redisService redis.Redis, dbService zhihuDB.DB, requestService request.Requester, parser parse.Parser, destroyedAuthors map[string]struct{}, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger) (skip, shouldReturn bool, err error) {
 	logger.Info("Start to crawl zhihu sub", zap.String("author_id", sub.AuthorID), zap.String("type", contentCrawler.name))
 
 	latestTimeInDB, hasLatest, err := contentCrawler.latestTime(sub.AuthorID, dbService)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to get latest %s from database", contentCrawler.name), zap.Error(err))
-		return "", "", false, false, err
+		return false, false, err
 	}
 
 	targetTime := cron.LongLongAgo
@@ -353,13 +347,15 @@ func crawlContentSub(sub zhihuDB.Sub, contentCrawler zhihuContentCrawler, dbServ
 	}
 	logger.Info(fmt.Sprintf("Crawl %s successfully", contentCrawler.name))
 
-	path, content, err = rss.GenerateZhihu(contentCrawler.contentType, sub.AuthorID, latestTimeInDB, dbService, logger)
-	if err != nil {
-		logger.Error("Failed to generate rss content", zap.Error(err))
-		return "", "", false, false, err
+	if err = rss.WarmCache(redisService, contentCrawler.contentType.RedisKey(sub.AuthorID), redis.RSSDefaultTTL,
+		func() (rss.FeedMeta, []rss.Item, error) {
+			return rss.FetchZhihu(contentCrawler.contentType, sub.AuthorID, dbService, logger)
+		}); err != nil {
+		logger.Error("Failed to warm rss cache", zap.Error(err))
+		return false, false, err
 	}
-	logger.Info("Generate rss content successfully")
-	return path, content, false, false, nil
+	logger.Info("Warmed rss cache successfully")
+	return false, false, nil
 }
 
 func initZhihuServices(db *gorm.DB, aiService ai.AI, cs cookie.CookieIface, logger *zap.Logger) (zhihuDB.DB, request.Requester, parse.Parser, error) {

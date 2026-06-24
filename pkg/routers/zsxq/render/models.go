@@ -25,17 +25,3 @@ type Topic struct {
 	Text       string
 	AuthorName string
 }
-
-// An RSSItem is a single item in an RSS feed.
-type RSSItem struct {
-	// Only used in zsxq random select rss generation. Because Reeder 5 uses id as item id.
-	// We have to use a fake id to make sure the id is unique.
-	FakeID     *string
-	TopicID    int
-	GroupID    int
-	GroupName  string
-	Title      *string
-	AuthorName string
-	CreateTime time.Time
-	Text       string
-}

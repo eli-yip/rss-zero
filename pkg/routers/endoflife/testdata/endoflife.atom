@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Mattermost Release</title>
+  <id>https://endoflife.date/mattermost</id>
+  <updated>2026-06-20T00:00:00Z</updated>
+  <link href="https://endoflife.date/mattermost"></link>
+  <entry>
+    <title>Mattermost LTS 9.5.2 Released</title>
+    <updated>2026-06-20T00:00:00Z</updated>
+    <id>mattermost-9.5.2</id>
+    <content type="html">&lt;p&gt;Version &lt;strong&gt;9.5.2&lt;/strong&gt; of &lt;strong&gt;mattermost&lt;/strong&gt; was released on 2026-06-20.&lt;/p&gt;&#xA;&lt;p&gt;Branch: &lt;strong&gt;LTS&lt;/strong&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://endoflife.date/mattermost" rel="alternate"></link>
+    <summary type="html">Version **9.5.2** of **mattermost** was released on 2026-06-20.&#xA;&#xA;Branch: **LTS**</summary>
+    <author>
+      <name>EndOfLife</name>
+    </author>
+  </entry>
+  <entry>
+    <title>Mattermost Latest 9.6.0 Released</title>
+    <updated>2026-06-10T00:00:00Z</updated>
+    <id>mattermost-9.6.0</id>
+    <content type="html">&lt;p&gt;Version &lt;strong&gt;9.6.0&lt;/strong&gt; of &lt;strong&gt;mattermost&lt;/strong&gt; was released on 2026-06-10.&lt;/p&gt;&#xA;&lt;p&gt;Branch: &lt;strong&gt;Latest&lt;/strong&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://endoflife.date/mattermost" rel="alternate"></link>
+    <summary type="html">Version **9.6.0** of **mattermost** was released on 2026-06-10.&#xA;&#xA;Branch: **Latest**</summary>
+    <author>
+      <name>EndOfLife</name>
+    </author>
+  </entry>
+</feed>

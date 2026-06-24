@@ -1,22 +1,20 @@
 package controller
 
 import (
-	"net/http"
+	"github.com/labstack/echo/v4"
 
 	serverCommon "github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
+	"github.com/eli-yip/rss-zero/internal/rss"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/random"
 )
 
-func (h *Controller) RandomCanglimoDigest(c echo.Context) (err error) {
+// RandomCanglimoDigest serves a randomly selected canglimo digest feed, cached for
+// RSSRandomTTL under its own key (like zhihu's random endpoint it keeps its own
+// rendered-XML cache rather than going through the unified items pipeline; the
+// daily random-select cron also warms this key).
+func (h *Controller) RandomCanglimoDigest(c echo.Context) error {
 	logger := serverCommon.ExtractLogger(c)
-
-	rss, err := h.getRSS(redis.ZsxqRandomCanglimoDigestPath, logger)
-	if err != nil {
-		logger.Error("Failed to get random canglimo digest", zap.Error(err))
-		return c.String(http.StatusInternalServerError, err.Error())
-	}
-
-	return c.String(http.StatusOK, rss)
+	return rss.ServeCachedString(c, h.redis, logger, redis.ZsxqRandomCanglimoDigestPath, redis.RSSRandomTTL,
+		func() (string, error) { return random.GenerateRandomCanglimoDigestRss(h.db, logger) })
 }

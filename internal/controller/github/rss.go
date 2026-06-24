@@ -18,6 +18,9 @@ import (
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 )
 
+// RSS serves a github release feed through the unified pipeline. checkRepo (with
+// the /rss/github/pre prefix selecting pre-releases) resolves/creates the
+// subscription before the generic Serve fetches and renders.
 func (h *Controller) RSS(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
@@ -29,14 +32,10 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 	}
 	user, repo := userRepo[0], userRepo[1]
 
-	var pre bool
-	path := c.Request().URL.Path
-	if strings.HasPrefix(path, "/rss/github/pre") {
-		pre = true
-	}
+	pre := strings.HasPrefix(c.Request().URL.Path, "/rss/github/pre")
 
-	var subID string
-	if subID, err = h.checkRepo(user, repo, pre); err != nil {
+	subID, err := h.checkRepo(user, repo, pre)
+	if err != nil {
 		if errors.Is(err, ErrRepoNotFound) {
 			logger.Error("Error return rss", zap.String("user", user), zap.String("repo", repo), zap.Error(err))
 			return c.String(http.StatusBadRequest, "repo not found")
@@ -46,58 +45,16 @@ func (h *Controller) RSS(c echo.Context) (err error) {
 	}
 	logger.Info("Check repo successfully")
 
-	rss, err := h.getRSS(fmt.Sprintf(redis.GitHubRSSPath, subID), logger)
-	if err != nil {
-		logger.Error("Failed to get rss from redis", zap.Error(err))
-		return c.String(http.StatusInternalServerError, "failed to get rss from redis")
-	}
-	logger.Info("Retrieved rss from redis")
-
-	return c.String(http.StatusOK, rss)
-}
-
-func (h *Controller) getRSS(key string, logger *zap.Logger) (rssContent string, err error) {
-	logger = logger.With(zap.String("rss_path", key))
-	defer logger.Info("Task channel closes")
-
-	task := common.Task{TextCh: make(chan string), ErrCh: make(chan error), Logger: logger}
-	defer close(task.TextCh)
-	defer close(task.ErrCh)
-
-	h.taskCh <- task
-	task.TextCh <- key
-	logger.Info("Task sent to task channel")
-
-	select {
-	case rssContent := <-task.TextCh:
-		return rssContent, nil
-	case err := <-task.ErrCh:
-		return "", err
-	}
-}
-
-type RssGenerator struct {
-	redis redis.Redis
-	db    githubDB.DB
-}
-
-func NewRssGenerator(redis redis.Redis, db githubDB.DB) *RssGenerator {
-	return &RssGenerator{redis: redis, db: db}
-}
-
-func (r *RssGenerator) generateRSS(key string, logger *zap.Logger) (rssContent string, err error) {
-	id := strings.TrimPrefix(key, fmt.Sprintf(redis.GitHubRSSPath, ""))
-
-	_, content, err := rss.GenerateGitHub(id, r.db, logger)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate rss: %w", err)
-	}
-
-	if err = r.redis.Set(key, content, redis.RSSDefaultTTL); err != nil {
-		return "", fmt.Errorf("failed to set rss: %w", err)
-	}
-
-	return content, nil
+	return rss.Serve(c, rss.ServeOptions{
+		Redis:        h.redis,
+		Logger:       logger,
+		Key:          fmt.Sprintf(redis.GitHubRSSPath, subID),
+		TTL:          redis.RSSDefaultTTL,
+		DefaultLimit: 20,
+		Fetch: func() (rss.FeedMeta, []rss.Item, error) {
+			return rss.FetchGitHub(subID, h.db, logger)
+		},
+	})
 }
 
 var ErrRepoNotFound = errors.New("repo not found")

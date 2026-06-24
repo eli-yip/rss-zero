@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom">
+  <title>tombkeeper 微博</title>
+  <id>https://weibo.com/u/1401527553</id>
+  <updated>2026-06-22T00:00:00Z</updated>
+  <link href="https://weibo.com/u/1401527553"></link>
+  <entry>
+    <title>标题</title>
+    <updated>2026-06-22T00:00:00Z</updated>
+    <id>5312665532239202</id>
+    <content type="html">&lt;p&gt;中文ABC&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://srv.test/api/v1/archive/https://weibo.com/1401527553/R5juh9owa&#34;&gt;存档链接&lt;/a&gt; · &lt;a href=&#34;https://tombkeeper.io/weibo/5312665532239202&#34;&gt;粉丝站链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://weibo.com/1401527553/R5juh9owa" rel="alternate"></link>
+    <summary type="html">中文&#xA;ABC</summary>
+    <author>
+      <name>tombkeeper</name>
+    </author>
+  </entry>
+  <entry>
+    <title>5311127265215757</title>
+    <updated>2026-06-21T00:00:00Z</updated>
+    <id>5311127265215757</id>
+    <content type="html">&lt;p&gt;纯中文内容没有边界&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://srv.test/api/v1/archive/https://weibo.com/1401527553/R4niFCJhG&#34;&gt;存档链接&lt;/a&gt; · &lt;a href=&#34;https://tombkeeper.io/weibo/5311127265215757&#34;&gt;粉丝站链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://weibo.com/1401527553/R4niFCJhG" rel="alternate"></link>
+    <summary type="html">纯中文内容没有边界</summary>
+    <author>
+      <name>tombkeeper</name>
+    </author>
+  </entry>
+</feed>

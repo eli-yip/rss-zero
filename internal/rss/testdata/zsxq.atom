@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom">
+  <title>苍离的博弈与成长</title>
+  <id>https://wx.zsxq.com/group/123</id>
+  <updated>2026-06-22T10:00:00Z</updated>
+  <link href="https://wx.zsxq.com/group/123"></link>
+  <entry>
+    <title>话题标题一</title>
+    <updated>2026-06-22T10:00:00Z</updated>
+    <id>1001</id>
+    <content type="html">&lt;p&gt;正文一段落&lt;a href=&#34;https://wx.zsxq.com/group/123/topic/1001&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://srv.test/api/v1/archive/https://wx.zsxq.com/group/123/topic/1001" rel="alternate"></link>
+    <summary type="html">正文一段落</summary>
+    <author>
+      <name>作者甲</name>
+    </author>
+  </entry>
+  <entry>
+    <title>1002</title>
+    <updated>2026-06-21T09:00:00Z</updated>
+    <id>1002</id>
+    <content type="html">&lt;p&gt;正文二段落&lt;a href=&#34;https://wx.zsxq.com/group/123/topic/1002&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://srv.test/api/v1/archive/https://wx.zsxq.com/group/123/topic/1002" rel="alternate"></link>
+    <summary type="html">正文二段落</summary>
+    <author>
+      <name>作者乙</name>
+    </author>
+  </entry>
+</feed>
