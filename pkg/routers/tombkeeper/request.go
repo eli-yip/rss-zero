@@ -233,5 +233,15 @@ func (rs *RequestService) GetPicStream(ctx context.Context, picURL string) (*htt
 		_ = resp.Body.Close()
 		return nil, fmt.Errorf("bad status code: %d", resp.StatusCode)
 	}
+	// Some third-party image proxies (notably image.baidu.com/search/down) answer a
+	// missing image with "200 OK, Content-Length: 0" — an empty success. Reject it
+	// so it never wins the candidate race in downloadFirstAvailable; the genuine
+	// sinaimg variant (non-empty) wins instead. Without this guard the empty body is
+	// streamed to OSS as a 0-byte file and recorded ObjectStatusOK, leaving the post
+	// body embedding a working OSS URL that serves a broken (0-byte) image.
+	if resp.ContentLength == 0 {
+		_ = resp.Body.Close()
+		return nil, fmt.Errorf("empty image body (content-length 0): %s", picURL)
+	}
 	return resp, nil
 }
