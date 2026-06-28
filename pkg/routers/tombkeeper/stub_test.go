@@ -39,6 +39,7 @@ func (f *fakeFile) GetStream(string) (io.ReadCloser, error) { return nil, errors
 func (f *fakeFile) AssetsDomain() string                    { return f.domain }
 func (f *fakeFile) Delete(string) error                     { return nil }
 func (f *fakeFile) Exist(string) (bool, error)              { return false, nil }
+func (f *fakeFile) Size(path string) (int64, error)        { return int64(len(f.saved[path])), nil }
 
 // ---- fake requester ----
 

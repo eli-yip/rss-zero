@@ -16,4 +16,6 @@ type File interface {
 	Delete(string) error
 	// Check existance of a file
 	Exist(string) (bool, error)
+	// Size returns the byte size of a stored object.
+	Size(string) (int64, error)
 }

@@ -90,6 +90,32 @@ func saveImage(req Requester, f file.File, db DB, postID int64, picField string,
 	return uri, true, nil
 }
 
+// RedownloadObject re-fetches pic id picID from its CDN candidates and overwrites
+// the OSS object at objectKey with the fresh bytes — repairing a previously stored
+// 0-byte (or otherwise corrupt) image in place. It keeps the SAME object key, so
+// the markdown image links already embedded in post bodies keep working without a
+// re-render. Unlike saveImage it deliberately ignores the object table: the row
+// already exists and is correct except for the stored bytes. Returns the candidate
+// URL the bytes came from, or an error if every candidate fails. Used by the
+// one-off 0-byte backfill migration.
+func RedownloadObject(req Requester, f file.File, objectKey, picID string, logger *zap.Logger) (usedURL string, err error) {
+	cands, _ := candidateURLs(picID)
+	if len(cands) == 0 {
+		return "", fmt.Errorf("no download candidates for pic %q", picID)
+	}
+	resp, usedURL, err := downloadFirstAvailable(req, cands)
+	if err != nil {
+		return "", fmt.Errorf("download pic %q: %w", picID, err)
+	}
+	// resp.Body is handed to SaveStream, which closes it.
+	if err = f.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
+		return "", fmt.Errorf("save pic %q to %q: %w", picID, objectKey, err)
+	}
+	logger.Info("redownloaded image",
+		zap.String("pic_id", picID), zap.String("object_key", objectKey), zap.String("used_url", usedURL))
+	return usedURL, nil
+}
+
 // candidateURLs expands a pics entry into download candidates, plus the original
 // link to keep if every candidate fails.
 func candidateURLs(picField string) (cands []string, originalLink string) {

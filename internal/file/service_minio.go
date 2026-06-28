@@ -89,6 +89,14 @@ func (s *FileServiceMinio) Delete(key string) (err error) {
 	return s.minioClient.RemoveObject(context.Background(), s.bucketName, key, minio.RemoveObjectOptions{})
 }
 
+func (s *FileServiceMinio) Size(key string) (size int64, err error) {
+	info, err := s.minioClient.StatObject(context.Background(), s.bucketName, key, minio.StatObjectOptions{})
+	if err != nil {
+		return 0, err
+	}
+	return info.Size, nil
+}
+
 func (s *FileServiceMinio) Exist(key string) (exist bool, err error) {
 	_, err = s.minioClient.StatObject(context.Background(), s.bucketName, key, minio.StatObjectOptions{})
 	if err != nil {

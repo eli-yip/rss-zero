@@ -2,6 +2,37 @@ package tombkeeper
 
 import "testing"
 
+// RedownloadObject must overwrite the OSS object at the given key with the freshly
+// downloaded bytes (the 0-byte backfill path), keeping the key unchanged so embedded
+// markdown links keep working.
+func TestRedownloadObjectOverwritesObjectKey(t *testing.T) {
+	f := newFakeFile()
+	f.saved["tombkeeper/abc.jpg"] = nil // simulate the pre-existing 0-byte object
+	req := &fakeRequester{picAvailable: true}
+
+	usedURL, err := RedownloadObject(req, f, "tombkeeper/abc.jpg", "abc", testLogger())
+	if err != nil {
+		t.Fatalf("RedownloadObject: %v", err)
+	}
+	if usedURL == "" {
+		t.Error("expected a non-empty used URL")
+	}
+	if got := string(f.saved["tombkeeper/abc.jpg"]); got != "IMGDATA" {
+		t.Errorf("object not overwritten with fresh bytes: got %q", got)
+	}
+}
+
+// RedownloadObject must surface an error (not silently store an empty object) when
+// every CDN candidate fails, so the migration counts it as a failure and retries.
+func TestRedownloadObjectErrorsWhenAllCandidatesFail(t *testing.T) {
+	f := newFakeFile()
+	req := &fakeRequester{picAvailable: false}
+
+	if _, err := RedownloadObject(req, f, "tombkeeper/abc.jpg", "abc", testLogger()); err == nil {
+		t.Error("expected error when all candidates fail, got nil")
+	}
+}
+
 func TestPicIDOf(t *testing.T) {
 	cases := map[string]string{
 		"53899d01ly1ie5wrym85ej20sg0gl41f":     "53899d01ly1ie5wrym85ej20sg0gl41f",
