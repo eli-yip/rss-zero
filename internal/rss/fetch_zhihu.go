@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -58,18 +59,14 @@ func zhihuRows(contentType common.ZhihuContentType, authorID string, db zhihuDB.
 		}
 		// Batch-load the answers' questions in one query instead of one GetQuestion
 		// per answer (up to MaxFetch round-trips per feed build).
-		questionIDs := make([]int, 0, len(answers))
-		for _, a := range answers {
-			questionIDs = append(questionIDs, a.QuestionID)
-		}
+		questionIDs := lo.Map(answers, func(a zhihuDB.Answer, _ int) int { return a.QuestionID })
 		questions, err := db.GetQuestions(questionIDs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get questions from database: %w", err)
 		}
-		titleByQuestionID := make(map[int]string, len(questions))
-		for _, q := range questions {
-			titleByQuestionID[q.ID] = q.Title
-		}
+		titleByQuestionID := lo.SliceToMap(questions, func(q zhihuDB.Question) (int, string) {
+			return q.ID, q.Title
+		})
 		rows := make([]ZhihuRow, 0, len(answers))
 		for _, a := range answers {
 			title, ok := titleByQuestionID[a.QuestionID]
