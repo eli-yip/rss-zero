@@ -56,17 +56,34 @@ func zhihuRows(contentType common.ZhihuContentType, authorID string, db zhihuDB.
 		if err != nil {
 			return nil, fmt.Errorf("failed to get latest answers from database: %w", err)
 		}
+		// Batch-load the answers' questions in one query instead of one GetQuestion
+		// per answer (up to MaxFetch round-trips per feed build).
+		questionIDs := make([]int, 0, len(answers))
+		for _, a := range answers {
+			questionIDs = append(questionIDs, a.QuestionID)
+		}
+		questions, err := db.GetQuestions(questionIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get questions from database: %w", err)
+		}
+		titleByQuestionID := make(map[int]string, len(questions))
+		for _, q := range questions {
+			titleByQuestionID[q.ID] = q.Title
+		}
 		rows := make([]ZhihuRow, 0, len(answers))
 		for _, a := range answers {
-			question, err := db.GetQuestion(a.QuestionID)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get question %d info from database: %w", a.QuestionID, err)
+			title, ok := titleByQuestionID[a.QuestionID]
+			if !ok {
+				// A stored answer with no question row breaks the answer→question
+				// invariant enforced at crawl time (question is saved before the
+				// answer). Fail loudly rather than render a blank-title entry.
+				return nil, fmt.Errorf("question %d not found for answer %d", a.QuestionID, a.ID)
 			}
 			rows = append(rows, ZhihuRow{
 				ID:           a.ID,
 				OfficialLink: zhihuRender.GenerateAnswerLink(a.QuestionID, a.ID),
 				CreateTime:   a.CreateAt,
-				Title:        question.Title,
+				Title:        title,
 				Text:         a.Text,
 			})
 		}
