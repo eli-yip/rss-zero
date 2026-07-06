@@ -40,6 +40,7 @@ const (
 // Requester is created per crawl run).
 type Requester interface {
 	GetPage(page int) ([]byte, error)
+	GetPageRange(startDate, endDate string, page int) ([]byte, error)
 	GetDetail(id string) ([]byte, error)
 	GetReppic(longURL string) (picIDs []string, err error)
 	GetPicStream(ctx context.Context, url string) (*http.Response, error)
@@ -137,6 +138,14 @@ func (rs *RequestService) Close() {
 
 func (rs *RequestService) GetPage(page int) ([]byte, error) {
 	return rs.getHTML(fmt.Sprintf("%s/?page=%d", siteBaseURL, page))
+}
+
+// GetPageRange fetches one list page restricted to the [startDate, endDate]
+// window (both YYYY-MM-DD; the site returns posts newest-first, page 1 nearest
+// endDate). The date strings are validated by the caller, so they need no
+// escaping.
+func (rs *RequestService) GetPageRange(startDate, endDate string, page int) ([]byte, error) {
+	return rs.getHTML(fmt.Sprintf("%s/?startDate=%s&endDate=%s&page=%d", siteBaseURL, startDate, endDate, page))
 }
 
 func (rs *RequestService) GetDetail(id string) ([]byte, error) {

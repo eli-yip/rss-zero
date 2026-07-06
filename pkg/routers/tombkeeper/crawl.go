@@ -23,6 +23,9 @@ const (
 )
 
 var (
+	// crawlMu guards the live crawl against overlapping itself. The history
+	// backfill does NOT take it (see history.go): the two run concurrently, safe
+	// because every DB write is an idempotent upsert.
 	crawlMu      sync.Mutex
 	detailLinkRe = regexp.MustCompile(`/weibo/(\d+)`)
 )
@@ -54,62 +57,74 @@ func Crawl(redisService redis.Redis, db DB, fileService file.File, logger *zap.L
 		if err != nil {
 			return fmt.Errorf("get page %d: %w", page, err)
 		}
-		posts, err := ExtractPosts(html)
-		if err != nil {
-			logger.Error("failed to extract posts", zap.Int("page", page), zap.Error(err))
-			continue
-		}
-		pageMap := make(map[string]RawPost, len(posts))
-		for _, p := range posts {
-			pageMap[p.ID] = p
-		}
-
-		// Two independent parsers read the same page: timelineIDs scrapes the SSR
-		// /weibo/{id} detail links, pageMap comes from the flight payload. When they
-		// disagree the markup has drifted, so surface it instead of silently
-		// ingesting nothing. (pageMap legitimately holds extra objects — inlined
-		// retweet originals — so only the timeline-id direction is a problem.)
-		ids := timelineIDs(html)
-		if len(ids) == 0 && len(posts) > 0 {
-			logger.Error("no timeline detail links found but flight has posts; page markup may have changed",
-				zap.Int("page", page), zap.Int("flight_posts", len(posts)))
-		}
-		for _, id := range ids {
-			raw, ok := pageMap[id]
-			if !ok {
-				logger.Warn("timeline id missing from flight payload",
-					zap.Int("page", page), zap.String("id", id))
-				continue
-			}
-			mid, err := strconv.ParseInt(id, 10, 64)
-			if err != nil {
-				continue
-			}
-			exists, err := db.PostExists(mid)
-			if err != nil {
-				logger.Error("post exists check", zap.String("id", id), zap.Error(err))
-				continue
-			}
-			if exists {
-				continue
-			}
-
-			post, err := renderer.Render(raw, pageMap)
-			if err != nil {
-				logger.Error("render post", zap.String("id", id), zap.Error(err))
-				continue
-			}
-			if err := db.SavePost(post); err != nil {
-				logger.Error("save post", zap.String("id", id), zap.Error(err))
-				continue
-			}
-			newCount++
-			logger.Info("saved tombkeeper post", zap.String("id", id))
-		}
+		_, saved := ingestPage(html, db, renderer, logger.With(zap.Int("page", page)))
+		newCount += saved
 	}
 	logger.Info("tombkeeper crawl done", zap.Int("new_posts", newCount))
 
 	return renderAndCacheRSS(redisService, db, logger)
+}
+
+// ingestPage renders and stores the page's new timeline posts. seen is the number
+// of timeline posts on the page, saved the number newly written (already-present
+// ids are skipped). Embedded retweet originals sit in the flight payload too but
+// are NOT timeline posts, so they are used only for inlining and never counted —
+// which is what lets the history loop stop on seen==0 and keeps an old retweet
+// original from moving any date boundary.
+func ingestPage(html []byte, db DB, renderer *Renderer, logger *zap.Logger) (seen, saved int) {
+	posts, err := ExtractPosts(html)
+	if err != nil {
+		logger.Error("failed to extract posts", zap.Error(err))
+		return 0, 0
+	}
+	pageMap := make(map[string]RawPost, len(posts))
+	for _, p := range posts {
+		pageMap[p.ID] = p
+	}
+
+	// Two independent parsers read the same page: timelineIDs scrapes the SSR
+	// /weibo/{id} detail links, pageMap comes from the flight payload. When they
+	// disagree the markup has drifted, so surface it instead of silently
+	// ingesting nothing. (pageMap legitimately holds extra objects — inlined
+	// retweet originals — so only the timeline-id direction is a problem.)
+	ids := timelineIDs(html)
+	if len(ids) == 0 && len(posts) > 0 {
+		logger.Error("no timeline detail links found but flight has posts; page markup may have changed",
+			zap.Int("flight_posts", len(posts)))
+	}
+	for _, id := range ids {
+		raw, ok := pageMap[id]
+		if !ok {
+			logger.Warn("timeline id missing from flight payload", zap.String("id", id))
+			continue
+		}
+		mid, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			continue
+		}
+		seen++
+		exists, err := db.PostExists(mid)
+		if err != nil {
+			logger.Error("post exists check", zap.String("id", id), zap.Error(err))
+			continue
+		}
+		if exists {
+			continue
+		}
+
+		post, err := renderer.Render(raw, pageMap)
+		if err != nil {
+			logger.Error("render post", zap.String("id", id), zap.Error(err))
+			continue
+		}
+		if err := db.SavePost(post); err != nil {
+			logger.Error("save post", zap.String("id", id), zap.Error(err))
+			continue
+		}
+		saved++
+		logger.Info("saved tombkeeper post", zap.String("id", id))
+	}
+	return seen, saved
 }
 
 // renderAndCacheRSS re-warms the items cache after a crawl (1:1 replacement of the

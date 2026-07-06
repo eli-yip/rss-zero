@@ -48,9 +48,17 @@ type fakeRequester struct {
 	details      map[string][]byte   // mid -> detail page html
 	reppics      map[string][]string // 查看图片 long_url -> resolved pic ids
 	reppicErr    bool                // GetReppic returns an error (h5 unreachable)
+	pages        map[int][]byte      // page number -> list page html (GetPageRange)
+	rangeErr     bool                // GetPageRange returns an error
 }
 
 func (f *fakeRequester) GetPage(int) ([]byte, error) { return nil, errors.New("not implemented") }
+func (f *fakeRequester) GetPageRange(_, _ string, page int) ([]byte, error) {
+	if f.rangeErr {
+		return nil, errors.New("range page unreachable")
+	}
+	return f.pages[page], nil // missing page -> nil html = empty page (window exhausted)
+}
 func (f *fakeRequester) GetDetail(id string) ([]byte, error) {
 	if h, ok := f.details[id]; ok {
 		return h, nil

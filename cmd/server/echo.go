@@ -119,7 +119,7 @@ func setupEcho(redisService redis.Redis,
 	cookieHandler := cookieController.NewController(cookieService)
 	registerCookieProbes(cookieService)
 	mHandler := mackedHandler.NewHandler(redisService, macked.NewDBService(db), logger)
-	tombkeeperH := tombkeeperHandler.NewController(redisService, tombkeeperRouter.NewDBService(db), logger)
+	tombkeeperH := tombkeeperHandler.NewController(redisService, tombkeeperRouter.NewDBService(db), fileService, notifier, logger)
 	parseHandler := parseHandler.NewHandler(db, ai, cookieService, fileService, notifier)
 	migrateHandler := migrateController.NewController(logger, db, notifier)
 
@@ -179,6 +179,11 @@ func setupEcho(redisService redis.Redis,
 
 	mackedGroup := apiGroup.Group("/macked")
 	registerMacked(mackedGroup, mHandler)
+
+	tombkeeperGroup := apiGroup.Group("/tombkeeper")
+	groupNeedAuth = append(groupNeedAuth, tombkeeperGroup)
+	tombkeeperHistoryApi := tombkeeperGroup.POST("/history", tombkeeperH.History)
+	tombkeeperHistoryApi.Name = "Tombkeeper history backfill route"
 
 	for g := range slices.Values(groupNeedAuth) {
 		g.Use(myMiddleware.AllowAdmin())
