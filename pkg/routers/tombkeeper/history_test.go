@@ -52,12 +52,15 @@ func TestCrawlHistoryStopsOnEmptyPageAndIsIdempotent(t *testing.T) {
 	}}
 	r := newTestRenderer(req, newFakeFile(), db)
 
-	saved, err := crawlHistoryPages(req, db, r, "2026-06-25", "2026-06-26", testLogger())
+	st, err := crawlHistoryPages(req, db, r, "2026-06-25", "2026-06-26", testLogger())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if saved != 4 {
-		t.Fatalf("saved = %d, want 4", saved)
+	if st.Saved != 4 {
+		t.Fatalf("saved = %d, want 4", st.Saved)
+	}
+	if st.Pages != 3 {
+		t.Fatalf("pages = %d, want 3 (2 with posts + 1 empty)", st.Pages)
 	}
 	if len(db.posts) != 4 {
 		t.Fatalf("db has %d posts, want 4", len(db.posts))
@@ -65,12 +68,12 @@ func TestCrawlHistoryStopsOnEmptyPageAndIsIdempotent(t *testing.T) {
 
 	// Re-run: every post already exists, so nothing new is saved, but the loop must
 	// still page past the (non-empty) pages 1-2 and stop at the empty page 3.
-	saved, err = crawlHistoryPages(req, db, r, "2026-06-25", "2026-06-26", testLogger())
+	st, err = crawlHistoryPages(req, db, r, "2026-06-25", "2026-06-26", testLogger())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if saved != 0 {
-		t.Fatalf("re-run saved = %d, want 0 (idempotent)", saved)
+	if st.Saved != 0 {
+		t.Fatalf("re-run saved = %d, want 0 (idempotent)", st.Saved)
 	}
 }
 
@@ -83,6 +86,25 @@ func TestCrawlHistoryPagesPropagatesFetchError(t *testing.T) {
 
 	if _, err := crawlHistoryPages(req, db, r, "2026-06-01", "2026-06-02", testLogger()); err == nil {
 		t.Fatal("expected error from failing GetPageRange, got nil")
+	}
+}
+
+// A timeline post that fails to save is counted in stats.Failed (not saved, not
+// silently lost), and the run still completes.
+func TestCrawlHistoryCountsFailed(t *testing.T) {
+	db := newFakeDB()
+	db.saveErr = true
+	req := &fakeRequester{pages: map[int][]byte{
+		1: listPage(map[string]string{"5314166504037012": "2026-06-15T10:00:00.000Z"}, nil),
+	}}
+	r := newTestRenderer(req, newFakeFile(), db)
+
+	st, err := crawlHistoryPages(req, db, r, "2026-06-15", "2026-06-15", testLogger())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Saved != 0 || st.Failed != 1 {
+		t.Fatalf("saved=%d failed=%d, want saved=0 failed=1", st.Saved, st.Failed)
 	}
 }
 
@@ -100,12 +122,12 @@ func TestCrawlHistoryIgnoresRetweetOriginal(t *testing.T) {
 	}}
 	r := newTestRenderer(req, newFakeFile(), db)
 
-	saved, err := crawlHistoryPages(req, db, r, "2026-06-01", "2026-06-26", testLogger())
+	st, err := crawlHistoryPages(req, db, r, "2026-06-01", "2026-06-26", testLogger())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if saved != 1 {
-		t.Fatalf("saved = %d, want 1 (timeline post only)", saved)
+	if st.Saved != 1 {
+		t.Fatalf("saved = %d, want 1 (timeline post only)", st.Saved)
 	}
 	if _, err := db.GetPost(5310000000000000); err == nil {
 		t.Fatal("retweet original was stored as a feed item, must not be")

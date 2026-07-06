@@ -88,13 +88,20 @@ func (f *fakeRequester) GetPicStream(context.Context, string) (*http.Response, e
 // ---- fake db ----
 
 type fakeDB struct {
-	posts map[int64]*Post
-	objs  map[string]*Object
+	posts   map[int64]*Post
+	objs    map[string]*Object
+	saveErr bool // SavePost returns an error (to exercise the ingest failure path)
 }
 
 func newFakeDB() *fakeDB { return &fakeDB{posts: map[int64]*Post{}, objs: map[string]*Object{}} }
 
-func (d *fakeDB) SavePost(p *Post) error { d.posts[p.ID] = p; return nil }
+func (d *fakeDB) SavePost(p *Post) error {
+	if d.saveErr {
+		return errors.New("save failed")
+	}
+	d.posts[p.ID] = p
+	return nil
+}
 func (d *fakeDB) GetPost(id int64) (*Post, error) {
 	if p, ok := d.posts[id]; ok {
 		return p, nil

@@ -57,7 +57,7 @@ func Crawl(redisService redis.Redis, db DB, fileService file.File, logger *zap.L
 		if err != nil {
 			return fmt.Errorf("get page %d: %w", page, err)
 		}
-		_, saved := ingestPage(html, db, renderer, logger.With(zap.Int("page", page)))
+		_, saved, _ := ingestPage(html, db, renderer, logger.With(zap.Int("page", page)))
 		newCount += saved
 	}
 	logger.Info("tombkeeper crawl done", zap.Int("new_posts", newCount))
@@ -66,16 +66,17 @@ func Crawl(redisService redis.Redis, db DB, fileService file.File, logger *zap.L
 }
 
 // ingestPage renders and stores the page's new timeline posts. seen is the number
-// of timeline posts on the page, saved the number newly written (already-present
-// ids are skipped). Embedded retweet originals sit in the flight payload too but
-// are NOT timeline posts, so they are used only for inlining and never counted —
-// which is what lets the history loop stop on seen==0 and keeps an old retweet
-// original from moving any date boundary.
-func ingestPage(html []byte, db DB, renderer *Renderer, logger *zap.Logger) (seen, saved int) {
+// of well-formed timeline posts on the page, saved the number newly written
+// (already-present ids are skipped), failed the number that errored on
+// exists-check/render/save (already logged per post). Embedded retweet originals
+// sit in the flight payload too but are NOT timeline posts, so they are used only
+// for inlining and never counted — which is what lets the history loop stop on
+// seen==0 and keeps an old retweet original from moving any date boundary.
+func ingestPage(html []byte, db DB, renderer *Renderer, logger *zap.Logger) (seen, saved, failed int) {
 	posts, err := ExtractPosts(html)
 	if err != nil {
 		logger.Error("failed to extract posts", zap.Error(err))
-		return 0, 0
+		return 0, 0, 0
 	}
 	pageMap := make(map[string]RawPost, len(posts))
 	for _, p := range posts {
@@ -106,6 +107,7 @@ func ingestPage(html []byte, db DB, renderer *Renderer, logger *zap.Logger) (see
 		exists, err := db.PostExists(mid)
 		if err != nil {
 			logger.Error("post exists check", zap.String("id", id), zap.Error(err))
+			failed++
 			continue
 		}
 		if exists {
@@ -115,16 +117,18 @@ func ingestPage(html []byte, db DB, renderer *Renderer, logger *zap.Logger) (see
 		post, err := renderer.Render(raw, pageMap)
 		if err != nil {
 			logger.Error("render post", zap.String("id", id), zap.Error(err))
+			failed++
 			continue
 		}
 		if err := db.SavePost(post); err != nil {
 			logger.Error("save post", zap.String("id", id), zap.Error(err))
+			failed++
 			continue
 		}
 		saved++
 		logger.Info("saved tombkeeper post", zap.String("id", id))
 	}
-	return seen, saved
+	return seen, saved, failed
 }
 
 // renderAndCacheRSS re-warms the items cache after a crawl (1:1 replacement of the
