@@ -3,6 +3,8 @@ package tombkeeper
 import (
 	"errors"
 	"fmt"
+	"regexp"
+	"strconv"
 	"sync/atomic"
 
 	"github.com/rs/xid"
@@ -13,10 +15,28 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 )
 
-// maxHistoryPages bounds the backfill loop.
-// ponytail: temporary hard cap; the loop normally stops on an empty page. Raise
-// it, or make the window date-driven, if a real backfill ever needs more.
+// maxHistoryPages caps how many pages one backfill will fetch.
+// ponytail: safety ceiling on the site-reported total — a window claiming more
+// than this aborts on page 1. 8000 is generous for the current volume.
 const maxHistoryPages = 8000
+
+// pageParamRe captures the page number from a `…&page=N` pagination link. In the
+// SSR HTML the separators are HTML-encoded (`&amp;` → `;page=`), so `;` is
+// accepted alongside `?`/`&`.
+var pageParamRe = regexp.MustCompile(`[?&;]page=(\d+)`)
+
+// totalPages returns the window's total page count: the highest page number in
+// the page's pagination links (the "last page" link). It returns 0 when the page
+// carries no pagination (a single-page window).
+func totalPages(html []byte) int {
+	highest := 0
+	for _, m := range pageParamRe.FindAllSubmatch(html, -1) {
+		if n, err := strconv.Atoi(string(m[1])); err == nil && n > highest {
+			highest = n
+		}
+	}
+	return highest
+}
 
 // historyRunning forbids two backfills in one process. A backfill can run
 // concurrently with the hourly live crawl — every crawl DB write is an idempotent
@@ -30,7 +50,7 @@ var ErrHistoryRunning = errors.New("a tombkeeper history crawl is already runnin
 
 // historyStats accumulates a backfill run's totals for the summary log line.
 type historyStats struct {
-	Pages  int // pages fetched (including the terminating empty one)
+	Pages  int // pages fetched (the last page reached, or where it aborted)
 	Saved  int // posts newly written
 	Failed int // timeline posts dropped on exists-check/render/save error
 }
@@ -72,10 +92,10 @@ func StartHistory(db DB, fileService file.File, notifier notify.Notifier, startD
 	return jobID, nil
 }
 
-// runHistory pages the window newest→oldest until an empty page. It deliberately
-// does NOT take crawlMu: the live crawl and a backfill run concurrently (each with
-// its own Requester/Renderer; DB writes are idempotent upserts), so a long
-// backfill never stalls the hourly live crawl.
+// runHistory pages the window newest→oldest over its full page count. It
+// deliberately does NOT take crawlMu: the live crawl and a backfill run
+// concurrently (each with its own Requester/Renderer; DB writes are idempotent
+// upserts), so a long backfill never stalls the hourly live crawl.
 func runHistory(db DB, fileService file.File, startDate, endDate string, logger *zap.Logger) (historyStats, error) {
 	req := NewRequestService(logger)
 	defer req.Close()
@@ -84,27 +104,44 @@ func runHistory(db DB, fileService file.File, startDate, endDate string, logger 
 	return crawlHistoryPages(req, db, renderer, startDate, endDate, logger)
 }
 
+// crawlHistoryPages fetches pages 1..total, where total is the page count the site
+// reports for the window on page 1. Every page's reported total is re-checked: if
+// it changes mid-crawl the window is no longer stable (e.g. new posts shifted the
+// pagination), so the count can't be trusted and the crawl aborts with an error —
+// the caller logs it and Barks.
 func crawlHistoryPages(req Requester, db DB, renderer *Renderer, startDate, endDate string, logger *zap.Logger) (historyStats, error) {
 	var st historyStats
-	for page := 1; page <= maxHistoryPages; page++ {
+	total := 0
+	for page := 1; ; page++ {
 		st.Pages = page
 		html, err := req.GetPageRange(startDate, endDate, page)
 		if err != nil {
 			return st, fmt.Errorf("get page %d (%s..%s): %w", page, startDate, endDate, err)
 		}
+
+		// No pagination (single-page window, reported==0) means this page is the last.
+		reported := max(totalPages(html), page)
+		if page == 1 {
+			total = reported
+			if total > maxHistoryPages {
+				return st, fmt.Errorf("window %s..%s reports %d pages, over the %d cap", startDate, endDate, total, maxHistoryPages)
+			}
+			logger.Info("tombkeeper history total pages", zap.Int("total", total))
+		} else if reported != total {
+			return st, fmt.Errorf("total pages changed mid-crawl (page 1 reported %d, page %d reports %d) — window not stable, aborting", total, page, reported)
+		}
+
 		seen, saved, failed := ingestPage(html, db, renderer, logger.With(zap.Int("page", page)))
 		st.Saved += saved
 		st.Failed += failed
-		if seen == 0 {
-			logger.Info("tombkeeper history done: reached empty page",
-				zap.Int("page", page), zap.Int("saved", st.Saved), zap.Int("failed", st.Failed))
+		logger.Info("tombkeeper history page progress",
+			zap.Int("page", page), zap.Int("total", total), zap.Int("seen", seen),
+			zap.Int("saved_page", saved), zap.Int("saved_total", st.Saved), zap.Int("failed_total", st.Failed))
+
+		if page >= total {
+			logger.Info("tombkeeper history done: reached last page",
+				zap.Int("pages", total), zap.Int("saved", st.Saved), zap.Int("failed", st.Failed))
 			return st, nil
 		}
-		logger.Info("tombkeeper history page progress",
-			zap.Int("page", page), zap.Int("seen", seen),
-			zap.Int("saved_page", saved), zap.Int("saved_total", st.Saved), zap.Int("failed_total", st.Failed))
 	}
-	logger.Warn("tombkeeper history hit page cap",
-		zap.Int("cap", maxHistoryPages), zap.Int("saved", st.Saved), zap.Int("failed", st.Failed))
-	return st, nil
 }

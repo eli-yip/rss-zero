@@ -3,6 +3,7 @@ package tombkeeper
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -29,9 +30,11 @@ func tkPostObj(id, date string) string {
 }
 
 // listPage builds a synthetic tombkeeper.io list page: one flight chunk holding
-// every object, plus a /weibo/{id} detail link for each timeline id. extras stand
-// in for embedded retweet originals — present in the flight, absent from the links.
-func listPage(timeline map[string]string, extras map[string]string) []byte {
+// every object, a 详情 permalink for each timeline id, and a pagination "last page"
+// link at page `total` (HTML-encoded `&amp;` separators, like the real site).
+// extras stand in for embedded retweet originals — present in the flight, absent
+// from the permalinks.
+func listPage(total int, timeline, extras map[string]string) []byte {
 	var flight, links string
 	for id, date := range timeline {
 		flight += tkPostObj(id, date) + "\n"
@@ -40,7 +43,22 @@ func listPage(timeline map[string]string, extras map[string]string) []byte {
 	for id, date := range extras {
 		flight += tkPostObj(id, date) + "\n"
 	}
-	return []byte(pushChunk("9:" + flight) + links)
+	nav := fmt.Sprintf(`<a href="/?startDate=2025-01-01&amp;endDate=2026-06-30&amp;page=%d">末页</a>`, total)
+	return []byte(pushChunk("9:"+flight) + links + nav)
+}
+
+func TestTotalPages(t *testing.T) {
+	html := []byte(`<nav>` +
+		`<a href="/?startDate=2025-01-01&amp;endDate=2026-06-30&amp;page=1">1</a>` +
+		`<a href="/?startDate=2025-01-01&amp;endDate=2026-06-30&amp;page=447">447</a>` +
+		`<a href="/?startDate=2025-01-01&amp;endDate=2026-06-30&amp;page=722">末页</a>` +
+		`</nav>`)
+	if got := totalPages(html); got != 722 {
+		t.Fatalf("totalPages = %d, want 722", got)
+	}
+	if got := totalPages([]byte(`<div>single page, no pagination</div>`)); got != 0 {
+		t.Fatalf("totalPages(no nav) = %d, want 0", got)
+	}
 }
 
 func TestTimelineIDsExcludesInBodyReferences(t *testing.T) {
@@ -60,12 +78,11 @@ func TestTimelineIDsExcludesInBodyReferences(t *testing.T) {
 	}
 }
 
-func TestCrawlHistoryStopsOnEmptyPageAndIsIdempotent(t *testing.T) {
+func TestCrawlHistoryCrawlsExactlyTotalPages(t *testing.T) {
 	db := newFakeDB()
 	req := &fakeRequester{pages: map[int][]byte{
-		1: listPage(map[string]string{"5314166504037012": "2026-06-26T10:00:00.000Z", "5314160939239118": "2026-06-26T09:00:00.000Z"}, nil),
-		2: listPage(map[string]string{"5314151876657931": "2026-06-25T10:00:00.000Z", "5314090474936306": "2026-06-25T09:00:00.000Z"}, nil),
-		// page 3 absent -> empty page -> window exhausted
+		1: listPage(2, map[string]string{"5314166504037012": "2026-06-26T10:00:00.000Z", "5314160939239118": "2026-06-26T09:00:00.000Z"}, nil),
+		2: listPage(2, map[string]string{"5314151876657931": "2026-06-25T10:00:00.000Z", "5314090474936306": "2026-06-25T09:00:00.000Z"}, nil),
 	}}
 	r := newTestRenderer(req, newFakeFile(), db)
 
@@ -76,21 +93,39 @@ func TestCrawlHistoryStopsOnEmptyPageAndIsIdempotent(t *testing.T) {
 	if st.Saved != 4 {
 		t.Fatalf("saved = %d, want 4", st.Saved)
 	}
-	if st.Pages != 3 {
-		t.Fatalf("pages = %d, want 3 (2 with posts + 1 empty)", st.Pages)
+	if st.Pages != 2 {
+		t.Fatalf("pages = %d, want 2 (total reported on page 1)", st.Pages)
 	}
 	if len(db.posts) != 4 {
 		t.Fatalf("db has %d posts, want 4", len(db.posts))
 	}
 
-	// Re-run: every post already exists, so nothing new is saved, but the loop must
-	// still page past the (non-empty) pages 1-2 and stop at the empty page 3.
+	// Re-run: everything already exists → 0 new, but it still fetches all `total` pages.
 	st, err = crawlHistoryPages(req, db, r, "2026-06-25", "2026-06-26", testLogger())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if st.Saved != 0 {
-		t.Fatalf("re-run saved = %d, want 0 (idempotent)", st.Saved)
+	if st.Saved != 0 || st.Pages != 2 {
+		t.Fatalf("re-run saved=%d pages=%d, want saved=0 pages=2 (idempotent)", st.Saved, st.Pages)
+	}
+}
+
+// If the site-reported total changes between pages, the window isn't stable and
+// the crawl must abort with an error (which the caller logs + Barks).
+func TestCrawlHistoryAbortsOnTotalPagesChange(t *testing.T) {
+	db := newFakeDB()
+	req := &fakeRequester{pages: map[int][]byte{
+		1: listPage(2, map[string]string{"5314166504037012": "2026-06-26T10:00:00.000Z"}, nil),
+		2: listPage(3, map[string]string{"5314160939239118": "2026-06-26T09:00:00.000Z"}, nil), // total shifted 2 -> 3
+	}}
+	r := newTestRenderer(req, newFakeFile(), db)
+
+	_, err := crawlHistoryPages(req, db, r, "2026-06-25", "2026-06-26", testLogger())
+	if err == nil {
+		t.Fatal("expected abort on total-pages change, got nil")
+	}
+	if !strings.Contains(err.Error(), "total pages changed") {
+		t.Fatalf("err = %v, want it to mention total pages changed", err)
 	}
 }
 
@@ -112,7 +147,7 @@ func TestCrawlHistoryCountsFailed(t *testing.T) {
 	db := newFakeDB()
 	db.saveErr = true
 	req := &fakeRequester{pages: map[int][]byte{
-		1: listPage(map[string]string{"5314166504037012": "2026-06-15T10:00:00.000Z"}, nil),
+		1: listPage(1, map[string]string{"5314166504037012": "2026-06-15T10:00:00.000Z"}, nil),
 	}}
 	r := newTestRenderer(req, newFakeFile(), db)
 
@@ -132,7 +167,7 @@ func TestCrawlHistoryIgnoresRetweetOriginal(t *testing.T) {
 	db := newFakeDB()
 	oldOriginalID := "5310000000000000" // created 2026-05-28, before startDate
 	req := &fakeRequester{pages: map[int][]byte{
-		1: listPage(
+		1: listPage(1,
 			map[string]string{"5314166504037012": "2026-06-26T10:00:00.000Z"},
 			map[string]string{oldOriginalID: "2026-05-28T10:00:00.000Z"},
 		),
