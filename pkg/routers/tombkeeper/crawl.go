@@ -1,6 +1,7 @@
 package tombkeeper
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -26,8 +27,13 @@ var (
 	// crawlMu guards the live crawl against overlapping itself. The history
 	// backfill does NOT take it (see history.go): the two run concurrently, safe
 	// because every DB write is an idempotent upsert.
-	crawlMu      sync.Mutex
-	detailLinkRe = regexp.MustCompile(`/weibo/(\d+)`)
+	crawlMu sync.Mutex
+	// detailLinkRe matches a post's permalink anchor: href="/weibo/{mid}" whose body
+	// carries the 详情 label. Group 1 is the mid, group 2 the anchor body. It matches
+	// in-body "微博正文" reference links too (same /weibo/{id} href form, pointing to
+	// other/off-page weibos) — those are filtered out by the 详情 check in timelineIDs.
+	detailLinkRe = regexp.MustCompile(`(?s)<a\b[^>]*href="/weibo/(\d+)"[^>]*>(.*?)</a>`)
+	detailLabel  = []byte("详情")
 )
 
 // CrawlFunc returns the hourly cron closure (matches the macked job shape).
@@ -144,11 +150,18 @@ func renderAndCacheRSS(redisService redis.Redis, db DB, logger *zap.Logger) erro
 }
 
 // timelineIDs returns the page's timeline post ids in order, taken from the
-// /weibo/{id} "详情" links (excludes embedded retweet originals).
+// per-post "详情" permalink anchors. It excludes both embedded retweet originals
+// (which have no 详情 permalink) and in-body "微博正文" reference links (which use
+// the same /weibo/{id} href but point to other, off-page weibos) — so a
+// "timeline id missing from flight payload" warning now means a real timeline
+// post is missing, not a benign in-body reference.
 func timelineIDs(html []byte) []string {
 	var ids []string
 	seen := make(map[string]struct{})
 	for _, m := range detailLinkRe.FindAllSubmatch(html, -1) {
+		if !bytes.Contains(m[2], detailLabel) {
+			continue // in-body 微博正文 reference, not a timeline post permalink
+		}
 		id := string(m[1])
 		if _, dup := seen[id]; dup {
 			continue

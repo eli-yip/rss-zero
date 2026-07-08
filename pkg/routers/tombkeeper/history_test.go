@@ -43,6 +43,23 @@ func listPage(timeline map[string]string, extras map[string]string) []byte {
 	return []byte(pushChunk("9:" + flight) + links)
 }
 
+func TestTimelineIDsExcludesInBodyReferences(t *testing.T) {
+	// Two /weibo/{id} anchors on the page: a real per-post 详情 permalink and an
+	// in-body 微博正文 reference to another (off-page) weibo. Only the 详情 one is a
+	// timeline post; the reference must not be collected.
+	html := []byte(
+		`<a class="group" target="_blank" href="/weibo/5189176439083062" rel="noopener noreferrer">` +
+			`<svg viewBox="0 0 32 32"></svg><span class="sr-only">详情</span></a>` +
+			`<div class="prose">正文里引用了另一条：` +
+			`<a href="/weibo/4654271716661263" target="_blank" rel="noopener noreferrer" class="text-emerald-600">微博正文</a>` +
+			`</div>`,
+	)
+	ids := timelineIDs(html)
+	if len(ids) != 1 || ids[0] != "5189176439083062" {
+		t.Fatalf("timelineIDs = %v, want [5189176439083062] (in-body 微博正文 ref excluded)", ids)
+	}
+}
+
 func TestCrawlHistoryStopsOnEmptyPageAndIsIdempotent(t *testing.T) {
 	db := newFakeDB()
 	req := &fakeRequester{pages: map[int][]byte{
