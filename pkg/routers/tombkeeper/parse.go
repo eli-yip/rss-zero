@@ -72,13 +72,17 @@ func (r *Renderer) renderContent(raw RawPost, pageMap map[string]RawPost, depth 
 		sections = append(sections, v)
 	}
 
-	// The reposter's own 正文 image (from 查看图片) is displayed right before the quote.
+	// The reposter's own 正文 image (from 查看图片) belongs to the reposter's own
+	// content, displayed above the retweet quote.
 	sections = append(sections, imageEmbeds(viewPicURLs)...)
+	// Inline 微博正文 N link quotes belong to the reposter's own text — their
+	// [微博正文 N] reference sits in the body — so they go above the retweet quote,
+	// not below the whole reposted original.
+	sections = append(sections, tailQuotes...)
 	if orig != nil {
 		quote := r.renderContent(*orig, nil, 1)
 		sections = append(sections, quoteBlock("转发 @"+orig.ScreenName, quote))
 	}
-	sections = append(sections, tailQuotes...)
 
 	return strings.TrimRight(md.Join(sections...), "\n")
 }
