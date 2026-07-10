@@ -19,7 +19,7 @@ internal/         应用内部（不对外复用）
 
 pkg/              可复用/源特定
   routers/<src>/  各源的抓取 + 解析 + （旧）渲染：zhihu xiaobot github zsxq
-                  tombkeeper endoflife macked weibo douyu
+                  tombkeeper tkblog endoflife macked weibo douyu
   render/         共享 markdown/HTML/Atom 渲染 helper（goldmark 封装）
   cookie/ cron/ httputil/ bookmark/ embedding/ common/
 ```
@@ -51,6 +51,10 @@ cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析
   离线读库即可重渲染）。
 - **缓存**：Redis 存 `cachedFeed` JSON 与部分渲染 XML（random 端点 24h TTL）。
 - **对象存储**：图片抓取后转存 OSS 换链（tombkeeper/zsxq 共用 `internal/file`）。
+- **tkblog 博客（旁支，不入 RSS 管线）**：`tombkeeper.io/{xfocus,baidu}` 的博文另存
+  `tombkeeper_blog_post`（`category` 区分两源、复合主键 `(category,id)`），纯文本正文存已转义
+  markdown。**只做解析/落库 + 单篇归档 HTML，无 RSS 出口**；按需**全量**抓取（伪 job，无 cron，
+  见 [OPS](OPS.md)）。解析复用微博同款 Next.js flight 机制（`pkg/routers/tkblog`）。
 
 ## 迁移
 

@@ -23,6 +23,7 @@ import (
 	migrateController "github.com/eli-yip/rss-zero/internal/controller/migrate"
 	parseHandler "github.com/eli-yip/rss-zero/internal/controller/parse"
 	rsshubController "github.com/eli-yip/rss-zero/internal/controller/rsshub"
+	tkblogHandler "github.com/eli-yip/rss-zero/internal/controller/tkblog"
 	tombkeeperHandler "github.com/eli-yip/rss-zero/internal/controller/tombkeeper"
 	userController "github.com/eli-yip/rss-zero/internal/controller/user"
 	xiaobotController "github.com/eli-yip/rss-zero/internal/controller/xiaobot"
@@ -39,6 +40,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
+	tkblogRouter "github.com/eli-yip/rss-zero/pkg/routers/tkblog"
 	tombkeeperRouter "github.com/eli-yip/rss-zero/pkg/routers/tombkeeper"
 	xiaobotDB "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/db"
 	xiaobotRequest "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/request"
@@ -120,6 +122,7 @@ func setupEcho(redisService redis.Redis,
 	registerCookieProbes(cookieService)
 	mHandler := mackedHandler.NewHandler(redisService, macked.NewDBService(db), logger)
 	tombkeeperH := tombkeeperHandler.NewController(redisService, tombkeeperRouter.NewDBService(db), fileService, notifier, logger)
+	tkblogH := tkblogHandler.NewController(tkblogRouter.NewDBService(db), notifier, logger)
 	parseHandler := parseHandler.NewHandler(db, ai, cookieService, fileService, notifier)
 	migrateHandler := migrateController.NewController(logger, db, notifier)
 
@@ -184,6 +187,11 @@ func setupEcho(redisService redis.Redis,
 	groupNeedAuth = append(groupNeedAuth, tombkeeperGroup)
 	tombkeeperHistoryApi := tombkeeperGroup.POST("/history", tombkeeperH.History)
 	tombkeeperHistoryApi.Name = "Tombkeeper history backfill route"
+
+	tkblogGroup := apiGroup.Group("/tkblog")
+	groupNeedAuth = append(groupNeedAuth, tkblogGroup)
+	tkblogCrawlApi := tkblogGroup.POST("/:category/crawl", tkblogH.Crawl)
+	tkblogCrawlApi.Name = "Tkblog crawl route"
 
 	for g := range slices.Values(groupNeedAuth) {
 		g.Use(myMiddleware.AllowAdmin())

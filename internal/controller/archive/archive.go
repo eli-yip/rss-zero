@@ -18,6 +18,7 @@ import (
 	utils "github.com/eli-yip/rss-zero/internal/utils"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/eli-yip/rss-zero/pkg/render"
+	tkblog "github.com/eli-yip/rss-zero/pkg/routers/tkblog"
 	tk "github.com/eli-yip/rss-zero/pkg/routers/tombkeeper"
 )
 
@@ -269,6 +270,8 @@ func (h *Controller) handleRequestArchiveLink(link string) (result *archiveResul
 		return h.HandleZsxqShareLink(link)
 	case tk.IsWeiboArchiveLink(link):
 		return h.HandleTombkeeperWeibo(link)
+	case tkblog.IsBlogArchiveLink(link):
+		return h.HandleTkblog(link)
 	}
 	return nil, fmt.Errorf("unknown link: %s", link)
 }
