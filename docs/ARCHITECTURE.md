@@ -6,7 +6,7 @@ headless 浏览器。本文件是代码地图 —— 模块边界、数据流、
 ## 全景
 
 ```
-cmd/server        Echo HTTP 服务（:8080）—— /rss/<source>、/api/v1/*、/health
+cmd/server        Echo HTTP 服务（:8080）—— /rss/<source>、/api/v1/*（含 /api/v1/health）
 cmd/cli           运维/一次性任务 CLI
 
 internal/         应用内部（不对外复用）
