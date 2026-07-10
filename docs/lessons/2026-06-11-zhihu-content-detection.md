@@ -1,7 +1,7 @@
 # LESSON: Zhihu Answer AI Content Detection & RSS Skipping
 
 - Date: 2026-06-11
-- PLAN: [plans/2026-06-11-01-zhihu-content-detection.md](../plans/2026-06-11-01-zhihu-content-detection.md)
+- PLAN: [plans/2026-06-11-zhihu-content-detection.md](../plans/2026-06-11-zhihu-content-detection.md)
 - Branch: `feat/zhihu-content-detection`
 
 Summary written after implementation completed.

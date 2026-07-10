@@ -1,6 +1,6 @@
 # PLAN: 知乎付费内容标识（答案 / 文章）
 
-实现 [SPEC 2026-06-20-01](../specs/2026-06-20-01-zhihu-paid-content-flag.md)。无新增数据库列；
+实现 [SPEC 2026-06-20-01](../issues/2026-06-20-zhihu-paid-content-flag.md)。无新增数据库列；
 付费判定按 `raw` 现算，命中后把带原文链接的引用块烘焙进 `.Text`。小步提交。
 
 依赖事实（已核实）：
@@ -111,7 +111,7 @@
 ### 步骤 6：收尾
 
 - 跑改动相关的 targeted 测试（parse 包）；`just lint` 全绿。
-- 更新 [docs/PROGRESS.md](PROGRESS.md) 状态为「实现完成，待 review / 部署」。
+- 更新 [docs/PROGRESS.md](../PROGRESS.md) 状态为「实现完成，待 review / 部署」。
 - 请作者 review；批准后 squash 合并 master、删分支（按 AGENTS.md 流程）。
 - 部署后手动 `POST /api/.../migrate/20260620` 跑一次回填（线上），抽查 canglimo 文章
   与一条付费答案，确认 RSS/archive 正文首行为带链接引用块。

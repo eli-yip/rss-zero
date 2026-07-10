@@ -1,7 +1,7 @@
 # PLAN: Unified Cookie Update Interface
 
 - Date: 2026-06-11
-- SPEC: [specs/2026-06-11-02-unified-cookie-interface.md](../specs/2026-06-11-02-unified-cookie-interface.md)
+- SPEC: [issues/2026-06-11-unified-cookie-interface.md](../issues/2026-06-11-unified-cookie-interface.md)
 - Branch: `feat/unified-cookie-interface`
 
 ## Recon summary (verified against current code)
@@ -127,7 +127,7 @@ Each step: files, change, verify. Ordered by dependency. Commit per step.
 ### Step 8 — Docs bookkeeping
 
 - Update `docs/PROGRESS.md` row as steps land.
-- Maintain `docs/lessons/2026-06-11-02-unified-cookie-interface.md`: append while executing,
+- Maintain `docs/lessons/2026-06-11-unified-cookie-interface.md`: append while executing,
   reorganize into a summary at the end (AGENTS.md).
 
 ## Extension steps (Phase P2 — repo `/Users/yip/new_home/projects/cookie-updater`)

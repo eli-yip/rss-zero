@@ -1,6 +1,6 @@
 # PLAN: 迁移注册表与启动自动迁移
 
-实现 [SPEC 2026-06-21-01](../specs/2026-06-21-01-migration-registry.md)。本分支
+实现 [SPEC 2026-06-21-01](../issues/2026-06-21-migration-registry.md)。本分支
 `feat-migration-registry`（off master）只交付框架；注册表留空，用测试里的假迁移验证。小步提交。
 
 依赖事实（已核实）：
@@ -100,7 +100,7 @@ DB 薄封装（loadApplied/recordApplied/Status）不单测（依赖 Postgres）
 ### 步骤 6：收尾
 
 - `just lint` 全绿；`go test ./internal/migrate/` 通过；`go build ./...`。
-- 更新 [docs/PROGRESS.md](PROGRESS.md) 状态为「实现完成，待 review」。
+- 更新 [docs/PROGRESS.md](../PROGRESS.md) 状态为「实现完成，待 review」。
 - 请作者 review；批准后 squash 合并 master（或按需），再**合并进 `feat-paid-content-flag`**，
   在该分支把 `Migrate20260620` 注册为 `Version=20260620000000/Auto`、删其专属端点（SPEC §6，不在本分支做）。
 

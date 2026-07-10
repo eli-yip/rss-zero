@@ -1,6 +1,6 @@
 # PLAN：项二 — 删除 zsxq 爬取回溯死代码
 
-> 对应 SPEC：[2026-06-12-01-zsxq-maintainability-refactor.md](../specs/2026-06-12-01-zsxq-maintainability-refactor.md) 重构项二
+> 对应 SPEC：[2026-06-12-01-zsxq-maintainability-refactor.md](../issues/2026-06-12-zsxq-maintainability-refactor.md) 重构项二
 > 分支：`feat-zsxq-drop-backtrack`
 > 风险：最低（纯删除死代码，正向爬取路径不动）
 

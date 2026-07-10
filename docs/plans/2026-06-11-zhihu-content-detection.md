@@ -1,7 +1,7 @@
 # PLAN: Zhihu Answer AI Content Detection & RSS Skipping
 
 - Date: 2026-06-11
-- SPEC: [specs/2026-06-11-01-zhihu-content-detection.md](../specs/2026-06-11-01-zhihu-content-detection.md)
+- SPEC: [issues/2026-06-11-zhihu-content-detection.md](../issues/2026-06-11-zhihu-content-detection.md)
 - Branch: `feat/zhihu-content-detection`
 
 ## Recon summary (verified against current code)
@@ -132,7 +132,7 @@ pure logic that needs no DB:
 ### Step 9 — Docs bookkeeping
 
 - Update `docs/PROGRESS.md` status as steps land.
-- Maintain `docs/lessons/2026-06-11-01-zhihu-content-detection.md`: append notes while
+- Maintain `docs/lessons/2026-06-11-zhihu-content-detection.md`: append notes while
   executing; reorganize into a summary once the plan completes (per AGENTS.md).
 
 ## Out of scope (per SPEC §9)

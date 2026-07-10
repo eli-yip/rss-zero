@@ -1,6 +1,6 @@
 # PLAN：统一 HTTP 响应格式（server + webapp + Apifox）
 
-> 对应 SPEC：[2026-06-13-01-unified-response-format.md](../specs/2026-06-13-01-unified-response-format.md)
+> 对应 SPEC：[2026-06-13-01-unified-response-format.md](../issues/2026-06-13-unified-response-format.md)
 > 分支：`feat-unified-response`（off `master`，小步提交）
 > 三处同步：① server（Go）② webapp（TS）③ Apifox 项目 3807162（RSS-ZERO）
 > 已决：迁移全部 JSON(`/api/v1`) 端点；采用集中式 error handler；`common.ApiResp` 全量替换为 `httputil.Resp` 并删除。
@@ -121,7 +121,7 @@
 1. server:`go build ./... && go vet ./...`;`curl` 抽样 `archive`/`bookmark`/`tag`/`user`/`statistics`/`zvideo`/`random`/`similarity` 成功体为 `{message,data}`、错误体为 `{message}`+正确码;`/rss/*` 成功体仍 atom XML。
 2. webapp:`bun run build`;八个页面端到端 (archive/random/bookmark/statistics/zvideo/similar drawer/tag 过滤/user),收藏乐观更新正常。
 3. Apifox:抽样接口在界面查看响应 schema 已为信封;运行已有正向/负向测试用例 (若依赖响应结构需同步用例——见风险 4)。
-4. 文档：更新 `docs/PROGRESS.md`;把实施中的经验整理进 `docs/lessons/2026-06-13-01-unified-response-format.md`。
+4. 文档：更新 `docs/PROGRESS.md`;把实施中的经验整理进 `docs/lessons/2026-06-13-unified-response-format.md`。
 5. 前后端**同分支/同次发布**切换 (破坏性，无双挂兼容期);Review 通过后 squash merge，删分支。
 
 ---

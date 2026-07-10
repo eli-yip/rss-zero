@@ -50,6 +50,18 @@ update:
 test:
     go test -v {{ invocation_directory() }}
 
+# 按 frontmatter 状态列出 issue（默认 open）。如 `just issues closed`
+issues status='open':
+    @rg -l '^status:\s+{{ status }}\s*$' docs/issues || true
+
+# 按 frontmatter 状态列出 plan（默认 in-progress）。如 `just plans done`
+plans status='in-progress':
+    @rg -l '^status:\s+{{ status }}\s*$' docs/plans || true
+
+# 按 frontmatter 状态列出 lesson（默认 draft）。如 `just lessons done`
+lessons status='draft':
+    @rg -l '^status:\s+{{ status }}\s*$' docs/lessons || true
+
 # Git相关命令
 commit:
     git add -A

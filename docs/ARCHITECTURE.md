@@ -1,0 +1,66 @@
+# 架构
+
+RSS-ZERO 后端：把若干「私有/不友好」站点抓取、入库、统一渲染成 Atom 输出。纯 Go，无
+headless 浏览器。本文件是代码地图 —— 模块边界、数据流、关键决策的落点，供人和 agent 快速定位。
+
+## 全景
+
+```
+cmd/server        Echo HTTP 服务（:8080）—— /rss/<source>、/api/v1/*、/health
+cmd/cli           运维/一次性任务 CLI
+
+internal/         应用内部（不对外复用）
+  controller/     各源的 HTTP handler + 编排（zhihu xiaobot github zsxq tombkeeper
+                  endoflife macked …，另有 archive job migrate parse rsshub user cookie）
+  rss/            统一 RSS 出口管线：canonical Item + FeedMeta + RenderAtom + 缓存层
+  migrate/        迁移注册表（schema_migrations 表，启动自动跑）
+  db/ redis/ file/ 存储访问（Postgres/GORM、Redis、对象存储/OSS）
+  md/ notify/ ai/ log/ middleware/ version/ utils/  markdown、Bark、AI、日志等
+
+pkg/              可复用/源特定
+  routers/<src>/  各源的抓取 + 解析 + （旧）渲染：zhihu xiaobot github zsxq
+                  tombkeeper endoflife macked weibo douyu
+  render/         共享 markdown/HTML/Atom 渲染 helper（goldmark 封装）
+  cookie/ cron/ httputil/ bookmark/ embedding/ common/
+```
+
+## RSS 出口管线（统一收口）
+
+见 [issues/2026-06-24-unified-rss-pipeline.md](issues/2026-06-24-unified-rss-pipeline.md) /
+[plans/2026-06-24-unified-rss-pipeline.md](plans/2026-06-24-unified-rss-pipeline.md)。核心：
+`/rss/<source>` 这一层统一为一条管线，取代早期「6+ 套 render 结构体 + 各写各的 Atom」。
+
+- **canonical 类型**：`Item{ID,Link,Title,Author,Time,Summary,ContentHTML}` + `FeedMeta`，
+  唯一渲染器 `rss.RenderAtom`。各源 `Fetch` 把 `ContentHTML` 算好，渲染器不再加工。
+- **缓存下沉**：从「渲染后的 XML」下沉到 `cachedFeed{Meta,Items}` 的 JSON（`v2:` key 与旧
+  XML 隔离）；`MaxFetch=50`，limit 不进 key、按需切片。
+- **Fetch 归属**：`zhihu/xiaobot/github/zsxq` 在 `internal/rss`；`endoflife/tombkeeper/macked`
+  在各自源包（非导出类型 + 规避 import 环）。
+- **编排**：`rss.Serve` / `WarmCache` / `FetchCached`；DB 源的 cron 预热同一 key。
+- **Markdown**：统一 goldmark `GFM + NewCJK(CSS3Draft)`。
+
+## 数据流
+
+```
+cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析）
+   → 入库(Postgres/GORM) + 图片转存(OSS) → internal/rss（canonical Item + 缓存 Redis）
+   → RenderAtom → /rss/<source> 响应
+```
+
+- **内容库**：Postgres（GORM），存已解析正文（`text_markdown` 等，引用块/提示已烘焙进正文，
+  离线读库即可重渲染）。
+- **缓存**：Redis 存 `cachedFeed` JSON 与部分渲染 XML（random 端点 24h TTL）。
+- **对象存储**：图片抓取后转存 OSS 换链（tombkeeper/zsxq 共用 `internal/file`）。
+
+## 迁移
+
+`internal/migrate` 是注册表：`Migration{Version int64, Name, Auto, RequiresPredecessors, Run}`
+配 `schema_migrations` 集合表。启动时 `RunAuto` 按版本升序跑合格的 auto 迁移（前置门控、失败
+只记日志/Bark 不阻断、下次启动重试）。手动端点：`registry` / `run/:version` / `run-pending`。
+多数为「离线回填已存正文」的数据迁移（幂等）。
+
+## 配套服务
+
+- **rss-zhihu-encrypt**（`../../zhihu-encrypt`）：知乎加密服务，compose 内 `:3000`。
+- **webapp**（`../webapp`）：前端，与本后端配对发布。
+- 详见 [OPS.md](OPS.md)。

@@ -1,6 +1,6 @@
 # PLAN：项一 — 请求重试循环收敛
 
-> 对应 SPEC：[2026-06-12-01-zsxq-maintainability-refactor.md](../specs/2026-06-12-01-zsxq-maintainability-refactor.md) 重构项一
+> 对应 SPEC：[2026-06-12-01-zsxq-maintainability-refactor.md](../issues/2026-06-12-zsxq-maintainability-refactor.md) 重构项一
 > 分支：`feat-zsxq-request-retry`
 > 风险：中（改动核心爬取链路；request 包当前**无任何测试**，需先补回归测试再重构）
 

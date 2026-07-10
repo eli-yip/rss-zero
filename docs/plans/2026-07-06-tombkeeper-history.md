@@ -1,6 +1,6 @@
 # PLAN: tombkeeper 历史回填
 
-日期：2026-07-06 · SPEC: [specs/2026-07-06-01-tombkeeper-history.md](../specs/2026-07-06-01-tombkeeper-history.md)
+日期：2026-07-06 · SPEC: [issues/2026-07-06-tombkeeper-history.md](../issues/2026-07-06-tombkeeper-history.md)
 
 ## 步骤
 

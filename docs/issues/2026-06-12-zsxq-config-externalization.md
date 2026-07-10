@@ -3,7 +3,7 @@
 > 状态：**已定稿 / 待实现**
 > 范围：`pkg/routers/zsxq/parse/**`、`pkg/routers/zsxq/request/**`、`pkg/routers/zsxq/refmt/**`、`config/**`
 > 目标：把散落在解析/请求/重排链路里的硬编码"规则与魔法值"按性质分类处理——运营规则外置到配置，协议常量/一次性边界提为带注释的具名常量——使"改一条运营规则"不再等于"改代码 + 发布"。
-> 前置：源自 [2026-06-12-01-zsxq-maintainability-refactor.md](2026-06-12-01-zsxq-maintainability-refactor.md) 附录"配置即代码（后续项）"。四处待决点已与作者确认，方案已定稿。
+> 前置：源自 [2026-06-12-zsxq-maintainability-refactor.md](2026-06-12-zsxq-maintainability-refactor.md) 附录"配置即代码（后续项）"。四处待决点已与作者确认，方案已定稿。
 >
 > 讨论结论：① 作者屏蔽用**全局**列表（非按 group）；② topicIDSkip **很少新增** → 仅提包级 var，**不进配置**；③ refmt **仍在使用**（不常用）→ 项 4 正经做具名常量，不降级。
 

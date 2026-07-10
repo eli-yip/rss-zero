@@ -1,8 +1,8 @@
 # LESSON: tombkeeper 微博 RSS 订阅源
 
 - 日期：2026-06-18
-- SPEC：[`../specs/2026-06-18-01-tombkeeper-rss.md`](../specs/2026-06-18-01-tombkeeper-rss.md)
-- PLAN：[`../plans/2026-06-18-01-tombkeeper-rss.md`](../plans/2026-06-18-01-tombkeeper-rss.md)
+- SPEC：[`../issues/2026-06-18-tombkeeper-rss.md`](../issues/2026-06-18-tombkeeper-rss.md)
+- PLAN：[`../plans/2026-06-18-tombkeeper-rss.md`](../plans/2026-06-18-tombkeeper-rss.md)
 - 解析 SSOT：[`../../pkg/routers/tombkeeper/example/README.md`](../../pkg/routers/tombkeeper/example/README.md)
 
 实现一个消费 `tombkeeper.io` 镜像站的微博订阅源。记录调研与实现中**非显而易见**的点。

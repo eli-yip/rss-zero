@@ -1,6 +1,6 @@
 # PLAN：zsxq 配置即代码收敛（四项合一）
 
-> 对应 SPEC：[2026-06-12-02-zsxq-config-externalization.md](../specs/2026-06-12-02-zsxq-config-externalization.md)
+> 对应 SPEC：[2026-06-12-02-zsxq-config-externalization.md](../issues/2026-06-12-zsxq-config-externalization.md)
 > 分支：`feat-zsxq-config`
 > 风险：项 1 中（配置 + 现网同步，漏配会让 `庄太云` 屏蔽回归）；项 2/3/4 低（纯 in-code 重命名）
 

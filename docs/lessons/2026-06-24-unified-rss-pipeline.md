@@ -1,8 +1,8 @@
 # LESSON: 统一 RSS 出口管线
 
 - 日期：2026-06-24
-- SPEC：[`../specs/2026-06-24-01-unified-rss-pipeline.md`](../specs/2026-06-24-01-unified-rss-pipeline.md)
-- PLAN：[`../plans/2026-06-24-01-unified-rss-pipeline.md`](../plans/2026-06-24-01-unified-rss-pipeline.md)
+- SPEC：[`../issues/2026-06-24-unified-rss-pipeline.md`](../issues/2026-06-24-unified-rss-pipeline.md)
+- PLAN：[`../plans/2026-06-24-unified-rss-pipeline.md`](../plans/2026-06-24-unified-rss-pipeline.md)
 
 把 7 个 RSS 源收口成一条出口管线（规范 `Item` + 唯一 `RenderAtom` + items 缓存）。记录实现中
 **非显而易见**的点。

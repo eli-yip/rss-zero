@@ -1,29 +1,69 @@
 # AGENTS.md
 
-- Before writing a commit message, read the recent commit history. Use the Conventional Commit style and write commit messages in English.
-- Unless explicitly requested, do not run the full existing project test suite. Prefer targeted tests for the files or packages changed in the current step.
-- Run lint with `just lint`; do not write your own lint command. To auto-fix lint issues, run `just fix-lint`.
+Working agreement for humans and agents on RSS-ZERO (the Go backend). Read
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the code map and
+[docs/CONVENTIONS.md](docs/CONVENTIONS.md) for how we track work.
+
+## What this is
+
+An all-in-one RSS aggregator that serves private/unfriendly sites (Zhihu, Xiaobot,
+ZSXQ, GitHub, tombkeeper, endoflife, macked, …) as Atom, in pure Go — no headless
+browser. Content is crawled, parsed, stored (Postgres), and rendered through one
+unified `/rss/<source>` pipeline. Deploy/runbook: [docs/OPS.md](docs/OPS.md).
 
 ## Related repositories
 
 - `../webapp` — this project's frontend; the two are a paired backend/frontend.
-- `../../zhihu-encrypt` — the Zhihu encryption service.
+- `../../zhihu-encrypt` — the Zhihu encryption service (`rss-zhihu-encrypt` in compose).
 
-## Project documentation workflow
+## Rules
 
-Documentation lives under `docs/`. Use the following layout and naming conventions. `NO` is a zero-padded sequence number (`01`, `02`, …) that disambiguates documents created on the same date; `<topic>` is a short kebab-case slug.
+1. **Language.** Docs and comments in **Chinese**; commit messages in **English**
+   (Conventional Commits). Before writing a commit message, read the recent commit
+   history and match its style.
 
-- **SPECs** go in `docs/specs/`, named `YYYY-MM-DD-NO-<topic>.md`. A SPEC defines what to build and why before implementation.
-- **PLANs** go in `docs/plans/`, named `YYYY-MM-DD-NO-<topic>.md`. A PLAN breaks a SPEC into concrete implementation steps.
-- **LESSONs** go in `docs/lessons/`, named `YYYY-MM-DD-NO-<topic>.md`. While executing a PLAN, append experience and lessons learned as you go; once the PLAN is complete, reorganize the file into a coherent summary.
-- **`docs/PROGRESS.md`** tracks current progress. Update it in the _same commit_ as any SPEC/PLAN/LESSON change — never later.
-- **`docs/TODO.md`** collects follow-up work that falls _outside_ the current PLAN — anything, large or small, that the author wants to revisit later (deferred fixes, tech debt, ideas surfaced mid-task). When you notice such an item but it is not part of the PLAN being executed, record it here with enough context to act on later rather than expanding the current change.
+2. **Docs.** Keep a light paper trail — [docs/CONVENTIONS.md](docs/CONVENTIONS.md) is
+   the full convention (flat dirs, frontmatter status, `YYYY-MM-DD-slug` names, the
+   issue/plan/lesson schema):
+   - **Reference docs** (evergreen, maintained in place):
+     [ARCHITECTURE](docs/ARCHITECTURE.md) · [OPS](docs/OPS.md) ·
+     [PROGRESS](docs/PROGRESS.md) · [TODO](docs/TODO.md).
+   - **Workflow docs**: `docs/issues/` (one problem/task/bug) · `docs/plans/` (one
+     approach; **where decisions are recorded**) · `docs/lessons/` (execution retro).
+   - Find work by status: `just issues open` / `just plans in-progress` /
+     `just lessons draft` (also `closed`, `wontfix`, `done`).
 
-## Development workflow
+3. **The flow.** issue (what & why) → **plan before any code** → implement, recording a
+   lesson → follow-up issues as they surface. Every issue gets a plan first; no issue
+   goes straight to implementation. Commit each issue/plan as its own `docs(...)` commit
+   before writing code. Update [docs/PROGRESS.md](docs/PROGRESS.md) in the **same commit**
+   as the doc change that finishes a branch — never later. Anything outside the current
+   plan (deferred fixes, tech debt, ideas) goes in [docs/TODO.md](docs/TODO.md), not into
+   the current change.
 
-Follow this process for every change:
+4. **Two independent reviews per plan — reviewer ≠ author.** (1) _Plan review_ before
+   building: a fresh read against the issue. (2) _Implementation review_ before merging:
+   run `/code-review` (Standards + Spec) on the diff; findings are fixed or spun out as
+   follow-up issues, never a standalone file.
 
-1. **Discuss the SPEC first, then write a PLAN, then implement and record LESSONs.** Agree on the SPEC (what to build and why) before planning; break it into a PLAN before writing code; capture experience in the LESSON while implementing. Track progress in `docs/PROGRESS.md` throughout. See _Project documentation workflow_ above for file layout and naming.
-2. **Commit docs separately.** Commit each SPEC/PLAN as its own `docs(...)` commit before writing code, and update `docs/PROGRESS.md` in that same commit.
-3. **Work on a dedicated branch with small commits.** Create a new branch off `master` named `feat-xxxx` (a short kebab-case description). Commit in small, focused steps rather than one large commit.
-4. **Request review before merging.** When the work is complete, ask the author to review it. After the review is approved, squash merge the branch into `master` and delete the branch.
+5. **Tests are not optional.** Every plan adds tests; every fixed bug gets a regression
+   test that fails before the fix. RSS sources keep golden snapshots (`testdata/*.atom`).
+   Unless explicitly asked, do **not** run the full suite — prefer the touched packages'
+   tests (`go test ./internal/rss/...`).
+
+6. **Lint.** Run `just lint`; auto-fix with `just fix-lint`. Do **not** write your own
+   lint command — the recipe chains autocorrect / dprint / go mod tidy / golangci-lint /
+   go fix in the right order.
+
+7. **Git flow.** Branch off `master` as `feat-…` / `fix-…` / `chore-…`, small focused
+   commits. When done: update PROGRESS, get the review, then **squash-merge** into
+   `master` and **delete** the branch.
+
+## Common commands
+
+- `just server` / `just cli` — run the server / CLI
+- `just lint` / `just fix-lint` — lint (report) / auto-fix
+- `just test` — `go test` in the current dir; scope by package path for a targeted run
+- `just build` / `just build-docker` — build binary / Docker image
+- `just issues [status]` / `just plans [status]` / `just lessons [status]` — list docs by status
+- Release: `/rss-zero-release` skill (CalVer tag → build → push `eliyip/rss-zero`); deploy per [docs/OPS.md](docs/OPS.md)

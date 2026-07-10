@@ -1,6 +1,6 @@
 # PLAN: /archive 多格式输出
 
-- 对应 SPEC：[specs/2026-06-17-01-archive-format-negotiation.md](../specs/2026-06-17-01-archive-format-negotiation.md)
+- 对应 SPEC：[issues/2026-06-17-archive-format-negotiation.md](../issues/2026-06-17-archive-format-negotiation.md)
 - 分支：`feat-archive-format`
 
 ## 设计要点

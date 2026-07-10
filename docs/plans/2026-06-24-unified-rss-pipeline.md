@@ -1,7 +1,7 @@
 # PLAN: 统一 RSS 出口管线
 
 - 日期：2026-06-24
-- SPEC：[`docs/specs/2026-06-24-01-unified-rss-pipeline.md`](../specs/2026-06-24-01-unified-rss-pipeline.md)
+- SPEC：[`docs/issues/2026-06-24-unified-rss-pipeline.md`](../issues/2026-06-24-unified-rss-pipeline.md)
 - 分支：`feat-unified-rss-pipeline`
 
 把 SPEC 拆成可独立提交、可验证的步骤。核心策略：**先建新基础设施（类型/渲染器/缓存/编排器），
@@ -210,7 +210,7 @@ func Serve(c echo.Context, o ServeOptions) error
 - 本地起服务 + 真实库/redis：对 7 源各请求**无参数**与 `?limit=N`，确认无参数与改造前一致
   （tombkeeper 仅 `<content>` 允许差异、人工核），`limit` 切片正确、同一份缓存零碎片
   （不同 limit 不增 key）；random 两端点正常；macked 冷启动预热有内容。
-- 整理 `docs/lessons/2026-06-24-01-unified-rss-pipeline.md`（差分测试经验、A6 偏离实测、zsxq
+- 整理 `docs/lessons/2026-06-24-unified-rss-pipeline.md`（差分测试经验、A6 偏离实测、zsxq
   过滤修正、v2 key 迁移、复合 id）。
 - **PROGRESS 终版**：合并前一次性更新 `docs/PROGRESS.md` 状态。
 

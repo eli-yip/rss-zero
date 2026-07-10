@@ -1,7 +1,7 @@
 # PLAN: tombkeeper 微博 RSS 订阅源
 
 - 日期：2026-06-18
-- SPEC：[`docs/specs/2026-06-18-01-tombkeeper-rss.md`](../specs/2026-06-18-01-tombkeeper-rss.md)
+- SPEC：[`docs/issues/2026-06-18-tombkeeper-rss.md`](../issues/2026-06-18-tombkeeper-rss.md)
 - 解析 SSOT：[`pkg/routers/tombkeeper/example/README.md`](../../pkg/routers/tombkeeper/example/README.md)
 - 分支：`feat-tombkeeper-rss`
 

@@ -1,6 +1,6 @@
 # LESSON：统一 HTTP 响应格式（server + webapp + Apifox）
 
-> 对应 SPEC/PLAN：[2026-06-13-01-unified-response-format](../specs/2026-06-13-01-unified-response-format.md)
+> 对应 SPEC/PLAN：[2026-06-13-01-unified-response-format](../issues/2026-06-13-unified-response-format.md)
 > 结果：server `feat-unified-response`（6 commits）+ webapp 同名分支（1 commit）+ Apifox 项目 3807162 全量信封化。`go build`/`go vet`/`tsc` 均绿。待 review/合并。
 
 ## 成果

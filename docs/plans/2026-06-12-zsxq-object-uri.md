@@ -1,6 +1,6 @@
 # PLAN：项三 — object → URI 构造收敛
 
-> 对应 SPEC：[2026-06-12-01-zsxq-maintainability-refactor.md](../specs/2026-06-12-01-zsxq-maintainability-refactor.md) 重构项三
+> 对应 SPEC：[2026-06-12-01-zsxq-maintainability-refactor.md](../issues/2026-06-12-zsxq-maintainability-refactor.md) 重构项三
 > 分支：`feat-zsxq-object-uri`
 > 风险：低（线上数据已验证零回归；image/voice 字节不变，file 链接两形态实测均 200）
 

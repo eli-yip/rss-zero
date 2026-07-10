@@ -1,7 +1,7 @@
 # tombkeeper 字段说明与解析规则（SSOT）
 
 本目录是 tombkeeper 微博解析的**单一事实源（SSOT）**：微博字段语义、解析/渲染规则、以及
-典型案例的原始 JSON 都以本文件为准。SPEC（[`docs/specs/2026-06-18-01-tombkeeper-rss.md`](../../../../docs/specs/2026-06-18-01-tombkeeper-rss.md)）
+典型案例的原始 JSON 都以本文件为准。SPEC（[`docs/issues/2026-06-18-tombkeeper-rss.md`](../../../../docs/issues/2026-06-18-tombkeeper-rss.md)）
 只描述目标/决策/数据库/接口，**解析细节不在 SPEC 重复**，以免漂移。
 
 ## 1. 数据获取与提取

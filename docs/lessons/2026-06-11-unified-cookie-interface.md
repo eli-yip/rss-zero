@@ -1,8 +1,8 @@
 # LESSON: Unified Cookie Update Interface
 
 - Date: 2026-06-11
-- SPEC: [specs/2026-06-11-02-unified-cookie-interface.md](../specs/2026-06-11-02-unified-cookie-interface.md)
-- PLAN: [plans/2026-06-11-02-unified-cookie-interface.md](../plans/2026-06-11-02-unified-cookie-interface.md)
+- SPEC: [issues/2026-06-11-unified-cookie-interface.md](../issues/2026-06-11-unified-cookie-interface.md)
+- PLAN: [plans/2026-06-11-unified-cookie-interface.md](../plans/2026-06-11-unified-cookie-interface.md)
 
 > Append notes while executing each step; reorganize into a coherent summary once the PLAN
 > completes (per AGENTS.md).
