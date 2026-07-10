@@ -66,6 +66,41 @@ updated: "2026-07-10"
 - [ ] `reorder.go`：确认 `ReorderInlineQuotes`（历史一次性迁移）不受影响 —— 时间行在
       `> 转发 @` 块内末尾，不匹配其 `转发`/`微博正文` 块头正则，无需改；仅核对，不动代码。
 
+## 补充（2026-07-10）：历史回填 migration
+
+渲染改动只对**新抓**的帖生效；库里已存的转发帖 `text_markdown` 缺时间行。仿
+`20260709000000`（inline-quote 重排）做一个**纯离线、无网络**的注册型 migration 回填。
+
+**关键事实（实测夹具）**：转发帖的 `raw`（bytea，逐字节存的原始对象）里**嵌有完整原文**
+`retweet_weibo`，含 `created_at`（`$D…Z`）。三个转发夹具（with_original / view_pic /
+original_absent）**均存在** `retweet_weibo.created_at` → 原博时间可**离线**从本帖 `raw` 取得，
+无需查原文行、无需联网。且它与渲染路径用的 `orig.CreatedAt`（同页独立对象）是同一条微博、
+时间戳一致，故回填结果与新渲染**逐字节相同**。
+
+**实现**：
+
+1. `pkg/routers/tombkeeper/reorder.go`（同族「离线 stored-body 字符串手术」，复用 `reRetweetHead`）加：
+   - `retweetOriginalCreatedAt(raw []byte) time.Time`：`json.Unmarshal` 取 `retweet_weibo.created_at`
+     → `parseFlightTime`；缺失/解析失败返回零值。
+   - `AppendRetweetTime(body string, raw []byte) string`：`reRetweetHead` 无匹配 / 原博时间零值 →
+     原样返回；否则按 `reorder.go` 的 `Split("\n\n")` 取**转发块** `blocks[0]`（其内无 `\n\n`），
+     在其末尾追加 `"\n> \n> " + retweetTimeLine(t)`（与渲染实测字节一致：空引用行为 `>`），
+     再 `Join` 回去。已含该时间行（`HasSuffix(retweet, "> "+line)`）则原样返回 → **幂等**。
+     取转发块而非直接 append body 尾：不依赖「转发块在最后」，即使某帖未经重排也只动转发块。
+2. `internal/migrate/20260710000000.go`：注册 `Migration{Version:20260710000000, Name:
+   "tombkeeper-retweet-original-time", Auto:true}`，`text_markdown LIKE '%> 转发 @%'` 收窄扫描，
+   逐条 `AppendRetweetTime(p.TextMarkdown, p.Raw)`，变了才 `Update`，记 `scanned/updated`。
+   版本号 > `20260709000000`，注册表按版本升序跑，重排在前、本回填在后。
+
+**测试**：`AppendRetweetTime` 单测 —— 取新渲染 body 去掉时间行后缀当「旧 body」，断言
+`AppendRetweetTime(旧, repost.Raw) == 新渲染 body`（逐字节）、再跑一次幂等、无转发块原样返回、
+`raw` 无 `retweet_weibo` 原样返回。（migration 壳是薄循环、仿已验证的 `20260709000000`，不另测。）
+
+**待更新文档（补充）**：
+
+- [ ] `docs/OPS.md`：迁移清单补 `20260710000000`（若有该清单）。
+- [ ] `docs/PROGRESS.md`：发版结论里带上「启动自动迁移 scanned/updated」。
+
 ## 后续项
 
 - `微博正文 N` 内联引用是否也加原博时间：本次不做。该路径走 `materializePost`，时间**能**拿到

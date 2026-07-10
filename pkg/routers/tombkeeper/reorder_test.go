@@ -53,3 +53,55 @@ func TestReorderInlineQuotesNoOps(t *testing.T) {
 		t.Errorf("only-retweet should be unchanged:\n%s", got)
 	}
 }
+
+func TestAppendRetweetTimeMatchesRender(t *testing.T) {
+	repost, original := loadRetweetPair(t, "retweet_with_original.json")
+	r := newTestRenderer(&fakeRequester{picAvailable: true}, newFakeFile(), newFakeDB())
+	post, err := r.Render(repost, map[string]RawPost{original.ID: original})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := post.TextMarkdown
+
+	// Reconstruct the pre-feature stored body by dropping the appended time line, then
+	// prove the offline backfill reproduces the renderer's output byte-for-byte.
+	suffix := "\n> \n> " + retweetTimeLine(original.CreatedAt)
+	if !strings.HasSuffix(rendered, suffix) {
+		t.Fatalf("render output lacks expected time suffix:\n%q", rendered)
+	}
+	old := strings.TrimSuffix(rendered, suffix)
+
+	if got := AppendRetweetTime(old, repost.Raw); got != rendered {
+		t.Errorf("backfill != render:\n--- got ---\n%q\n--- want ---\n%q", got, rendered)
+	}
+	// Idempotent on the already-backfilled body.
+	if again := AppendRetweetTime(rendered, repost.Raw); again != rendered {
+		t.Errorf("not idempotent:\n%q", again)
+	}
+	// No retweet quote, or raw without retweet_weibo time: unchanged.
+	if got := AppendRetweetTime("plain body", repost.Raw); got != "plain body" {
+		t.Errorf("no retweet head should be unchanged: %q", got)
+	}
+	if got := AppendRetweetTime(old, []byte(`{"id":"1"}`)); got != old {
+		t.Errorf("raw without retweet_weibo should be unchanged: %q", got)
+	}
+}
+
+func TestAppendRetweetTimeTargetsRetweetBlockNotTail(t *testing.T) {
+	// A not-yet-reordered body: a 微博正文 quote sits AFTER the retweet. The time line
+	// must land inside the retweet block (before the inline quote), never at the tail.
+	raw := []byte(`{"retweet_weibo":{"created_at":"$D2026-06-08T00:55:15.000Z"}}`)
+	line := retweetTimeLine(retweetOriginalCreatedAt(raw))
+
+	body := build("reposter text", md.Quote("转发 @orig\n\noriginal body"), inlineQuote(1, "linked"))
+	got := AppendRetweetTime(body, raw)
+
+	timeIdx := strings.Index(got, "> "+line)
+	inlineIdx := strings.Index(got, "linked") // the inline quote's body (ASCII, autocorrect-safe)
+	if timeIdx < 0 {
+		t.Fatalf("time line missing:\n%s", got)
+	}
+	if timeIdx > inlineIdx {
+		t.Errorf("time line must sit in the retweet block, before the inline quote:\n%s", got)
+	}
+}

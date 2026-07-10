@@ -1,8 +1,10 @@
 package tombkeeper
 
 import (
+	"encoding/json"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var (
@@ -42,4 +44,50 @@ func ReorderInlineQuotes(body string) string {
 		return body
 	}
 	return head + strings.Join(append(append(inline, retweet), others...), "\n\n")
+}
+
+// AppendRetweetTime inserts the retweeted original's publish time (Beijing) as the
+// last line of the 转发 @ retweet quote in a stored body, matching renderContent's
+// output for freshly-crawled posts. The time is read from the post's OWN raw JSON
+// (retweet_weibo.created_at is embedded verbatim), so this is pure string surgery with
+// no network — historical posts can be backfilled offline. It returns the body
+// unchanged when there is no retweet quote, when raw carries no usable original time,
+// or when the time line is already present (idempotent).
+func AppendRetweetTime(body string, raw []byte) string {
+	loc := reRetweetHead.FindStringIndex(body)
+	if loc == nil {
+		return body
+	}
+	t := retweetOriginalCreatedAt(raw)
+	if t.IsZero() {
+		return body
+	}
+	line := retweetTimeLine(t)
+
+	// The retweet quote has no internal "\n\n" (md.Quote turns blank lines into "> "),
+	// so from its header the first "\n\n"-delimited block is the whole quote. Extend
+	// that block — not the body tail — so we only ever touch the retweet quote even if
+	// other blocks follow it (a body not yet reordered by 20260709000000).
+	head, tail := body[:loc[0]], body[loc[0]:]
+	blocks := strings.Split(tail, "\n\n")
+	if strings.HasSuffix(blocks[0], "> "+line) {
+		return body
+	}
+	blocks[0] += "\n> \n> " + line
+	return head + strings.Join(blocks, "\n\n")
+}
+
+// retweetOriginalCreatedAt reads retweet_weibo.created_at (the embedded original) from
+// a post's raw object. Returns the zero time when raw is not the expected object, the
+// field is absent, or the $D date fails to parse.
+func retweetOriginalCreatedAt(raw []byte) time.Time {
+	var o struct {
+		RetweetWeibo struct {
+			CreatedAt string `json:"created_at"`
+		} `json:"retweet_weibo"`
+	}
+	if err := json.Unmarshal(raw, &o); err != nil {
+		return time.Time{}
+	}
+	return parseFlightTime(o.RetweetWeibo.CreatedAt)
 }
