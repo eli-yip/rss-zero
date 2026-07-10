@@ -57,12 +57,15 @@
 - **被内联帖的 `url_info` 缺失**：嵌入的转发原文对象有时不带 `url_info`（其 `t.cn` 短链不展开，正文里保留裸 `t.cn`，由 GFM 自动链接）。如需完整展开，可对原文补一次详情抓取，但会增加请求量，暂不做。
 - **微博换行被连排（East Asian Line Breaks 的既有行为，与 A6 无关）**：tombkeeper 正文把多行微博用单 `\n` 拼接（[`render_markdown.go:46`](../../pkg/routers/tombkeeper/render_markdown.go) `strings.Join(lines, "\n")`），而 feed 的 goldmark（A6 后 CSS3Draft、A6 前 `extension.CJK`/Simple **同样**）会去掉 CJK 软换行，导致多行微博在 RSS/归档 HTML 里**连排成一行**。这是 East Asian Line Breaks 扩展的设计行为（避免 CJK 软折行在 HTML 里渲染成字间空格），A6 前后**一致**、非本次引入。若要让微博换行**可见保留**，应在**解析层**把微博的 `\n` 转成硬换行（行尾两空格 `\n`）或段落 `\n\n`（改 `escapeMarkdown`），而非改 goldmark 配置。取舍：硬换行会让每条多行微博每行都带 `<br>`，需先确认这是期望呈现。来源：2026-06-24 unified-rss-pipeline A6 讨论。
 
-## tkblog 博客（xfocus / baidu）后续
+## tkblog 博客（xfocus / baidu）
 
-来源：2026-07-10 tkblog 实现（[plan](plans/2026-07-10-tkblog-xfocus-baidu.md)）有意延后项。
+来源：2026-07-10 tkblog 实现（[plan](plans/2026-07-10-tkblog-xfocus-baidu.md)）。
 
-- **RSS/Atom 出口**：本次只做解析/落库/归档。内容已定型、订阅价值低故不做。如需，按微博 RSS plan
-  §8-9 补 `feed.go` + controller + `/rss/...` 路由 + redis 缓存键 + golden `.atom`。
+**永久非目标（作者 2026-07-10 定，不是延后 —— 别再当 TODO 捡起来）**：RSS/Atom 出口、cron 增量、
+断点续传。理由：博文内容已定型、篇数少，按需全量幂等伪 job 足矣。
+
+**真·延后（有用非必需，将来可做）**：
+
 - **归档额外认 wayback URL**：当前只认粉丝站链接 `tombkeeper.io/{category}/{id}`。如需用 wayback
   原文链接也能归档，按 `source_url` 反查库加一个匹配分支。
 - **flight 解析三家共享**：`pkg/routers/tkblog/extract.go` 复制了微博的 flight 机件（已带 `ponytail:`
