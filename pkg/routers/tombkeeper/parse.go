@@ -81,6 +81,11 @@ func (r *Renderer) renderContent(raw RawPost, pageMap map[string]RawPost, depth 
 	sections = append(sections, tailQuotes...)
 	if orig != nil {
 		quote := r.renderContent(*orig, nil, 1)
+		// 引用块末尾注明原博发布时间（北京时间），供读者判断转发的是哪天的内容。
+		// 零时间（created_at 解析失败）时跳过，避免渲染 0001 年。
+		if !orig.CreatedAt.IsZero() {
+			quote = md.Join(quote, retweetTimeLine(orig.CreatedAt))
+		}
 		sections = append(sections, quoteBlock("转发 @"+orig.ScreenName, quote))
 	}
 
@@ -239,6 +244,15 @@ func (r *Renderer) materializePost(mid string) (body, screenName string, ok bool
 		}
 	}
 	return "", "", false
+}
+
+// ponytail: 固定 +08:00，不用 config.C.BJT —— 后者在本包单测里为 nil（.In(nil) 会 panic），
+// 且微博时间恒在 1991 年后、中国无夏令时，FixedZone 与 Asia/Shanghai 对任何微博时间等价、零依赖。
+var beijing = time.FixedZone("Beijing", 8*3600)
+
+// retweetTimeLine 把 UTC 的原博发布时间格式化为北京时间的「YYYY 年 MM 月 DD 日 HH:MM」。
+func retweetTimeLine(t time.Time) string {
+	return t.In(beijing).Format("2006 年 01 月 02 日 15:04")
 }
 
 func quoteBlock(header, body string) string {

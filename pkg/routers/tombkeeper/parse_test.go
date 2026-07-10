@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/eli-yip/rss-zero/internal/md"
 )
@@ -139,6 +140,46 @@ func TestRenderRetweetInlinesOriginal(t *testing.T) {
 	snippet := string([]rune(original.Text)[:6])
 	if !strings.Contains(post.TextMarkdown, snippet) {
 		t.Errorf("original text %q not inlined:\n%s", snippet, post.TextMarkdown)
+	}
+}
+
+func TestRenderRetweetAppendsOriginalTime(t *testing.T) {
+	repost, original := loadRetweetPair(t, "retweet_with_original.json")
+	r := newTestRenderer(&fakeRequester{picAvailable: true}, newFakeFile(), newFakeDB())
+
+	post, err := r.Render(repost, map[string]RawPost{original.ID: original})
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := post.TextMarkdown
+
+	// original.created_at "$D2026-06-08T00:55:15.000Z" -> Beijing 08:55.
+	wantLine := "> 2026 年 06 月 08 日 08:55"
+	if !strings.Contains(out, wantLine) {
+		t.Errorf("missing retweet time line %q:\n%s", wantLine, out)
+	}
+	// It sits at the end of the quote, after the original's content.
+	snippet := string([]rune(original.Text)[:6])
+	if strings.Index(out, wantLine) < strings.Index(out, snippet) {
+		t.Errorf("time line should follow the original content:\n%s", out)
+	}
+}
+
+func TestRenderRetweetOmitsTimeWhenZero(t *testing.T) {
+	repost, original := loadRetweetPair(t, "retweet_with_original.json")
+	original.CreatedAt = time.Time{} // created_at unparseable -> zero
+	r := newTestRenderer(&fakeRequester{picAvailable: true}, newFakeFile(), newFakeDB())
+
+	post, err := r.Render(repost, map[string]RawPost{original.ID: original})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// No year-0001 line, and the retweet still renders (no panic on nil location).
+	if strings.Contains(post.TextMarkdown, "0001 年") {
+		t.Errorf("zero created_at must not render a time line:\n%s", post.TextMarkdown)
+	}
+	if !strings.Contains(post.TextMarkdown, "> 转发 @"+original.ScreenName) {
+		t.Errorf("retweet quote should still render:\n%s", post.TextMarkdown)
 	}
 }
 
