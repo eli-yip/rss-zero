@@ -33,18 +33,21 @@ unified `/rss/<source>` pipeline. Deploy/runbook: [docs/OPS.md](docs/OPS.md).
    - Find work by status: `just issues open` / `just plans in-progress` /
      `just lessons draft` (also `closed`, `wontfix`, `done`).
 
-3. **The flow.** issue (what & why) → **plan before any code** → implement, recording a
-   lesson → follow-up issues as they surface. Every issue gets a plan first; no issue
-   goes straight to implementation. Commit each issue/plan as its own `docs(...)` commit
-   before writing code. Update [docs/PROGRESS.md](docs/PROGRESS.md) in the **same commit**
+3. **The flow.** issue (what & why) → **plan before any code** → plan review →
+   **owner sign-off** → implement, recording a lesson → follow-up issues as they surface.
+   Every issue gets a plan first; no issue goes straight to implementation. Commit each
+   issue/plan as its own `docs(...)` commit before writing code. Update [docs/PROGRESS.md](docs/PROGRESS.md) in the **same commit**
    as the doc change that finishes a branch — never later. Anything outside the current
    plan (deferred fixes, tech debt, ideas) goes in [docs/TODO.md](docs/TODO.md), not into
    the current change.
 
 4. **Two independent reviews per plan — reviewer ≠ author.** (1) _Plan review_ before
-   building: a fresh read against the issue. (2) _Implementation review_ before merging:
-   run `/code-review` (Standards + Spec) on the diff; findings are fixed or spun out as
-   follow-up issues, never a standalone file.
+   building: a fresh read against the issue. **After the plan review, stop and wait for
+   the owner's explicit go-ahead — do not begin implementation until the human owner
+   confirms.** An agent-run plan review does not substitute for this sign-off; it feeds
+   it. (The owner may waive the gate for a specific change by saying so.) (2)
+   _Implementation review_ before merging: run `/code-review` (Standards + Spec) on the
+   diff; findings are fixed or spun out as follow-up issues, never a standalone file.
 
 5. **Tests are not optional.** Every plan adds tests; every fixed bug gets a regression
    test that fails before the fix. RSS sources keep golden snapshots (`testdata/*.atom`).
