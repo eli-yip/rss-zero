@@ -10,7 +10,6 @@ import (
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/notify"
 )
@@ -50,9 +49,9 @@ var ErrHistoryRunning = errors.New("a tombkeeper history crawl is already runnin
 
 // historyStats accumulates a backfill run's totals for the summary log line.
 type historyStats struct {
-	Pages  int // pages fetched (the last page reached, or where it aborted)
-	Saved  int // posts newly written
-	Failed int // timeline posts dropped on exists-check/render/save error
+	Pages         int // 已抓取的页数，失败时表示中断所在页
+	EntriesSaved  int // 本次读库快照观察到的新增时间线博文数
+	EntriesFailed int // 缺失或写入失败的时间线博文数
 }
 
 // StartHistory launches a background backfill of [startDate, endDate] (YYYY-MM-DD,
@@ -81,27 +80,26 @@ func StartHistory(db DB, fileService file.File, notifier notify.Notifier, startD
 		stats, err := runHistory(db, fileService, startDate, endDate, l)
 		if err != nil {
 			l.Error("tombkeeper history crawl failed",
-				zap.Int("pages", stats.Pages), zap.Int("saved", stats.Saved), zap.Int("failed", stats.Failed), zap.Error(err))
+				zap.Int("pages", stats.Pages), zap.Int("observed_entries_saved", stats.EntriesSaved),
+				zap.Int("entries_failed", stats.EntriesFailed), zap.Error(err))
 			notify.NoticeWithLogger(notifier, "Tombkeeper history crawl failed",
 				fmt.Sprintf("job %s (%s..%s): %v", jobID, startDate, endDate, err), l)
 			return
 		}
 		l.Info("tombkeeper history crawl done",
-			zap.Int("pages", stats.Pages), zap.Int("saved", stats.Saved), zap.Int("failed", stats.Failed))
+			zap.Int("pages", stats.Pages), zap.Int("observed_entries_saved", stats.EntriesSaved),
+			zap.Int("entries_failed", stats.EntriesFailed))
 	}()
 	return jobID, nil
 }
 
-// runHistory pages the window newest→oldest over its full page count. It
-// deliberately does NOT take crawlMu: the live crawl and a backfill run
-// concurrently (each with its own Requester/Renderer; DB writes are idempotent
-// upserts), so a long backfill never stalls the hourly live crawl.
+// runHistory 从新到旧遍历日期窗口；实时抓取与历史回填依靠原子 upsert 安全并发。
 func runHistory(db DB, fileService file.File, startDate, endDate string, logger *zap.Logger) (historyStats, error) {
 	req := NewRequestService(logger)
 	defer req.Close()
-	renderer := NewRenderer(req, fileService, db, config.C.Settings.ServerURL, logger)
+	importer := NewTimelineImporter(req, fileService, db, logger)
 
-	return crawlHistoryPages(req, db, renderer, startDate, endDate, logger)
+	return crawlHistoryPages(req, importer, startDate, endDate, logger)
 }
 
 // crawlHistoryPages fetches pages 1..total, where total is the page count the site
@@ -109,7 +107,7 @@ func runHistory(db DB, fileService file.File, startDate, endDate string, logger 
 // it changes mid-crawl the window is no longer stable (e.g. new posts shifted the
 // pagination), so the count can't be trusted and the crawl aborts with an error —
 // the caller logs it and Barks.
-func crawlHistoryPages(req Requester, db DB, renderer *Renderer, startDate, endDate string, logger *zap.Logger) (historyStats, error) {
+func crawlHistoryPages(req Requester, importer *TimelineImporter, startDate, endDate string, logger *zap.Logger) (historyStats, error) {
 	var st historyStats
 	total := 0
 	for page := 1; ; page++ {
@@ -131,16 +129,23 @@ func crawlHistoryPages(req Requester, db DB, renderer *Renderer, startDate, endD
 			return st, fmt.Errorf("total pages changed mid-crawl (page 1 reported %d, page %d reports %d) — window not stable, aborting", total, page, reported)
 		}
 
-		seen, saved, failed := ingestPage(html, db, renderer, logger.With(zap.Int("page", page)))
-		st.Saved += saved
-		st.Failed += failed
+		importStats, err := importer.Import(html)
+		if err != nil {
+			return st, fmt.Errorf("import page %d: %w", page, err)
+		}
+		st.EntriesSaved += importStats.EntriesSaved
+		st.EntriesFailed += importStats.EntriesFailed
 		logger.Info("tombkeeper history page progress",
-			zap.Int("page", page), zap.Int("total", total), zap.Int("seen", seen),
-			zap.Int("saved_page", saved), zap.Int("saved_total", st.Saved), zap.Int("failed_total", st.Failed))
+			zap.Int("page", page), zap.Int("total", total),
+			zap.Int("entries_seen", importStats.EntriesSeen),
+			zap.Int("observed_entries_saved_page", importStats.EntriesSaved),
+			zap.Int("observed_entries_saved_total", st.EntriesSaved),
+			zap.Int("entries_failed_total", st.EntriesFailed))
 
 		if page >= total {
 			logger.Info("tombkeeper history done: reached last page",
-				zap.Int("pages", total), zap.Int("saved", st.Saved), zap.Int("failed", st.Failed))
+				zap.Int("pages", total), zap.Int("observed_entries_saved", st.EntriesSaved),
+				zap.Int("entries_failed", st.EntriesFailed))
 			return st, nil
 		}
 	}

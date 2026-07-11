@@ -21,31 +21,22 @@ func init() {
 	})
 }
 
-// migrateTombkeeperZeroByteImages repairs tombkeeper images stored as 0-byte OSS
-// objects. The earlier bug: a third-party image proxy (image.baidu.com/search/down)
-// could answer a candidate probe with "200 OK, Content-Length: 0", which won the
-// download race, was streamed to OSS as an empty file, and was recorded
-// ObjectStatusOK — so the post body embeds a working OSS URL that serves 0 bytes
-// (a broken image). GetPicStream now rejects empty responses, but already-stored
-// rows are status OK and are never re-fetched by the crawler, so this one-off
-// backfill re-downloads them in place (same object key, so the markdown links
-// already embedded in post bodies keep working). It is idempotent: a non-empty
-// object is skipped, so it is safe to re-run. Returns an error if any 0-byte object
-// could not be repaired, so the registry retries it on the next startup rather than
-// recording a partial backfill.
+// migrateTombkeeperZeroByteImages 原地重下已记录为成功的零字节图片资产。
 func migrateTombkeeperZeroByteImages(db *gorm.DB, logger *zap.Logger) error {
+	var objs []tombkeeper.ImageAsset
+	if err := db.Where("type = ? AND status = ?", tombkeeper.ObjectTypeImage, tombkeeper.ObjectStatusOK).
+		Find(&objs).Error; err != nil {
+		return fmt.Errorf("scan tombkeeper_object: %w", err)
+	}
+	if len(objs) == 0 {
+		return nil
+	}
 	f, err := file.NewFileServiceMinio(config.C.Minio, logger)
 	if err != nil {
 		return fmt.Errorf("init minio: %w", err)
 	}
 	req := tombkeeper.NewRequestService(logger)
 	defer req.Close()
-
-	var objs []tombkeeper.Object
-	if err := db.Where("type = ? AND status = ?", tombkeeper.ObjectTypeImage, tombkeeper.ObjectStatusOK).
-		Find(&objs).Error; err != nil {
-		return fmt.Errorf("scan tombkeeper_object: %w", err)
-	}
 
 	var scanned, repaired, failed int
 	for _, o := range objs {
@@ -71,7 +62,7 @@ func migrateTombkeeperZeroByteImages(db *gorm.DB, logger *zap.Logger) error {
 			continue
 		}
 		// Keep the recorded source URL honest: it was the dead empty-proxy URL.
-		if err := db.Model(&tombkeeper.Object{}).Where("id = ?", o.ID).
+		if err := db.Model(&tombkeeper.ImageAsset{}).Where("id = ?", o.ID).
 			Update("url", usedURL).Error; err != nil {
 			logger.Warn("repaired bytes but failed to update url",
 				zap.String("pic_id", o.ID), zap.Error(err))

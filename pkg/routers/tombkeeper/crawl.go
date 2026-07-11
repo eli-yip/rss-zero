@@ -4,20 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
-	"strconv"
 	"sync"
 
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 
-	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 )
 
 const (
-	pagesPerCrawl = 2  // fetch the two most recent list pages each run
+	pagesPerCrawl = 2 // fetch the two most recent list pages each run
 	// FeedSize is the number of latest posts rendered into the feed, shared by the
 	// cron warm path (here) and the controller's cache-miss regeneration.
 	FeedSize = 30
@@ -46,102 +44,41 @@ func CrawlFunc(redisService redis.Redis, db DB, fileService file.File, logger *z
 	}
 }
 
-// Crawl fetches the latest pages, ingests new timeline posts, and refreshes the
-// cached RSS. Only the timeline posts (the page's /weibo/{id} detail links) are
-// stored as feed items; embedded retweet originals are used only for inlining.
+// Crawl 摄取最新列表页，并刷新 RSS 缓存。内嵌博文只作为支持内容入库。
 func Crawl(redisService redis.Redis, db DB, fileService file.File, logger *zap.Logger) error {
 	crawlMu.Lock()
 	defer crawlMu.Unlock()
 
 	req := NewRequestService(logger)
 	defer req.Close()
-	renderer := NewRenderer(req, fileService, db, config.C.Settings.ServerURL, logger)
+	importer := NewTimelineImporter(req, fileService, db, logger)
 
-	var newCount int
+	var observedNewEntryCount int
 	for page := 1; page <= pagesPerCrawl; page++ {
 		html, err := req.GetPage(page)
 		if err != nil {
 			return fmt.Errorf("get page %d: %w", page, err)
 		}
-		_, saved, _ := ingestPage(html, db, renderer, logger.With(zap.Int("page", page)))
-		newCount += saved
+		stats, err := importer.Import(html)
+		if err != nil {
+			return fmt.Errorf("import page %d: %w", page, err)
+		}
+		observedNewEntryCount += stats.EntriesSaved
+		logger.Info("tombkeeper page imported", zap.Int("page", page),
+			zap.Int("entries_seen", stats.EntriesSeen),
+			zap.Int("observed_entries_saved", stats.EntriesSaved),
+			zap.Int("entries_failed", stats.EntriesFailed))
 	}
-	logger.Info("tombkeeper crawl done", zap.Int("new_posts", newCount))
+	logger.Info("tombkeeper crawl done", zap.Int("observed_new_entries", observedNewEntryCount))
 
 	return renderAndCacheRSS(redisService, db, logger)
-}
-
-// ingestPage renders and stores the page's new timeline posts. seen is the number
-// of well-formed timeline posts on the page, saved the number newly written
-// (already-present ids are skipped), failed the number that errored on
-// exists-check/render/save (already logged per post). Embedded retweet originals
-// sit in the flight payload too but are NOT timeline posts, so they are used only
-// for inlining and never counted — which is what lets the history loop stop on
-// seen==0 and keeps an old retweet original from moving any date boundary.
-func ingestPage(html []byte, db DB, renderer *Renderer, logger *zap.Logger) (seen, saved, failed int) {
-	posts, err := ExtractPosts(html)
-	if err != nil {
-		logger.Error("failed to extract posts", zap.Error(err))
-		return 0, 0, 0
-	}
-	pageMap := make(map[string]RawPost, len(posts))
-	for _, p := range posts {
-		pageMap[p.ID] = p
-	}
-
-	// Two independent parsers read the same page: timelineIDs scrapes the SSR
-	// /weibo/{id} detail links, pageMap comes from the flight payload. When they
-	// disagree the markup has drifted, so surface it instead of silently
-	// ingesting nothing. (pageMap legitimately holds extra objects — inlined
-	// retweet originals — so only the timeline-id direction is a problem.)
-	ids := timelineIDs(html)
-	if len(ids) == 0 && len(posts) > 0 {
-		logger.Error("no timeline detail links found but flight has posts; page markup may have changed",
-			zap.Int("flight_posts", len(posts)))
-	}
-	for _, id := range ids {
-		raw, ok := pageMap[id]
-		if !ok {
-			logger.Warn("timeline id missing from flight payload", zap.String("id", id))
-			continue
-		}
-		mid, err := strconv.ParseInt(id, 10, 64)
-		if err != nil {
-			continue
-		}
-		seen++
-		exists, err := db.PostExists(mid)
-		if err != nil {
-			logger.Error("post exists check", zap.String("id", id), zap.Error(err))
-			failed++
-			continue
-		}
-		if exists {
-			continue
-		}
-
-		post, err := renderer.Render(raw, pageMap)
-		if err != nil {
-			logger.Error("render post", zap.String("id", id), zap.Error(err))
-			failed++
-			continue
-		}
-		if err := db.SavePost(post); err != nil {
-			logger.Error("save post", zap.String("id", id), zap.Error(err))
-			failed++
-			continue
-		}
-		saved++
-		logger.Info("saved tombkeeper post", zap.String("id", id))
-	}
-	return seen, saved, failed
 }
 
 // renderAndCacheRSS re-warms the items cache after a crawl (1:1 replacement of the
 // old "render XML and Set" step), so a reader sees freshly crawled posts without
 // waiting for the cache to expire.
 func renderAndCacheRSS(redisService redis.Redis, db DB, logger *zap.Logger) error {
-	if err := rss.WarmCache(redisService, redis.RssTombkeeperPath, redis.RSSDefaultTTL,
+	if err := rss.WarmCache(redisService, redis.RssTombkeeperTimelinePath, redis.RSSDefaultTTL,
 		func() (rss.FeedMeta, []rss.Item, error) { return BuildFeed(db) }); err != nil {
 		return fmt.Errorf("warm tombkeeper rss cache: %w", err)
 	}

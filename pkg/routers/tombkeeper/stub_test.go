@@ -39,7 +39,7 @@ func (f *fakeFile) GetStream(string) (io.ReadCloser, error) { return nil, errors
 func (f *fakeFile) AssetsDomain() string                    { return f.domain }
 func (f *fakeFile) Delete(string) error                     { return nil }
 func (f *fakeFile) Exist(string) (bool, error)              { return false, nil }
-func (f *fakeFile) Size(path string) (int64, error)        { return int64(len(f.saved[path])), nil }
+func (f *fakeFile) Size(path string) (int64, error)         { return int64(len(f.saved[path])), nil }
 
 // ---- fake requester ----
 
@@ -47,7 +47,9 @@ type fakeRequester struct {
 	picAvailable bool                // whether GetPicStream returns 200
 	details      map[string][]byte   // mid -> detail page html
 	reppics      map[string][]string // 查看图片 long_url -> resolved pic ids
+	reppicCalls  map[string]int      // 查看图片 long_url -> request count
 	reppicErr    bool                // GetReppic returns an error (h5 unreachable)
+	detailCalls  int
 	pages        map[int][]byte      // page number -> list page html (GetPageRange)
 	rangeErr     bool                // GetPageRange returns an error
 }
@@ -60,12 +62,16 @@ func (f *fakeRequester) GetPageRange(_, _ string, page int) ([]byte, error) {
 	return f.pages[page], nil // missing page -> nil html = empty page (window exhausted)
 }
 func (f *fakeRequester) GetDetail(id string) ([]byte, error) {
+	f.detailCalls++
 	if h, ok := f.details[id]; ok {
 		return h, nil
 	}
 	return nil, errors.New("detail not found")
 }
 func (f *fakeRequester) GetReppic(longURL string) ([]string, error) {
+	if f.reppicCalls != nil {
+		f.reppicCalls[longURL]++
+	}
 	if f.reppicErr {
 		return nil, errors.New("reppic unreachable")
 	}
@@ -88,16 +94,30 @@ func (f *fakeRequester) GetPicStream(context.Context, string) (*http.Response, e
 // ---- fake db ----
 
 type fakeDB struct {
-	posts   map[int64]*Post
-	objs    map[string]*Object
-	saveErr bool // SavePost returns an error (to exercise the ingest failure path)
+	posts        map[int64]*Post
+	objs         map[string]*ImageAsset
+	saveErr      bool // UpsertPost returns an error (to exercise the import failure path)
+	getPostsErr  bool
+	imageSaveErr bool
 }
 
-func newFakeDB() *fakeDB { return &fakeDB{posts: map[int64]*Post{}, objs: map[string]*Object{}} }
-
-func (d *fakeDB) SavePost(p *Post) error {
+func newFakeDB() *fakeDB {
+	return &fakeDB{posts: map[int64]*Post{}, objs: map[string]*ImageAsset{}}
+}
+func (d *fakeDB) UpsertPost(p *Post) error {
 	if d.saveErr {
 		return errors.New("save failed")
+	}
+	if old, ok := d.posts[p.ID]; ok {
+		p.InTimeline = p.InTimeline || old.InTimeline
+		if p.H5ImageIDsByURL == nil {
+			p.H5ImageIDsByURL = map[string][]string{}
+		}
+		for u, ids := range old.H5ImageIDsByURL {
+			if incoming, exists := p.H5ImageIDsByURL[u]; !exists || len(incoming) == 0 && len(ids) > 0 {
+				p.H5ImageIDsByURL[u] = ids
+			}
+		}
 	}
 	d.posts[p.ID] = p
 	return nil
@@ -108,28 +128,54 @@ func (d *fakeDB) GetPost(id int64) (*Post, error) {
 	}
 	return nil, errors.New("record not found")
 }
-func (d *fakeDB) PostExists(id int64) (bool, error) { _, ok := d.posts[id]; return ok, nil }
-func (d *fakeDB) GetLatestPosts(n int) ([]Post, error) {
+func (d *fakeDB) GetPosts(ids []int64) ([]Post, error) {
+	if d.getPostsErr {
+		return nil, errors.New("load posts failed")
+	}
+	var out []Post
+	for _, id := range ids {
+		if p, ok := d.posts[id]; ok {
+			out = append(out, *p)
+		}
+	}
+	return out, nil
+}
+func (d *fakeDB) LatestTimelineEntries(n int) ([]Post, error) {
 	out := make([]Post, 0, len(d.posts))
 	for _, p := range d.posts {
-		out = append(out, *p)
+		if p.InTimeline {
+			out = append(out, *p)
+		}
 	}
-	// Mirror production: ORDER BY created_at DESC, then LIMIT n (the map above has
-	// no inherent order, so without this the "latest N" semantics aren't tested).
-	sort.Slice(out, func(i, j int) bool { return out[i].PostTime.After(out[j].PostTime) })
+	sort.Slice(out, func(i, j int) bool { return out[i].PublishedAt.After(out[j].PublishedAt) })
 	if n < len(out) {
 		out = out[:n]
 	}
 	return out, nil
 }
-func (d *fakeDB) SaveObject(o *Object) error { d.objs[o.ID] = o; return nil }
-func (d *fakeDB) GetObject(id string) (*Object, error) {
+func (d *fakeDB) SaveImageAsset(asset *ImageAsset) error {
+	if d.imageSaveErr {
+		return errors.New("save image failed")
+	}
+	d.objs[asset.ID] = asset
+	return nil
+}
+func (d *fakeDB) GetImageAsset(id string) (*ImageAsset, error) {
 	if o, ok := d.objs[id]; ok {
 		return o, nil
 	}
 	return nil, errors.New("record not found")
 }
-func (d *fakeDB) ObjectExists(id string) (bool, error) { _, ok := d.objs[id]; return ok, nil }
+func (d *fakeDB) ImageAssetExists(id string) (bool, error) { _, ok := d.objs[id]; return ok, nil }
+func (d *fakeDB) GetImageAssets(ids []string) ([]ImageAsset, error) {
+	var out []ImageAsset
+	for _, id := range ids {
+		if asset, ok := d.objs[id]; ok {
+			out = append(out, *asset)
+		}
+	}
+	return out, nil
+}
 
 // ---- fixture helpers ----
 
@@ -142,9 +188,9 @@ func readFixture(t *testing.T, name string) []byte {
 	return b
 }
 
-func loadRawPost(t *testing.T, name string) RawPost {
+func loadSourcePost(t *testing.T, name string) SourcePost {
 	t.Helper()
-	p, err := parseRawPost(readFixture(t, name), nil)
+	p, err := parseSourcePost(readFixture(t, name), nil)
 	if err != nil {
 		t.Fatalf("parse fixture %s: %v", name, err)
 	}

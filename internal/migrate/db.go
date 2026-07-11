@@ -53,7 +53,7 @@ func MigrateDB(db *gorm.DB) (err error) {
 		&macked.AppInfo{},
 
 		&tombkeeper.Post{},
-		&tombkeeper.Object{},
+		&tombkeeper.ImageAsset{},
 
 		&tkblog.Post{},
 

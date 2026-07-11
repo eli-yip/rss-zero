@@ -5,77 +5,19 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-
-	"github.com/eli-yip/rss-zero/pkg/render"
 )
 
 var tcnRe = regexp.MustCompile(`https?://t\.cn/[A-Za-z0-9]+`)
 
-// processShortLinks expands the t.cn short links in text using url_info. At
-// depth 0, links to tombkeeper's own weibo ("微博正文") become an inline archive
-// link plus a tail quote block inlining the linked post; every other link becomes
-// a plain [title](long_url). At depth >= 1 (already inside an inlined post) all
-// links are rendered plainly — inlining is limited to one layer. viewPicURLs holds
-// the original's rehosted images (for a "查看图片" repost), so the in-text 查看图片
-// link is replaced in place by a labeled link to the same image displayed nearby.
-func (r *Renderer) processShortLinks(text string, urlInfo []URLInfoEntry, depth int, viewPicURLs []string) (string, []string) {
-	if len(urlInfo) == 0 {
-		return text, nil
-	}
-	byShort := make(map[string]URLInfoEntry, len(urlInfo))
-	for _, e := range urlInfo {
-		if e.ShortURL != "" {
-			byShort[e.ShortURL] = e
-		}
-	}
-
-	var tailQuotes []string
-	n := 0
-	viewPicN := 0
-	newText := tcnRe.ReplaceAllStringFunc(text, func(tok string) string {
-		e, ok := byShort[tok]
-		if !ok {
-			return tok
-		}
-		// "查看图片" carries the reposter's own 正文 image (also displayed before the
-		// quote). Replace it in place with a labeled link to that same rehosted image so
-		// the sentence stays coherent, sharing the image's number. If the image could
-		// not be resolved, keep a clickable link to the original photo.weibo.com page
-		// rather than dropping it.
-		if isViewPic(e) {
-			if viewPicN < len(viewPicURLs) {
-				viewPicN++
-				return fmt.Sprintf("[微博图片 %d](%s)", viewPicN, viewPicURLs[viewPicN-1])
-			}
-			return fmt.Sprintf("[查看图片|原始链接](%s)", e.LongURL)
-		}
-		if depth == 0 && isWeiboTextLink(e) {
-			if _, bid := parseWeiboLong(e.LongURL); bid != "" {
-				if targetMid, err := BidToMid(bid); err == nil {
-					if body, sn, ok := r.materializePost(targetMid); ok {
-						n++
-						tailQuotes = append(tailQuotes,
-							quoteBlock(fmt.Sprintf("微博正文%d @%s", n, sn), body))
-						rssURL := render.BuildArchiveLink(r.serverURL, e.LongURL)
-						return fmt.Sprintf("[微博正文%d](%s)", n, rssURL)
-					}
-				}
-			}
-		}
-		return plainLink(e)
-	})
-	return newText, tailQuotes
-}
-
 // isViewPic reports whether a url_info entry is a "查看图片" reference — the reposter's
 // own image attached on a 带图转发 repost, carried on a photo.weibo.com H5 page.
-func isViewPic(e URLInfoEntry) bool {
+func isViewPic(e PostLink) bool {
 	return e.URLType == 39 && strings.Contains(e.URLTitle, "查看图片")
 }
 
 // isWeiboTextLink reports whether a url_info entry is a link to tombkeeper's own
 // weibo (used to decide archive-link + inline-quote rendering).
-func isWeiboTextLink(e URLInfoEntry) bool {
+func isWeiboTextLink(e PostLink) bool {
 	if e.URLType != 0 || e.URLTitle != "微博正文" {
 		return false
 	}
@@ -148,7 +90,7 @@ func WeiboPostURL(uid, bid, mid string) string {
 // FanSiteURL builds the tombkeeper.io mirror ("粉丝站") link for a weibo id.
 func FanSiteURL(mid string) string { return siteBaseURL + "/weibo/" + mid }
 
-func plainLink(e URLInfoEntry) string {
+func plainLink(e PostLink) string {
 	title := e.URLTitle
 	if title == "" {
 		title = "网页链接"

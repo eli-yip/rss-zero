@@ -2,11 +2,55 @@ package tombkeeper
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
+
+// ExtractTimelinePage 汇合 flight 博文对象与 SSR「详情」链接，返回分类后的页面内容。
+func ExtractTimelinePage(html []byte) (TimelinePage, error) {
+	sourcePosts, err := extractSourcePosts(html)
+	if err != nil {
+		return TimelinePage{}, err
+	}
+	ids := timelineIDs(html)
+	if len(ids) == 0 && len(sourcePosts) > 0 {
+		return TimelinePage{}, fmt.Errorf("flight has %d posts but no timeline detail links", len(sourcePosts))
+	}
+
+	posts := make(map[int64]SourcePost, len(sourcePosts))
+	order := make([]int64, 0, len(sourcePosts))
+	for _, post := range sourcePosts {
+		posts[post.ID] = post
+		order = append(order, post.ID)
+	}
+
+	page := TimelinePage{}
+	entries := make(map[int64]struct{}, len(ids))
+	for _, rawID := range ids {
+		id, err := strconv.ParseInt(rawID, 10, 64)
+		if err != nil {
+			page.MissingEntries++
+			continue
+		}
+		entries[id] = struct{}{}
+		post, ok := posts[id]
+		if !ok {
+			page.MissingEntries++
+			continue
+		}
+		page.Entries = append(page.Entries, post)
+	}
+	for _, id := range order {
+		if _, isEntry := entries[id]; isEntry {
+			continue
+		}
+		page.EmbeddedPosts = append(page.EmbeddedPosts, posts[id])
+	}
+	return page, nil
+}
 
 // tombkeeper.io is a Next.js SSR site: each weibo's structured data is embedded
 // in the page's RSC flight payload, split across many self.__next_f.push([1,"…"])
@@ -22,24 +66,23 @@ var (
 	objStartRe = regexp.MustCompile(`\{\s*"id"\s*:\s*"\d`)
 )
 
-// ExtractPosts parses all weibo objects out of a tombkeeper.io page, in document
-// order, de-duplicated by id.
-func ExtractPosts(html []byte) ([]RawPost, error) {
+// extractSourcePosts 按文档顺序解析全部博文，并按 id 去重。
+func extractSourcePosts(html []byte) ([]SourcePost, error) {
 	flight := reassembleFlight(html)
 	rows := parseFlightRows(flight)
 
-	var posts []RawPost
-	seen := make(map[string]struct{})
+	var posts []SourcePost
+	seen := make(map[int64]struct{})
 	for _, obj := range extractObjects(flight) {
-		p, err := parseRawPost([]byte(obj), rows)
+		post, err := parseSourcePost([]byte(obj), rows)
 		if err != nil {
 			continue // tolerate a malformed object, keep the rest of the page
 		}
-		if _, dup := seen[p.ID]; dup {
+		if _, dup := seen[post.ID]; dup {
 			continue
 		}
-		seen[p.ID] = struct{}{}
-		posts = append(posts, p)
+		seen[post.ID] = struct{}{}
+		posts = append(posts, post)
 	}
 	return posts, nil
 }
@@ -178,28 +221,37 @@ type rawPostWire struct {
 	URLInfo    json.RawMessage `json:"url_info"`
 }
 
-// parseRawPost decodes one object substring into a RawPost, resolving the
-// url_info $ref against rows and parsing the $D-prefixed created_at.
-func parseRawPost(obj []byte, rows map[string]string) (RawPost, error) {
+// parseSourcePost 解析单个对象，并解开 url_info 引用与 $D 时间。
+func parseSourcePost(obj []byte, rows map[string]string) (SourcePost, error) {
 	var w rawPostWire
 	if err := json.Unmarshal(obj, &w); err != nil {
-		return RawPost{}, err
+		return SourcePost{}, err
 	}
-
-	raw := make([]byte, len(obj))
-	copy(raw, obj)
-
-	return RawPost{
-		ID:         w.ID,
-		Bid:        w.Bid,
-		UserID:     w.UserID,
-		ScreenName: w.ScreenName,
-		Text:       resolveFlightString(w.Text, rows),
-		Pics:       w.Pics,
-		CreatedAt:  parseFlightTime(w.CreatedAt),
-		RetweetID:  w.RetweetID,
-		URLInfo:    resolveURLInfo(w.URLInfo, rows),
-		Raw:        raw,
+	id, err := strconv.ParseInt(w.ID, 10, 64)
+	if err != nil {
+		return SourcePost{}, fmt.Errorf("parse post id %q: %w", w.ID, err)
+	}
+	publishedAt := parseFlightTime(w.CreatedAt)
+	if publishedAt.IsZero() {
+		return SourcePost{}, fmt.Errorf("parse post %d created_at %q", id, w.CreatedAt)
+	}
+	var retweetID int64
+	if w.RetweetID != "" {
+		retweetID, err = strconv.ParseInt(w.RetweetID, 10, 64)
+		if err != nil {
+			return SourcePost{}, fmt.Errorf("parse retweet id %q: %w", w.RetweetID, err)
+		}
+	}
+	return SourcePost{
+		ID:            id,
+		Bid:           w.Bid,
+		AuthorID:      w.UserID,
+		ScreenName:    w.ScreenName,
+		Text:          resolveFlightString(w.Text, rows),
+		Pics:          splitPics(w.Pics),
+		PublishedAt:   publishedAt,
+		RetweetPostID: retweetID,
+		Links:         resolvePostLinks(w.URLInfo, rows),
 	}, nil
 }
 
@@ -213,9 +265,8 @@ func parseFlightTime(s string) time.Time {
 	return t
 }
 
-// resolveURLInfo turns the raw url_info value into entries. It accepts either an
-// inline array (fixtures) or a "$<rowid>" reference resolved against rows.
-func resolveURLInfo(raw json.RawMessage, rows map[string]string) []URLInfoEntry {
+// resolvePostLinks 解析内联数组或指向 flight row 的 url_info。
+func resolvePostLinks(raw json.RawMessage, rows map[string]string) []PostLink {
 	trimmed := strings.TrimSpace(string(raw))
 	if trimmed == "" || trimmed == "null" {
 		return nil
@@ -236,7 +287,7 @@ func resolveURLInfo(raw json.RawMessage, rows map[string]string) []URLInfoEntry 
 		return nil
 	}
 
-	var entries []URLInfoEntry
+	var entries []PostLink
 	if err := json.Unmarshal([]byte(arrayJSON), &entries); err != nil {
 		return nil
 	}

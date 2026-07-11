@@ -84,14 +84,14 @@ func TestCrawlHistoryCrawlsExactlyTotalPages(t *testing.T) {
 		1: listPage(2, map[string]string{"5314166504037012": "2026-06-26T10:00:00.000Z", "5314160939239118": "2026-06-26T09:00:00.000Z"}, nil),
 		2: listPage(2, map[string]string{"5314151876657931": "2026-06-25T10:00:00.000Z", "5314090474936306": "2026-06-25T09:00:00.000Z"}, nil),
 	}}
-	r := newTestRenderer(req, newFakeFile(), db)
+	importer := NewTimelineImporter(req, newFakeFile(), db, testLogger())
 
-	st, err := crawlHistoryPages(req, db, r, "2026-06-25", "2026-06-26", testLogger())
+	st, err := crawlHistoryPages(req, importer, "2026-06-25", "2026-06-26", testLogger())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if st.Saved != 4 {
-		t.Fatalf("saved = %d, want 4", st.Saved)
+	if st.EntriesSaved != 4 {
+		t.Fatalf("entries saved = %d, want 4", st.EntriesSaved)
 	}
 	if st.Pages != 2 {
 		t.Fatalf("pages = %d, want 2 (total reported on page 1)", st.Pages)
@@ -101,12 +101,13 @@ func TestCrawlHistoryCrawlsExactlyTotalPages(t *testing.T) {
 	}
 
 	// Re-run: everything already exists → 0 new, but it still fetches all `total` pages.
-	st, err = crawlHistoryPages(req, db, r, "2026-06-25", "2026-06-26", testLogger())
+	st, err = crawlHistoryPages(req, importer, "2026-06-25", "2026-06-26", testLogger())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if st.Saved != 0 || st.Pages != 2 {
-		t.Fatalf("re-run saved=%d pages=%d, want saved=0 pages=2 (idempotent)", st.Saved, st.Pages)
+	if st.EntriesSaved != 0 || st.Pages != 2 {
+		t.Fatalf("re-run entries saved=%d pages=%d, want entries saved=0 pages=2 (idempotent)",
+			st.EntriesSaved, st.Pages)
 	}
 }
 
@@ -118,9 +119,9 @@ func TestCrawlHistoryAbortsOnTotalPagesChange(t *testing.T) {
 		1: listPage(2, map[string]string{"5314166504037012": "2026-06-26T10:00:00.000Z"}, nil),
 		2: listPage(3, map[string]string{"5314160939239118": "2026-06-26T09:00:00.000Z"}, nil), // total shifted 2 -> 3
 	}}
-	r := newTestRenderer(req, newFakeFile(), db)
+	importer := NewTimelineImporter(req, newFakeFile(), db, testLogger())
 
-	_, err := crawlHistoryPages(req, db, r, "2026-06-25", "2026-06-26", testLogger())
+	_, err := crawlHistoryPages(req, importer, "2026-06-25", "2026-06-26", testLogger())
 	if err == nil {
 		t.Fatal("expected abort on total-pages change, got nil")
 	}
@@ -134,36 +135,33 @@ func TestCrawlHistoryAbortsOnTotalPagesChange(t *testing.T) {
 func TestCrawlHistoryPagesPropagatesFetchError(t *testing.T) {
 	db := newFakeDB()
 	req := &fakeRequester{rangeErr: true}
-	r := newTestRenderer(req, newFakeFile(), db)
+	importer := NewTimelineImporter(req, newFakeFile(), db, testLogger())
 
-	if _, err := crawlHistoryPages(req, db, r, "2026-06-01", "2026-06-02", testLogger()); err == nil {
+	if _, err := crawlHistoryPages(req, importer, "2026-06-01", "2026-06-02", testLogger()); err == nil {
 		t.Fatal("expected error from failing GetPageRange, got nil")
 	}
 }
 
-// A timeline post that fails to save is counted in stats.Failed (not saved, not
-// silently lost), and the run still completes.
+// 时间线博文写入失败时计入 EntriesFailed，历史任务仍继续处理其他博文。
 func TestCrawlHistoryCountsFailed(t *testing.T) {
 	db := newFakeDB()
 	db.saveErr = true
 	req := &fakeRequester{pages: map[int][]byte{
 		1: listPage(1, map[string]string{"5314166504037012": "2026-06-15T10:00:00.000Z"}, nil),
 	}}
-	r := newTestRenderer(req, newFakeFile(), db)
+	importer := NewTimelineImporter(req, newFakeFile(), db, testLogger())
 
-	st, err := crawlHistoryPages(req, db, r, "2026-06-15", "2026-06-15", testLogger())
+	st, err := crawlHistoryPages(req, importer, "2026-06-15", "2026-06-15", testLogger())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if st.Saved != 0 || st.Failed != 1 {
-		t.Fatalf("saved=%d failed=%d, want saved=0 failed=1", st.Saved, st.Failed)
+	if st.EntriesSaved != 0 || st.EntriesFailed != 1 {
+		t.Fatalf("entries saved=%d failed=%d, want saved=0 failed=1", st.EntriesSaved, st.EntriesFailed)
 	}
 }
 
-// A retweet original carries a created_at outside the window; it lives in the
-// flight payload but not the timeline links. It must be neither ingested nor
-// counted, so it can't add a feed item nor keep the loop from stopping.
-func TestCrawlHistoryIgnoresRetweetOriginal(t *testing.T) {
+// 转发原文只作为支持内容入库，不计入 Saved，也不能进入时间线查询。
+func TestCrawlHistoryStoresRetweetOriginalOutsideTimeline(t *testing.T) {
 	db := newFakeDB()
 	oldOriginalID := "5310000000000000" // created 2026-05-28, before startDate
 	req := &fakeRequester{pages: map[int][]byte{
@@ -172,16 +170,27 @@ func TestCrawlHistoryIgnoresRetweetOriginal(t *testing.T) {
 			map[string]string{oldOriginalID: "2026-05-28T10:00:00.000Z"},
 		),
 	}}
-	r := newTestRenderer(req, newFakeFile(), db)
+	importer := NewTimelineImporter(req, newFakeFile(), db, testLogger())
 
-	st, err := crawlHistoryPages(req, db, r, "2026-06-01", "2026-06-26", testLogger())
+	st, err := crawlHistoryPages(req, importer, "2026-06-01", "2026-06-26", testLogger())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if st.Saved != 1 {
-		t.Fatalf("saved = %d, want 1 (timeline post only)", st.Saved)
+	if st.EntriesSaved != 1 {
+		t.Fatalf("entries saved = %d, want 1 (timeline post only)", st.EntriesSaved)
 	}
-	if _, err := db.GetPost(5310000000000000); err == nil {
-		t.Fatal("retweet original was stored as a feed item, must not be")
+	original, err := db.GetPost(5310000000000000)
+	if err != nil {
+		t.Fatal("retweet original was not archived")
+	}
+	if original.InTimeline {
+		t.Fatal("retweet original must not be marked as a timeline entry")
+	}
+	entries, err := db.LatestTimelineEntries(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].ID != 5314166504037012 {
+		t.Fatalf("timeline entries = %+v", entries)
 	}
 }

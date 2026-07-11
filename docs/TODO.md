@@ -53,7 +53,9 @@
 来源：2026-06-18 tombkeeper-rss 实现后的对抗式评审（确认项已修复，下列为有意延后的加固/增强）。
 
 - **图片抓取的纵深 SSRF 加固（低优先）**：已对「完整 URL 形态的 `pics`」加 host 允许名单、并约束图片下载的重定向 host。残留风险（评审指出）：被允许的 CDN 若 302 到内网、或 DNS rebinding。彻底防御需在拨号层（`net.Dialer.Control`）阻断私有/环回/链路本地网段（10/8、172.16/12、192.168/16、127/8、169.254/16、::1、fc00::/7）。鉴于上游 `tombkeeper.io` 单一可信、且为 blind SSRF（响应直接入 OSS 不回显），按低优先处理。
-- **`title` 用 LLM 细化（SPEC 后期项）**：当前 `tombkeeper_post.title` = 正文前 10 字。后续接 `internal/ai` 的 LLM 概括为更可读的标题，可加一次性 backfill 迁移。
+- **用 LLM 生成 tombkeeper 标题（SPEC 后期项）**：当前标题由读取端从正文前 10 个 rune 纯函数推导，
+  数据库不保存 `title`。若要引入 LLM，应把模型输出建成独立、带来源/版本的内容事实，再由读取端选择；
+  不要把它塞回 Markdown 缓存或覆盖源正文。
 - **被内联帖的 `url_info` 缺失**：嵌入的转发原文对象有时不带 `url_info`（其 `t.cn` 短链不展开，正文里保留裸 `t.cn`，由 GFM 自动链接）。如需完整展开，可对原文补一次详情抓取，但会增加请求量，暂不做。
 - **微博换行被连排（East Asian Line Breaks 的既有行为，与 A6 无关）**：tombkeeper 正文把多行微博用单 `\n` 拼接（[`render_markdown.go:46`](../../pkg/routers/tombkeeper/render_markdown.go) `strings.Join(lines, "\n")`），而 feed 的 goldmark（A6 后 CSS3Draft、A6 前 `extension.CJK`/Simple **同样**）会去掉 CJK 软换行，导致多行微博在 RSS/归档 HTML 里**连排成一行**。这是 East Asian Line Breaks 扩展的设计行为（避免 CJK 软折行在 HTML 里渲染成字间空格），A6 前后**一致**、非本次引入。若要让微博换行**可见保留**，应在**解析层**把微博的 `\n` 转成硬换行（行尾两空格 `\n`）或段落 `\n\n`（改 `escapeMarkdown`），而非改 goldmark 配置。取舍：硬换行会让每条多行微博每行都带 `<br>`，需先确认这是期望呈现。来源：2026-06-24 unified-rss-pipeline A6 讨论。
 

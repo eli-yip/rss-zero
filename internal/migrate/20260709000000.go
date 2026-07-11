@@ -5,8 +5,6 @@ import (
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
-
-	"github.com/eli-yip/rss-zero/pkg/routers/tombkeeper"
 )
 
 func init() {
@@ -27,18 +25,21 @@ func init() {
 // retweet quote can be affected, so the scan is narrowed with a LIKE. Idempotent: a
 // post already in the new order reorders to itself and is skipped.
 func migrateTombkeeperInlineQuoteOrder(db *gorm.DB, logger *zap.Logger) error {
-	var posts []tombkeeper.Post
+	if !db.Migrator().HasColumn(&legacyTombkeeperPost{}, "text_markdown") {
+		return nil
+	}
+	var posts []legacyTombkeeperPost
 	if err := db.Where("text_markdown LIKE ?", "%> 转发 @%").Find(&posts).Error; err != nil {
 		return fmt.Errorf("scan tombkeeper_post: %w", err)
 	}
 
 	var updated int
 	for _, p := range posts {
-		nb := tombkeeper.ReorderInlineQuotes(p.TextMarkdown)
+		nb := reorderLegacyInlineQuotes(p.TextMarkdown)
 		if nb == p.TextMarkdown {
 			continue
 		}
-		if err := db.Model(&tombkeeper.Post{}).Where("id = ?", p.ID).
+		if err := db.Model(&legacyTombkeeperPost{}).Where("id = ?", p.ID).
 			Update("text_markdown", nb).Error; err != nil {
 			return fmt.Errorf("update post %d: %w", p.ID, err)
 		}

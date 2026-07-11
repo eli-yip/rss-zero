@@ -14,7 +14,7 @@ func pushChunk(s string) string {
 	return `self.__next_f.push([1,` + string(b) + `])`
 }
 
-func TestExtractPostsCrossChunkAndRef(t *testing.T) {
+func TestExtractSourcePostsCrossChunkAndRef(t *testing.T) {
 	// A post whose text contains a quote and braces (must not break brace
 	// matching), url_info given as a $ref, created_at carrying the $D marker.
 	post := `{"id":"5312623991326758","bid":"R5iph5z9k","user_id":"1401527553",` +
@@ -31,29 +31,29 @@ func TestExtractPostsCrossChunkAndRef(t *testing.T) {
 	mid := len(flight) / 2
 	html := []byte(pushChunk(flight[:mid]) + "<script></script>" + pushChunk(flight[mid:]))
 
-	posts, err := ExtractPosts(html)
+	posts, err := extractSourcePosts(html)
 	if err != nil {
-		t.Fatalf("ExtractPosts error: %v", err)
+		t.Fatalf("extractSourcePosts error: %v", err)
 	}
 	if len(posts) != 1 {
 		t.Fatalf("got %d posts, want 1", len(posts))
 	}
 	p := posts[0]
-	if p.ID != "5312623991326758" {
-		t.Errorf("id = %q", p.ID)
+	if p.ID != 5312623991326758 {
+		t.Errorf("id = %d", p.ID)
 	}
-	if p.Pics != "abc123,def456" {
-		t.Errorf("pics = %q", p.Pics)
+	if len(p.Pics) != 2 || p.Pics[0] != "abc123" || p.Pics[1] != "def456" {
+		t.Errorf("pics = %v", p.Pics)
 	}
 	if !strings.Contains(p.Text, "hello\nworld") || !strings.Contains(p.Text, "{c}") {
 		t.Errorf("text = %q", p.Text)
 	}
-	if p.CreatedAt.Year() != 2026 || p.CreatedAt.Month() != 6 {
-		t.Errorf("created_at = %v", p.CreatedAt)
+	if p.PublishedAt.Year() != 2026 || p.PublishedAt.Month() != 6 {
+		t.Errorf("published_at = %v", p.PublishedAt)
 	}
-	if len(p.URLInfo) != 1 || p.URLInfo[0].URLTitle != "微博正文" ||
-		p.URLInfo[0].LongURL != "https://weibo.com/1401527553/R4FtclSR7" {
-		t.Errorf("url_info = %+v", p.URLInfo)
+	if len(p.Links) != 1 || p.Links[0].URLTitle != "微博正文" ||
+		p.Links[0].LongURL != "https://weibo.com/1401527553/R4FtclSR7" {
+		t.Errorf("links = %+v", p.Links)
 	}
 }
 
@@ -68,7 +68,7 @@ func TestExtractResolvesTextRef(t *testing.T) {
 	row := fmt.Sprintf("\n17:T%x,%s\n", len(body), body)
 	flight := "9:" + post + row + "1f:[]\n"
 
-	posts, err := ExtractPosts([]byte(pushChunk(flight)))
+	posts, err := extractSourcePosts([]byte(pushChunk(flight)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,22 +80,22 @@ func TestExtractResolvesTextRef(t *testing.T) {
 	}
 }
 
-func TestExtractPostsToleratesWhitespace(t *testing.T) {
+func TestExtractSourcePostsToleratesWhitespace(t *testing.T) {
 	// A pretty-printed/reformatted object (whitespace after '{' and around ':')
 	// must still be extracted — objStartRe tolerates whitespace around the id key.
 	post := `{ "id" : "200", "bid":"B","user_id":"1401527553","screen_name":"tombkeeper",` +
 		`"text":"x","pics":"","video_url":"","created_at":"$D2026-01-02T03:04:05.000Z",` +
 		`"retweet_id":"","url_info":[]}`
-	posts, err := ExtractPosts([]byte(pushChunk("9:" + post + "\n")))
+	posts, err := extractSourcePosts([]byte(pushChunk("9:" + post + "\n")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(posts) != 1 || posts[0].ID != "200" {
+	if len(posts) != 1 || posts[0].ID != 200 {
 		t.Fatalf("whitespaced object not extracted: %+v", posts)
 	}
 }
 
-func TestExtractPostsInlineURLInfoAndDedup(t *testing.T) {
+func TestExtractSourcePostsInlineLinksAndDedup(t *testing.T) {
 	post := `{"id":"100","bid":"B","user_id":"1401527553","screen_name":"tombkeeper",` +
 		`"text":"x","pics":"","video_url":"","created_at":"$D2026-01-02T03:04:05.000Z",` +
 		`"retweet_id":"","url_info":[{"short_url":"s","url_type":0,"url_title":"t","long_url":"l"}]}`
@@ -103,14 +103,14 @@ func TestExtractPostsInlineURLInfoAndDedup(t *testing.T) {
 	flight := "9:" + post + "\na:" + post + "\n"
 	html := []byte(pushChunk(flight))
 
-	posts, err := ExtractPosts(html)
+	posts, err := extractSourcePosts(html)
 	if err != nil {
-		t.Fatalf("ExtractPosts error: %v", err)
+		t.Fatalf("extractSourcePosts error: %v", err)
 	}
 	if len(posts) != 1 {
 		t.Fatalf("got %d posts, want 1 (dedup)", len(posts))
 	}
-	if len(posts[0].URLInfo) != 1 || posts[0].URLInfo[0].LongURL != "l" {
-		t.Errorf("inline url_info not parsed: %+v", posts[0].URLInfo)
+	if len(posts[0].Links) != 1 || posts[0].Links[0].LongURL != "l" {
+		t.Errorf("inline links not parsed: %+v", posts[0].Links)
 	}
 }

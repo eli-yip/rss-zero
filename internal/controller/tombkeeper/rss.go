@@ -18,7 +18,7 @@ func (h *Controller) RSS(c echo.Context) error {
 	return rss.Serve(c, rss.ServeOptions{
 		Redis:        h.redis,
 		Logger:       logger,
-		Key:          redis.RssTombkeeperPath,
+		Key:          redis.RssTombkeeperTimelinePath,
 		TTL:          redis.RSSDefaultTTL,
 		DefaultLimit: tk.FeedSize,
 		Fetch: func() (rss.FeedMeta, []rss.Item, error) {

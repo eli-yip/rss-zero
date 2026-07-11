@@ -28,7 +28,7 @@ const (
 
 	RssMackedPath = "macked_rss"
 
-	RssTombkeeperPath = "tombkeeper_rss"
+	RssTombkeeperTimelinePath = "tombkeeper_timeline_rss"
 )
 
 const (

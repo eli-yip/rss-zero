@@ -18,86 +18,74 @@ import (
 
 var errAllCDNFailed = errors.New("all cdn candidates failed")
 
-// saveImage rehosts one pic (a bare pic id or a full sinaimg URL) to OSS and, on
-// success, returns the markdown image URL to embed with ok=true. On total CDN
-// failure or OSS failure it records an abandoned object and returns ok=false with
-// no URL: the only link we could offer is a fabricated sinaimg URL that is one of
-// the candidates already proven dead, so the caller points readers at the source
-// weibo instead of embedding a broken image. It is idempotent: an already-recorded
-// object is reused (ok mirrors its stored status). err is reserved for unexpected
-// failures (empty pic id, object persistence).
-func saveImage(req Requester, f file.File, db DB, postID int64, picField string, logger *zap.Logger) (markdownURL string, ok bool, err error) {
+type imageRequester interface {
+	GetPicStream(ctx context.Context, url string) (*http.Response, error)
+	WaitPicSlot()
+}
+
+type imageAssetStore interface {
+	SaveImageAsset(asset *ImageAsset) error
+	ImageAssetExists(id string) (bool, error)
+}
+
+// archiveImageAsset 归档源图片并记录归档结果，不生成展示文本。
+func archiveImageAsset(req imageRequester, f file.File, store imageAssetStore, picField string, logger *zap.Logger) error {
 	picID := picIDOf(picField)
 	if picID == "" {
-		return "", false, fmt.Errorf("empty pic id from %q", picField)
+		return fmt.Errorf("empty pic id from %q", picField)
 	}
 
-	if exists, _ := db.ObjectExists(picID); exists {
-		if o, e := db.GetObject(picID); e == nil {
-			if o.Status == ObjectStatusOK {
-				if uri, uerr := o.URI(); uerr == nil {
-					return uri, true, nil
-				}
-			}
-			return "", false, nil // previously abandoned (or URI unbuildable): do not embed
-		}
+	exists, err := store.ImageAssetExists(picID)
+	if err != nil {
+		return fmt.Errorf("check image asset %q: %w", picID, err)
+	}
+	if exists {
+		return nil
 	}
 
 	cands, originalLink := candidateURLs(picField)
 	if len(cands) == 0 {
-		// A full-URL pics entry on a non-allowlisted host: we deliberately do not
-		// proxy it (anti-SSRF), but it is a genuine, possibly-live link rather than a
-		// fabricated dead one, so embed it directly. The reader's client fetches it,
-		// not our server. Nothing is rehosted, so no object is recorded.
-		return originalLink, true, nil
+		// 保留非白名单源链接，但不从服务端请求。
+		return nil
 	}
 	resp, usedURL, derr := downloadFirstAvailable(req, cands)
 	if derr != nil {
 		logger.Warn("all CDNs failed, abandoning image", zap.String("pic_id", picID))
-		_ = db.SaveObject(&Object{
-			ID: picID, PostID: postID, Type: ObjectTypeImage,
+		if err := store.SaveImageAsset(&ImageAsset{
+			ID: picID, Type: ObjectTypeImage,
 			URL: originalLink, Status: ObjectStatusAbandoned,
-		})
-		return "", false, nil
+		}); err != nil {
+			return fmt.Errorf("save abandoned image asset: %w", err)
+		}
+		return nil
 	}
-	// resp.Body is handed to SaveStream, which closes it.
+	// SaveStream 负责关闭 resp.Body。
 	ext := extFromContentType(resp.Header.Get("Content-Type"))
 	objectKey := fmt.Sprintf("tombkeeper/%s.%s", picID, ext)
-	if err = f.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
-		// OSS write failed: record abandoned (like total-CDN-failure) so the next
-		// crawl skips it instead of re-downloading, and report ok=false so the body
-		// carries a source-weibo notice rather than a broken embed.
+	if err := f.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
+		// 持久化失败结果，避免后续导入重复下载。
 		logger.Warn("oss save failed, abandoning image", zap.String("pic_id", picID), zap.Error(err))
-		_ = db.SaveObject(&Object{
-			ID: picID, PostID: postID, Type: ObjectTypeImage,
+		if saveErr := store.SaveImageAsset(&ImageAsset{
+			ID: picID, Type: ObjectTypeImage,
 			URL: originalLink, Status: ObjectStatusAbandoned,
-		})
-		return "", false, nil
+		}); saveErr != nil {
+			return fmt.Errorf("save abandoned image asset: %w", saveErr)
+		}
+		return nil
 	}
 
-	obj := &Object{
-		ID: picID, PostID: postID, Type: ObjectTypeImage,
+	asset := &ImageAsset{
+		ID: picID, Type: ObjectTypeImage,
 		ObjectKey: objectKey, URL: usedURL,
 		StorageProvider: []string{f.AssetsDomain()}, Status: ObjectStatusOK,
 	}
-	if err = db.SaveObject(obj); err != nil {
-		return "", false, fmt.Errorf("save object: %w", err)
+	if err := store.SaveImageAsset(asset); err != nil {
+		return fmt.Errorf("save image asset: %w", err)
 	}
-	uri, err := obj.URI()
-	if err != nil {
-		return "", false, fmt.Errorf("object uri: %w", err)
-	}
-	return uri, true, nil
+	return nil
 }
 
-// RedownloadObject re-fetches pic id picID from its CDN candidates and overwrites
-// the OSS object at objectKey with the fresh bytes — repairing a previously stored
-// 0-byte (or otherwise corrupt) image in place. It keeps the SAME object key, so
-// the markdown image links already embedded in post bodies keep working without a
-// re-render. Unlike saveImage it deliberately ignores the object table: the row
-// already exists and is correct except for the stored bytes. Returns the candidate
-// URL the bytes came from, or an error if every candidate fails. Used by the
-// one-off 0-byte backfill migration.
+// RedownloadObject 为零字节回填原地修复已有图片资产。
 func RedownloadObject(req Requester, f file.File, objectKey, picID string, logger *zap.Logger) (usedURL string, err error) {
 	cands, _ := candidateURLs(picID)
 	if len(cands) == 0 {
@@ -107,7 +95,7 @@ func RedownloadObject(req Requester, f file.File, objectKey, picID string, logge
 	if err != nil {
 		return "", fmt.Errorf("download pic %q: %w", picID, err)
 	}
-	// resp.Body is handed to SaveStream, which closes it.
+	// SaveStream 负责关闭 resp.Body。
 	if err = f.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
 		return "", fmt.Errorf("save pic %q to %q: %w", picID, objectKey, err)
 	}
@@ -226,7 +214,7 @@ func extFromContentType(ct string) string {
 // meantime has its body drained and closed. The winner keeps its own context
 // alive until the caller closes its body (see cancelOnClose). Returns
 // errAllCDNFailed if none succeed.
-func downloadFirstAvailable(req Requester, cands []string) (*http.Response, string, error) {
+func downloadFirstAvailable(req imageRequester, cands []string) (*http.Response, string, error) {
 	req.WaitPicSlot() // throttle the image-fetch rate; the fan-out below stays concurrent
 
 	type result struct {

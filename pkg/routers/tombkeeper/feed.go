@@ -15,55 +15,48 @@ const (
 	feedLink  = "https://weibo.com/u/1401527553"
 )
 
-// BuildFeed loads the latest posts (up to MaxFetch) and builds the canonical feed
-// for the unified pipeline. It is the source's Fetch step, shared by the
-// controller's cache-miss path and the cron warm path.
+// BuildFeed 选择时间线条目，装配内容快照并在读取时生成展示。
 func BuildFeed(db DB) (rss.FeedMeta, []rss.Item, error) {
-	posts, err := db.GetLatestPosts(rss.MaxFetch)
+	posts, err := db.LatestTimelineEntries(rss.MaxFetch)
 	if err != nil {
-		return rss.FeedMeta{}, nil, fmt.Errorf("get latest posts: %w", err)
+		return rss.FeedMeta{}, nil, fmt.Errorf("get latest timeline entries: %w", err)
 	}
-	return feedFromPosts(posts)
+	content, err := NewContentLoader(db).Load(posts)
+	if err != nil {
+		return rss.FeedMeta{}, nil, err
+	}
+	return feedFromPosts(posts, content, config.C.Settings.ServerURL)
 }
 
-// feedFromPosts builds the envelope and items from posts. Content decoration
-// matches the former RenderRSS except the markdown→HTML step now uses the shared
-// feed renderer (A6): a CJK/latin line break joins under CSS3Draft where the old
-// extension.CJK config kept the newline. The entry <link> is the uid/bid weibo
-// permalink; the content footer carries the archive and fan-site links.
-func feedFromPosts(posts []Post) (rss.FeedMeta, []rss.Item, error) {
+func feedFromPosts(posts []Post, content ContentSnapshot, serverBaseURL string) (rss.FeedMeta, []rss.Item, error) {
 	meta := rss.FeedMeta{Title: feedTitle, Link: feedLink}
 	if len(posts) == 0 {
 		meta.Updated = time.Now()
 		return meta, nil, nil
 	}
-	meta.Updated = posts[0].PostTime
+	meta.Updated = posts[0].PublishedAt
 
 	items := make([]rss.Item, 0, len(posts))
-	for i := range posts {
-		p := posts[i]
-		idStr := strconv.FormatInt(p.ID, 10)
-		officialLink := WeiboPostURL(p.AuthorID, p.Bid, idStr)
+	for _, post := range posts {
+		markdown, err := RenderMarkdown(post.ID, content, serverBaseURL)
+		if err != nil {
+			return rss.FeedMeta{}, nil, err
+		}
+		id := strconv.FormatInt(post.ID, 10)
+		officialLink := WeiboPostURL(post.AuthorID, post.Bid, id)
 		footer := fmt.Sprintf("[存档链接](%s) · [粉丝站链接](%s)",
-			render.BuildArchiveLink(config.C.Settings.ServerURL, officialLink), FanSiteURL(idStr))
-
-		contentHTML, err := render.FeedHTML(p.TextMarkdown + "\n\n" + footer)
+			render.BuildArchiveLink(serverBaseURL, officialLink), FanSiteURL(id))
+		contentHTML, err := render.FeedHTML(markdown + "\n\n" + footer)
 		if err != nil {
 			return rss.FeedMeta{}, nil, fmt.Errorf("convert markdown to html: %w", err)
 		}
-
-		title := p.Title
+		title := makeTitle(post.Text)
 		if title == "" {
-			title = idStr
+			title = id
 		}
 		items = append(items, rss.Item{
-			ID:          idStr,
-			Link:        officialLink,
-			Title:       title,
-			Author:      p.ScreenName,
-			Time:        p.PostTime,
-			Summary:     render.ExtractExcerpt(p.TextMarkdown),
-			ContentHTML: contentHTML,
+			ID: id, Link: officialLink, Title: title, Author: post.ScreenName,
+			Time: post.PublishedAt, Summary: render.ExtractExcerpt(markdown), ContentHTML: contentHTML,
 		})
 	}
 	return meta, items, nil

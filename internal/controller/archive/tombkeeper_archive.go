@@ -7,12 +7,11 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/eli-yip/rss-zero/config"
 	tk "github.com/eli-yip/rss-zero/pkg/routers/tombkeeper"
 )
 
-// HandleTombkeeperWeibo renders a single tombkeeper weibo's archive page. The
-// post markdown is already fully rendered (OSS images, expanded links), so it is
-// returned verbatim. The HTML page shows no title (empty <title>), only the body.
+// HandleTombkeeperWeibo 从已存结构化内容渲染一篇归档微博。
 func (h *Controller) HandleTombkeeperWeibo(link string) (*archiveResult, error) {
 	mid, ok := tk.WeiboArchiveMid(link)
 	if !ok {
@@ -29,9 +28,15 @@ func (h *Controller) HandleTombkeeperWeibo(link string) (*archiveResult, error) 
 		}
 		return nil, fmt.Errorf("get tombkeeper post %d: %w", midInt, err)
 	}
-	// Like the zhihu archive, append source links — here the original weibo and
-	// the tombkeeper.io mirror ("粉丝站").
+	content, err := tk.NewContentLoader(h.tombkeeperDBService).Load([]tk.Post{*post})
+	if err != nil {
+		return nil, fmt.Errorf("load tombkeeper content %d: %w", midInt, err)
+	}
+	markdown, err := tk.RenderMarkdown(post.ID, content, config.C.Settings.ServerURL)
+	if err != nil {
+		return nil, fmt.Errorf("render tombkeeper post %d: %w", midInt, err)
+	}
 	footer := fmt.Sprintf("[微博](%s) · [粉丝站](%s)",
 		tk.WeiboPostURL(post.AuthorID, post.Bid, mid), tk.FanSiteURL(mid))
-	return &archiveResult{title: "", markdown: post.TextMarkdown + "\n\n" + footer}, nil
+	return &archiveResult{title: "", markdown: markdown + "\n\n" + footer}, nil
 }

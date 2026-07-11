@@ -43,5 +43,5 @@
       "url_info": []
     }
   },
-  "_note": "repost.retweet_id=5307458244575582 is NOT present on the same page payload; parser must fall back to GET /weibo/5307458244575582 (or skip inline)"
+  "_note": "没有额外的独立 original 对象，但 repost.retweet_weibo 仍包含完整原文；解析器应从嵌套对象保留原文，不请求详情页"
 }
