@@ -1,7 +1,7 @@
 ---
 title: "tombkeeper 只存事实并在读取时渲染 Markdown"
 kind: refactor
-status: open
+status: closed
 priority: high
 areas: [tombkeeper, rss, controller, migrate, db, render]
 plan: docs/plans/2026-07-11-tombkeeper-fact-rendering.md

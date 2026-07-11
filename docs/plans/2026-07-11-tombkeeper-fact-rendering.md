@@ -1,7 +1,7 @@
 ---
 title: "tombkeeper 事实入库与读时 Markdown 渲染重写"
 issue: docs/issues/2026-07-11-tombkeeper-fact-rendering.md
-status: in-progress
+status: done
 areas: [tombkeeper, rss, controller, migrate, db, render]
 updated: "2026-07-11"
 ---

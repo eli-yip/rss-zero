@@ -1,7 +1,7 @@
 ---
 title: "tombkeeper 事实入库与纯 Markdown 渲染重写复盘"
 plan: docs/plans/2026-07-11-tombkeeper-fact-rendering.md
-status: draft
+status: done
 areas: [tombkeeper, rss, controller, migrate, db, render]
 updated: "2026-07-11"
 ---
