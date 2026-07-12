@@ -13,6 +13,12 @@ type testCase struct {
 	want  string
 }
 
+// TestBJTInitialized 守护回归：config.C.BJT 必须在包加载时非 nil，否则
+// 所有 time.Date / Time.In 调用点都会 panic（go1.26 下暴露）。
+func TestBJTInitialized(t *testing.T) {
+	assert.NotNil(t, config.C.BJT)
+}
+
 func TestEncodeTimeForQuery(t *testing.T) {
 	testCases := []testCase{
 		{

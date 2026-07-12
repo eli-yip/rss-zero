@@ -61,19 +61,19 @@ func TestExport(t *testing.T) {
 			option: Option{},
 			expect: `# [精华]title
 
-时间：2022年11月20日
-
-链接：[https://wx.zsxq.com/dweb2/index/topic/28855218411241](https://wx.zsxq.com/dweb2/index/topic/28855218411241)
-
 text
+
+2022年11月20日
+
+[https://wx.zsxq.com/group/28855218411241/topic/1](https://wx.zsxq.com/group/28855218411241/topic/1)
 
 # title2
 
-时间：2022年11月20日
-
-链接：[https://wx.zsxq.com/dweb2/index/topic/28855218411241](https://wx.zsxq.com/dweb2/index/topic/28855218411241)
-
 text
+
+2022年11月20日
+
+[https://wx.zsxq.com/group/28855218411241/topic/22222](https://wx.zsxq.com/group/28855218411241/topic/22222)
 `,
 		},
 	}

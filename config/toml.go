@@ -13,6 +13,11 @@ const DefaultFetchCount = 20
 
 var C TomlConfig
 
+// BJT（Asia/Shanghai, UTC+8）是各 router 通用的固定时区。此处在包加载时初始化，
+// 保证即使没有调用 InitFromToml（例如单元测试）consumer 也不会拿到 nil
+// *time.Location —— 否则 time.Date / Time.In 会 panic。
+func init() { C.BJT = mustBJT() }
+
 type TomlConfig struct {
 	Settings struct {
 		ServerURL         string `toml:"server_url"`
@@ -129,15 +134,17 @@ func InitFromToml(path string) (err error) {
 		return fmt.Errorf("failed to unmarshal toml: %w", err)
 	}
 
-	BJT, err := getBJT()
-	if err != nil {
-		return fmt.Errorf("failed to get BJT: %w", err)
-	}
-	C.BJT = BJT
+	C.BJT = mustBJT()
 
 	return nil
 }
 
-func getBJT() (*time.Location, error) {
-	return time.LoadLocation("Asia/Shanghai")
+// mustBJT 返回 Asia/Shanghai；当系统或内嵌 tzdata 不可用（例如 scratch 容器）时
+// 回退到固定 UTC+8。中国自 1991 年起不再实行夏令时，故对本项目处理的数据 UTC+8 精确。
+func mustBJT() *time.Location {
+	if loc, err := time.LoadLocation("Asia/Shanghai"); err == nil {
+		return loc
+	}
+	// ponytail: 固定 UTC+8 兜底；若将来需处理 1991 年前时间戳再换 tzdata
+	return time.FixedZone("CST", 8*60*60)
 }
