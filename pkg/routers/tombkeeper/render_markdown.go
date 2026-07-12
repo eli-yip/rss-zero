@@ -37,10 +37,7 @@ func renderSnapshotPost(post Post, content ContentSnapshot, serverBaseURL string
 
 	if depth == 0 && post.RetweetPostID != 0 {
 		if original, ok := content.Posts[post.RetweetPostID]; ok {
-			quote := renderSnapshotPost(original, content, serverBaseURL, 1)
-			if !original.PublishedAt.IsZero() {
-				quote = md.Join(quote, retweetTimeLine(original.PublishedAt))
-			}
+			quote := snapshotQuoteBody(original, content, serverBaseURL)
 			sections = append(sections, quoteBlock("转发 @"+original.ScreenName, quote))
 		}
 	}
@@ -141,7 +138,7 @@ func renderSnapshotLinks(text string, links []PostLink, content ContentSnapshot,
 				id, parseErr := strconv.ParseInt(mid, 10, 64)
 				if target, exists := content.Posts[id]; parseErr == nil && exists {
 					quoteNumber++
-					body := renderSnapshotPost(target, content, serverBaseURL, 1)
+					body := snapshotQuoteBody(target, content, serverBaseURL)
 					quotes = append(quotes,
 						quoteBlock(fmt.Sprintf("微博正文%d @%s", quoteNumber, target.ScreenName), body))
 					archiveURL := render.BuildArchiveLink(serverBaseURL, link.LongURL)
@@ -152,6 +149,14 @@ func renderSnapshotLinks(text string, links []PostLink, content ContentSnapshot,
 		return plainLink(link)
 	})
 	return text, quotes
+}
+
+func snapshotQuoteBody(post Post, content ContentSnapshot, serverBaseURL string) string {
+	body := renderSnapshotPost(post, content, serverBaseURL, 1)
+	if post.PublishedAt.IsZero() {
+		return body
+	}
+	return md.Join(body, retweetTimeLine(post.PublishedAt))
 }
 
 // 微博正文是纯文本；#话题#、@用户和词内下划线保持字面值。

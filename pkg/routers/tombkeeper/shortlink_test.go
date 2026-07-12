@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestImportAndRenderWeiboTextLinks(t *testing.T) {
@@ -34,6 +35,69 @@ func TestImportAndRenderWeiboTextLinks(t *testing.T) {
 	}
 	if len(entries) != 1 {
 		t.Fatalf("linked posts entered timeline: %+v", entries)
+	}
+}
+
+func TestRenderMarkdownShowsWeiboTextLinkTargetTime(t *testing.T) {
+	const bid = "R5juh9owa"
+	targetMid, err := BidToMid(bid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	targetID := mustPostID(t, targetMid)
+	link := PostLink{
+		ShortURL: "http://t.cn/AAA", URLType: 0, URLTitle: "微博正文",
+		LongURL: "https://weibo.com/1401527553/" + bid,
+	}
+	root := Post{ID: 1, Text: "root http://t.cn/AAA", Links: []PostLink{link}}
+	target := Post{
+		ID: targetID, ScreenName: "target", Text: "target body",
+		PublishedAt: time.Date(2026, 7, 12, 1, 2, 0, 0, time.UTC),
+	}
+	content := ContentSnapshot{
+		Posts:  map[int64]Post{root.ID: root, target.ID: target},
+		Images: map[string]ImageAsset{},
+	}
+
+	markdown, err := RenderMarkdown(root.ID, content, "https://srv.test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// autocorrect-disable（渲染器的既有标签有意编号为「微博正文1」）
+	const wantQuote = "> 微博正文1 @target\n> \n> target body\n> \n> 2026 年 07 月 12 日 09:02"
+	// autocorrect-enable
+	if !strings.HasSuffix(markdown, wantQuote) {
+		t.Fatalf("inline quote must end with target time:\n%s", markdown)
+	}
+}
+
+func TestRenderMarkdownOmitsZeroWeiboTextLinkTargetTime(t *testing.T) {
+	const bid = "R5juh9owa"
+	targetMid, err := BidToMid(bid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	targetID := mustPostID(t, targetMid)
+	link := PostLink{
+		ShortURL: "http://t.cn/AAA", URLType: 0, URLTitle: "微博正文",
+		LongURL: "https://weibo.com/1401527553/" + bid,
+	}
+	root := Post{ID: 1, Text: "root http://t.cn/AAA", Links: []PostLink{link}}
+	target := Post{ID: targetID, ScreenName: "target", Text: "target body"}
+	content := ContentSnapshot{
+		Posts:  map[int64]Post{root.ID: root, target.ID: target},
+		Images: map[string]ImageAsset{},
+	}
+
+	markdown, err := RenderMarkdown(root.ID, content, "https://srv.test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// autocorrect-disable（渲染器的既有标签有意编号为「微博正文1」）
+	const wantQuote = "> 微博正文1 @target\n> \n> target body"
+	// autocorrect-enable
+	if !strings.HasSuffix(markdown, wantQuote) {
+		t.Fatalf("zero-time inline quote must end with target body:\n%s", markdown)
 	}
 }
 
