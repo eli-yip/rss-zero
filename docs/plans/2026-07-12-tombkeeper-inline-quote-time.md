@@ -1,7 +1,7 @@
 ---
 title: "tombkeeper 内嵌微博正文时间展示"
 issue: docs/issues/2026-07-12-tombkeeper-inline-quote-time.md
-status: in-progress
+status: done
 areas: [tombkeeper, rss, render]
 updated: "2026-07-12"
 ---
