@@ -1,7 +1,7 @@
 ---
 title: "cron 来源注册表重构 + 删除 definitionToFunc 数据竞争"
 issue: docs/issues/2026-07-12-cron-source-registry.md
-status: draft
+status: done
 areas: [cron, controller, db]
 updated: "2026-07-12"
 ---

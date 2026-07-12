@@ -1,7 +1,7 @@
 ---
 title: "cron 来源注册表：把 5 处来源 switch 塌成一张表，顺带根治 definitionToFunc 数据竞争"
 kind: refactor
-status: open
+status: closed
 priority: high
 areas: [cron, controller, db]
 plan: docs/plans/2026-07-12-cron-source-registry.md

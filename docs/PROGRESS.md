@@ -2,6 +2,22 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
+**2026-07-12 · cron-source-registry · 已 squash 合并本地 master（`41676fbf`）；未发版、未 push。**
+[Issue](issues/2026-07-12-cron-source-registry.md) ·
+[Plan](plans/2026-07-12-cron-source-registry.md)：把散在 `cmd/server/cron.go` 与
+`internal/controller/job/task.go` 的 5 处来源 switch（zsxq/zhihu/xiaobot/github）塌成
+`internal/controller/job/registry.go` 一张 `SourceSpec` 表（仿 `pkg/cookie/registry.go`），各源
+差异的 crawlFunc 构造锁进 `Build` 闭包，启动期与请求期共用 `AddToScheduler`，恢复按 `Resumable`
+分流——新增来源从改 5 处变为加 1 行 + 1 闭包。同时删掉无锁的 `definitionToFunc` map，`StartJob`
+改为经注册表从 definition 现场重建 crawlFunc，从构造上消除并发读写崩进程的数据竞争（`go test -race`
+并发打 Add/Patch/Delete 回归，修前 `fatal: concurrent map writes`、删 map 后转绿）；DB schema、静态
+job 与行为不变，唯一有意改善是 `StartJob` 对旧缓存缺失的 definition 从 404 改为可启动。开工前 plan
+评审两处 blocking（测试段不可执行、helper 跨包不可见）修后放行；合并前双轴 `/code-review` Spec 零
+发现、Standards 零硬违规，两条判断题（收窄 `specByName`、修误导注释）已就地修。`go build ./...`、
+`go test -race ./internal/controller/job/...`、`just lint` 全绿。派生
+[Issue 2](issues/2026-07-12-cron-drop-jobid-column.md)（删 `cron_service_job_id` 列）、
+[Issue 3](issues/2026-07-12-cron-kind-string.md)（Type int→Kind string）待后续。
+
 **2026-07-12 · tombkeeper-inline-quote-time · 已 squash 合并 master（`b0c3222a`）。**
 [Issue](issues/2026-07-12-tombkeeper-inline-quote-time.md) ·
 [Plan](plans/2026-07-12-tombkeeper-inline-quote-time.md)：正文中的「微博正文」短链成功展开时，目标博文
