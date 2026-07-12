@@ -27,11 +27,12 @@ func (h *Controller) StartJob(c echo.Context) (err error) {
 	}
 	logger.Info("Get task def successfully", zap.Any("definition", definition))
 
-	crawlFunc, ok := h.definitionToFunc[definition.ID]
+	spec, ok := SpecByType(definition.Type)
 	if !ok {
-		return httputil.NewHTTPError(http.StatusBadRequest, "task definition not found")
+		return httputil.NewHTTPError(http.StatusBadRequest, "unknown task type")
 	}
-	logger.Info("Get crawl function successfully")
+	crawlFunc := spec.Build(h.buildDeps(), definition, nil)
+	logger.Info("Built crawl function successfully")
 
 	cronJobChanInfo := make(chan cron.CronJobInfo)
 	go crawlFunc(cronJobChanInfo)

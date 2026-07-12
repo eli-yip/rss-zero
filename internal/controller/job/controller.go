@@ -13,24 +13,26 @@ import (
 )
 
 type Controller struct {
-	cronService      *cron.CronService
-	redisService     redis.Redis
-	cookie           cookie.CookieIface
-	db               *gorm.DB
-	ai               ai.AI
-	notifier         notify.Notifier
-	cronDBService    cronDB.DB
-	definitionToFunc DefinitionToFunc
-	logger           *zap.Logger
+	cronService   *cron.CronService
+	redisService  redis.Redis
+	cookie        cookie.CookieIface
+	db            *gorm.DB
+	ai            ai.AI
+	notifier      notify.Notifier
+	cronDBService cronDB.DB
+	logger        *zap.Logger
 }
 
-func NewController(cronService *cron.CronService, redisService redis.Redis, cs cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier, cronDBService cronDB.DB, definitionToFunc DefinitionToFunc, logger *zap.Logger) *Controller {
+func NewController(cronService *cron.CronService, redisService redis.Redis, cs cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier, cronDBService cronDB.DB, logger *zap.Logger) *Controller {
 	return &Controller{cronService: cronService,
 		redisService: redisService, cookie: cs, db: db, ai: ai, notifier: notifier,
-		cronDBService: cronDBService, definitionToFunc: definitionToFunc, logger: logger}
+		cronDBService: cronDBService, logger: logger}
 }
 
-type (
-	CrawlFunc        func(chan cron.CronJobInfo)
-	DefinitionToFunc map[string]CrawlFunc
-)
+// buildDeps packs the controller's held dependencies into a BuildDeps so any
+// source's Build closure can reconstruct its crawlFunc on demand.
+func (h *Controller) buildDeps() BuildDeps {
+	return BuildDeps{Redis: h.redisService, Cookie: h.cookie, DB: h.db, AI: h.ai, Notifier: h.notifier}
+}
+
+type CrawlFunc func(chan cron.CronJobInfo)

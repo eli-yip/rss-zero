@@ -10,10 +10,6 @@ import (
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
-	githubCron "github.com/eli-yip/rss-zero/pkg/routers/github/cron"
-	xiaobotCron "github.com/eli-yip/rss-zero/pkg/routers/xiaobot/cron"
-	zhihuCron "github.com/eli-yip/rss-zero/pkg/routers/zhihu/cron"
-	zsxqCron "github.com/eli-yip/rss-zero/pkg/routers/zsxq/cron"
 )
 
 func (h *Controller) AddTask(c echo.Context) (err error) {
@@ -34,7 +30,7 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	taskType, err := TaskTypeStrToInt(req.TaskType)
+	taskType, err := TypeStrToInt(req.TaskType)
 	if err != nil {
 		logger.Error("Unknown task type", zap.String("task_type", req.TaskType))
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -47,7 +43,9 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 	}
 	logger.Info("Add task definition successfully", zap.String("task_id", taskID))
 
-	cronServiceJobID, err := h.addTaskToCronService(taskID, req.CronExpr, req.Include, req.Exclude, taskType)
+	// The definition we just stored, assembled from the request (avoids a re-fetch).
+	def := &cronDB.CronTask{ID: taskID, Type: taskType, CronExpr: req.CronExpr, Include: req.Include, Exclude: req.Exclude}
+	cronServiceJobID, err := h.addTaskToCronService(def)
 	if err != nil {
 		logger.Error("Failed to add task to cron service", zap.Error(err))
 		if err = h.cronDBService.DeleteDefinition(taskID); err != nil {
@@ -66,48 +64,14 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 	}))
 }
 
-func (h *Controller) addTaskToCronService(taskID, cronExpr string, include, exclude []string, taskType int) (jobID string, err error) {
-	var crawlFunc CrawlFunc
-	switch taskType {
-	case cronDB.TypeZsxq:
-		crawlFunc = zsxqCron.BuildCrawlFunc(nil, taskID, include, exclude, h.redisService, h.cookie, h.db, h.ai, h.notifier)
-		if jobID, err = h.cronService.AddCrawlJob("zsxq_crawl", cronExpr, crawlFunc); err != nil {
-			return "", fmt.Errorf("failed to add crawl job: %w", err)
-		}
-		if err = h.cronDBService.PatchDefinition(taskID, nil, nil, nil, &jobID); err != nil {
-			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
-		}
-	case cronDB.TypeZhihu:
-		crawlFunc = zhihuCron.BuildCrawlFunc(nil, taskID, include, exclude, h.redisService, h.cookie, h.db, h.ai, h.notifier)
-		if jobID, err = h.cronService.AddCrawlJob("zhihu_crawl", cronExpr, crawlFunc); err != nil {
-			return "", fmt.Errorf("failed to add crawl job: %w", err)
-		}
-		if err = h.cronDBService.PatchDefinition(taskID, nil, nil, nil, &jobID); err != nil {
-			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
-		}
-	case cronDB.TypeXiaobot:
-		crawlFunc = xiaobotCron.BuildCronCrawlFunc(h.redisService, h.cookie, h.db, h.notifier, &xiaobotCron.Filter{
-			Include: include,
-			Exclude: exclude,
-		})
-		if jobID, err = h.cronService.AddCrawlJob("xiaobot_crawl", cronExpr, crawlFunc); err != nil {
-			return "", fmt.Errorf("failed to add crawl job: %w", err)
-		}
-		if err = h.cronDBService.PatchDefinition(taskID, nil, nil, nil, &jobID); err != nil {
-			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
-		}
-	case cronDB.TypeGitHub:
-		crawlFunc = githubCron.Crawl(h.redisService, h.cookie, h.db, h.ai, h.notifier)
-		if jobID, err = h.cronService.AddCrawlJob("github_crawl", cronExpr, crawlFunc); err != nil {
-			return "", fmt.Errorf("failed to add crawl job: %w", err)
-		}
-		if err = h.cronDBService.PatchDefinition(taskID, nil, nil, nil, &jobID); err != nil {
-			return "", fmt.Errorf("failed to patch definition of job id: %w", err)
-		}
-	default:
-		return "", fmt.Errorf("unknown task type: %d", taskType)
+func (h *Controller) addTaskToCronService(def *cronDB.CronTask) (jobID string, err error) {
+	spec, ok := SpecByType(def.Type)
+	if !ok {
+		return "", fmt.Errorf("unknown task type: %d", def.Type)
 	}
-	h.definitionToFunc[taskID] = crawlFunc
+	if jobID, err = AddToScheduler(h.cronService, h.cronDBService, spec, h.buildDeps(), def); err != nil {
+		return "", err
+	}
 	return jobID, nil
 }
 
@@ -161,7 +125,7 @@ func (h *Controller) PatchTask(c echo.Context) (err error) {
 	}
 	logger.Info("Get task definition successfully", zap.String("task_id", req.ID))
 
-	cronServiceJobID, err := h.addTaskToCronService(req.ID, taskInfo.CronExpr, taskInfo.Include, taskInfo.Exclude, taskInfo.Type)
+	cronServiceJobID, err := h.addTaskToCronService(taskInfo)
 	if err != nil {
 		logger.Error("Failed to add task to cron service", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -219,9 +183,7 @@ func (h *Controller) DeleteTask(c echo.Context) (err error) {
 	}
 	logger.Info("Delete task definition successfully", zap.String("task_id", taskID))
 
-	delete(h.definitionToFunc, taskID)
-
-	taskTypeStr, err := TaskTypeIntToStr(taskInfo.Type)
+	taskTypeStr, err := TypeIntToStr(taskInfo.Type)
 	if err != nil {
 		logger.Error("Failed to convert task type to string", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -250,7 +212,7 @@ func (h *Controller) ListTask(c echo.Context) (err error) {
 
 		taskInfo := make([]*TaskInfo, 0, len(taskDefs))
 		for _, def := range taskDefs {
-			taskTypeStr, err := TaskTypeIntToStr(def.Type)
+			taskTypeStr, err := TypeIntToStr(def.Type)
 			if err != nil {
 				logger.Error("Failed to convert task type to string", zap.Error(err))
 				return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -276,7 +238,7 @@ func (h *Controller) ListTask(c echo.Context) (err error) {
 	}
 	logger.Info("Get task definition successfully", zap.String("task_id", taskID))
 
-	taskTypeStr, err := TaskTypeIntToStr(taskDef.Type)
+	taskTypeStr, err := TypeIntToStr(taskDef.Type)
 	if err != nil {
 		logger.Error("Failed to convert task type to string", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -291,34 +253,4 @@ func (h *Controller) ListTask(c echo.Context) (err error) {
 			Exclude:  taskDef.Exclude,
 		},
 	}))
-}
-
-func TaskTypeStrToInt(taskType string) (int, error) {
-	switch taskType {
-	case "zsxq":
-		return cronDB.TypeZsxq, nil
-	case "zhihu":
-		return cronDB.TypeZhihu, nil
-	case "xiaobot":
-		return cronDB.TypeXiaobot, nil
-	case "github":
-		return cronDB.TypeGitHub, nil
-	default:
-		return 0, fmt.Errorf("unknown task type: %s", taskType)
-	}
-}
-
-func TaskTypeIntToStr(taskType int) (string, error) {
-	switch taskType {
-	case cronDB.TypeZsxq:
-		return "zsxq", nil
-	case cronDB.TypeZhihu:
-		return "zhihu", nil
-	case cronDB.TypeXiaobot:
-		return "xiaobot", nil
-	case cronDB.TypeGitHub:
-		return "github", nil
-	default:
-		return "", fmt.Errorf("unknown task type: %d", taskType)
-	}
 }

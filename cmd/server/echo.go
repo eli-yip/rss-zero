@@ -54,7 +54,6 @@ func setupEcho(redisService redis.Redis,
 	ai ai.AI,
 	notifier notify.Notifier,
 	fileService file.File,
-	definitionToFunc jobController.DefinitionToFunc,
 	cronService *cron.CronService,
 	logger *zap.Logger,
 ) (e *echo.Echo) {
@@ -114,7 +113,7 @@ func setupEcho(redisService redis.Redis,
 	cronDBService := cronDB.NewDBService(db)
 	jobHandler := jobController.NewController(cronService,
 		redisService, cookieService, db, ai, notifier,
-		cronDBService, definitionToFunc, logger)
+		cronDBService, logger)
 	archiveHandler := archiveController.NewController(db)
 	githubDBService := githubDB.NewDBService(db)
 	githubController := githubController.NewController(redisService, cookieService, githubDBService, notifier)

@@ -56,6 +56,25 @@ cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析
   markdown。**只做解析/落库 + 单篇归档 HTML，无 RSS 出口**；按需**全量**抓取（伪 job，无 cron，
   见 [OPS](OPS.md)）。解析复用微博同款 Next.js flight 机制（`pkg/routers/tkblog`）。
 
+## 定时任务（cron）
+
+`pkg/cron` 是 gocron 的薄封装；`cmd/server/cron.go` 的 `setupCronCrawlJob` 在启动时装配两类
+job：
+
+- **静态 job**：`jobDefinition` slice（`check_cookies` / `macked_crawl` / `tombkeeper_crawl` /
+  `canglimo_*` / `zvideo_crawl` / `douyu_crawl`），固定注册，与来源枚举无关。
+- **动态来源 job**：用户经 `/api/v1/job` 增删的 zsxq/zhihu/xiaobot/github 抓取任务，持久化在
+  `cron_tasks`（`CronTask.Type` 为 int 枚举）。
+
+**来源的唯一分支点是 `internal/controller/job/registry.go` 的一张 `SourceSpec` 表**：一源一行
+（`Type` / `Name` / `Resumable` / `Build` 闭包）。四个签名各异的 `BuildCrawlFunc` 各自锁进本源的
+`Build` 闭包里，对外统一出 `CrawlFunc`；`SpecByType` / `SpecByName` 查表取代了原先散在「启动加载 /
+请求增改 / 重启恢复 / 字符串↔int」的 5 处 `switch`。启动期与请求期共用 helper `AddToScheduler`
+（`Build → AddCrawlJob → PatchDefinition` 回写调度器 job id）。重启恢复 `resumeRunningJobs` 按
+`spec.Resumable` 分流：可续爬的 zsxq/zhihu 现场重建 crawlFunc 续跑，xiaobot/github 标
+`StatusStopped`。`StartJob` 也由 definition + 注册表**现场重建** crawlFunc（无共享缓存 map，故无并发
+数据竞争）。**新增一个来源 = 加一行表 + 写它的 `Build` 闭包**，别处不再改。
+
 ## 迁移
 
 `internal/migrate` 是注册表：`Migration{Version int64, Name, Auto, RequiresPredecessors, Run}`
