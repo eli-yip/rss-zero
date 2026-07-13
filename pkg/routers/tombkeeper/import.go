@@ -178,12 +178,7 @@ func referencePostIDs(retweetPostID int64, links []PostLink) []int64 {
 		if !isWeiboTextLink(link) {
 			continue
 		}
-		_, bid := parseWeiboLong(link.LongURL)
-		mid, err := BidToMid(bid)
-		if err != nil {
-			continue
-		}
-		if id, err := strconv.ParseInt(mid, 10, 64); err == nil {
+		if id, ok := weiboLinkPostID(link.LongURL); ok {
 			ids = append(ids, id)
 		}
 	}

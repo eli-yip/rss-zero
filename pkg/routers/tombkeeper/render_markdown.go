@@ -132,11 +132,8 @@ func renderSnapshotLinks(text string, links []PostLink, content ContentSnapshot,
 			return fmt.Sprintf("[查看图片|原始链接](%s)", link.LongURL)
 		}
 		if depth == 0 && isWeiboTextLink(link) {
-			_, bid := parseWeiboLong(link.LongURL)
-			mid, err := BidToMid(bid)
-			if err == nil {
-				id, parseErr := strconv.ParseInt(mid, 10, 64)
-				if target, exists := content.Posts[id]; parseErr == nil && exists {
+			if id, ok := weiboLinkPostID(link.LongURL); ok {
+				if target, exists := content.Posts[id]; exists {
 					quoteNumber++
 					body := snapshotQuoteBody(target, content, serverBaseURL)
 					quotes = append(quotes,

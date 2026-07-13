@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -25,7 +26,9 @@ func isWeiboTextLink(e PostLink) bool {
 	return IsTombkeeperUID(uid)
 }
 
-// parseWeiboLong splits a https://weibo.com/{uid}/{bid} long_url.
+// parseWeiboLong splits a https://weibo.com/{uid}/{bid|mid} long_url. The second
+// segment is usually a base62 bid but can also be a numeric mid; callers resolve
+// it via weiboSegmentToMid.
 func parseWeiboLong(longURL string) (uid, bid string) {
 	u, err := url.Parse(longURL)
 	if err != nil {
@@ -36,6 +39,47 @@ func parseWeiboLong(longURL string) (uid, bid string) {
 		return parts[0], parts[1]
 	}
 	return "", ""
+}
+
+func isAllDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := range len(s) {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// weiboMblogidMaxLen 是任意 int64 mid 经 MidToBid 得到的 mblogid 最大长度：mid 按 7
+// 位分组，每组 base62 至多 4 字符、最高组至多 3 字符 → 3+4+4 = 11。
+const weiboMblogidMaxLen = 11
+
+// weiboSegmentToMid 把 weibo 永久链接第二段解析成数字 mid。该段通常是 base62 bid，
+// 但 weibo（及 tombkeeper.io 的 url_info）也会直接用数字 mid 形式。长度 > 11 的纯数字
+// 段不可能是 bid（任何 int64 mid 的 bid ≤ 11 字符），故只能是数字 mid，直接返回，避免
+// 被 BidToMid 误当 base62 解出乱码；较短的纯数字段与真实 bid 有歧义，仍走 BidToMid。
+func weiboSegmentToMid(seg string) (string, error) {
+	if len(seg) > weiboMblogidMaxLen && isAllDigits(seg) {
+		return seg, nil
+	}
+	return BidToMid(seg)
+}
+
+// weiboLinkPostID 从 uid/{bid|mid} 长链解析出微博的数字 id。
+func weiboLinkPostID(longURL string) (int64, bool) {
+	_, seg := parseWeiboLong(longURL)
+	mid, err := weiboSegmentToMid(seg)
+	if err != nil {
+		return 0, false
+	}
+	id, err := strconv.ParseInt(mid, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return id, true
 }
 
 // Archive-link matchers, shared by the archive controller's dispatcher and its
@@ -62,7 +106,7 @@ func WeiboArchiveMid(link string) (mid string, ok bool) {
 		if !IsTombkeeperUID(m[1]) {
 			return "", false
 		}
-		if mid, err := BidToMid(m[2]); err == nil {
+		if mid, err := weiboSegmentToMid(m[2]); err == nil {
 			return mid, true
 		}
 	}
