@@ -81,6 +81,31 @@ func GenerateHTML(title, bodyContent string) (string, error) {
             max-width: 100%%;
             height: auto;
         }
+				blockquote {
+            margin: 1em 0;
+            padding: 0.5em 1em;
+            border-left: 4px solid #d0d7de;
+            background: #f6f8fa;
+            color: #57606a;
+        }
+				code {
+            background: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+				pre {
+            background: #f6f8fa;
+            padding: 1em;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+				pre code {
+            background: none;
+            padding: 0;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>

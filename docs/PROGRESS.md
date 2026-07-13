@@ -2,6 +2,10 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
+**2026-07-13 · archive-content-styles · 已 squash 合并 master、发版 `26.7.7`。** archive HTML 正文为
+blockquote/code/pre 补充内联样式（`pkg/render/md2html.go`），提升可读性；同时刷新此前遗留的 md2html golden
+（favicon/style/wrapper 曾加入 `GenerateHTML` 却未同步测试）。`go test ./pkg/render/...`、`just lint` 全绿。
+
 **2026-07-13 · cron-kind-string + cron-drop-jobid-column · 已 squash 合并本地 master（`8afa7780`）；未发版、未 push。**
 [Issue 3](issues/2026-07-12-cron-kind-string.md) · [Plan 3](plans/2026-07-12-cron-kind-string.md) ·
 [Issue 2](issues/2026-07-12-cron-drop-jobid-column.md) · [Plan 2](plans/2026-07-12-cron-drop-jobid-column.md)：

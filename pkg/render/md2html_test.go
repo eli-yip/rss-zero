@@ -105,10 +105,74 @@ func TestHtmlRender(t *testing.T) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<!-- Standard favicon -->
+		<link rel="icon" href="https://oss.darkeli.com/rss/favicon/favicon.ico" type="image/x-icon">
+
+		<!-- 16x16 icon -->
+		<link rel="icon" href="https://oss.darkeli.com/rss/favicon/favicon-16x16.png" sizes="16x16" type="image/png">
+
+		<!-- 32x32 icon -->
+		<link rel="icon" href="https://oss.darkeli.com/rss/favicon/favicon-32x32.png" sizes="32x32" type="image/png">
+
+		<!-- Android Chrome icon -->
+		<link rel="icon" href="https://oss.darkeli.com/rss/favicon/android-chrome-192x192.png" sizes="192x192" type="image/png">
+		<link rel="icon" href="https://oss.darkeli.com/rss/favicon/android-chrome-512x512.png" sizes="512x512" type="image/png">
+
+		<!-- Apple Touch icon for iOS -->
+		<link rel="apple-touch-icon" href="https://oss.darkeli.com/rss/favicon/apple-touch-icon.png">
+
+		<!-- Web App Manifest -->
+		<link rel="manifest" href="https://oss.darkeli.com/rss/favicon/site.webmanifest">
     <title>我是一个接近完美的人。没有高学历的情况下，如何做才能做到在大城市优雅的生活？</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+        }
+        .content {
+            max-width: 800px;
+            width: 100%;
+						text-align: left;
+        }
+				a {
+						max-width: 100%;
+						word-wrap: break-word;
+            color: blue;
+        }
+				img {
+            max-width: 100%;
+            height: auto;
+        }
+				blockquote {
+            margin: 1em 0;
+            padding: 0.5em 1em;
+            border-left: 4px solid #d0d7de;
+            background: #f6f8fa;
+            color: #57606a;
+        }
+				code {
+            background: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+				pre {
+            background: #f6f8fa;
+            padding: 1em;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+				pre code {
+            background: none;
+            padding: 0;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
-    <h1>我是一个接近完美的人。没有高学历的情况下，如何做才能做到在大城市优雅的生活？</h1>
+    <div class="content">
+        <h1>我是一个接近完美的人。没有高学历的情况下，如何做才能做到在大城市优雅的生活？</h1>
 <p>题主需要知道一点。</p>
 <p><strong>接近完美的人并不稀缺。</strong></p>
 <p><strong>只要完美的标准足够低就可以。</strong></p>
@@ -165,6 +229,7 @@ func TestHtmlRender(t *testing.T) {
 <p>时间：2021-06-23</p>
 <p><a href="https://www.zhihu.com/question/466050093/answer/1955958198">原文链接</a></p>
 
+    </div>
 </body>
 </html>`,
 		},
