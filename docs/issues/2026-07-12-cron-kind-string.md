@@ -1,7 +1,7 @@
 ---
 title: "cron 任务类型从 int(iota) 改为字符串 Kind"
 kind: refactor
-status: open
+status: closed
 priority: medium
 areas: [cron, db, controller, migrate]
 plan: docs/plans/2026-07-12-cron-kind-string.md

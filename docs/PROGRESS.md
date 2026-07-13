@@ -2,6 +2,24 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
+**2026-07-13 · cron-kind-string + cron-drop-jobid-column · 已 squash 合并本地 master（`8afa7780`）；未发版、未 push。**
+[Issue 3](issues/2026-07-12-cron-kind-string.md) · [Plan 3](plans/2026-07-12-cron-kind-string.md) ·
+[Issue 2](issues/2026-07-12-cron-drop-jobid-column.md) · [Plan 2](plans/2026-07-12-cron-drop-jobid-column.md)：
+承 [cron-source-registry](issues/2026-07-12-cron-source-registry.md) 的注册表，一次提交落地两件独立重构。
+**Issue 3**：`cron_tasks` 来源列从位置相关的 `int(iota)` 改为自描述字符串 `kind`——`SourceSpec` 合并
+`Type`+`Name` 为单一 `Kind`，`SpecByKind` 取代 `SpecByType`/`TypeStrToInt`/`TypeIntToStr`，API 字符串、
+注册表键、DB 列三者统一；自动迁移回填 int→kind（未知值/NULL 保护 + 事务内回填并删 `type` 列）。
+**Issue 2**：删持久化的 `cron_service_job_id` 列，改由带锁内存 `JobIndex`（`map[taskID]schedulerJobID`）
+维护，`setupCronCrawlJob` 建实例并穿线到启动装载器与 job Controller，`AddToScheduler` 为唯一写入点，
+`PatchTask` 在覆盖前取旧 jobID 并保留存在性校验；迁移幂等删列。锁只消数据竞争、不串行化生命周期
+（既有交错窗口非本次引入，等价搬家）。**评审**：实现与测试均由 codex（`gpt-5.6-sol` medium）独立
+评审——查出迁移未知值保护漏 NULL、测试「注册↔行为」未串联、缺 Patch-404 回归三处并修复。
+**迁移撞版本**：master 已占用 `20260713000000`（`zhihu-drop-content-text`），故本次两条迁移改号
+`20260714000000` / `20260714000001` 避让。`go build ./...`、
+`go test -race ./internal/controller/job/...`、`just lint` 全绿；迁移集成测试门控在
+`CRON_TEST_DATABASE_URL`，未设则 Skip——回填/删列 SQL **尚未对真实 Postgres 执行**，部署前建议先在
+staging 跑一次自动迁移验证。
+
 **2026-07-12 · cron-source-registry · 已 squash 合并本地 master（`41676fbf`）；未发版、未 push。**
 [Issue](issues/2026-07-12-cron-source-registry.md) ·
 [Plan](plans/2026-07-12-cron-source-registry.md)：把散在 `cmd/server/cron.go` 与

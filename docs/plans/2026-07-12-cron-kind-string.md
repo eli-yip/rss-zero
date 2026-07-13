@@ -1,7 +1,7 @@
 ---
 title: "cron 任务类型从 int(iota) 改为字符串 Kind"
 issue: docs/issues/2026-07-12-cron-kind-string.md
-status: draft
+status: done
 areas: [cron, db, controller, migrate]
 updated: "2026-07-13"
 ---

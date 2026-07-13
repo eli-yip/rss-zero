@@ -1,7 +1,7 @@
 ---
 title: "删除持久化的 cron_service_job_id 列，改由内存维护 taskID→schedulerJobID"
 issue: docs/issues/2026-07-12-cron-drop-jobid-column.md
-status: draft
+status: done
 areas: [cron, db, controller, migrate]
 updated: "2026-07-13"
 ---
