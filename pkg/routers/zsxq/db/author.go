@@ -15,9 +15,17 @@ type DBAuthor interface {
 	GetAuthorName(authorID int) (authorName string, err error)
 	// Get author id by name or alias from zsxq_author table
 	GetAuthorID(authorName string) (authorID int, err error)
+	// Batch get authors by ids from zsxq_author table
+	GetAuthorsByIDs(ids []int) (as []Author, err error)
 }
 
 func (s *ZsxqDBService) SaveAuthor(author *Author) error { return s.db.Save(author).Error }
+
+// GetAuthorsByIDs 一次查回 ids 对应的作者事实（缺失的 id 静默省略，渲染期作者名降级为空）。
+func (s *ZsxqDBService) GetAuthorsByIDs(ids []int) (authors []Author, err error) {
+	err = s.db.Where("id IN ?", ids).Find(&authors).Error
+	return authors, err
+}
 
 func (s *ZsxqDBService) GetAuthorName(authorID int) (authorName string, err error) {
 	var author Author

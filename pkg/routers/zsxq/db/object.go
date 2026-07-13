@@ -47,6 +47,8 @@ type DBObject interface {
 	SaveObjectInfo(o *Object) error
 	// Get object info from zsxq_object table
 	GetObjectInfo(oid int) (o *Object, err error)
+	// Batch get object info by ids from zsxq_object table
+	GetObjectsByIDs(ids []int) (os []Object, err error)
 }
 
 func (s *ZsxqDBService) SaveObjectInfo(o *Object) error { return s.db.Save(o).Error }
@@ -57,4 +59,10 @@ func (s *ZsxqDBService) GetObjectInfo(oid int) (*Object, error) {
 		return nil, err
 	}
 	return &object, nil
+}
+
+// GetObjectsByIDs 一次查回 ids 对应的对象事实（缺失的 id 静默省略，由渲染期报错）。
+func (s *ZsxqDBService) GetObjectsByIDs(ids []int) (objects []Object, err error) {
+	err = s.db.Where("id IN ?", ids).Find(&objects).Error
+	return objects, err
 }

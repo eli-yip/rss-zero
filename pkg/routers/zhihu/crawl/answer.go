@@ -47,8 +47,7 @@ func CrawlAnswer(user string, rs request.Requester, parser parse.Parser,
 			return parser.ParseAnswerList(bytes, index, logger)
 		},
 		parseItem: func(_ apiModels.Answer, raw json.RawMessage, logger *zap.Logger) error {
-			_, err := parser.ParseAnswer(raw, user, logger)
-			return err
+			return parser.ParseAnswer(raw, user, logger)
 		},
 		createdAt: func(answer apiModels.Answer) int64 {
 			return answer.CreateAt

@@ -4,23 +4,23 @@
   <updated>2026-06-22T10:00:00Z</updated>
   <link href="https://www.zhihu.com/people/canglimo/posts"></link>
   <entry>
-    <title>问题标题一</title>
+    <title>文章标题一</title>
     <updated>2026-06-22T10:00:00Z</updated>
     <id>111</id>
-    <content type="html">&lt;p&gt;回答正文一段&lt;a href=&#34;https://www.zhihu.com/question/1/answer/111&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
-    <link href="https://srv.test/api/v1/archive/https://www.zhihu.com/question/1/answer/111" rel="alternate"></link>
-    <summary type="html">回答正文一段</summary>
+    <content type="html">&lt;p&gt;文章正文第一段。&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://zhuanlan.zhihu.com/p/111&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://srv.test/api/v1/archive/https://zhuanlan.zhihu.com/p/111" rel="alternate"></link>
+    <summary type="html">文章正文第一段。&#xA;</summary>
     <author>
       <name>墨苍离</name>
     </author>
   </entry>
   <entry>
-    <title>问题标题二</title>
+    <title>文章标题二</title>
     <updated>2026-06-21T09:00:00Z</updated>
     <id>222</id>
-    <content type="html">&lt;p&gt;回答正文二段&lt;a href=&#34;https://www.zhihu.com/question/2/answer/222&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
-    <link href="https://srv.test/api/v1/archive/https://www.zhihu.com/question/2/answer/222" rel="alternate"></link>
-    <summary type="html">回答正文二段</summary>
+    <content type="html">&lt;p&gt;文章正文第二段。&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://zhuanlan.zhihu.com/p/222&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <link href="https://srv.test/api/v1/archive/https://zhuanlan.zhihu.com/p/222" rel="alternate"></link>
+    <summary type="html">文章正文第二段。&#xA;</summary>
     <author>
       <name>墨苍离</name>
     </author>

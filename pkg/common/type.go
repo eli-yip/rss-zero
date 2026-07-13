@@ -79,8 +79,11 @@ func (t ZhihuContentType) Slug() string {
 	return string(t)
 }
 
+// RedisKey 是 zhihu 每作者 RSS feed 的源缓存键，cron warm（crawl.go）与 controller cache-miss
+// （rss.go）共用同一个入口，故换命名空间只此一处。v2（plan 决策 6）：删 text 列后正文改从 raw
+// 重放，换 key 隔离旧 text 生成的陈旧 canonical items。
 func (t ZhihuContentType) RedisKey(authorID string) string {
-	return "zhihu_rss_" + t.Slug() + "_" + authorID
+	return "zhihu_rss_v2_" + t.Slug() + "_" + authorID
 }
 
 func (t ZhihuContentType) ProfilePath() string {

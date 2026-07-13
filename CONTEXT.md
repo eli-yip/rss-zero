@@ -27,3 +27,26 @@ _Avoid_: View Pics、H5 Result
 **内容快照（Content Snapshot）**：
 呈现一组博文所需的博文与图片资产的自包含只读集合。
 _Avoid_: Render Dataset、Render Context
+
+## 共享（读取期渲染）
+
+zhihu 与 zsxq 的事实化重写沿用 tombkeeper 的「只存事实、读取期纯渲染」骨架，形成跨源共同词汇。
+
+**内容快照（ContentSnapshot）**：
+呈现一批内容所需的根行与其引用事实（object / question / article / author）的自包含只读集合；
+不持久化，读取期由 loader 装配后喂给纯 renderer。
+_Avoid_: RenderDataset、RenderContext
+
+**内容装配器（ContentLoader）**：
+各源一个，两阶段批量把一组根行与其引用装配成内容快照，避免 N+1；可查库，产物只读。
+_Avoid_: 跨源 Library、FactReader
+
+**待提交解析结果（Parse Result）**：
+一条内容解析出的、待在同一事务内落库的全部事实（`TopicParseResult`、`PinParseResult` 等，
+各源按需定义，不抽通用 interface）。
+_Avoid_: 通用 Fact / Record interface
+
+**transient 派生渲染（Transient Derived Render）**：
+抓取期在内存里跑一次读取期同一个纯 renderer，把临时 Markdown 喂给 word_count、内容检测、
+embedding、AI 标题等派生事实，产物**不落库**；用于保派生值不漂移，而非持久化正文。
+_Avoid_: 抓取期保存 Markdown

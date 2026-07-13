@@ -11,7 +11,7 @@ type Article struct {
 	Title       string          `json:"title"`
 	HTML        string          `json:"content"`
 	ArticleType string          `json:"article_type"` // "paid_column_content" for paid
-	PaidInfo    json.RawMessage `json:"paid_info"`    // non-empty object for paid; see parse.IsPaidArticle
+	PaidInfo    json.RawMessage `json:"paid_info"`    // non-empty object for paid; see render isPaidArticle
 }
 
 type ArticleList struct {

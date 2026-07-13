@@ -35,22 +35,12 @@ func (h *Controller) HandleZsxqWebTopic(link string) (result *archiveResult, err
 		return &archiveResult{redirectTo: render.BuildArchiveLink(config.C.Settings.ServerURL, zsxqRender.BuildLink(topic.GroupID, topic.ID))}, nil
 	}
 
-	topicToRender := &zsxqRender.Topic{
-		ID:       idInt,
-		GroupID:  topic.GroupID,
-		Title:    topic.Title,
-		Type:     topic.Type,
-		Digested: topic.Digested,
-		Time:     topic.Time,
-		Text:     topic.Text,
-	}
-
-	fullTextMd, err := h.zsxqFullTextRenderService.FullText(topicToRender)
+	fullTextMd, err := h.zsxqFullTextRenderService.FullText(topic)
 	if err != nil {
 		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
 
-	return &archiveResult{title: zsxqRender.BuildTitle(topicToRender), markdown: fullTextMd}, nil
+	return &archiveResult{title: zsxqRender.BuildTitle(topic), markdown: fullTextMd}, nil
 }
 
 func isOldStyleZsxqLink(link string) bool {

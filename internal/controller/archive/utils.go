@@ -70,10 +70,20 @@ func buildTopicsFromAnswer(answers []zhihuDB.Answer, userID string, d zhihuDB.DB
 		return nil, fmt.Errorf("failed to build author map: %w", err)
 	}
 
+	snapshot, err := zhihuRender.NewContentLoader(d).LoadAnswers(answers)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load answer snapshot: %w", err)
+	}
+
 	for answer := range slices.Values(answers) {
 		question, ok := questionMap[answer.QuestionID]
 		if !ok {
 			return nil, fmt.Errorf("question not found in question map: %d", answer.QuestionID)
+		}
+
+		body, err := zhihuRender.RenderMarkdown(answer.ID, snapshot, config.C.Settings.ServerURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to render answer %d: %w", answer.ID, err)
 		}
 
 		answerID := strconv.Itoa(answer.ID)
@@ -108,7 +118,7 @@ func buildTopicsFromAnswer(answers []zhihuDB.Answer, userID string, d zhihuDB.DB
 			Type:        mustLegacyTopicType(pkgCommon.ZhihuAnswer),
 			Title:       question.Title,
 			CreatedAt:   answer.CreateAt.Format(time.RFC3339),
-			Body:        answer.Text,
+			Body:        body,
 			Author:      Author{ID: answer.AuthorID, Nickname: authorMap[answer.AuthorID]},
 			Custom:      custom,
 		})
@@ -133,12 +143,22 @@ func buildTopicMapFromAnswer(answers map[int]zhihuDB.Answer, bookmarks map[int]b
 		return nil, fmt.Errorf("failed to build author map: %w", err)
 	}
 
+	snapshot, err := zhihuRender.NewContentLoader(d).LoadAnswers(lo.Values(answers))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load answer snapshot: %w", err)
+	}
+
 	topicMap = make(map[string]Topic) // key: answerID, value: Topic
 
 	for _, answer := range answers {
 		question, ok := questionMap[answer.QuestionID]
 		if !ok {
 			return nil, fmt.Errorf("question not found in question map: %d", answer.QuestionID)
+		}
+
+		body, err := zhihuRender.RenderMarkdown(answer.ID, snapshot, config.C.Settings.ServerURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to render answer %d: %w", answer.ID, err)
 		}
 
 		answerID := strconv.Itoa(answer.ID)
@@ -165,7 +185,7 @@ func buildTopicMapFromAnswer(answers map[int]zhihuDB.Answer, bookmarks map[int]b
 			Type:        mustLegacyTopicType(pkgCommon.ZhihuAnswer),
 			Title:       question.Title,
 			CreatedAt:   answer.CreateAt.Format(time.RFC3339),
-			Body:        answer.Text,
+			Body:        body,
 			Author:      Author{ID: answer.AuthorID, Nickname: authorMap[answer.AuthorID]},
 			Custom:      custom,
 		}
@@ -181,7 +201,17 @@ func buildTopicsFromPin(pins []zhihuDB.Pin, userID string, d zhihuDB.DB, bd book
 		return nil, fmt.Errorf("failed to build author map: %w", err)
 	}
 
+	snapshot, err := zhihuRender.NewContentLoader(d).LoadPins(pins)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load pin snapshot: %w", err)
+	}
+
 	for p := range slices.Values(pins) {
+		body, err := zhihuRender.RenderMarkdown(p.ID, snapshot, config.C.Settings.ServerURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to render pin %d: %w", p.ID, err)
+		}
+
 		pinID := strconv.Itoa(p.ID)
 		bookmark, err := bd.GetBookmarkByContent(userID, pkgCommon.ZhihuPin, pinID)
 		var custom *Custom
@@ -219,7 +249,7 @@ func buildTopicsFromPin(pins []zhihuDB.Pin, userID string, d zhihuDB.DB, bd book
 				return p.Title
 			}(),
 			CreatedAt: p.CreateAt.Format(time.RFC3339),
-			Body:      p.Text,
+			Body:      body,
 			Author:    Author{ID: p.AuthorID, Nickname: authorMap[p.AuthorID]},
 			Custom:    custom,
 		})
@@ -237,9 +267,19 @@ func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, bookmarks map[int]bookmarkDB
 		return nil, fmt.Errorf("failed to build author map: %w", err)
 	}
 
+	snapshot, err := zhihuRender.NewContentLoader(d).LoadPins(lo.Values(pins))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load pin snapshot: %w", err)
+	}
+
 	topicMap = make(map[string]Topic)
 
 	for _, p := range pins {
+		body, err := zhihuRender.RenderMarkdown(p.ID, snapshot, config.C.Settings.ServerURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to render pin %d: %w", p.ID, err)
+		}
+
 		pinID := strconv.Itoa(p.ID)
 
 		bookmark := bookmarks[p.ID]
@@ -269,7 +309,7 @@ func buildTopicMapFromPin(pins map[int]zhihuDB.Pin, bookmarks map[int]bookmarkDB
 				return p.Title
 			}(),
 			CreatedAt: p.CreateAt.Format(time.RFC3339),
-			Body:      p.Text,
+			Body:      body,
 			Author:    Author{ID: p.AuthorID, Nickname: authorMap[p.AuthorID]},
 			Custom:    custom,
 		}

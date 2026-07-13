@@ -391,7 +391,7 @@ func initZhihuServices(db *gorm.DB, aiService ai.AI, cs cookie.CookieIface, logg
 
 	htmlToMarkdown = renderIface.NewHTMLToMarkdownService(render.GetHtmlRules()...)
 
-	imageParser = parse.NewOnlineImageParser(requestService, fileService, dbService)
+	imageParser = parse.NewOnlineImageParser(requestService)
 
 	embeddingDBService := embeddingDB.NewDBService(db)
 

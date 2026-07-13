@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -50,38 +49,37 @@ func FetchZhihu(contentType common.ZhihuContentType, authorID string, db zhihuDB
 	return BuildZhihuFeed(contentType, authorID, authorName, rows)
 }
 
+// zhihuRows loads a page of roots of one content type, assembles their side facts
+// once via ContentLoader (no per-item N+1), and renders each body from raw — the
+// text column is no longer read. The answer entry title comes from AnswerTitle,
+// which degrades to the question-id placeholder when the question row is missing
+// (replacing the former hard-fail that broke the whole feed).
 func zhihuRows(contentType common.ZhihuContentType, authorID string, db zhihuDB.DB) ([]ZhihuRow, error) {
+	loader := zhihuRender.NewContentLoader(db)
+	serverBaseURL := config.C.Settings.ServerURL
+
 	switch contentType {
 	case common.ZhihuAnswer:
 		answers, err := db.GetLatestNVisibleAnswer(MaxFetch, authorID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get latest answers from database: %w", err)
 		}
-		// Batch-load the answers' questions in one query instead of one GetQuestion
-		// per answer (up to MaxFetch round-trips per feed build).
-		questionIDs := lo.Map(answers, func(a zhihuDB.Answer, _ int) int { return a.QuestionID })
-		questions, err := db.GetQuestions(questionIDs)
+		snap, err := loader.LoadAnswers(answers)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get questions from database: %w", err)
+			return nil, fmt.Errorf("failed to load answer snapshot: %w", err)
 		}
-		titleByQuestionID := lo.SliceToMap(questions, func(q zhihuDB.Question) (int, string) {
-			return q.ID, q.Title
-		})
 		rows := make([]ZhihuRow, 0, len(answers))
 		for _, a := range answers {
-			title, ok := titleByQuestionID[a.QuestionID]
-			if !ok {
-				// A stored answer with no question row breaks the answer→question
-				// invariant enforced at crawl time (question is saved before the
-				// answer). Fail loudly rather than render a blank-title entry.
-				return nil, fmt.Errorf("question %d not found for answer %d", a.QuestionID, a.ID)
+			body, err := zhihuRender.RenderMarkdown(a.ID, snap, serverBaseURL)
+			if err != nil {
+				return nil, fmt.Errorf("failed to render answer %d: %w", a.ID, err)
 			}
 			rows = append(rows, ZhihuRow{
 				ID:           a.ID,
 				OfficialLink: zhihuRender.GenerateAnswerLink(a.QuestionID, a.ID),
 				CreateTime:   a.CreateAt,
-				Title:        title,
-				Text:         a.Text,
+				Title:        zhihuRender.AnswerTitle(snap, a.QuestionID),
+				Text:         body,
 			})
 		}
 		return rows, nil
@@ -90,14 +88,22 @@ func zhihuRows(contentType common.ZhihuContentType, authorID string, db zhihuDB.
 		if err != nil {
 			return nil, fmt.Errorf("failed to get latest articles from database: %w", err)
 		}
+		snap, err := loader.LoadArticles(articles)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load article snapshot: %w", err)
+		}
 		rows := make([]ZhihuRow, 0, len(articles))
 		for _, ar := range articles {
+			body, err := zhihuRender.RenderMarkdown(ar.ID, snap, serverBaseURL)
+			if err != nil {
+				return nil, fmt.Errorf("failed to render article %d: %w", ar.ID, err)
+			}
 			rows = append(rows, ZhihuRow{
 				ID:           ar.ID,
 				OfficialLink: zhihuRender.GenerateArticleLink(ar.ID),
 				CreateTime:   ar.CreateAt,
 				Title:        ar.Title,
-				Text:         ar.Text,
+				Text:         body,
 			})
 		}
 		return rows, nil
@@ -106,8 +112,16 @@ func zhihuRows(contentType common.ZhihuContentType, authorID string, db zhihuDB.
 		if err != nil {
 			return nil, fmt.Errorf("failed to get latest pins from database: %w", err)
 		}
+		snap, err := loader.LoadPins(pins)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load pin snapshot: %w", err)
+		}
 		rows := make([]ZhihuRow, 0, len(pins))
 		for _, pin := range pins {
+			body, err := zhihuRender.RenderMarkdown(pin.ID, snap, serverBaseURL)
+			if err != nil {
+				return nil, fmt.Errorf("failed to render pin %d: %w", pin.ID, err)
+			}
 			title := pin.Title
 			if title == "" {
 				title = strconv.Itoa(pin.ID)
@@ -117,7 +131,7 @@ func zhihuRows(contentType common.ZhihuContentType, authorID string, db zhihuDB.
 				OfficialLink: zhihuRender.GeneratePinLink(pin.ID),
 				CreateTime:   pin.CreateAt,
 				Title:        title,
-				Text:         pin.Text,
+				Text:         body,
 			})
 		}
 		return rows, nil

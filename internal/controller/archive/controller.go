@@ -3,7 +3,7 @@ package archive
 import (
 	"gorm.io/gorm"
 
-	"github.com/eli-yip/rss-zero/internal/md"
+	"github.com/eli-yip/rss-zero/config"
 	bookmarkDB "github.com/eli-yip/rss-zero/pkg/bookmark/db"
 	embeddingDB "github.com/eli-yip/rss-zero/pkg/embedding/db"
 	"github.com/eli-yip/rss-zero/pkg/render"
@@ -32,14 +32,15 @@ type Controller struct {
 
 func NewController(db *gorm.DB) *Controller {
 	zsxqDBService := zsxqDB.NewDBService(db)
+	zhihuDBService := zhihuDB.NewDBService(db)
 	return &Controller{
 		db:                         db,
-		zhihuDBService:             zhihuDB.NewDBService(db),
+		zhihuDBService:             zhihuDBService,
 		embeddingDBService:         embeddingDB.NewDBService(db),
 		bookmarkDBService:          bookmarkDB.NewBookMarkDBImpl(db),
-		zhihuFullTextRenderService: zhihuRender.NewFullTextRender(md.NewMarkdownFormatter()),
+		zhihuFullTextRenderService: zhihuRender.NewFullTextRender(zhihuDBService, config.C.Settings.ServerURL),
 		zsxqDBService:              zsxqDBService,
-		zsxqFullTextRenderService:  zsxqRender.NewFullTextRenderService(),
+		zsxqFullTextRenderService:  zsxqRender.NewFullTextRenderService(zsxqDBService),
 		tombkeeperDBService:        tombkeeperDB.NewDBService(db),
 		tkblogDBService:            tkblogDB.NewDBService(db),
 

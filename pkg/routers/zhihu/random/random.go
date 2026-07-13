@@ -30,19 +30,27 @@ func GenerateRandomCanglimoAnswerRSS(zhihuDBService db.DB, logger *zap.Logger) (
 	}
 	logger.Info("Random select answers", zap.Int("count", len(answers)))
 
+	// 正文改从 raw + 侧表重放（text 列已删）：装配一次快照，逐条走读取期同一个纯 RenderMarkdown。
+	// answer 正文用不到 serverBaseURL，传空即可；标题经 AnswerTitle 从快照取、缺失降级为问题 id。
+	snap, err := zhihuRender.NewContentLoader(zhihuDBService).LoadAnswers(answers)
+	if err != nil {
+		logger.Error("Failed to load answer snapshot", zap.Error(err))
+		return "", err
+	}
+
 	rows := make([]rss.ZhihuRow, 0, len(answers))
 	for _, answer := range answers {
-		question, err := zhihuDBService.GetQuestion(answer.QuestionID)
+		body, err := zhihuRender.RenderMarkdown(answer.ID, snap, "")
 		if err != nil {
-			logger.Error("Failed to get question", zap.Error(err))
+			logger.Error("Failed to render answer", zap.Int("answer_id", answer.ID), zap.Error(err))
 			return "", err
 		}
 		rows = append(rows, rss.ZhihuRow{
 			ID:           rand.IntN(1000000000),
 			OfficialLink: zhihuRender.GenerateAnswerLink(answer.QuestionID, answer.ID),
 			CreateTime:   time.Now(),
-			Title:        question.Title,
-			Text:         answer.Text,
+			Title:        zhihuRender.AnswerTitle(snap, answer.QuestionID),
+			Text:         body,
 		})
 	}
 

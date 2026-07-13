@@ -15,6 +15,9 @@ func getFormatFuncs() []formatFunc {
 		replaceBookMarkUp,
 		replaceAnswerQuoto,
 		replaceHashTags,
+		// FormatStr 后清理排版产生的空格。
+		// FIX: 去缩进目前前后各跑一次且逻辑分散，后续应合并为「源文本规范化」单一阶段
+		// （inventory #8 方案 B/C），暂按方案 A 对称化。
 		removeSpaces,
 		processMention,
 		replacePercentEncodedChars,

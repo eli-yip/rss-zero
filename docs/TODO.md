@@ -43,6 +43,17 @@
 
 `go test ./pkg/routers/endoflife/` 的 `TestParseCycles` 也是**预存**失败（在 master 50e088c 即可复现，非 unified-rss-pipeline 改动引入）：用例期望 `ParseCycles` 返回 3 条 versionInfo，实际 `filterCycles` 只保留 `latest==最新版` 或 `lts` 的 cycle，返回 1 条。需确认是 fixture/期望陈旧还是 `filterCycles` 过滤逻辑回归。
 
+## 知乎 / 星球事实化渲染后续（zhihu-zsxq-fact-rendering）
+
+来源：2026-07-12 [plan](plans/2026-07-12-zhihu-zsxq-fact-rendering.md) 明列的后续项，本次重写有意不做。
+
+- **对象存储 staging / 不可变 key 与 orphan 回收**：抓取期转存的图片/附件文件**不入事务**（失败留
+  MinIO 未引用文件，同稳定 key 可复用/覆盖）。本次刻意不引入 staging 目录、不可变 key 或 orphan 回收；
+  若未引用文件积累变痛，再单开。两源共同。
+- **`raw` → typed `content` 事实列（YAGNI 备选）**：读取期每次从 `raw` 经 `parse/models`/`api_models`
+  反序列化装配快照。若将来上游 API schema 漂移导致「按老结构反解旧 `raw`」变脆/变痛，可把稳定字段物化
+  成 typed `content` 列（而非继续依赖即时反解）。当前 `raw` 反解够用，属 YAGNI 备选，两源共同。
+
 ## 统一响应格式后续（unified-response-format）
 
 - **`/statistics` 页面在统计数据为空时白屏崩溃**（预存 bug，与统一响应格式无关）。webapp 的 `<ActivityCalendar>`（react-activity-calendar）在收到空数据时抛异常，且无 error boundary，导致整页不渲染。复现：当 canglimo 在"过去一年"窗口内没有回答时（如本地 DB 数据陈旧），`GET /api/v1/archive/statistics` 返回空 `data`，前端解包为空 → 组件崩溃。生产环境有近一年数据故正常。修复方向：`StatisticsPage`/`Statistics` 组件加空数据 guard（空时显示占位/提示），或包一层 error boundary。

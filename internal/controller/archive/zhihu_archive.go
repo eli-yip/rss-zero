@@ -31,18 +31,7 @@ func (h *Controller) HandleZhihuAnswer(link string) (result *archiveResult, err 
 		return nil, fmt.Errorf("failed to get author name: %w", err)
 	}
 
-	fullText, err := h.zhihuFullTextRenderService.Answer(&zhihuRender.Answer{
-		Question: zhihuRender.BaseContent{
-			ID:       answer.QuestionID,
-			CreateAt: question.CreateAt,
-			Text:     question.Title,
-		},
-		Answer: zhihuRender.BaseContent{
-			ID:       answerIDint,
-			CreateAt: answer.CreateAt,
-			Text:     answer.Text,
-		},
-	}, zhihuRender.WithAuthorName(authorName))
+	fullText, err := h.zhihuFullTextRenderService.Answer(*answer, question.Title, zhihuRender.WithAuthorName(authorName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
@@ -71,14 +60,7 @@ func (h *Controller) HandleZhihuArticle(link string) (result *archiveResult, err
 		return nil, fmt.Errorf("failed to get author name: %w", err)
 	}
 
-	fullText, err := h.zhihuFullTextRenderService.Article(&zhihuRender.Article{
-		Title: article.Title,
-		BaseContent: zhihuRender.BaseContent{
-			ID:       articleIDint,
-			CreateAt: article.CreateAt,
-			Text:     article.Text,
-		},
-	}, zhihuRender.WithAuthorName(authorName))
+	fullText, err := h.zhihuFullTextRenderService.Article(*article, zhihuRender.WithAuthorName(authorName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}
@@ -107,13 +89,7 @@ func (h *Controller) HandleZhihuPin(link string) (result *archiveResult, err err
 		return nil, fmt.Errorf("failed to get author name: %w", err)
 	}
 
-	fullText, err := h.zhihuFullTextRenderService.Pin(&zhihuRender.Pin{
-		Title: pin.Title,
-		BaseContent: zhihuRender.BaseContent{
-			ID:       pin.ID,
-			CreateAt: pin.CreateAt,
-			Text:     pin.Text,
-		}}, zhihuRender.WithAuthorName(authorName))
+	fullText, err := h.zhihuFullTextRenderService.Pin(*pin, zhihuRender.WithAuthorName(authorName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to render full text: %w", err)
 	}

@@ -7,9 +7,9 @@
     <title>话题标题一</title>
     <updated>2026-06-22T10:00:00Z</updated>
     <id>1001</id>
-    <content type="html">&lt;p&gt;正文一段落&lt;a href=&#34;https://wx.zsxq.com/group/123/topic/1001&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <content type="html">&lt;p&gt;&lt;em&gt;&lt;strong&gt;作者：作者甲&lt;/strong&gt;&lt;/em&gt;&lt;/p&gt;&#xA;&lt;p&gt;这是话题正文。&lt;/p&gt;&#xA;&lt;p&gt;这篇文章的附件如下：&lt;/p&gt;&#xA;&lt;p&gt;第1个文件：&lt;a href=&#34;https://oss.example.com/zsxq/report.pdf&#34;&gt;报告.pdf&lt;/a&gt;&lt;/p&gt;&#xA;&lt;p&gt;这篇文章的图片如下：&lt;/p&gt;&#xA;&lt;p&gt;第1张图片：&lt;img src=&#34;https://oss.example.com/zsxq/9002.jpg&#34; alt=&#34;9002&#34;&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://wx.zsxq.com/group/123/topic/1001&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
     <link href="https://srv.test/api/v1/archive/https://wx.zsxq.com/group/123/topic/1001" rel="alternate"></link>
-    <summary type="html">正文一段落</summary>
+    <summary type="html">***作者：作者甲***&#xA;&#xA;这是话题正文。&#xA;&#xA;这篇文章的附件如下：&#xA;&#xA;第1个文件：[</summary>
     <author>
       <name>作者甲</name>
     </author>
@@ -18,9 +18,9 @@
     <title>1002</title>
     <updated>2026-06-21T09:00:00Z</updated>
     <id>1002</id>
-    <content type="html">&lt;p&gt;正文二段落&lt;a href=&#34;https://wx.zsxq.com/group/123/topic/1002&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <content type="html">&lt;blockquote&gt;&#xA;&lt;p&gt;这是提问正文&lt;/p&gt;&#xA;&lt;/blockquote&gt;&#xA;&lt;p&gt;&lt;em&gt;&lt;strong&gt;作者乙&lt;/strong&gt;回答如下：&lt;/em&gt;&lt;/p&gt;&#xA;&lt;p&gt;这个&lt;a href=&#34;https://oss.example.com/zsxq/voice.mp3&#34;&gt;回答&lt;/a&gt;的语音转文字结果：&lt;/p&gt;&#xA;&lt;p&gt;这是语音转写内容&lt;/p&gt;&#xA;&lt;p&gt;这是回答正文&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://wx.zsxq.com/group/123/topic/1002&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
     <link href="https://srv.test/api/v1/archive/https://wx.zsxq.com/group/123/topic/1002" rel="alternate"></link>
-    <summary type="html">正文二段落</summary>
+    <summary type="html">&gt; 这是提问正文&#xA;&#xA;***作者乙**回答如下：*&#xA;&#xA;这个[回答](https://oss.example.com/zsxq/vo</summary>
     <author>
       <name>作者乙</name>
     </author>

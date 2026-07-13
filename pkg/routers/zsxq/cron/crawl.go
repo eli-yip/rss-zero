@@ -249,7 +249,7 @@ func prepareZsxqServices(cookie string, db *gorm.DB, ai ai.AI, logger *zap.Logge
 		return nil, nil, nil, fmt.Errorf("failed to init zsxq file service: %w", err)
 	}
 
-	markdownRender := render.NewMarkdownRenderService(dbService)
+	markdownRender := render.NewMarkdownRenderService()
 
 	if parseService, err = parse.NewParseService(
 		fileService,

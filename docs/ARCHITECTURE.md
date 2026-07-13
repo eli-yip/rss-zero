@@ -47,8 +47,9 @@ cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析
    → RenderAtom → /rss/<source> 响应
 ```
 
-- **内容库**：Postgres（GORM）。多数来源保存已解析正文；tombkeeper 只保存结构化博文、链接、
-  图片资产和时间线成员关系，读取时先批量装配 `ContentSnapshot`，再用纯函数生成 Markdown。
+- **内容库**：Postgres（GORM）。部分来源保存已解析正文；tombkeeper、zhihu、zsxq 只存结构化事实
+  （`raw` + 侧表：object/question/article/author），读取时先批量装配 `ContentSnapshot`，再用纯
+  `RenderMarkdown` 生成 Markdown。
 - **缓存**：Redis 存 `cachedFeed` JSON 与部分渲染 XML（random 端点 24h TTL）。
 - **对象存储**：图片抓取后转存 OSS 换链（tombkeeper/zsxq 共用 `internal/file`）。
 - **tkblog 博客（旁支，不入 RSS 管线）**：`tombkeeper.io/{xfocus,baidu}` 的博文另存

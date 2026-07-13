@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"slices"
 	"time"
 
@@ -13,7 +14,6 @@ type Pin struct {
 	CreateAt time.Time `gorm:"column:create_at;type:timestamptz"`
 	UpdateAt time.Time `gorm:"column:update_at;type:timestamptz"`
 	Title    string    `gorm:"column:title;type:text"`
-	Text     string    `gorm:"column:text;type:text"`
 	Raw      []byte    `gorm:"column:raw;type:bytea"`
 }
 
@@ -22,6 +22,11 @@ func (p *Pin) TableName() string { return "zhihu_pin" }
 type DBPin interface {
 	GetPin(id int) (*Pin, error)
 	SavePin(p *Pin) error
+	// SavePinTx 在单事务内提交一条 pin 树产生的全部行：各图片对象、作者、各 pin 根行
+	// （origin 引用的 pin 在前、顶层 pin 在后）。origin_pin 也随顶层 pin 同事务落库
+	// （代码递归任意深度，zhihu 实际至多一层 origin）。原子性来自事务本身（任一步失败整体
+	// 回滚，见 plan 决策 4）；写入顺序只是可读性约定，无 FK 强制、不改变回滚语义。
+	SavePinTx(pins []Pin, authors []Author, objects []Object) error
 	GetLatestNPin(n int, authorID string) ([]Pin, error)
 	GetLatestPinTime(userID string) (time.Time, error)
 	FetchNPin(n int, opt FetchPinOption) (ps []Pin, err error)
@@ -42,6 +47,31 @@ func (d *DBService) GetPin(id int) (*Pin, error) {
 }
 
 func (d *DBService) SavePin(p *Pin) error { return d.Save(p).Error }
+
+// SavePinTx 把一条 pin 树（顶层 + origin，代码递归任意深度、zhihu 实际至多一层）解析出的
+// 全部事实行放进同一个事务提交：各图片对象、各作者、按 pins 切片顺序写各 pin 根行（origin
+// 在前、顶层在后）。原子性来自事务本身（任一步失败整体回滚）；写入顺序只是可读性约定，无 FK
+// 强制、不改变回滚语义。图片 OSS 上传在事务外完成，见 SaveAnswerTx 注释。
+func (d *DBService) SavePinTx(pins []Pin, authors []Author, objects []Object) error {
+	return d.Transaction(func(tx *gorm.DB) error {
+		for i := range objects {
+			if err := tx.Save(&objects[i]).Error; err != nil {
+				return fmt.Errorf("failed to save object %d: %w", objects[i].ID, err)
+			}
+		}
+		for i := range authors {
+			if err := tx.Save(&authors[i]).Error; err != nil {
+				return fmt.Errorf("failed to save author %s: %w", authors[i].ID, err)
+			}
+		}
+		for i := range pins {
+			if err := tx.Save(&pins[i]).Error; err != nil {
+				return fmt.Errorf("failed to save pin root %d: %w", pins[i].ID, err)
+			}
+		}
+		return nil
+	})
+}
 
 func (d *DBService) GetLatestNPin(n int, authorID string) ([]Pin, error) {
 	ps := make([]Pin, 0, n)

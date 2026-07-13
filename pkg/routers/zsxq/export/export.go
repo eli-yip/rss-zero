@@ -91,18 +91,14 @@ func (s *ExportService) Export(writer io.Writer, opt Option) (err error) {
 			finished = true
 		}
 
+		// 一页只装配一次快照，逐条渲染时复用，避免每条 topic 各查一次侧表（P2）。
+		snapshot, err := s.mr.LoadSnapshot(topics)
+		if err != nil {
+			return err
+		}
+
 		for i, topic := range topics {
-			fullText, err := s.mr.FullText(
-				&render.Topic{
-					ID:       topic.ID,
-					GroupID:  topic.GroupID,
-					Title:    topic.Title,
-					Type:     topic.Type,
-					Digested: topic.Digested,
-					Time:     topic.Time,
-					Text:     topic.Text,
-				},
-			)
+			fullText, err := s.mr.FullTextFromSnapshot(topic, snapshot)
 			if err != nil {
 				return err
 			}

@@ -14,6 +14,10 @@ import (
 type DBAnswer interface {
 	// Save answer info to zhihu_answer table
 	SaveAnswer(a *Answer) error
+	// SaveAnswerTx 在单事务内提交一条 answer 产生的全部行：问题、图片对象、answer 根行。
+	// 原子性来自事务本身（一起提交或一起回滚），故不留可见半态；写入顺序（根行最后写）
+	// 只是可读性约定，无 FK 强制，不改变回滚语义。
+	SaveAnswerTx(answer *Answer, question *Question, objects []Object) error
 	GetLatestNAnswer(n int, userID string) ([]Answer, error)
 	// GetLatestNVisibleAnswer is GetLatestNAnswer excluding answers hidden by
 	// content detection (detect_status = DetectStatusSkipped). Used by RSS generation.
@@ -49,7 +53,6 @@ type DBAnswer interface {
 type FetchAnswerOption struct {
 	FetchOptionBase
 
-	Text   *string
 	Status *int
 }
 
@@ -62,7 +65,6 @@ type Answer struct {
 	AuthorID   string    `gorm:"column:author_id;type:text"`
 	CreateAt   time.Time `gorm:"column:create_at;type:timestamptz"`
 	UpdateAt   time.Time `gorm:"column:update_at;type:timestamptz"`
-	Text       string    `gorm:"column:text;type:text"`
 	// NOTE: raw can be standard apiModel.Answer,
 	// or raw from zhihu api,
 	// it depends on how parseAnswer func is used.
@@ -111,6 +113,30 @@ type Question struct {
 func (q *Question) TableName() string { return "zhihu_question" }
 
 func (d *DBService) SaveAnswer(a *Answer) error { return d.Save(a).Error }
+
+// SaveAnswerTx 把一条 answer 解析出的全部事实行放进同一个事务提交：问题、各图片对象、
+// answer 根行。原子性来自事务本身（任一步失败整体回滚），消除「对象先写、根行后写、中途
+// 失败留半态」的旧 bug（见 plan 决策 4）；根行最后写只是可读性约定，无 FK 强制、不改变回滚
+// 语义。图片二进制已在事务外上传 OSS（见 parse.downloadImageObjects），只有上传成功的对象
+// 元数据才进入 objects，故这里只做纯 DB 写。
+func (d *DBService) SaveAnswerTx(answer *Answer, question *Question, objects []Object) error {
+	return d.Transaction(func(tx *gorm.DB) error {
+		if question != nil {
+			if err := tx.Save(question).Error; err != nil {
+				return fmt.Errorf("failed to save question %d: %w", question.ID, err)
+			}
+		}
+		for i := range objects {
+			if err := tx.Save(&objects[i]).Error; err != nil {
+				return fmt.Errorf("failed to save object %d: %w", objects[i].ID, err)
+			}
+		}
+		if err := tx.Save(answer).Error; err != nil {
+			return fmt.Errorf("failed to save answer root %d: %w", answer.ID, err)
+		}
+		return nil
+	})
+}
 
 func (d *DBService) GetLatestNAnswer(n int, userID string) ([]Answer, error) {
 	as := make([]Answer, 0, n)
@@ -186,10 +212,6 @@ func (d *DBService) FetchNAnswer(n int, opts FetchAnswerOption) (as []Answer, er
 
 	if !opts.EndTime.IsZero() {
 		query = query.Where("create_at <= ?", opts.EndTime)
-	}
-
-	if opts.Text != nil {
-		query = query.Where("text = ?", *opts.Text)
 	}
 
 	if opts.Status != nil {

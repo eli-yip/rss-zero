@@ -17,9 +17,17 @@ type DBArticle interface {
 	GetArticle(articleID string) (*Article, error)
 	// Get article text by id from zsxq_article table
 	GetArticleText(articleID string) (text string, err error)
+	// Batch get articles by ids from zsxq_article table
+	GetArticlesByIDs(ids []string) (as []Article, err error)
 }
 
 func (s *ZsxqDBService) SaveArticle(article *Article) error { return s.db.Save(article).Error }
+
+// GetArticlesByIDs 一次查回 ids 对应的外部文章事实（缺失的 id 静默省略）。
+func (s *ZsxqDBService) GetArticlesByIDs(ids []string) (articles []Article, err error) {
+	err = s.db.Where("id IN ?", ids).Find(&articles).Error
+	return articles, err
+}
 
 func (s *ZsxqDBService) GetArticle(articleID string) (*Article, error) {
 	var article Article

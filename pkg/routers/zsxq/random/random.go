@@ -9,6 +9,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/internal/rss"
 	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/db"
+	"github.com/eli-yip/rss-zero/pkg/routers/zsxq/render"
 )
 
 // GenerateRandomCanglimoDigestRss renders an Atom feed of randomly selected
@@ -32,8 +33,22 @@ func GenerateRandomCanglimoDigestRss(gormDB *gorm.DB, logger *zap.Logger) (strin
 	}
 	logger.Info("Random select topics", zap.Int("count", len(topics)))
 
+	// Shared body renderer with the feed path (raw -> snapshot -> markdown); only
+	// the identity differs — a hardcoded author, time.Now(), and a fresh xid so
+	// each cached pick stays distinct.
+	snapshot, err := render.NewContentLoader(zsxqDB).Load(topics)
+	if err != nil {
+		logger.Error("Failed to load content snapshot", zap.Error(err))
+		return "", err
+	}
+
 	rows := make([]rss.ZSXQRow, 0, len(topics))
 	for _, topic := range topics {
+		body, err := render.RenderMarkdown(topic.ID, snapshot)
+		if err != nil {
+			logger.Error("Failed to render topic", zap.Int("topic_id", topic.ID), zap.Error(err))
+			return "", err
+		}
 		fakeID := xid.New().String()
 		rows = append(rows, rss.ZSXQRow{
 			TopicID:    topic.ID,
@@ -41,7 +56,7 @@ func GenerateRandomCanglimoDigestRss(gormDB *gorm.DB, logger *zap.Logger) (strin
 			Title:      topic.Title,
 			AuthorName: authorName,
 			Time:       time.Now(),
-			Text:       topic.Text,
+			Text:       body,
 			FakeID:     &fakeID,
 		})
 	}

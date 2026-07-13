@@ -46,26 +46,6 @@ func (h *Controller) Migrate20240905(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewMessage("Start to migrate minio files"))
 }
 
-func (h *Controller) Migrate20240929(c echo.Context) (err error) {
-	logger := common.ExtractLogger(c)
-
-	logger.Info("Start to migrate db 20240929")
-
-	go migrate.MigrateDB20240929(h.db, logger)
-
-	return c.JSON(http.StatusOK, httputil.NewMessage("Start to migrate db 20240929"))
-}
-
-func (h *Controller) Migrate20250530(c echo.Context) (err error) {
-	logger := common.ExtractLogger(c)
-
-	logger.Info("Start to migrate db 20250530")
-
-	go migrate.Migrate20250530(h.db, logger)
-
-	return c.JSON(http.StatusOK, httputil.NewMessage("Start to migrate db 20250530"))
-}
-
 func (h *Controller) Migrate20260612(c echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 

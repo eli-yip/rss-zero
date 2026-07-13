@@ -161,7 +161,7 @@ func setupEcho(redisService redis.Redis,
 
 	refmtGroup := apiGroup.Group("/refmt")
 	groupNeedAuth = append(groupNeedAuth, refmtGroup)
-	registerReformat(refmtGroup, zsxqHandler, zhihuHandler, xiaobotHandler)
+	registerReformat(refmtGroup, xiaobotHandler)
 
 	exportGroup := apiGroup.Group("/export")
 	groupNeedAuth = append(groupNeedAuth, exportGroup)
@@ -324,16 +324,8 @@ func registerDEncryptionService(apiGroup *echo.Group, zhihuHandler *zhihuControl
 }
 
 // /api/v1/refmt
-// /api/v1/refmt/zsxq
-// /api/v1/refmt/zhihu
 // /api/v1/refmt/xiaobot
-func registerReformat(refmtApi *echo.Group, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
-	refmtZsxqApi := refmtApi.POST("/zsxq", zsxqHandler.Reformat)
-	refmtZsxqApi.Name = "Reformat route for zsxq"
-
-	refmtZhihuApi := refmtApi.POST("/zhihu", zhihuHandler.Reformat)
-	refmtZhihuApi.Name = "Reformat route for zhihu"
-
+func registerReformat(refmtApi *echo.Group, xiaobotHandler *xiaobotController.Controller) {
 	refmtXiaobotApi := refmtApi.POST("/xiaobot", xiaobotHandler.Reformat)
 	refmtXiaobotApi.Name = "Reformat route for xiaobot"
 }
@@ -445,10 +437,6 @@ func registerSub(subApi *echo.Group, zhihuHandler *zhihuController.Controller, g
 func registerMigrate(migrateApi *echo.Group, migrateHandler *migrateController.Controller) {
 	migrateMinioApi := migrateApi.POST("/20240905", migrateHandler.Migrate20240905)
 	migrateMinioApi.Name = "Migrate minio files route 20240905"
-	migrate20240929Api := migrateApi.POST("/20240929", migrateHandler.Migrate20240929)
-	migrate20240929Api.Name = "Migrate db 20240929 route"
-	migrate20250530Api := migrateApi.POST("/20250530", migrateHandler.Migrate20250530)
-	migrate20250530Api.Name = "Migrate db 20250530 route"
 	migrate20260612Api := migrateApi.POST("/20260612", migrateHandler.Migrate20260612)
 	migrate20260612Api.Name = "Migrate db 20260612 route"
 

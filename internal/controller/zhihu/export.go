@@ -15,7 +15,6 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/file"
-	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	utils "github.com/eli-yip/rss-zero/internal/utils"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
@@ -61,7 +60,7 @@ func (h *Controller) Export(c echo.Context) (err error) {
 	}
 	logger.Info("Parse export option success", zap.Any("options", options))
 
-	fullTextRender := zhihuRender.NewFullTextRender(md.NewMarkdownFormatter())
+	fullTextRender := zhihuRender.NewFullTextRender(h.db, config.C.Settings.ServerURL)
 	exportService := zhihuExport.NewExportService(h.db, fullTextRender)
 
 	var filename string

@@ -11,9 +11,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *ParseService) saveImages(images []models.Image, topicID int, createTimeStr string, logger *zap.Logger) (err error) {
+// collectImages 下载图片转存 OSS（事务外网络副作用），返回待提交的对象事实行；不落库。
+// 保留旧 saveImages 的 url 优选与错误路径：无有效 url 报错、下载/转存失败即中止整条 topic。
+func (s *ParseService) collectImages(images []models.Image, topicID int, createTimeStr string, logger *zap.Logger) (objects []db.Object, err error) {
 	if images == nil {
-		return nil
+		return nil, nil
 	}
 
 	for _, image := range images {
@@ -24,7 +26,7 @@ func (s *ParseService) saveImages(images []models.Image, topicID int, createTime
 			case nil:
 				switch image.Thumbnail {
 				case nil:
-					return errors.New("found no valid image url")
+					return nil, errors.New("found no valid image url")
 				default:
 					url = image.Thumbnail.URL
 				}
@@ -38,18 +40,18 @@ func (s *ParseService) saveImages(images []models.Image, topicID int, createTime
 		objectKey := fmt.Sprintf("zsxq/%d.%s", image.ImageID, image.Type)
 		resp, err := s.request.LimitStream(context.Background(), url, logger)
 		if err != nil {
-			return fmt.Errorf("failed to download image %d: %w", image.ImageID, err)
+			return nil, fmt.Errorf("failed to download image %d: %w", image.ImageID, err)
 		}
 		if err = s.file.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
-			return fmt.Errorf("failed to save image %d: %w", image.ImageID, err)
+			return nil, fmt.Errorf("failed to save image %d: %w", image.ImageID, err)
 		}
 
 		createTime, err := zsxqTime.DecodeZsxqAPITime(createTimeStr)
 		if err != nil {
-			return fmt.Errorf("failed to decode create time: %w", err)
+			return nil, fmt.Errorf("failed to decode create time: %w", err)
 		}
 
-		if err = s.db.SaveObjectInfo(&db.Object{
+		objects = append(objects, db.Object{
 			ID:              image.ImageID,
 			TopicID:         topicID,
 			Time:            createTime,
@@ -57,10 +59,8 @@ func (s *ParseService) saveImages(images []models.Image, topicID int, createTime
 			ObjectKey:       objectKey,
 			StorageProvider: []string{s.file.AssetsDomain()},
 			Url:             url,
-		}); err != nil {
-			return fmt.Errorf("failed to save image info to database: %w", err)
-		}
+		})
 	}
 
-	return nil
+	return objects, nil
 }

@@ -7,9 +7,9 @@
     <title>问题标题一</title>
     <updated>2026-06-22T10:00:00Z</updated>
     <id>111</id>
-    <content type="html">&lt;p&gt;回答正文一段&lt;a href=&#34;https://www.zhihu.com/question/1/answer/111&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <content type="html">&lt;blockquote&gt;&#xA;&lt;p&gt;本文为付费内容，请点击 &lt;a href=&#34;https://www.zhihu.com/question/1/answer/111&#34;&gt;原文链接&lt;/a&gt; 查看全文&lt;/p&gt;&#xA;&lt;/blockquote&gt;&#xA;&lt;p&gt;付费回答正文第一段。&lt;/p&gt;&#xA;&lt;p&gt;&lt;img src=&#34;https://oss.example.com/zhihu/1168166042.jpg&#34; alt=&#34;zhihu/1168166042.jpg&#34;&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://www.zhihu.com/question/1/answer/111&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
     <link href="https://srv.test/api/v1/archive/https://www.zhihu.com/question/1/answer/111" rel="alternate"></link>
-    <summary type="html">回答正文一段</summary>
+    <summary type="html">&gt; 本文为付费内容，请点击 [原文链接](https://www.zhihu.com/question/1/answer/111) 查</summary>
     <author>
       <name>墨苍离</name>
     </author>
@@ -18,9 +18,9 @@
     <title>问题标题二</title>
     <updated>2026-06-21T09:00:00Z</updated>
     <id>222</id>
-    <content type="html">&lt;p&gt;回答正文二段&lt;a href=&#34;https://www.zhihu.com/question/2/answer/222&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
+    <content type="html">&lt;p&gt;普通回答正文。&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://www.zhihu.com/question/2/answer/222&#34;&gt;原文链接&lt;/a&gt;&lt;/p&gt;&#xA;</content>
     <link href="https://srv.test/api/v1/archive/https://www.zhihu.com/question/2/answer/222" rel="alternate"></link>
-    <summary type="html">回答正文二段</summary>
+    <summary type="html">普通回答正文。&#xA;</summary>
     <author>
       <name>墨苍离</name>
     </author>

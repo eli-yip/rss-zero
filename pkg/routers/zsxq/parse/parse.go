@@ -14,7 +14,7 @@ import (
 
 type Parser interface {
 	SplitTopics(respBytes []byte, logger *zap.Logger) (rawTopics []json.RawMessage, err error)
-	ParseTopic(topic *models.TopicParseResult, logger *zap.Logger) (text string, err error)
+	ParseTopic(topic *models.TopicParseResult, logger *zap.Logger) (err error)
 }
 
 type ParseService struct {

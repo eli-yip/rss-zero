@@ -76,7 +76,7 @@ func CrawlGroup(groupID int, request request.Requester,
 				break
 			}
 
-			if _, err := parser.ParseTopic(&result, logger); err != nil {
+			if err := parser.ParseTopic(&result, logger); err != nil {
 				logger.Error("Failed to parse topic", zap.Error(err))
 				return fmt.Errorf("failed to parse topic: %w", err)
 			}

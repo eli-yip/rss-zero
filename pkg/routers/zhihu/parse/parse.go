@@ -2,9 +2,9 @@ package parse
 
 import (
 	"fmt"
-	"hash/fnv"
-	"regexp"
 	"strconv"
+
+	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/ai"
 	"github.com/eli-yip/rss-zero/internal/file"
@@ -14,8 +14,6 @@ import (
 	renderIface "github.com/eli-yip/rss-zero/pkg/render"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
-
-	"go.uber.org/zap"
 )
 
 type Parser interface {
@@ -108,46 +106,46 @@ func WithMarkdownFormatter(mdfmt *md.MarkdownFormatter) Option {
 	return func(s *ParseService) { s.mdfmt = mdfmt }
 }
 
-// URLToID converts a string to an int by hashing it.
-func URLToID(str string) int {
-	h := fnv.New32a()
-	h.Write([]byte(str))
-	return int(h.Sum32())
-}
+// downloadImageObjects 按转换后正文里的原始图片链接逐个下载图片、转存 OSS（事务外网络副作用），
+// 返回待提交的对象事实行——不写库（同 request、同 object key layout、同 storage provider）。对象
+// 元数据交由根行事务一起提交（不即时写 zhihu_object），以修「对象先写、根行后写、中途失败留半态」
+// 的旧 bug。图片流经 p.GetImageStream（Imager）取得。
+func (p *ParseService) downloadImageObjects(convertedBody string, contentID int, t common.ZhihuContentType, logger *zap.Logger) ([]db.Object, error) {
+	var objects []db.Object
+	for _, link := range render.FindImageLinks(convertedBody) {
+		picID := render.URLToID(link)
 
-// findImageLinks find all markdown links and return them as a list
-func findImageLinks(text string) (links []string) {
-	re := regexp.MustCompile(`!\[.*?\]\((.*?)\)`)
-	matches := re.FindAllStringSubmatch(text, -1)
-
-	for _, match := range matches {
-		if len(match) > 1 {
-			links = append(links, match[1])
+		resp, err := p.GetImageStream(link, logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get image stream for url %s: %w", link, err)
 		}
+
+		const zhihuImageObjectKeyLayout = "zhihu/%d.jpg"
+		objectKey := fmt.Sprintf(zhihuImageObjectKeyLayout, picID)
+		if err = p.file.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
+			return nil, fmt.Errorf("failed to save image stream %s to file service: %w", link, err)
+		}
+
+		objects = append(objects, db.Object{
+			ID:              picID,
+			Type:            db.ObjectTypeImage,
+			ContentType:     t,
+			ContentID:       contentID,
+			ObjectKey:       objectKey,
+			URL:             link,
+			StorageProvider: []string{p.file.AssetsDomain()},
+		})
 	}
-	return links
+	return objects, nil
 }
 
-// replaceImageLink replace image syntax in markdown text
-//   - text: raw markdown text
-//   - name: image name
-//   - from: origin image link
-//   - to: result image link
-func replaceImageLink(text, name, from, to string) (result string) {
-	re := regexp.MustCompile(`!\[[^\]]*\]\(` + regexp.QuoteMeta(from) + `\)`)
-	result = re.ReplaceAllString(text, `![`+name+`](`+to+`)`)
-	return result
-}
-
-// parseHTML convert html content to markdown content
-// it also download images and replace image links in markdown content
-func (p *ParseService) parseHTML(html string, id int, t common.ZhihuContentType, logger *zap.Logger) (string, error) {
-	bytes, err := p.htmlToMarkdown.Convert([]byte(html))
-	if err != nil {
-		return "", fmt.Errorf("failed to convert html to markdown: %w", err)
+// objectsByID 把待提交对象切片按 id 索引，供 transient 渲染快照换链。
+func objectsByID(objects []db.Object) map[int]db.Object {
+	m := make(map[int]db.Object, len(objects))
+	for _, o := range objects {
+		m[o.ID] = o
 	}
-
-	return p.ParseImages(string(bytes), id, t, logger)
+	return m
 }
 
 // anyToID converts zhihu id of type any to int

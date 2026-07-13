@@ -16,15 +16,15 @@ type Topic struct {
 	Digested bool      `gorm:"column:digested;type:bool"`
 	AuthorID int       `gorm:"column:author_id"`
 	Title    *string   `gorm:"column:title;type:text"` // Although title is not null in q&a and talk, it is null in some topics
-	Text     string    `gorm:"column:text;type:text"`
 	Raw      []byte    `gorm:"column:raw;type:bytea"`
 }
 
 func (t *Topic) TableName() string { return "zsxq_topic" }
 
 type DBTopic interface {
-	// Save topic to zsxq_topic table
-	SaveTopic(t *Topic) error
+	// SaveTopicTx 在单事务内提交一条 topic 产生的全部行；原子性来自事务本身（一起提交或
+	// 一起回滚），根行最后写只是可读性约定，无 FK 强制、不改变回滚语义。
+	SaveTopicTx(root *Topic, author *Author, article *Article, objects []Object) error
 	// Get latest topic time from zsxq_topic table
 	GetLatestTopicTime(gid int) (t time.Time, err error)
 	// Get latest n topics from zsxq_topic table
@@ -39,12 +39,36 @@ type DBTopic interface {
 	GetTopicByID(id int) (t Topic, err error)
 	// Random select n topics from zsxq_topic table
 	RandomSelect(userID, n int, digest bool) (topics []Topic, err error)
-	// GetTopicForMigrate
-	GetTopicForMigrate() (ts []Topic, err error)
 }
 
-func (s *ZsxqDBService) SaveTopic(t *Topic) error {
-	return s.db.Save(t).Error
+// SaveTopicTx 把一条 topic 解析出的全部事实行放进同一个事务提交：作者、外部文章、各对象、
+// topic 根行。原子性来自事务本身（任一步失败整体回滚），消除「资源先写、根行后写、中途失败
+// 留半态」的旧 bug；根行最后写只是可读性约定，无 FK 强制、不改变回滚语义。
+//
+// 对象二进制已在事务外上传 OSS（见 parse.collect*），只有上传成功的对象元数据才会进入
+// objects，故这里只做纯 DB 写。author/article 为 nil（如未知类型）时相应步骤跳过。
+func (s *ZsxqDBService) SaveTopicTx(root *Topic, author *Author, article *Article, objects []Object) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if author != nil {
+			if err := tx.Save(author).Error; err != nil {
+				return fmt.Errorf("failed to save author %d: %w", author.ID, err)
+			}
+		}
+		if article != nil {
+			if err := tx.Save(article).Error; err != nil {
+				return fmt.Errorf("failed to save article %s: %w", article.ID, err)
+			}
+		}
+		for i := range objects {
+			if err := tx.Save(&objects[i]).Error; err != nil {
+				return fmt.Errorf("failed to save object %d: %w", objects[i].ID, err)
+			}
+		}
+		if err := tx.Save(root).Error; err != nil {
+			return fmt.Errorf("failed to save topic root %d: %w", root.ID, err)
+		}
+		return nil
+	})
 }
 
 func (s *ZsxqDBService) GetLatestTopicTime(gid int) (time.Time, error) {
@@ -149,9 +173,4 @@ func (s *ZsxqDBService) RandomSelect(userID, n int, digest bool) (topics []Topic
 	}
 
 	return topics, nil
-}
-
-func (s *ZsxqDBService) GetTopicForMigrate() (ts []Topic, err error) {
-	err = s.db.Where("type in ? and title is null", []string{"talk", "q&a"}).Find(&ts).Error
-	return ts, err
 }

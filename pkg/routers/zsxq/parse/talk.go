@@ -16,68 +16,75 @@ import (
 
 var ErrNoText = errors.New("no text in this topic")
 
-func (s *ParseService) parseTalk(logger *zap.Logger, topic *models.Topic) (authorID int, authorName string, err error) {
+// parseTalk 抽取一条 talk 的全部待提交事实（作者 / 文件 + 图片对象 / 外部文章），不落库。
+// 沿用旧行为：无正文或被屏蔽作者返回 ErrNoText（ParseTopic 据此 skip）；文章 converter
+// 超时会以 commonRender.ErrTimeout 包在返回错误里（ParseTopic 据此 skip）。
+func (s *ParseService) parseTalk(logger *zap.Logger, topic *models.Topic) (author *db.Author, objects []db.Object, article *db.Article, err error) {
 	talk := topic.Talk
 	if talk == nil || talk.Text == nil {
-		return 0, "", ErrNoText
+		return nil, nil, nil, ErrNoText
 	}
 
-	authorID, authorName, err = s.parseAuthor(&talk.Owner)
-	if err != nil {
-		return 0, "", fmt.Errorf("failed to parse author: %w", err)
-	}
-	logger.Info("Parse author successfully", zap.Int("author_id", authorID), zap.String("author_name", authorName))
+	author = buildAuthor(&talk.Owner)
+	name := displayName(author)
+	logger.Info("Parse author successfully", zap.Int("author_id", author.ID), zap.String("author_name", name))
 
-	if slices.Contains(config.C.Zsxq.BlockedAuthorIDs, authorID) ||
-		slices.Contains(config.C.Zsxq.BlockedAuthorNames, authorName) {
+	if slices.Contains(config.C.Zsxq.BlockedAuthorIDs, author.ID) ||
+		slices.Contains(config.C.Zsxq.BlockedAuthorNames, name) {
 		logger.Info("Skip crawling topic, blocked author",
 			zap.Int("topic_id", topic.TopicID),
-			zap.Int("author_id", authorID), zap.String("author_name", authorName))
-		return 0, "", ErrNoText
+			zap.Int("author_id", author.ID), zap.String("author_name", name))
+		return nil, nil, nil, ErrNoText
 	}
 
-	if err = s.saveFiles(talk.Files, topic.TopicID, topic.CreateTime, logger); err != nil {
-		return 0, "", fmt.Errorf("failed to save files: %w", err)
+	fileObjects, err := s.collectFiles(talk.Files, topic.TopicID, topic.CreateTime, logger)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to save files: %w", err)
 	}
+	objects = append(objects, fileObjects...)
 
-	if err = s.saveImages(talk.Images, topic.TopicID, topic.CreateTime, logger); err != nil {
-		return 0, "", fmt.Errorf("failed to save images: %w", err)
+	imageObjects, err := s.collectImages(talk.Images, topic.TopicID, topic.CreateTime, logger)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to save images: %w", err)
 	}
+	objects = append(objects, imageObjects...)
 
-	if err = s.saveArticles(talk.Article, logger); err != nil {
+	article, err = s.collectArticle(talk.Article, logger)
+	if err != nil {
 		logger.Error("failed to parse articles", zap.Error(err))
-		return 0, "", fmt.Errorf("failed to parse articles: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to parse articles: %w", err)
 	}
 
-	return authorID, authorName, nil
+	return author, objects, article, nil
 }
 
-func (s *ParseService) saveFiles(files []models.File, topicID int, createTimeStr string, logger *zap.Logger) (err error) {
+// collectFiles 下载附件转存 OSS（事务外网络副作用），返回待提交的对象事实行；不落库。
+func (s *ParseService) collectFiles(files []models.File, topicID int, createTimeStr string, logger *zap.Logger) (objects []db.Object, err error) {
 	if files == nil {
-		return nil
+		return nil, nil
 	}
 
 	for _, file := range files {
 		downloadLink, err := s.downloadLink(file.FileID, logger)
 		if err != nil {
-			return fmt.Errorf("failed to get download link for file %d: %w", file.FileID, err)
+			return nil, fmt.Errorf("failed to get download link for file %d: %w", file.FileID, err)
 		}
 
 		objectKey := fmt.Sprintf("zsxq/%d-%s", file.FileID, file.Name)
 		resp, err := s.request.LimitStream(context.Background(), downloadLink, logger)
 		if err != nil {
-			return fmt.Errorf("failed to download file %d: %w", file.FileID, err)
+			return nil, fmt.Errorf("failed to download file %d: %w", file.FileID, err)
 		}
 		if err = s.file.SaveStream(objectKey, resp.Body, resp.ContentLength); err != nil {
-			return fmt.Errorf("failed to save file %d: %w", file.FileID, err)
+			return nil, fmt.Errorf("failed to save file %d: %w", file.FileID, err)
 		}
 
 		createTime, err := zsxqTime.DecodeZsxqAPITime(createTimeStr)
 		if err != nil {
-			return fmt.Errorf("failed to decode create time: %w", err)
+			return nil, fmt.Errorf("failed to decode create time: %w", err)
 		}
 
-		if err = s.db.SaveObjectInfo(&db.Object{
+		objects = append(objects, db.Object{
 			ID:              file.FileID,
 			TopicID:         topicID,
 			Time:            createTime,
@@ -85,38 +92,34 @@ func (s *ParseService) saveFiles(files []models.File, topicID int, createTimeStr
 			ObjectKey:       objectKey,
 			StorageProvider: []string{s.file.AssetsDomain()},
 			Url:             downloadLink,
-		}); err != nil {
-			return fmt.Errorf("failed to save file info to database: %w", err)
-		}
+		})
 	}
 
-	return nil
+	return objects, nil
 }
 
-func (s *ParseService) saveArticles(article *models.Article, logger *zap.Logger) (err error) {
+// collectArticle 抓取并转换外部文章 HTML→Markdown（豁免，保留在抓取期，见 plan 决策 5），
+// 返回待提交的文章事实行；不落库。article 为 nil 时返回 nil。
+func (s *ParseService) collectArticle(article *models.Article, logger *zap.Logger) (*db.Article, error) {
 	if article == nil {
-		return nil
+		return nil, nil
 	}
 
 	html, err := s.request.LimitRaw(context.Background(), article.ArticleURL, logger)
 	if err != nil {
-		return fmt.Errorf("failed to request article url: %w", err)
+		return nil, fmt.Errorf("failed to request article url: %w", err)
 	}
 
 	text, err := s.render.Article(html)
 	if err != nil {
-		return fmt.Errorf("failed render article: %w", err)
+		return nil, fmt.Errorf("failed render article: %w", err)
 	}
 
-	if err = s.db.SaveArticle(&db.Article{
+	return &db.Article{
 		ID:    article.ArticleID,
 		URL:   article.ArticleURL,
 		Title: article.Title,
 		Text:  text,
 		Raw:   html,
-	}); err != nil {
-		return fmt.Errorf("failed to save article info to database: %w", err)
-	}
-
-	return nil
+	}, nil
 }

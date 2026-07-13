@@ -47,8 +47,7 @@ func CrawlArticle(user string, request request.Requester, parser parse.Parser,
 			return parser.ParseArticleList(bytes, index, logger)
 		},
 		parseItem: func(_ apiModels.Article, raw json.RawMessage, logger *zap.Logger) error {
-			_, err := parser.ParseArticle(raw, logger)
-			return err
+			return parser.ParseArticle(raw, logger)
 		},
 		skipItem: func(article apiModels.Article, logger *zap.Logger) bool {
 			unsupportedArticleIDs := []int{1946529288879858682}

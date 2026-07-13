@@ -93,24 +93,19 @@ func (s *ExportService) exportAnswer(writer io.Writer, opt Option) (err error) {
 			finished = true
 		}
 
+		// 一页只装配一次快照，逐条渲染时复用，避免每条 answer 各查一次侧表（P2）。
+		snap, err := s.mr.LoadAnswers(answers)
+		if err != nil {
+			return err
+		}
+
 		for i, answer := range answers {
 			question, err := s.db.GetQuestion(answer.QuestionID)
 			if err != nil {
 				return err
 			}
 
-			fullText, err := s.mr.Answer(&render.Answer{
-				Question: render.BaseContent{
-					ID:       question.ID,
-					CreateAt: question.CreateAt,
-					Text:     question.Title,
-				},
-				Answer: render.BaseContent{
-					ID:       answer.ID,
-					CreateAt: answer.CreateAt,
-					Text:     answer.Text,
-				},
-			})
+			fullText, err := s.mr.AnswerFromSnapshot(answer, question.Title, snap)
 			if err != nil {
 				return err
 			}
@@ -161,14 +156,14 @@ func (s *ExportService) exportArticle(writer io.Writer, opt Option) (err error) 
 			finished = true
 		}
 
+		// 一页只装配一次快照，逐条渲染时复用，避免每条 article 各查一次侧表（P2）。
+		snap, err := s.mr.LoadArticles(articles)
+		if err != nil {
+			return err
+		}
+
 		for i, article := range articles {
-			fullText, err := s.mr.Article(&render.Article{
-				Title: article.Title,
-				BaseContent: render.BaseContent{
-					ID:       article.ID,
-					CreateAt: article.CreateAt,
-					Text:     article.Text},
-			})
+			fullText, err := s.mr.ArticleFromSnapshot(article, snap)
 			if err != nil {
 				return err
 			}
@@ -220,14 +215,7 @@ func (s *ExportService) exportPin(writer io.Writer, opt Option) (err error) {
 		}
 
 		for i, pin := range pins {
-			fullText, err := s.mr.Pin(&render.Pin{
-				Title: pin.Title,
-				BaseContent: render.BaseContent{
-					ID:       pin.ID,
-					CreateAt: pin.CreateAt,
-					Text:     pin.Text,
-				},
-			})
+			fullText, err := s.mr.Pin(pin)
 			if err != nil {
 				return err
 			}

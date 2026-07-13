@@ -12,15 +12,17 @@ import (
 var ErrKeyNotExist = errors.New("key does not exist")
 
 const (
-	ZsxqRSSPath                  = "zsxq_rss_%s"
-	ZsxqRandomCanglimoDigestPath = "zsxq_rss_random_canglimo_digest"
+	// v2 namespace（plan 决策 7）：删 text 列后读取期从 raw 重放正文，换 key 隔离旧 text 生成的
+	// 陈旧 canonical items。cron warm 与 controller cache-miss 共用同一 const，一并切换。
+	ZsxqRSSPath                  = "zsxq_rss_v2_%s"
+	ZsxqRandomCanglimoDigestPath = "zsxq_rss_random_canglimo_digest_v2"
 
 	XiaobotRSSPath = "xiaobot_rss_%s"
 
-	ZhihuAnswerPath                = "zhihu_rss_answer_%s"
-	ZhihuArticlePath               = "zhihu_rss_article_%s"
-	ZhihuPinPath                   = "zhihu_rss_pin_%s"
-	ZhihuRandomCanglimoAnswersPath = "zhihu_rss_random_canglimo_answers"
+	// v2 namespace（plan 决策 6）：删 text 列后随机答案正文改从 raw 重放，换 key 隔离旧 text
+	// 生成的陈旧 items。cron warm（cron/random.go）与 controller serve（controller/zhihu/random.go）
+	// 共用同一 const，一并切换。每作者 feed 的 v2 键见 common.ZhihuContentType.RedisKey。
+	ZhihuRandomCanglimoAnswersPath = "zhihu_rss_random_canglimo_answers_v2"
 
 	EndOfLifePath = "endoflife_rss_%s"
 

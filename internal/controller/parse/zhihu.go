@@ -46,7 +46,7 @@ func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 		logger.Error("failed to init request service", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusInternalServerError, "failed to init request service")
 	}
-	imageParser := parse.NewOnlineImageParser(requestService, h.fileService, h.zhihuDbService)
+	imageParser := parse.NewOnlineImageParser(requestService)
 	zhihuParseService, err := parse.InitParser(h.aiService, imageParser, h.zhihuHtmlToMarkdown, h.fileService, h.zhihuDbService, h.embeddingDBService)
 	if err != nil {
 		logger.Error("failed to init zhihu parse service", zap.Error(err))
@@ -63,7 +63,7 @@ func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
 		for i, answer := range answerExcerptList {
 			logger := pLogger.With(zap.Int("answer_id", answer.ID))
 
-			if _, err = zhihuParseService.ParseAnswer(answers[i], req.AuthorID, logger); err != nil {
+			if err = zhihuParseService.ParseAnswer(answers[i], req.AuthorID, logger); err != nil {
 				logger.Error("failed to parse answer", zap.Error(err))
 				return
 			}

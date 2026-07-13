@@ -9,7 +9,6 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/db"
-	"github.com/eli-yip/rss-zero/internal/md"
 	"github.com/eli-yip/rss-zero/pkg/common"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
 	zhihuRender "github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
@@ -21,7 +20,7 @@ func TestExportSingle(t *testing.T) {
 	db, err := db.NewPostgresDB(config.C.Database)
 	assert.Nil(err)
 	zhihuDBService := zhihuDB.NewDBService(db)
-	fullTextRender := zhihuRender.NewFullTextRender(md.NewMarkdownFormatter())
+	fullTextRender := zhihuRender.NewFullTextRender(zhihuDBService, config.C.Settings.ServerURL)
 	exportService := NewExportService(zhihuDBService, fullTextRender)
 
 	t.Run("export single answer", func(t *testing.T) {

@@ -13,7 +13,6 @@ import (
 
 	"github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	"github.com/eli-yip/rss-zero/pkg/routers/zhihu/render"
 )
 
 func (s *ExportService) ExportSingle(writer io.Writer, opt Option) (err error) {
@@ -84,18 +83,7 @@ func (s *ExportService) exportSingleAnswer(writer io.Writer, opt Option) (err er
 				return err
 			}
 
-			fullText, err := s.mr.Answer(&render.Answer{
-				Question: render.BaseContent{
-					ID:       question.ID,
-					CreateAt: question.CreateAt,
-					Text:     question.Title,
-				},
-				Answer: render.BaseContent{
-					ID:       answer.ID,
-					CreateAt: answer.CreateAt,
-					Text:     answer.Text,
-				},
-			})
+			fullText, err := s.mr.Answer(answer, question.Title)
 			if err != nil {
 				return err
 			}
@@ -178,13 +166,7 @@ func (s *ExportService) exportSingleArticle(writer io.Writer, opt Option) (err e
 		}
 
 		for i, article := range articles {
-			fullText, err := s.mr.Article(&render.Article{
-				Title: article.Title,
-				BaseContent: render.BaseContent{
-					ID:       article.ID,
-					CreateAt: article.CreateAt,
-					Text:     article.Text},
-			})
+			fullText, err := s.mr.Article(article)
 			if err != nil {
 				return err
 			}
@@ -267,14 +249,7 @@ func (s *ExportService) exportSinglePin(writer io.Writer, opt Option) (err error
 		}
 
 		for i, pin := range pins {
-			fullText, err := s.mr.Pin(&render.Pin{
-				Title: pin.Title,
-				BaseContent: render.BaseContent{
-					ID:       pin.ID,
-					CreateAt: pin.CreateAt,
-					Text:     pin.Text,
-				},
-			})
+			fullText, err := s.mr.Pin(pin)
 			if err != nil {
 				return err
 			}

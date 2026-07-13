@@ -41,8 +41,7 @@ func CrawlPin(user string, request request.Requester, parser parse.Parser,
 			return parser.ParsePinList(bytes, index, logger)
 		},
 		parseItem: func(_ apiModels.Pin, raw json.RawMessage, logger *zap.Logger) error {
-			_, err := parser.ParsePin(raw, logger)
-			return err
+			return parser.ParsePin(raw, logger)
 		},
 		skipItem: func(pin apiModels.Pin, logger *zap.Logger) bool {
 			// see more in https://gitea.darkeli.com/yezi/rss-zero/issues/95 https://gitea.darkeli.com/yezi/rss-zero#140
