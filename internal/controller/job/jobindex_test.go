@@ -14,16 +14,14 @@ func TestJobIndexConcurrentAccess(t *testing.T) {
 	const workers, iterations = 16, 1000
 	var wg sync.WaitGroup
 	for worker := range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for iteration := range iterations {
 				jobID := fmt.Sprintf("job-%d-%d", worker, iteration)
 				index.Set("shared-task", jobID)
 				index.Get("shared-task")
 				index.Delete("shared-task")
 			}
-		}()
+		})
 	}
 	wg.Wait()
 

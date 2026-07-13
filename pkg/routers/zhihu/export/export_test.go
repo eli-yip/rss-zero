@@ -80,8 +80,8 @@ func TestExportAnswerBatchesSnapshotPerPage(t *testing.T) {
 
 	var buf bytes.Buffer
 	assert.Nil(exportService.Export(&buf, Option{
-		AuthorID:  ptr("author"),
-		Type:      ptr(0), // legacyZhihuAnswer, see pkg/common/type.go
+		AuthorID:  new("author"),
+		Type:      new(0), // legacyZhihuAnswer, see pkg/common/type.go
 		StartTime: time.Date(2023, 5, 1, 0, 0, 0, 0, time.UTC),
 		EndTime:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC),
 	}))
@@ -120,8 +120,8 @@ func TestExportArticleBatchesSnapshotPerPage(t *testing.T) {
 
 	var buf bytes.Buffer
 	assert.Nil(exportService.Export(&buf, Option{
-		AuthorID:  ptr("author"),
-		Type:      ptr(1), // legacyZhihuArticle, see pkg/common/type.go
+		AuthorID:  new("author"),
+		Type:      new(1), // legacyZhihuArticle, see pkg/common/type.go
 		StartTime: time.Date(2023, 5, 1, 0, 0, 0, 0, time.UTC),
 		EndTime:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC),
 	}))
@@ -141,4 +141,5 @@ func TestExportArticleBatchesSnapshotPerPage(t *testing.T) {
 	assert.Equal(want.String(), buf.String())
 }
 
-func ptr[T any](v T) *T { return &v }
+//go:fix inline
+func ptr[T any](v T) *T { return new(v) }

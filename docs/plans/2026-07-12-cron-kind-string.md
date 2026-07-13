@@ -60,6 +60,7 @@ var registry = []SourceSpec{
 ### 2. 查表 helper 从三个塌成一个 `SpecByKind`
 
 **选择**：
+
 - `specByName`（`registry.go:109`）改名并导出为 `SpecByKind(kind string) (SourceSpec, bool)`
   ——`cmd/server/cron.go` 跨包调用，必须导出。
 - 删除 `SpecByType`（`registry.go:98`）、`TypeStrToInt`（`registry.go:119`）、
@@ -72,6 +73,7 @@ job，统一走 `SpecByKind`。
 ### 3. `CronTask.Type int` → `Kind string`，`AddDefinition` 签名跟改
 
 **选择**：
+
 ```go
 type CronTask struct {
     // ...
@@ -82,6 +84,7 @@ type CronTask struct {
 // CronTaskIface：
 AddDefinition(kind string, cronExpr string, include, exclude []string) (id string, err error)
 ```
+
 删除 `definition.go:34` 起的 `iota` const 块（`TypeZsxq…`）。`AddDefinition` 的 `taskType int`
 形参改为 `kind string`，函数体 `Type: taskType` 改为 `Kind: kind`。
 
