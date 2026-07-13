@@ -140,6 +140,3 @@ func TestExportArticleBatchesSnapshotPerPage(t *testing.T) {
 	}
 	assert.Equal(want.String(), buf.String())
 }
-
-//go:fix inline
-func ptr[T any](v T) *T { return new(v) }
