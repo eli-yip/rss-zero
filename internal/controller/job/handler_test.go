@@ -1,11 +1,13 @@
 package job
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -17,6 +19,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
 )
 
 func init() {
@@ -26,28 +29,29 @@ func init() {
 	}
 }
 
-// fakeCronDB is an in-memory cronDB.DB with every method locked, letting the tests
-// drive the handlers concurrently. It once isolated the controller's unsynchronized
-// definitionToFunc map as the sole race target; that map has since been removed in the
-// same change, so the concurrent test only reports a race against the earlier revision.
+// fakeCronDB 是带锁的内存 cronDB.DB，供 handler 生命周期与并发测试复用。
 type fakeCronDB struct {
-	mu    sync.Mutex
-	tasks map[string]*cronDB.CronTask
-	seq   int
+	mu      sync.Mutex
+	tasks   map[string]*cronDB.CronTask
+	seq     int
+	fixedID string
 }
 
 func newFakeCronDB() *fakeCronDB { return &fakeCronDB{tasks: map[string]*cronDB.CronTask{}} }
 
-func (f *fakeCronDB) AddDefinition(taskType int, cronExpr string, include, exclude []string) (string, error) {
+func (f *fakeCronDB) AddDefinition(kind string, cronExpr string, include, exclude []string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.seq++
 	id := fmt.Sprintf("task-%d", f.seq)
-	f.tasks[id] = &cronDB.CronTask{ID: id, Type: taskType, CronExpr: cronExpr, Include: include, Exclude: exclude}
+	if f.fixedID != "" {
+		id = f.fixedID
+	}
+	f.tasks[id] = &cronDB.CronTask{ID: id, Kind: kind, CronExpr: cronExpr, Include: include, Exclude: exclude}
 	return id, nil
 }
 
-func (f *fakeCronDB) PatchDefinition(id string, cronExpr *string, include, exclude []string, cronServiceJobID *string) error {
+func (f *fakeCronDB) PatchDefinition(id string, cronExpr *string, include, exclude []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	t, ok := f.tasks[id]
@@ -62,9 +66,6 @@ func (f *fakeCronDB) PatchDefinition(id string, cronExpr *string, include, exclu
 	}
 	if exclude != nil {
 		t.Exclude = exclude
-	}
-	if cronServiceJobID != nil {
-		t.CronServiceJobID = *cronServiceJobID
 	}
 	return nil
 }
@@ -98,7 +99,7 @@ func (f *fakeCronDB) GetDefinitions() ([]*cronDB.CronTask, error) {
 	return out, nil
 }
 
-// CronJobIface — not exercised by the tested handlers; canned responses.
+// CronJobIface 不在这些 handler 测试中执行，返回固定结果即可。
 func (f *fakeCronDB) AddJob(jobID, taskType string) (*cronDB.CronJob, error) {
 	return &cronDB.CronJob{ID: jobID}, nil
 }
@@ -109,8 +110,7 @@ func (f *fakeCronDB) FindErrorJob() ([]*cronDB.CronJob, error)   { return nil, n
 func (f *fakeCronDB) UpdateStatus(string, int) error             { return nil }
 func (f *fakeCronDB) RecordDetail(string, string) error          { return nil }
 
-// withNoopRegistry swaps the package registry for one whose Build closures return a
-// crawlFunc that just reports success and returns — no real crawling, no deps touched.
+// withNoopRegistry 用不访问外部依赖的抓取闭包替换注册表。
 func withNoopRegistry(t *testing.T) {
 	orig := registry
 	t.Cleanup(func() { registry = orig })
@@ -118,30 +118,33 @@ func withNoopRegistry(t *testing.T) {
 		return func(ch chan cron.CronJobInfo) { ch <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: "noop"}} }
 	}
 	registry = []SourceSpec{
-		{Type: cronDB.TypeZsxq, Name: "zsxq", Resumable: true, Build: noop},
-		{Type: cronDB.TypeZhihu, Name: "zhihu", Resumable: true, Build: noop},
-		{Type: cronDB.TypeXiaobot, Name: "xiaobot", Resumable: false, Build: noop},
-		{Type: cronDB.TypeGitHub, Name: "github", Resumable: false, Build: noop},
+		{Kind: "zsxq", Resumable: true, Build: noop},
+		{Kind: "zhihu", Resumable: true, Build: noop},
+		{Kind: "xiaobot", Resumable: false, Build: noop},
+		{Kind: "github", Resumable: false, Build: noop},
 	}
 }
 
 type harness struct {
-	h    *Controller
-	fake *fakeCronDB
-	cs   *cron.CronService
-	e    *echo.Echo
+	h     *Controller
+	fake  *fakeCronDB
+	cs    *cron.CronService
+	index *JobIndex
+	e     *echo.Echo
 }
 
 func newHarness(t *testing.T, fake *fakeCronDB) *harness {
 	cs, err := cron.NewCronService(zap.NewNop())
 	require.NoError(t, err)
-	return &harness{h: newTestController(cs, fake), fake: fake, cs: cs, e: echo.New()}
+	index := NewJobIndex()
+	e := echo.New()
+	e.HTTPErrorHandler = httputil.NewHTTPErrorHandler(zap.NewNop())
+	return &harness{h: newTestController(cs, index, fake), fake: fake, cs: cs, index: index, e: e}
 }
 
-// newTestController builds a Controller with nil source deps; the no-op registry
-// never touches them.
-func newTestController(cs *cron.CronService, fake cronDB.DB) *Controller {
-	return NewController(cs, nil, nil, nil, nil, nil, fake, zap.NewNop())
+// newTestController 的来源依赖可为空，因为 no-op registry 不会访问它们。
+func newTestController(cs *cron.CronService, index *JobIndex, fake cronDB.DB) *Controller {
+	return NewController(cs, index, nil, nil, nil, nil, nil, fake, zap.NewNop())
 }
 
 func (th *harness) ctx(method, body string) (echo.Context, *httptest.ResponseRecorder) {
@@ -155,13 +158,17 @@ func (th *harness) ctx(method, body string) (echo.Context, *httptest.ResponseRec
 
 func (th *harness) add(body string) *httptest.ResponseRecorder {
 	c, rec := th.ctx(http.MethodPost, body)
-	_ = th.h.AddTask(c)
+	if err := th.h.AddTask(c); err != nil {
+		th.e.HTTPErrorHandler(err, c)
+	}
 	return rec
 }
 
 func (th *harness) patch(body string) *httptest.ResponseRecorder {
 	c, rec := th.ctx(http.MethodPost, body)
-	_ = th.h.PatchTask(c)
+	if err := th.h.PatchTask(c); err != nil {
+		th.e.HTTPErrorHandler(err, c)
+	}
 	return rec
 }
 
@@ -169,7 +176,20 @@ func (th *harness) delete(id string) *httptest.ResponseRecorder {
 	c, rec := th.ctx(http.MethodDelete, "")
 	c.SetParamNames("id")
 	c.SetParamValues(id)
-	_ = th.h.DeleteTask(c)
+	if err := th.h.DeleteTask(c); err != nil {
+		th.e.HTTPErrorHandler(err, c)
+	}
+	return rec
+}
+
+func (th *harness) list(id string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(http.MethodGet, "/?id="+id, nil)
+	rec := httptest.NewRecorder()
+	c := th.e.NewContext(req, rec)
+	c.Set("logger", zap.NewNop())
+	if err := th.h.ListTask(c); err != nil {
+		th.e.HTTPErrorHandler(err, c)
+	}
 	return rec
 }
 
@@ -180,69 +200,75 @@ func (th *harness) start(id string) error {
 	return th.h.StartJob(c)
 }
 
-// TestConcurrentTaskMutationsShareNoMutableState hammers the same taskID with
-// concurrent AddTask/PatchTask/DeleteTask. Before definitionToFunc was removed these
-// three write/delete a shared unlocked map and `go test -race` reports a data race
-// (often `fatal error: concurrent map writes`). After the map is gone the handlers
-// share nothing mutable, so the same test is clean.
-func TestConcurrentTaskMutationsShareNoMutableState(t *testing.T) {
+// TestConcurrentTaskMutationsUseJobIndexSafely 只验证同一 taskID 并发变更时无数据竞争。
+func TestConcurrentTaskMutationsUseJobIndexSafely(t *testing.T) {
 	withNoopRegistry(t)
-	th := newHarness(t, newFakeCronDB())
+	fake := newFakeCronDB()
+	fake.fixedID = "shared-task"
+	th := newHarness(t, fake)
 
-	patchID, err := th.fake.AddDefinition(cronDB.TypeZsxq, "0 0 * * *", nil, nil)
+	patchID, err := th.fake.AddDefinition("zsxq", "0 0 * * *", nil, nil)
 	require.NoError(t, err)
+	jobID, err := th.cs.AddCrawlJob("zsxq_crawl", "0 0 * * *", func(chan cron.CronJobInfo) {})
+	require.NoError(t, err)
+	th.index.Set(patchID, jobID)
 
 	const workers, iters = 8, 50
 	var wg sync.WaitGroup
+	start := make(chan struct{})
+	var addSuccess, patchSuccess, deleteSuccess atomic.Int64
 	for range workers {
 		wg.Add(3)
 		go func() {
 			defer wg.Done()
+			<-start
 			for range iters {
-				th.add(`{"task_type":"zsxq","cron_expr":"0 0 * * *"}`)
+				if th.add(`{"task_type":"zsxq","cron_expr":"0 0 * * *"}`).Code == http.StatusOK {
+					addSuccess.Add(1)
+				}
 			}
 		}()
 		go func() {
 			defer wg.Done()
+			<-start
 			for range iters {
-				th.patch(fmt.Sprintf(`{"id":%q,"cron_expr":"0 0 * * *"}`, patchID))
+				if th.patch(fmt.Sprintf(`{"id":%q,"cron_expr":"0 0 * * *"}`, patchID)).Code == http.StatusOK {
+					patchSuccess.Add(1)
+				}
 			}
 		}()
 		go func() {
 			defer wg.Done()
+			<-start
 			for range iters {
-				// Seed a scheduled task so DeleteTask gets past RemoveCrawlJob and
-				// reaches the map delete.
-				id, _ := th.fake.AddDefinition(cronDB.TypeGitHub, "0 0 * * *", nil, nil)
-				jobID, _ := th.cs.AddCrawlJob("github_crawl", "0 0 * * *", func(chan cron.CronJobInfo) {})
-				_ = th.fake.PatchDefinition(id, nil, nil, nil, &jobID)
-				th.delete(id)
+				if th.delete(patchID).Code == http.StatusOK {
+					deleteSuccess.Add(1)
+				}
 			}
 		}()
 	}
+	close(start)
 	wg.Wait()
+	require.Positive(t, addSuccess.Load(), "AddTask should succeed at least once")
+	require.Positive(t, patchSuccess.Load(), "PatchTask should succeed at least once")
+	require.Positive(t, deleteSuccess.Load(), "DeleteTask should succeed at least once")
 }
 
-// TestStartJobRebuildsFromRegistry covers the read path: StartJob rebuilds the
-// crawlFunc from the definition + registry, so a definition that was never routed
-// through AddTask still starts (pre-refactor that 404'd on a map miss). An unknown
-// source type is the only thing that fails.
+// TestStartJobRebuildsFromRegistry 验证 StartJob 能按 definition 与 registry 重建抓取函数。
 func TestStartJobRebuildsFromRegistry(t *testing.T) {
 	withNoopRegistry(t)
 	th := newHarness(t, newFakeCronDB())
 
-	id, err := th.fake.AddDefinition(cronDB.TypeZsxq, "0 0 * * *", nil, nil)
+	id, err := th.fake.AddDefinition("zsxq", "0 0 * * *", nil, nil)
 	require.NoError(t, err)
 	require.NoError(t, th.start(id))
 
-	badID, err := th.fake.AddDefinition(9999, "0 0 * * *", nil, nil)
+	badID, err := th.fake.AddDefinition("unknown", "0 0 * * *", nil, nil)
 	require.NoError(t, err)
 	assert.Error(t, th.start(badID))
 }
 
-// TestTaskLifecycle walks add -> start -> patch -> delete end to end, asserting the
-// scheduler job is created, the job id is written back onto the definition, patch
-// swaps it, and delete removes both the definition and the scheduler job.
+// TestTaskLifecycle 验证 add → start → patch → delete 的 Kind 回显与 JobIndex 生命周期。
 func TestTaskLifecycle(t *testing.T) {
 	withNoopRegistry(t)
 	th := newHarness(t, newFakeCronDB())
@@ -253,20 +279,77 @@ func TestTaskLifecycle(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, defs, 1)
 	id := defs[0].ID
-	oldJobID := defs[0].CronServiceJobID
-	require.NotEmpty(t, oldJobID, "add should write back the scheduler job id")
+	oldJobID, ok := th.index.Get(id)
+	require.True(t, ok)
+	require.NotEmpty(t, oldJobID)
+	require.Equal(t, "zhihu", defs[0].Kind)
+
+	listRec := th.list(id)
+	require.Equal(t, http.StatusOK, listRec.Code)
+	var listed httputil.Resp[[]TaskInfo]
+	require.NoError(t, json.Unmarshal(listRec.Body.Bytes(), &listed))
+	require.Len(t, listed.Data, 1)
+	require.Equal(t, "zhihu", listed.Data[0].TaskType)
 
 	require.NoError(t, th.start(id))
 
 	require.Equal(t, http.StatusOK, th.patch(fmt.Sprintf(`{"id":%q,"cron_expr":"0 5 * * *"}`, id)).Code)
-	updated, err := th.fake.GetDefinition(id)
-	require.NoError(t, err)
-	require.NotEqual(t, oldJobID, updated.CronServiceJobID, "patch should reschedule under a new job id")
+	newJobID, ok := th.index.Get(id)
+	require.True(t, ok)
+	require.NotEqual(t, oldJobID, newJobID, "patch should reschedule under a new job id")
 	require.Error(t, th.cs.RemoveCrawlJob(oldJobID), "patch should have removed the old scheduler job")
-	newJobID := updated.CronServiceJobID
 
-	require.Equal(t, http.StatusOK, th.delete(id).Code)
+	deleteRec := th.delete(id)
+	require.Equal(t, http.StatusOK, deleteRec.Code)
+	var deleted httputil.Resp[TaskInfo]
+	require.NoError(t, json.Unmarshal(deleteRec.Body.Bytes(), &deleted))
+	require.Equal(t, "zhihu", deleted.Data.TaskType)
 	_, err = th.fake.GetDefinition(id)
 	require.ErrorIs(t, err, cronDB.ErrDefinitionNotFound)
+	_, ok = th.index.Get(id)
+	require.False(t, ok)
 	require.Error(t, th.cs.RemoveCrawlJob(newJobID), "delete should have removed the scheduler job")
+}
+
+func TestAddTaskRejectsUnknownKind(t *testing.T) {
+	withNoopRegistry(t)
+	th := newHarness(t, newFakeCronDB())
+
+	rec := th.add(`{"task_type":"unknown","cron_expr":"0 0 * * *"}`)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	defs, err := th.fake.GetDefinitions()
+	require.NoError(t, err)
+	require.Empty(t, defs)
+}
+
+func TestPatchTaskRejectsMissingDefinition(t *testing.T) {
+	withNoopRegistry(t)
+	th := newHarness(t, newFakeCronDB())
+
+	rec := th.patch(`{"id":"missing-task","cron_expr":"0 5 * * *"}`)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	_, ok := th.index.Get("missing-task")
+	require.False(t, ok)
+	require.Error(t, th.cs.RunJobNow("zsxq_crawl"), "missing task must not add a scheduler job")
+}
+
+func TestListTaskReturnsKindsForAllDefinitions(t *testing.T) {
+	th := newHarness(t, newFakeCronDB())
+	want := make(map[string]string)
+	for _, kind := range []string{"zsxq", "zhihu", "xiaobot", "github"} {
+		id, err := th.fake.AddDefinition(kind, "0 0 * * *", nil, nil)
+		require.NoError(t, err)
+		want[id] = kind
+	}
+
+	rec := th.list("")
+	require.Equal(t, http.StatusOK, rec.Code)
+	var response httputil.Resp[[]TaskInfo]
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+	require.Len(t, response.Data, len(want))
+	got := make(map[string]string, len(response.Data))
+	for _, task := range response.Data {
+		got[task.ID] = task.TaskType
+	}
+	require.Equal(t, want, got)
 }

@@ -27,7 +27,7 @@ func (h *Controller) StartJob(c echo.Context) (err error) {
 	}
 	logger.Info("Get task def successfully", zap.Any("definition", definition))
 
-	spec, ok := SpecByType(definition.Type)
+	spec, ok := SpecByKind(definition.Kind)
 	if !ok {
 		return httputil.NewHTTPError(http.StatusBadRequest, "unknown task type")
 	}

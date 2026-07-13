@@ -30,13 +30,12 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	taskType, err := TypeStrToInt(req.TaskType)
-	if err != nil {
+	if _, ok := SpecByKind(req.TaskType); !ok {
 		logger.Error("Unknown task type", zap.String("task_type", req.TaskType))
-		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
+		return httputil.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("unknown task type: %s", req.TaskType))
 	}
 
-	taskID, err := h.cronDBService.AddDefinition(taskType, req.CronExpr, req.Include, req.Exclude)
+	taskID, err := h.cronDBService.AddDefinition(req.TaskType, req.CronExpr, req.Include, req.Exclude)
 	if err != nil {
 		logger.Error("Failed to add task definition", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -44,7 +43,7 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 	logger.Info("Add task definition successfully", zap.String("task_id", taskID))
 
 	// The definition we just stored, assembled from the request (avoids a re-fetch).
-	def := &cronDB.CronTask{ID: taskID, Type: taskType, CronExpr: req.CronExpr, Include: req.Include, Exclude: req.Exclude}
+	def := &cronDB.CronTask{ID: taskID, Kind: req.TaskType, CronExpr: req.CronExpr, Include: req.Include, Exclude: req.Exclude}
 	cronServiceJobID, err := h.addTaskToCronService(def)
 	if err != nil {
 		logger.Error("Failed to add task to cron service", zap.Error(err))
@@ -65,11 +64,11 @@ func (h *Controller) AddTask(c echo.Context) (err error) {
 }
 
 func (h *Controller) addTaskToCronService(def *cronDB.CronTask) (jobID string, err error) {
-	spec, ok := SpecByType(def.Type)
+	spec, ok := SpecByKind(def.Kind)
 	if !ok {
-		return "", fmt.Errorf("unknown task type: %d", def.Type)
+		return "", fmt.Errorf("unknown task type: %s", def.Kind)
 	}
-	if jobID, err = AddToScheduler(h.cronService, h.cronDBService, spec, h.buildDeps(), def); err != nil {
+	if jobID, err = AddToScheduler(h.cronService, h.jobIndex, spec, h.buildDeps(), def); err != nil {
 		return "", err
 	}
 	return jobID, nil
@@ -105,14 +104,14 @@ func (h *Controller) PatchTask(c echo.Context) (err error) {
 		return httputil.NewHTTPError(http.StatusBadRequest, "empty task ID")
 	}
 
-	originalTaskDef, err := h.cronDBService.GetDefinition(req.ID)
+	_, err = h.cronDBService.GetDefinition(req.ID)
 	if err != nil {
 		logger.Error("Failed to get task definition", zap.Error(err), zap.String("def_id", req.ID))
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	logger.Info("Get original task definition successfully", zap.String("task_id", req.ID))
 
-	if err = h.cronDBService.PatchDefinition(req.ID, req.CronExpr, req.Include, req.Exclude, nil); err != nil {
+	if err = h.cronDBService.PatchDefinition(req.ID, req.CronExpr, req.Include, req.Exclude); err != nil {
 		logger.Error("Failed to patch task definition", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -125,6 +124,7 @@ func (h *Controller) PatchTask(c echo.Context) (err error) {
 	}
 	logger.Info("Get task definition successfully", zap.String("task_id", req.ID))
 
+	oldJobID, ok := h.jobIndex.Get(req.ID)
 	cronServiceJobID, err := h.addTaskToCronService(taskInfo)
 	if err != nil {
 		logger.Error("Failed to add task to cron service", zap.Error(err))
@@ -132,11 +132,15 @@ func (h *Controller) PatchTask(c echo.Context) (err error) {
 	}
 	logger.Info("Add task to cron service successfully", zap.String("task_id", req.ID), zap.String("cron_service_job_id", cronServiceJobID))
 
-	if err = h.cronService.RemoveCrawlJob(originalTaskDef.CronServiceJobID); err != nil {
-		logger.Error("Failed to remove task from cron service", zap.Error(err), zap.String("def_id", req.ID))
-		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
+	if ok {
+		if err = h.cronService.RemoveCrawlJob(oldJobID); err != nil {
+			logger.Error("Failed to remove task from cron service", zap.Error(err), zap.String("def_id", req.ID))
+			return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+		logger.Info("Remove original task definition from cron service successfully", zap.String("cron_service_job_id", oldJobID))
+	} else {
+		logger.Warn("Cron service job not found; skip removing it", zap.String("task_id", req.ID))
 	}
-	logger.Info("Remove original task definition from cron service successfully", zap.String("cron_service_job_id", originalTaskDef.CronServiceJobID))
 
 	return c.JSON(http.StatusOK, httputil.NewResp("success", &Resp{
 		ID:       taskInfo.ID,
@@ -169,29 +173,27 @@ func (h *Controller) DeleteTask(c echo.Context) (err error) {
 		logger.Error("Failed to get task definition", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	logger.Info("Get cron service job id successfully", zap.String("cron_service_job_id", taskInfo.CronServiceJobID))
-
-	if err = h.cronService.RemoveCrawlJob(taskInfo.CronServiceJobID); err != nil {
-		logger.Error("Failed to remove task from cron service", zap.Error(err))
-		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
+	jobID, ok := h.jobIndex.Get(taskID)
+	if ok {
+		if err = h.cronService.RemoveCrawlJob(jobID); err != nil {
+			logger.Error("Failed to remove task from cron service", zap.Error(err))
+			return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+		logger.Info("Remove task from cron service successfully", zap.String("cron_service_job_id", jobID))
+	} else {
+		logger.Warn("Cron service job not found; skip removing it", zap.String("task_id", taskID))
 	}
-	logger.Info("Remove task from cron service successfully", zap.String("cron_service_job_id", taskInfo.CronServiceJobID))
 
 	if err = h.cronDBService.DeleteDefinition(taskID); err != nil {
 		logger.Error("Failed to delete task definition", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	h.jobIndex.Delete(taskID)
 	logger.Info("Delete task definition successfully", zap.String("task_id", taskID))
-
-	taskTypeStr, err := TypeIntToStr(taskInfo.Type)
-	if err != nil {
-		logger.Error("Failed to convert task type to string", zap.Error(err))
-		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
 
 	return c.JSON(http.StatusOK, httputil.NewResp("task definition deleted", TaskInfo{
 		ID:       taskInfo.ID,
-		TaskType: taskTypeStr,
+		TaskType: taskInfo.Kind,
 		CronExpr: taskInfo.CronExpr,
 		Include:  taskInfo.Include,
 		Exclude:  taskInfo.Exclude,
@@ -212,15 +214,9 @@ func (h *Controller) ListTask(c echo.Context) (err error) {
 
 		taskInfo := make([]*TaskInfo, 0, len(taskDefs))
 		for _, def := range taskDefs {
-			taskTypeStr, err := TypeIntToStr(def.Type)
-			if err != nil {
-				logger.Error("Failed to convert task type to string", zap.Error(err))
-				return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
-			}
-
 			taskInfo = append(taskInfo, &TaskInfo{
 				ID:       def.ID,
-				TaskType: taskTypeStr,
+				TaskType: def.Kind,
 				CronExpr: def.CronExpr,
 				Include:  def.Include,
 				Exclude:  def.Exclude,
@@ -238,16 +234,10 @@ func (h *Controller) ListTask(c echo.Context) (err error) {
 	}
 	logger.Info("Get task definition successfully", zap.String("task_id", taskID))
 
-	taskTypeStr, err := TypeIntToStr(taskDef.Type)
-	if err != nil {
-		logger.Error("Failed to convert task type to string", zap.Error(err))
-		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
 	return c.JSON(http.StatusOK, httputil.NewResp("success", &[]TaskInfo{
 		{
 			ID:       taskDef.ID,
-			TaskType: taskTypeStr,
+			TaskType: taskDef.Kind,
 			CronExpr: taskDef.CronExpr,
 			Include:  taskDef.Include,
 			Exclude:  taskDef.Exclude,

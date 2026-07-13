@@ -4,19 +4,15 @@ kind: tech-debt
 status: open
 priority: low
 areas: [cron, db, controller, migrate]
-plan: docs/plans/2026-07-12-cron-drop-jobid-column.md  # TBD，待 Issue 1 落地后补写
+plan: docs/plans/2026-07-12-cron-drop-jobid-column.md
 depends_on:
   - docs/issues/2026-07-12-cron-source-registry.md
 related:
   - pkg/cron/db/definition.go
   - internal/controller/job/task.go
   - cmd/server/cron.go
-updated: "2026-07-12"
+updated: "2026-07-13"
 ---
-
-> **plan 待写**：本 issue 依赖 [Issue 1（来源注册表）](2026-07-12-cron-source-registry.md) 先
-> 落地。`plan:` 字段指向的 `docs/plans/2026-07-12-cron-drop-jobid-column.md` 目前是占位路径，
-> 等 Issue 1 合并后再补写方案。
 
 ## 问题
 

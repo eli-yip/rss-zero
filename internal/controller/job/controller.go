@@ -20,13 +20,14 @@ type Controller struct {
 	ai            ai.AI
 	notifier      notify.Notifier
 	cronDBService cronDB.DB
+	jobIndex      *JobIndex
 	logger        *zap.Logger
 }
 
-func NewController(cronService *cron.CronService, redisService redis.Redis, cs cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier, cronDBService cronDB.DB, logger *zap.Logger) *Controller {
+func NewController(cronService *cron.CronService, jobIndex *JobIndex, redisService redis.Redis, cs cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier, cronDBService cronDB.DB, logger *zap.Logger) *Controller {
 	return &Controller{cronService: cronService,
 		redisService: redisService, cookie: cs, db: db, ai: ai, notifier: notifier,
-		cronDBService: cronDBService, logger: logger}
+		cronDBService: cronDBService, jobIndex: jobIndex, logger: logger}
 }
 
 // buildDeps packs the controller's held dependencies into a BuildDeps so any

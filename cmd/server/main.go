@@ -15,6 +15,7 @@ import (
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/ai"
+	jobController "github.com/eli-yip/rss-zero/internal/controller/job"
 	"github.com/eli-yip/rss-zero/internal/db"
 	"github.com/eli-yip/rss-zero/internal/file"
 	"github.com/eli-yip/rss-zero/internal/log"
@@ -80,13 +81,14 @@ func main() {
 	}
 
 	var cronService *cron.CronService
+	var jobIndex *jobController.JobIndex
 	ai := ai.NewAIService(config.C.Openai.APIKey, config.C.Openai.BaseURL)
-	if cronService, err = setupCronCrawlJob(logger, redisService, cookieService, db, ai, bark, fileService); err != nil {
+	if cronService, jobIndex, err = setupCronCrawlJob(logger, redisService, cookieService, db, ai, bark, fileService); err != nil {
 		logger.Fatal("Failed to setup cron jobs", zap.Error(err))
 	}
 	logger.Info("Init cron service and jobs successfully")
 
-	e := setupEcho(redisService, cookieService, db, ai, bark, fileService, cronService, logger)
+	e := setupEcho(redisService, cookieService, db, ai, bark, fileService, cronService, jobIndex, logger)
 	logger.Info("Init echo server successfully")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

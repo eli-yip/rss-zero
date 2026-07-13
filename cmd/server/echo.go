@@ -55,6 +55,7 @@ func setupEcho(redisService redis.Redis,
 	notifier notify.Notifier,
 	fileService file.File,
 	cronService *cron.CronService,
+	jobIndex *jobController.JobIndex,
 	logger *zap.Logger,
 ) (e *echo.Echo) {
 	e = echo.New()
@@ -111,7 +112,7 @@ func setupEcho(redisService redis.Redis,
 	xiaobotHandler := xiaobotController.NewController(redisService, cookieService, xiaobotDBService, notifier, logger)
 	endOfLifeHandler := endoflifeController.NewController(redisService, logger)
 	cronDBService := cronDB.NewDBService(db)
-	jobHandler := jobController.NewController(cronService,
+	jobHandler := jobController.NewController(cronService, jobIndex,
 		redisService, cookieService, db, ai, notifier,
 		cronDBService, logger)
 	archiveHandler := archiveController.NewController(db)
