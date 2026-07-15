@@ -2,6 +2,15 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
+**2026-07-15 · tombkeeper-crawl-bark · 已完成并通过实现评审，待发版部署。**
+[Issue](issues/2026-07-15-tombkeeper-crawl-bark.md) ·
+[Plan](plans/2026-07-15-tombkeeper-crawl-bark.md)：live 每小时任务与手工 run-now 复用注入 Bark 的同一闭包，
+history 使用同一聚合规则；正常 run 不通知，partial、fatal、panic 每轮最多一条。importer 汇总 missing、
+引用抓取、H5、UPSERT 与图片归档等可恢复失败，保留继续处理语义；摘要限制 3 个示例、单项 500 rune、
+整条通知 1000 rune。Bark transport error 安全处理 nil response，以及同时返回 response 与 error 时的 body
+关闭。真实 importer 回归覆盖连续 UPSERT 失败仍继续且只发一条通知。Standards/Spec 双轴复审 PASS；
+目标测试、race 与 `just lint` 全绿。OPS 无需修改。
+
 **2026-07-15 · tombkeeper-h5-image-index-invariant · 已发版并生产部署 `26.7.8`。**
 [Issue](issues/2026-07-15-tombkeeper-h5-null-upsert.md) ·
 [Plan](plans/2026-07-15-tombkeeper-h5-null-upsert.md)：修复 H5 成功空结果经 nil slice 落成 JSON null、

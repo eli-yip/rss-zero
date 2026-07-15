@@ -52,6 +52,7 @@ type historyStats struct {
 	Pages         int // 已抓取的页数，失败时表示中断所在页
 	EntriesSaved  int // 本次读库快照观察到的新增时间线博文数
 	EntriesFailed int // 缺失或写入失败的时间线博文数
+	Failures      FailureSummary
 }
 
 // StartHistory launches a background backfill of [startDate, endDate] (YYYY-MM-DD,
@@ -59,6 +60,14 @@ type historyStats struct {
 // ErrHistoryRunning immediately if one is already running (one per process). The
 // crawl logs under job_id; on failure or panic it notifies via notifier.
 func StartHistory(db DB, fileService file.File, notifier notify.Notifier, startDate, endDate string, logger *zap.Logger) (jobID string, err error) {
+	return startHistoryWithRunner(func(l *zap.Logger) (historyStats, error) {
+		return runHistory(db, fileService, startDate, endDate, l)
+	}, notifier, startDate, endDate, logger, nil)
+}
+
+func startHistoryWithRunner(run func(*zap.Logger) (historyStats, error), notifier notify.Notifier,
+	startDate, endDate string, logger *zap.Logger, onDone func(),
+) (jobID string, err error) {
 	if !historyRunning.CompareAndSwap(false, true) {
 		return "", ErrHistoryRunning
 	}
@@ -66,31 +75,45 @@ func StartHistory(db DB, fileService file.File, notifier notify.Notifier, startD
 	l := logger.With(zap.String("job_id", jobID), zap.String("start", startDate), zap.String("end", endDate))
 	l.Info("tombkeeper history crawl started")
 	go func() {
-		defer historyRunning.Store(false)
+		defer func() {
+			historyRunning.Store(false)
+			if onDone != nil {
+				onDone()
+			}
+		}()
 		// A panic while rendering some malformed post would otherwise take down the
 		// whole server process; contain it to this backfill.
 		defer func() {
 			if r := recover(); r != nil {
 				l.Error("tombkeeper history crawl panicked", zap.Any("panic", r), zap.Stack("stack"))
 				notify.NoticeWithLogger(notifier, "Tombkeeper history crawl panicked",
-					fmt.Sprintf("job %s (%s..%s): %v", jobID, startDate, endDate, r), l)
+					historyNotificationContent(jobID, startDate, endDate, FailureSummary{}, "", fmt.Sprint(r)), l)
 			}
 		}()
 
-		stats, err := runHistory(db, fileService, startDate, endDate, l)
+		stats, err := run(l)
 		if err != nil {
 			l.Error("tombkeeper history crawl failed",
 				zap.Int("pages", stats.Pages), zap.Int("observed_entries_saved", stats.EntriesSaved),
 				zap.Int("entries_failed", stats.EntriesFailed), zap.Error(err))
 			notify.NoticeWithLogger(notifier, "Tombkeeper history crawl failed",
-				fmt.Sprintf("job %s (%s..%s): %v", jobID, startDate, endDate, err), l)
+				historyNotificationContent(jobID, startDate, endDate, stats.Failures, err.Error(), ""), l)
 			return
 		}
 		l.Info("tombkeeper history crawl done",
 			zap.Int("pages", stats.Pages), zap.Int("observed_entries_saved", stats.EntriesSaved),
 			zap.Int("entries_failed", stats.EntriesFailed))
+		if stats.Failures.Count > 0 {
+			notify.NoticeWithLogger(notifier, "Tombkeeper history crawl completed with errors",
+				historyNotificationContent(jobID, startDate, endDate, stats.Failures, "", ""), l)
+		}
 	}()
 	return jobID, nil
+}
+
+func historyNotificationContent(jobID, startDate, endDate string, failures FailureSummary, fatal, panicValue string) string {
+	return crawlNotificationContent(jobID, failures, fatal, panicValue) +
+		fmt.Sprintf("\nrange: %s..%s", startDate, endDate)
 }
 
 // runHistory 从新到旧遍历日期窗口；实时抓取与历史回填依靠原子 upsert 安全并发。
@@ -135,6 +158,7 @@ func crawlHistoryPages(req Requester, importer *TimelineImporter, startDate, end
 		}
 		st.EntriesSaved += importStats.EntriesSaved
 		st.EntriesFailed += importStats.EntriesFailed
+		st.Failures.Merge(importStats.Failures)
 		logger.Info("tombkeeper history page progress",
 			zap.Int("page", page), zap.Int("total", total),
 			zap.Int("entries_seen", importStats.EntriesSeen),

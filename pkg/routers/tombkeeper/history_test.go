@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 type nopNotifier struct{}
@@ -21,6 +23,80 @@ func TestStartHistoryRejectsSecond(t *testing.T) {
 	_, err := StartHistory(newFakeDB(), newFakeFile(), nopNotifier{}, "2026-06-01", "2026-06-02", testLogger())
 	if !errors.Is(err, ErrHistoryRunning) {
 		t.Fatalf("err = %v, want ErrHistoryRunning", err)
+	}
+}
+
+func TestStartHistoryAggregatesNotificationsPerRun(t *testing.T) {
+	tests := []struct {
+		name         string
+		run          func(*zap.Logger) (historyStats, error)
+		wantTitle    string
+		wantContents []string
+	}{
+		{
+			name: "healthy",
+			run:  func(*zap.Logger) (historyStats, error) { return historyStats{}, nil },
+		},
+		{
+			name: "recoverable failures",
+			run: func(*zap.Logger) (historyStats, error) {
+				return historyStats{Failures: FailureSummary{Count: 2, Examples: []string{"upsert post 1: failed"}}}, nil
+			},
+			wantTitle:    "Tombkeeper history crawl completed with errors",
+			wantContents: []string{"failures: 2", "upsert post 1", "range: 2026-07-01..2026-07-02"},
+		},
+		{
+			name: "fatal after recoverable failure",
+			run: func(*zap.Logger) (historyStats, error) {
+				return historyStats{Failures: FailureSummary{Count: 1, Examples: []string{"archive image p: failed"}}}, errors.New("page unreachable")
+			},
+			wantTitle:    "Tombkeeper history crawl failed",
+			wantContents: []string{"fatal: page unreachable", "failures: 1", "archive image p"},
+		},
+		{
+			name: "panic",
+			run: func(*zap.Logger) (historyStats, error) {
+				panic("bad history payload")
+			},
+			wantTitle:    "Tombkeeper history crawl panicked",
+			wantContents: []string{"panic: bad history payload"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			notifier := &recordingNotifier{}
+			done := make(chan struct{})
+			_, err := startHistoryWithRunner(tt.run, notifier, "2026-07-01", "2026-07-02", testLogger(), func() {
+				close(done)
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			<-done
+
+			if tt.wantTitle == "" {
+				if len(notifier.messages) != 0 {
+					t.Fatalf("notifications = %+v, want none", notifier.messages)
+				}
+				return
+			}
+			if len(notifier.messages) != 1 {
+				t.Fatalf("notifications = %+v, want exactly one", notifier.messages)
+			}
+			message := notifier.messages[0]
+			if message.title != tt.wantTitle {
+				t.Fatalf("title = %q, want %q", message.title, tt.wantTitle)
+			}
+			if !strings.Contains(message.content, "run: ") {
+				t.Fatalf("content = %q, want job id", message.content)
+			}
+			for _, want := range tt.wantContents {
+				if !strings.Contains(message.content, want) {
+					t.Fatalf("content = %q, want %q", message.content, want)
+				}
+			}
+		})
 	}
 }
 
@@ -157,6 +233,12 @@ func TestCrawlHistoryCountsFailed(t *testing.T) {
 	}
 	if st.EntriesSaved != 0 || st.EntriesFailed != 1 {
 		t.Fatalf("entries saved=%d failed=%d, want saved=0 failed=1", st.EntriesSaved, st.EntriesFailed)
+	}
+	if st.Failures.Count != 1 || len(st.Failures.Examples) != 1 {
+		t.Fatalf("failures = %+v, want one example", st.Failures)
+	}
+	if !strings.Contains(st.Failures.Examples[0], "upsert post 5314166504037012") {
+		t.Fatalf("failure example = %q, want post id", st.Failures.Examples[0])
 	}
 }
 

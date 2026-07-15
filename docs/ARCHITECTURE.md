@@ -64,6 +64,9 @@ job：
 
 - **静态 job**：`jobDefinition` slice（`check_cookies` / `macked_crawl` / `tombkeeper_crawl` /
   `canglimo_*` / `zvideo_crawl` / `douyu_crawl`），固定注册，与来源枚举无关。
+- **tombkeeper 告警边界**：live/history 都在一次 run 的最外层解释结果；panic、fatal error、成功但含
+  可恢复单条失败三种结果互斥，每次 run 最多发一条聚合 Bark。单条失败继续处理，摘要保留总数与至多
+  3 条代表性错误；手工 run-now 复用同一个 live cron 闭包。
 - **动态来源 job**：用户经 `/api/v1/job` 增删的 zsxq/zhihu/xiaobot/github 抓取任务，持久化在
   `cron_tasks`（`CronTask.Type` 为 int 枚举）。
 

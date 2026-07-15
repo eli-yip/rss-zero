@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/file"
+	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/rss"
 )
@@ -35,17 +37,62 @@ var (
 )
 
 // CrawlFunc returns the hourly cron closure (matches the macked job shape).
-func CrawlFunc(redisService redis.Redis, db DB, fileService file.File, logger *zap.Logger) func() {
+func CrawlFunc(redisService redis.Redis, db DB, fileService file.File, notifier notify.Notifier, logger *zap.Logger) func() {
+	return newCrawlFunc(func(l *zap.Logger) (FailureSummary, error) {
+		return crawl(redisService, db, fileService, l)
+	}, notifier, logger)
+}
+
+func newCrawlFunc(run func(*zap.Logger) (FailureSummary, error), notifier notify.Notifier, logger *zap.Logger) func() {
 	return func() {
-		l := logger.With(zap.String("cron_job_id", xid.New().String()))
-		if err := Crawl(redisService, db, fileService, l); err != nil {
+		runID := xid.New().String()
+		l := logger.With(zap.String("cron_job_id", runID))
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				l.Error("tombkeeper crawl panicked", zap.Any("panic", recovered), zap.Stack("stack"))
+				notify.NoticeWithLogger(notifier, "Tombkeeper crawl panicked",
+					crawlNotificationContent(runID, FailureSummary{}, "", fmt.Sprint(recovered)), l)
+			}
+		}()
+
+		failures, err := run(l)
+		if err != nil {
 			l.Error("failed to crawl tombkeeper", zap.Error(err))
+			notify.NoticeWithLogger(notifier, "Tombkeeper crawl failed",
+				crawlNotificationContent(runID, failures, err.Error(), ""), l)
+			return
+		}
+		if failures.Count > 0 {
+			notify.NoticeWithLogger(notifier, "Tombkeeper crawl completed with errors",
+				crawlNotificationContent(runID, failures, "", ""), l)
 		}
 	}
 }
 
+func crawlNotificationContent(runID string, failures FailureSummary, fatal, panicValue string) string {
+	lines := []string{"run: " + runID}
+	if fatal != "" {
+		lines = append(lines, "fatal: "+truncateRunes(fatal, maxFailureExampleRunes))
+	}
+	if panicValue != "" {
+		lines = append(lines, "panic: "+truncateRunes(panicValue, maxFailureExampleRunes))
+	}
+	if failures.Count > 0 {
+		lines = append(lines, fmt.Sprintf("failures: %d", failures.Count))
+		for _, example := range failures.Examples {
+			lines = append(lines, "- "+truncateRunes(example, maxFailureExampleRunes))
+		}
+	}
+	return truncateRunes(strings.Join(lines, "\n"), maxNotificationRunes)
+}
+
 // Crawl 摄取最新列表页，并刷新 RSS 缓存。内嵌博文只作为支持内容入库。
 func Crawl(redisService redis.Redis, db DB, fileService file.File, logger *zap.Logger) error {
+	_, err := crawl(redisService, db, fileService, logger)
+	return err
+}
+
+func crawl(redisService redis.Redis, db DB, fileService file.File, logger *zap.Logger) (FailureSummary, error) {
 	crawlMu.Lock()
 	defer crawlMu.Unlock()
 
@@ -54,14 +101,16 @@ func Crawl(redisService redis.Redis, db DB, fileService file.File, logger *zap.L
 	importer := NewTimelineImporter(req, fileService, db, logger)
 
 	var observedNewEntryCount int
+	var failures FailureSummary
 	for page := 1; page <= pagesPerCrawl; page++ {
 		html, err := req.GetPage(page)
 		if err != nil {
-			return fmt.Errorf("get page %d: %w", page, err)
+			return failures, fmt.Errorf("get page %d: %w", page, err)
 		}
 		stats, err := importer.Import(html)
+		failures.Merge(stats.Failures)
 		if err != nil {
-			return fmt.Errorf("import page %d: %w", page, err)
+			return failures, fmt.Errorf("import page %d: %w", page, err)
 		}
 		observedNewEntryCount += stats.EntriesSaved
 		logger.Info("tombkeeper page imported", zap.Int("page", page),
@@ -71,7 +120,7 @@ func Crawl(redisService redis.Redis, db DB, fileService file.File, logger *zap.L
 	}
 	logger.Info("tombkeeper crawl done", zap.Int("observed_new_entries", observedNewEntryCount))
 
-	return renderAndCacheRSS(redisService, db, logger)
+	return failures, renderAndCacheRSS(redisService, db, logger)
 }
 
 // renderAndCacheRSS re-warms the items cache after a crawl (1:1 replacement of the

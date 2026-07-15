@@ -64,7 +64,7 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 		{
 			name:     "tombkeeper_crawl",
 			schedule: "0 * * * *",
-			fn:       tombkeeper.CrawlFunc(redisService, tombkeeper.NewDBService(db), fileService, logger),
+			fn:       tombkeeper.CrawlFunc(redisService, tombkeeper.NewDBService(db), fileService, notifier, logger),
 		},
 		{
 			name:     "canglimo_random_select",

@@ -124,6 +124,51 @@ func TestTimelineImporterFetchesRetweetMissingFromPageAndStore(t *testing.T) {
 	assert.False(t, original.InTimeline)
 }
 
+func TestTimelineImporterSummarizesFailedReferencedPostFetch(t *testing.T) {
+	const originalID = "5310000000000000"
+	entry := `{"id":"5314166504037012","bid":"ENTRY","user_id":"1401527553",` +
+		`"screen_name":"tombkeeper","text":"timeline","pics":"",` +
+		`"created_at":"$D2026-06-26T10:00:00.000Z","retweet_id":"` + originalID + `","url_info":[]}`
+	html := []byte(pushChunk("9:"+entry+"\n") +
+		`<a href="/weibo/5314166504037012"><span>详情</span></a>`)
+
+	stats, err := NewTimelineImporter(&fakeRequester{}, newFakeFile(), newFakeDB(), testLogger()).Import(html)
+	require.NoError(t, err)
+	require.Equal(t, 1, stats.Failures.Count)
+	require.Len(t, stats.Failures.Examples, 1)
+	assert.Contains(t, stats.Failures.Examples[0], "fetch referenced post "+originalID)
+}
+
+func TestTimelineImporterSummarizesMissingTimelineEntries(t *testing.T) {
+	html := []byte(`<a href="/weibo/5314166504037012"><span>详情</span></a>`)
+
+	stats, err := NewTimelineImporter(&fakeRequester{}, newFakeFile(), newFakeDB(), testLogger()).Import(html)
+	require.NoError(t, err)
+	assert.Equal(t, 1, stats.EntriesFailed)
+	assert.Equal(t, 1, stats.Failures.Count)
+	assert.Equal(t, []string{"timeline payload missing entries: 1"}, stats.Failures.Examples)
+}
+
+func TestTimelineImporterBoundsFailureExamples(t *testing.T) {
+	var flight, links string
+	for id := int64(5314166504037012); id < 5314166504037016; id++ {
+		entry := fmt.Sprintf(`{"id":"%d","bid":"ENTRY","user_id":"1401527553",`+
+			`"screen_name":"tombkeeper","text":"timeline","pics":"",`+
+			`"created_at":"$D2026-06-26T10:00:00.000Z","retweet_id":"","url_info":[]}`, id)
+		flight += fmt.Sprintf("%x:%s\n", id-5314166504037000, entry)
+		links += fmt.Sprintf(`<a href="/weibo/%d"><span>详情</span></a>`, id)
+	}
+	db := newFakeDB()
+	db.saveErr = true
+
+	stats, err := NewTimelineImporter(&fakeRequester{}, newFakeFile(), db, testLogger()).Import(
+		[]byte(pushChunk(flight) + links),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, 4, stats.Failures.Count)
+	assert.Len(t, stats.Failures.Examples, maxFailureExamples)
+}
+
 func TestTimelineImporterStoresPostBeforeBestEffortImageAsset(t *testing.T) {
 	source := loadSourcePost(t, "single_image.json")
 	html := []byte(pushChunk("9:"+string(readFixture(t, "single_image.json"))+"\n") +
@@ -134,7 +179,12 @@ func TestTimelineImporterStoresPostBeforeBestEffortImageAsset(t *testing.T) {
 
 	stats, err := NewTimelineImporter(req, newFakeFile(), db, testLogger()).Import(html)
 	require.NoError(t, err)
-	assert.Equal(t, ImportStats{EntriesSeen: 1, EntriesSaved: 1}, stats)
+	assert.Equal(t, 1, stats.EntriesSeen)
+	assert.Equal(t, 1, stats.EntriesSaved)
+	require.Equal(t, 1, stats.Failures.Count)
+	require.Len(t, stats.Failures.Examples, 1)
+	assert.Contains(t, stats.Failures.Examples[0], "archive image")
+	assert.Contains(t, stats.Failures.Examples[0], fmt.Sprint(source.ID))
 	assert.Contains(t, db.posts, source.ID)
 }
 
@@ -183,8 +233,12 @@ func TestTimelineImporterRetriesFailedH5Request(t *testing.T) {
 	db := newFakeDB()
 	importer := NewTimelineImporter(req, newFakeFile(), db, testLogger())
 
-	_, err := importer.Import(html)
+	stats, err := importer.Import(html)
 	require.NoError(t, err)
+	require.Equal(t, 1, stats.Failures.Count)
+	require.Len(t, stats.Failures.Examples, 1)
+	assert.Contains(t, stats.Failures.Examples[0], "resolve H5 image index")
+	assert.Contains(t, stats.Failures.Examples[0], fmt.Sprint(repost.ID))
 	if _, exists := db.posts[repost.ID].H5ImageIDsByURL[longURL]; exists {
 		t.Fatal("failed H5 request must not create a completed index entry")
 	}

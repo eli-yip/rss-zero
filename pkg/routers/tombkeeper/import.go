@@ -11,12 +11,53 @@ import (
 	"github.com/eli-yip/rss-zero/internal/file"
 )
 
+const (
+	maxFailureExamples     = 3
+	maxFailureExampleRunes = 500
+	maxNotificationRunes   = 1000
+)
+
+// FailureSummary 汇总一次抓取中可恢复的单条失败，并限制通知中的示例数量。
+type FailureSummary struct {
+	Count    int
+	Examples []string
+}
+
+func (s *FailureSummary) Add(message string) { s.AddN(1, message) }
+
+func (s *FailureSummary) AddN(count int, message string) {
+	if count <= 0 {
+		return
+	}
+	s.Count += count
+	if len(s.Examples) < maxFailureExamples {
+		s.Examples = append(s.Examples, truncateRunes(message, maxFailureExampleRunes))
+	}
+}
+
+func (s *FailureSummary) Merge(other FailureSummary) {
+	s.Count += other.Count
+	remaining := min(maxFailureExamples-len(s.Examples), len(other.Examples))
+	if remaining > 0 {
+		s.Examples = append(s.Examples, other.Examples[:remaining]...)
+	}
+}
+
+func truncateRunes(text string, limit int) string {
+	runes := []rune(text)
+	if len(runes) <= limit {
+		return text
+	}
+	return string(runes[:limit-1]) + "…"
+}
+
 // ImportStats 是一页时间线的导入统计。EntriesSaved 是本次读库快照观察到的新增成员；
 // live/history 并发处理同一篇时可能重复观察，不作为数据库全局计数。
 type ImportStats struct {
 	EntriesSeen   int
 	EntriesSaved  int
 	EntriesFailed int
+	Failures      FailureSummary
 }
 
 type importRequester interface {
@@ -45,6 +86,10 @@ func (i *TimelineImporter) Import(pageHTML []byte) (ImportStats, error) {
 		return ImportStats{}, err
 	}
 	stats := ImportStats{EntriesSeen: len(page.Entries), EntriesFailed: page.MissingEntries}
+	if page.MissingEntries > 0 {
+		stats.Failures.AddN(page.MissingEntries,
+			fmt.Sprintf("timeline payload missing entries: %d", page.MissingEntries))
+	}
 	postsProvidedByPage := make(map[int64]importCandidate, len(page.Entries)+len(page.EmbeddedPosts))
 	for _, source := range page.EmbeddedPosts {
 		postsProvidedByPage[source.ID] = importCandidate{source: source}
@@ -74,6 +119,7 @@ func (i *TimelineImporter) Import(pageHTML []byte) (ImportStats, error) {
 		source, err := i.fetchSourcePost(id)
 		if err != nil {
 			i.logger.Warn("failed to fetch referenced tombkeeper post", zap.Int64("id", id), zap.Error(err))
+			stats.Failures.Add(fmt.Sprintf("fetch referenced post %d: %v", id, err))
 			continue
 		}
 		postsToImport = append(postsToImport, importCandidate{source: source})
@@ -85,9 +131,10 @@ func (i *TimelineImporter) Import(pageHTML []byte) (ImportStats, error) {
 		if existed {
 			post.H5ImageIDsByURL = cloneH5ImageIDs(existingPost.H5ImageIDsByURL)
 		}
-		i.resolveMissingH5ImageIDs(&post)
+		i.resolveMissingH5ImageIDs(&post, &stats.Failures)
 		if err := i.store.UpsertPost(&post); err != nil {
 			i.logger.Error("failed to save tombkeeper post", zap.Int64("id", post.ID), zap.Error(err))
+			stats.Failures.Add(fmt.Sprintf("upsert post %d: %v", post.ID, err))
 			if candidate.inTimeline {
 				stats.EntriesFailed++
 			}
@@ -96,7 +143,7 @@ func (i *TimelineImporter) Import(pageHTML []byte) (ImportStats, error) {
 		if candidate.inTimeline && (!existed || !existingPost.InTimeline) {
 			stats.EntriesSaved++
 		}
-		i.archiveReferencedImages(post)
+		i.archiveReferencedImages(post, &stats.Failures)
 	}
 	return stats, nil
 }
@@ -126,7 +173,7 @@ func cloneNonNilImageIDs(ids []string) []string {
 	return append(make([]string, 0, len(ids)), ids...)
 }
 
-func (i *TimelineImporter) resolveMissingH5ImageIDs(post *Post) {
+func (i *TimelineImporter) resolveMissingH5ImageIDs(post *Post, failures *FailureSummary) {
 	for _, link := range post.Links {
 		if !isViewPic(link) {
 			continue
@@ -137,13 +184,14 @@ func (i *TimelineImporter) resolveMissingH5ImageIDs(post *Post) {
 		ids, err := i.req.GetReppic(link.LongURL)
 		if err != nil {
 			i.logger.Warn("failed to resolve 查看图片 H5 page", zap.String("long_url", link.LongURL), zap.Error(err))
+			failures.Add(fmt.Sprintf("resolve H5 image index for post %d (%s): %v", post.ID, link.LongURL, err))
 			continue
 		}
 		post.H5ImageIDsByURL[link.LongURL] = cloneNonNilImageIDs(ids)
 	}
 }
 
-func (i *TimelineImporter) archiveReferencedImages(post Post) {
+func (i *TimelineImporter) archiveReferencedImages(post Post, failures *FailureSummary) {
 	images := append([]string(nil), post.Pics...)
 	for _, ids := range post.H5ImageIDsByURL {
 		images = append(images, ids...)
@@ -152,6 +200,7 @@ func (i *TimelineImporter) archiveReferencedImages(post Post) {
 		if err := archiveImageAsset(i.req, i.file, i.store, image, i.logger); err != nil {
 			i.logger.Error("failed to archive tombkeeper image asset",
 				zap.Int64("post_id", post.ID), zap.String("image", image), zap.Error(err))
+			failures.Add(fmt.Sprintf("archive image %s for post %d: %v", image, post.ID, err))
 		}
 	}
 }

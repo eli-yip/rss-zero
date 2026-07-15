@@ -17,20 +17,40 @@ type Message struct {
 	Content string
 }
 
-type BarkNotifier struct{ url string }
+type httpGetter interface {
+	Get(string) (*http.Response, error)
+}
 
-func NewBarkNotifier(url string) Notifier { return &BarkNotifier{url: url} }
+type BarkNotifier struct {
+	url    string
+	client httpGetter
+}
+
+func NewBarkNotifier(url string) Notifier { return &BarkNotifier{url: url, client: http.DefaultClient} }
 
 func (b *BarkNotifier) Notify(title, content string) error {
 	const urlLayout = "%s/%s/%s?group=RSS-Zero"
 	u := fmt.Sprintf(urlLayout, b.url, url.QueryEscape(title), url.QueryEscape(content))
 
-	resp, err := http.Get(u)
+	client := b.client
+	if client == nil {
+		client = http.DefaultClient
+	}
+	resp, err := client.Get(u)
+	if err != nil {
+		if resp != nil && resp.Body != nil {
+			_ = resp.Body.Close()
+		}
+		return err
+	}
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf("status code: %d", resp.StatusCode)
+		return fmt.Errorf("status code: %d", resp.StatusCode)
 	}
 
-	return err
+	return nil
 }
 
 func NoticeWithLogger(notifer Notifier, title, content string, logger *zap.Logger) {

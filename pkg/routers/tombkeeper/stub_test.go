@@ -50,8 +50,8 @@ type fakeRequester struct {
 	reppicCalls  map[string]int      // 查看图片 long_url -> request count
 	reppicErr    bool                // GetReppic returns an error (h5 unreachable)
 	detailCalls  int
-	pages        map[int][]byte      // page number -> list page html (GetPageRange)
-	rangeErr     bool                // GetPageRange returns an error
+	pages        map[int][]byte // page number -> list page html (GetPageRange)
+	rangeErr     bool           // GetPageRange returns an error
 }
 
 func (f *fakeRequester) GetPage(int) ([]byte, error) { return nil, errors.New("not implemented") }
@@ -96,6 +96,7 @@ func (f *fakeRequester) GetPicStream(context.Context, string) (*http.Response, e
 type fakeDB struct {
 	posts        map[int64]*Post
 	objs         map[string]*ImageAsset
+	upsertCalls  int
 	saveErr      bool // UpsertPost returns an error (to exercise the import failure path)
 	getPostsErr  bool
 	imageSaveErr bool
@@ -105,6 +106,7 @@ func newFakeDB() *fakeDB {
 	return &fakeDB{posts: map[int64]*Post{}, objs: map[string]*ImageAsset{}}
 }
 func (d *fakeDB) UpsertPost(p *Post) error {
+	d.upsertCalls++
 	if d.saveErr {
 		return errors.New("save failed")
 	}
