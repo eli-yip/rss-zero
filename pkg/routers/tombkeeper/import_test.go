@@ -171,6 +171,10 @@ func TestTimelineImporterCachesSuccessfulEmptyH5ImageIndex(t *testing.T) {
 	ids, exists := db.posts[repost.ID].H5ImageIDsByURL[longURL]
 	assert.True(t, exists)
 	assert.Empty(t, ids)
+	assert.NotNil(t, ids)
+	encoded, err := json.Marshal(ids)
+	require.NoError(t, err)
+	assert.JSONEq(t, "[]", string(encoded))
 }
 
 func TestTimelineImporterRetriesFailedH5Request(t *testing.T) {

@@ -118,8 +118,12 @@ func postFromSource(source SourcePost, inTimeline bool) Post {
 
 func cloneH5ImageIDs(idsByURL map[string][]string) map[string][]string {
 	return lo.MapValues(idsByURL, func(ids []string, _ string) []string {
-		return append([]string(nil), ids...)
+		return cloneNonNilImageIDs(ids)
 	})
+}
+
+func cloneNonNilImageIDs(ids []string) []string {
+	return append(make([]string, 0, len(ids)), ids...)
 }
 
 func (i *TimelineImporter) resolveMissingH5ImageIDs(post *Post) {
@@ -135,7 +139,7 @@ func (i *TimelineImporter) resolveMissingH5ImageIDs(post *Post) {
 			i.logger.Warn("failed to resolve 查看图片 H5 page", zap.String("long_url", link.LongURL), zap.Error(err))
 			continue
 		}
-		post.H5ImageIDsByURL[link.LongURL] = append([]string(nil), ids...)
+		post.H5ImageIDsByURL[link.LongURL] = cloneNonNilImageIDs(ids)
 	}
 }
 

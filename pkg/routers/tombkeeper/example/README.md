@@ -48,8 +48,12 @@ Markdown：
 存入 `H5ImageIDsByURL`，区分三种状态：
 
 - key 不存在：尚未求取，或上次网络/解析失败；以后允许重试；
-- key 存在且数组为空：请求成功但页面没有图片；以后不再重复请求；
+- key 存在且数组为空：请求成功但页面没有图片；持久化为 JSON `[]`，以后不再重复请求；
 - key 存在且数组非空：已经得到 pic id；以后直接复用。
+
+数据库列 `view_pics` 必须是非 NULL JSON object，且每个 value 必须是 JSON array；PostgreSQL
+constraint 拒绝其他形态。`20260715000000` migration 把历史 SQL NULL／顶层非 object 归一化为
+`{}`，把 object 内的 JSON null 或其他非数组 value 归一化为 `[]`。
 
 并发 upsert 的合并顺序是 absent < empty < nonempty，因此旧请求不能覆盖已经成功取得的 id。
 
