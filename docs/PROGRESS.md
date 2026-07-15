@@ -2,14 +2,17 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
-**2026-07-15 · tombkeeper-crawl-bark · 已完成并通过实现评审，待发版部署。**
+**2026-07-15 · tombkeeper-crawl-bark · 已发版并生产部署 `26.7.9`。**
 [Issue](issues/2026-07-15-tombkeeper-crawl-bark.md) ·
 [Plan](plans/2026-07-15-tombkeeper-crawl-bark.md)：live 每小时任务与手工 run-now 复用注入 Bark 的同一闭包，
 history 使用同一聚合规则；正常 run 不通知，partial、fatal、panic 每轮最多一条。importer 汇总 missing、
 引用抓取、H5、UPSERT 与图片归档等可恢复失败，保留继续处理语义；摘要限制 3 个示例、单项 500 rune、
 整条通知 1000 rune。Bark transport error 安全处理 nil response，以及同时返回 response 与 error 时的 body
 关闭。真实 importer 回归覆盖连续 UPSERT 失败仍继续且只发一条通知。Standards/Spec 双轴复审 PASS；
-目标测试、race 与 `just lint` 全绿。OPS 无需修改。
+目标测试、race 与 `just lint` 全绿。squash 合并 master（`d4f9050e`），origin/oss 均已推送；镜像
+`eliyip/rss-zero:26.7.9` 与 `latest` digest 为 `sha256:8a3499a8fb1e958b5364f8faf3b2f2867893c6ccf5bca651fa922e6ed06e5708`。
+生产 health 返回 `26.7.9`，后端 restart=0、数据库 healthy、`tombkeeper_crawl` 注册成功；启动日志除 OPS
+已注明的 macked 上游 403 外无 tombkeeper error 或 panic。OPS 无需修改。
 
 **2026-07-15 · tombkeeper-h5-image-index-invariant · 已发版并生产部署 `26.7.8`。**
 [Issue](issues/2026-07-15-tombkeeper-h5-null-upsert.md) ·
