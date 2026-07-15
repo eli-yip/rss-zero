@@ -2,7 +2,7 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
-**2026-07-15 · tombkeeper-h5-image-index-invariant · 已 squash 合并 master；未发版。**
+**2026-07-15 · tombkeeper-h5-image-index-invariant · 已发版并生产部署 `26.7.8`。**
 [Issue](issues/2026-07-15-tombkeeper-h5-null-upsert.md) ·
 [Plan](plans/2026-07-15-tombkeeper-h5-null-upsert.md)：修复 H5 成功空结果经 nil slice 落成 JSON null、
 继而让 `jsonb_array_length` 报 SQLSTATE 22023 的入库故障。importer 与读库 clone 统一保留非 nil
@@ -10,8 +10,9 @@ Running log across issues / plans / lessons — newest first. See [CONVENTIONS.m
 同一事务中设置 default/NOT NULL 与 object→array CHECK constraint。真实 PostgreSQL 16.3 红灯先行，
 覆盖历史数据矩阵、fresh/retry 幂等、非法 ON CONFLICT 原子拒绝，以及 migration 后的图片索引与
 `in_timeline` 单调 upsert。双轴实现评审的两处 helper 重复与一项测试缺口均修复后 Standards/Spec
-复核 PASS；`go test -p 1 ./pkg/routers/tombkeeper/... ./internal/migrate/...`、`just lint` 全绿。未修改
-OPS 或生产数据库。
+复核 PASS；`go test -p 1 ./pkg/routers/tombkeeper/... ./internal/migrate/...`、`just lint` 全绿。生产启动时
+migration `20260715000000` applied；故障帖子 `5320541594714302` 的 H5 value 已归一为 `[]`，非法直接 value
+计数为 0，列 default/NOT NULL 与 CHECK constraint 均生效；health 返回 `26.7.8`。OPS 未修改。
 
 **2026-07-13 · archive-content-styles · 已 squash 合并 master、发版 `26.7.7`。** archive HTML 正文为
 blockquote/code/pre 补充内联样式（`pkg/render/md2html.go`），提升可读性；同时刷新此前遗留的 md2html golden
