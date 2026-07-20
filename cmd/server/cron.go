@@ -24,6 +24,12 @@ import (
 	zsxqCron "github.com/eli-yip/rss-zero/pkg/routers/zsxq/cron"
 )
 
+type jobDefinition struct {
+	name     string
+	schedule string
+	fn       func()
+}
+
 // setupCronCrawlJob sets up cron jobs
 func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, ai ai.AI, notifier notify.Notifier, fileService file.File,
 ) (cronService *cron.CronService, jobIndex *jobController.JobIndex, err error) {
@@ -44,12 +50,32 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 		return nil, nil, fmt.Errorf("failed to add job to cron service: %w", err)
 	}
 
-	type jobDefinition struct {
-		name     string
-		schedule string
-		fn       func()
+	jobs := buildStaticJobDefinitions(redisService, cookieService, db, notifier, fileService, logger, config.C.Settings.DisableDouyu)
+
+	// If debug is true, add no jobs
+	if config.C.Settings.Debug {
+		jobs = []jobDefinition{}
 	}
 
+	for _, job := range jobs {
+		jobID, err := cronService.AddJob(job.name, job.schedule, job.fn)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to add %s job: %w", job.name, err)
+		}
+		logger.Info(fmt.Sprintf("Add %s job successfully", job.name), zap.String("job_id", jobID))
+	}
+
+	// macked has no content DB: its items cache is populated only by the hourly
+	// cron, so a fresh deploy would serve an empty feed until the next run. Prewarm
+	// once at startup to close that window.
+	if !config.C.Settings.Debug {
+		go macked.CrawlFunc(redisService, macked.NewDBService(db), logger)()
+	}
+
+	return cronService, jobIndex, nil
+}
+
+func buildStaticJobDefinitions(redisService redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, notifier notify.Notifier, fileService file.File, logger *zap.Logger, disableDouyu bool) []jobDefinition {
 	jobs := []jobDefinition{
 		{
 			name:     "check_cookies",
@@ -81,34 +107,17 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 			schedule: "0 0,3,6,9,12,15,18,21 * * *",
 			fn:       zhihuCron.BuildZvideoCrawlFunc("canglimo", db, notifier, cookieService),
 		},
-		{
+	}
+
+	if !disableDouyu {
+		jobs = append(jobs, jobDefinition{
 			name:     "douyu_crawl",
 			schedule: "0 19 * * *",
 			fn:       douyu.BuildCrawlFunc(notifier, redisService),
-		},
+		})
 	}
 
-	// If debug is true, add no jobs
-	if config.C.Settings.Debug {
-		jobs = []jobDefinition{}
-	}
-
-	for _, job := range jobs {
-		jobID, err := cronService.AddJob(job.name, job.schedule, job.fn)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to add %s job: %w", job.name, err)
-		}
-		logger.Info(fmt.Sprintf("Add %s job successfully", job.name), zap.String("job_id", jobID))
-	}
-
-	// macked has no content DB: its items cache is populated only by the hourly
-	// cron, so a fresh deploy would serve an empty feed until the next run. Prewarm
-	// once at startup to close that window.
-	if !config.C.Settings.Debug {
-		go macked.CrawlFunc(redisService, macked.NewDBService(db), logger)()
-	}
-
-	return cronService, jobIndex, nil
+	return jobs
 }
 
 func resumeRunningJobs(cronDBService cronDB.DB, deps jobController.BuildDeps, logger *zap.Logger) (err error) {

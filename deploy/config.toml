@@ -3,6 +3,7 @@ server_url = ''
 internal_server_url = ''
 fresh_rss_url = ''
 debug = false
+disable_douyu = false
 
 [minio]
 endpoint = ''
