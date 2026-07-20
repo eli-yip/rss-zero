@@ -2,6 +2,15 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
+**2026-07-20 · disable-douyu · 已发版并生产部署 `26.7.12`。** 按 owner 明确豁免未创建 issue/plan、
+未执行实现评审；新增 `[settings].disable_douyu` 配置开关，默认保持斗鱼任务启用，开启后在静态 cron
+定义构建期移除 `douyu_crawl`，从入口同时停止斗鱼网络请求、Redis 状态读写与 Bark 通知。配置解析和
+job 注册回归测试通过，`just lint` 0 issue。Squash 合并 master（`165ae9b8`），origin master 与 tag
+`26.7.12` 已推送；镜像 `eliyip/rss-zero:26.7.12` 与 `latest` digest 为
+`sha256:727bbe9dc7ea8876b21282c04df923062514009ab2d21974f7045645f2d0f424`。生产
+`SERVER_TAG=26.7.12`、`disable_douyu = true`，health 返回 `26.7.12`，后端 running、restart=0，数据库
+healthy；启动日志没有注册 `douyu_crawl`，仅有 OPS 已注明可忽略的 macked 上游 403。
+
 **2026-07-20 · echo-v5 · 已发版并生产部署 `26.7.11`。** 按 owner 明确豁免未创建 issue/plan，HTTP 框架从
 Echo v4.15.2 升级到 v5.1.1：handler 与 middleware 改用 `*echo.Context`，错误处理器、响应元数据、
 context store、query/path 参数、测试 path values、路由枚举和命名注册均适配 v5 API；context 与参数读取
