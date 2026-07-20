@@ -29,7 +29,6 @@ func CrawlRepo(user, repo, repoID, token string, parser parse.Parser, logger *za
 			logger.Warn("No release found for this repo")
 			return nil
 		}
-		logger.Error("Failed to get github release", zap.Error(err))
 		return fmt.Errorf("failed to request github API: %w", err)
 	}
 

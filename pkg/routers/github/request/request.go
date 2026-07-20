@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
+
+const maxLoggedResponseBodyBytes = 64 * 1024
 
 type Release struct {
 	ID          int       `json:"id"`
@@ -43,11 +46,24 @@ func GetRepoReleases(user, repo, token string) (releases []Release, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get releases API response: %w", err)
 	}
-	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, fmt.Errorf("%w: status %d", ErrUnauthorized, resp.StatusCode)
-	}
+	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get releases API response, bad status code: %d", resp.StatusCode)
+		body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxLoggedResponseBodyBytes+1))
+		if readErr != nil {
+			return nil, fmt.Errorf("failed to get releases API response, bad status code: %d, failed to read response body: %w", resp.StatusCode, readErr)
+		}
+
+		truncationMarker := ""
+		if len(body) > maxLoggedResponseBodyBytes {
+			body = body[:maxLoggedResponseBodyBytes]
+			truncationMarker = fmt.Sprintf(" [response body truncated after %d bytes]", maxLoggedResponseBodyBytes)
+		}
+
+		if resp.StatusCode == http.StatusUnauthorized {
+			return nil, fmt.Errorf("%w: status %d, response body: %s%s", ErrUnauthorized, resp.StatusCode, body, truncationMarker)
+		}
+		return nil, fmt.Errorf("failed to get releases API response, bad status code: %d, response body: %s%s", resp.StatusCode, body, truncationMarker)
 	}
 
 	if err = json.NewDecoder(resp.Body).Decode(&releases); err != nil {
