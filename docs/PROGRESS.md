@@ -2,6 +2,15 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
+**2026-07-20 · github-api-error-response · 已发版并生产部署 `26.7.10`。** GitHub Releases API
+返回非 200 状态时，错误现在携带最多 64 KiB 响应体，超限明确标记截断；抓取中间层不再重复记 error，
+由 cron 外层统一打印一次。响应体在所有路径正确关闭，401 仍保留 `ErrUnauthorized` 分类语义。回归测试覆盖
+503 状态码、正文截断、关闭响应体与单次日志边界；目标包测试、`just lint`、Standards/Spec 双轴复审均通过。
+squash 合并 master（`607dfbb3`），tag `26.7.10` 与镜像 `eliyip/rss-zero:26.7.10`、`latest`
+均已推送，digest 为 `sha256:0f5dc04edd71801ae3ab9148a4d3962a9734aaf2ccb5e7142531309788a64079`。
+生产 `SERVER_TAG=26.7.10`，health 返回 `26.7.10`，后端 running、数据库 healthy；启动日志仅有 OPS
+已注明可忽略的 macked 上游 403，无 panic 或 GitHub 相关错误。OPS 无需修改。
+
 **2026-07-15 · tombkeeper-crawl-bark · 已发版并生产部署 `26.7.9`。**
 [Issue](issues/2026-07-15-tombkeeper-crawl-bark.md) ·
 [Plan](plans/2026-07-15-tombkeeper-crawl-bark.md)：live 每小时任务与手工 run-now 复用注入 Bark 的同一闭包，
