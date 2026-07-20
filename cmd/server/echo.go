@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"slices"
 
-	echopprof "github.com/eli-yip/echo-pprof"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -59,8 +58,6 @@ func setupEcho(redisService redis.Redis,
 	logger *zap.Logger,
 ) (e *echo.Echo) {
 	e = echo.New()
-	e.HideBanner = true
-	e.HidePort = true
 	e.IPExtractor = echo.ExtractIPFromXFFHeader(
 		echo.TrustIPRange(func(ip string) *net.IPNet {
 			_, ipNet, _ := net.ParseCIDR(ip)
@@ -185,91 +182,89 @@ func setupEcho(redisService redis.Redis,
 
 	tombkeeperGroup := apiGroup.Group("/tombkeeper")
 	groupNeedAuth = append(groupNeedAuth, tombkeeperGroup)
-	tombkeeperHistoryApi := tombkeeperGroup.POST("/history", tombkeeperH.History)
-	tombkeeperHistoryApi.Name = "Tombkeeper history backfill route"
+	registerNamedRoute(tombkeeperGroup, http.MethodPost, "/history", "Tombkeeper history backfill route", tombkeeperH.History)
 
 	tkblogGroup := apiGroup.Group("/tkblog")
 	groupNeedAuth = append(groupNeedAuth, tkblogGroup)
-	tkblogCrawlApi := tkblogGroup.POST("/:category/crawl", tkblogH.Crawl)
-	tkblogCrawlApi.Name = "Tkblog crawl route"
+	registerNamedRoute(tkblogGroup, http.MethodPost, "/:category/crawl", "Tkblog crawl route", tkblogH.Crawl)
 
 	for g := range slices.Values(groupNeedAuth) {
 		g.Use(myMiddleware.AllowAdmin())
 	}
 
-	healthEndpoint := apiGroup.GET("/health", func(c echo.Context) error {
+	registerNamedRoute(apiGroup, http.MethodGet, "/health", "Health check route", func(c *echo.Context) error {
 		return c.JSON(http.StatusOK, httputil.NewResp("ok", map[string]string{
 			"status":  "ok",
 			"version": version.Version,
 		}))
 	})
-	healthEndpoint.Name = "Health check route"
 
 	// iterate all routes and log them
-	for _, r := range e.Routes() {
+	for _, r := range e.Router().Routes() {
 		logger.Info("route",
 			zap.String("name", r.Name),
 			zap.String("path", r.Path))
 	}
 
-	echopprof.Wrap(e)
+	registerPprof(e)
 
 	return e
 }
 
+type routeRegistrar interface {
+	AddRoute(route echo.Route) (echo.RouteInfo, error)
+}
+
+// registerNamedRoute 通过 v5 的 Route API 注册带名称的路由。
+func registerNamedRoute(registrar routeRegistrar, method, path, name string, handler echo.HandlerFunc, middleware ...echo.MiddlewareFunc) {
+	_, err := registrar.AddRoute(echo.Route{
+		Method:      method,
+		Path:        path,
+		Name:        name,
+		Handler:     handler,
+		Middlewares: middleware,
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
 func registerBookmark(bookmarkGroup *echo.Group, archiveHandler *archiveController.Controller) {
-	bookmarkList := bookmarkGroup.POST("", archiveHandler.GetBookmarkList)
-	bookmarkList.Name = "Bookmark list route"
-	bookmarkAdd := bookmarkGroup.PUT("", archiveHandler.PutBookmark)
-	bookmarkAdd.Name = "Bookmark add route"
-	bookmarkDelete := bookmarkGroup.DELETE("/:id", archiveHandler.DeleteBookmark)
-	bookmarkDelete.Name = "Bookmark delete route"
-	bookmarkUpdate := bookmarkGroup.PATCH("/:id", archiveHandler.PatchBookmark)
-	bookmarkUpdate.Name = "Bookmark update route"
+	registerNamedRoute(bookmarkGroup, http.MethodPost, "", "Bookmark list route", archiveHandler.GetBookmarkList)
+	registerNamedRoute(bookmarkGroup, http.MethodPut, "", "Bookmark add route", archiveHandler.PutBookmark)
+	registerNamedRoute(bookmarkGroup, http.MethodDelete, "/:id", "Bookmark delete route", archiveHandler.DeleteBookmark)
+	registerNamedRoute(bookmarkGroup, http.MethodPatch, "/:id", "Bookmark update route", archiveHandler.PatchBookmark)
 }
 
 func registerTag(tagGroup *echo.Group, archiveHandler *archiveController.Controller) {
-	tagList := tagGroup.GET("", archiveHandler.GetAllTags)
-	tagList.Name = "Tag list route"
+	registerNamedRoute(tagGroup, http.MethodGet, "", "Tag list route", archiveHandler.GetAllTags)
 }
 
 func registerAuthor(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller) {
 	// /api/v1/author/zhihu
-	zhihuAuthorApi := apiGroup.GET("/author/zhihu/:id", zhihuHandler.AuthorName)
-	zhihuAuthorApi.Name = "Author name route for zhihu"
+	registerNamedRoute(apiGroup, http.MethodGet, "/author/zhihu/:id", "Author name route for zhihu", zhihuHandler.AuthorName)
 }
 
 // /api/v1/feed
 // /api/v1/feed/zhihu/:id
 // /api/v1/feed/rsshub
 func registerFeed(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller, githubController *githubController.Controller) {
-	zhihuFeedApi := apiGroup.GET("/zhihu/:id", zhihuHandler.Feed)
-	zhihuFeedApi.Name = "Feed route for zhihu"
-	rssHubFeddApi := apiGroup.POST("/rsshub", rsshubController.GenerateRSSHubFeed)
-	rssHubFeddApi.Name = "RSSHub feed generator route"
+	registerNamedRoute(apiGroup, http.MethodGet, "/zhihu/:id", "Feed route for zhihu", zhihuHandler.Feed)
+	registerNamedRoute(apiGroup, http.MethodPost, "/rsshub", "RSSHub feed generator route", rsshubController.GenerateRSSHubFeed)
 
-	githubFeedApi := apiGroup.GET("/github/:user_repo", githubController.Feed)
-	githubFeedApi.Name = "Feed route for github"
+	registerNamedRoute(apiGroup, http.MethodGet, "/github/:user_repo", "Feed route for github", githubController.Feed)
 }
 
 // /api/v1/job
 func registerJob(apiGroup *echo.Group, jobHandler *jobController.Controller) {
-	startJobApi := apiGroup.POST("/start/:task", jobHandler.StartJob)
-	startJobApi.Name = "Start job route"
-	getJobsApi := apiGroup.GET("/list", jobHandler.GetJobs)
-	getJobsApi.Name = "Get jobs route"
-	getErrorJobsApi := apiGroup.GET("/list/error", jobHandler.GetErrorJobs)
-	getErrorJobsApi.Name = "Get error jobs route"
-	addTaskApi := apiGroup.POST("/task", jobHandler.AddTask)
-	addTaskApi.Name = "Add task route"
-	patchTaskApi := apiGroup.POST("/task/patch", jobHandler.PatchTask)
-	patchTaskApi.Name = "Patch task route"
-	deleteTaskApi := apiGroup.DELETE("/task/:id", jobHandler.DeleteTask)
-	deleteTaskApi.Name = "Delete task route"
-	listTaskApi := apiGroup.GET("/task/list", jobHandler.ListTask)
-	listTaskApi.Name = "List task route"
-	runNowApi := apiGroup.POST("/run/:job", jobHandler.RunJobByName)
-	runNowApi.Name = "Run job now route"
+	registerNamedRoute(apiGroup, http.MethodPost, "/start/:task", "Start job route", jobHandler.StartJob)
+	registerNamedRoute(apiGroup, http.MethodGet, "/list", "Get jobs route", jobHandler.GetJobs)
+	registerNamedRoute(apiGroup, http.MethodGet, "/list/error", "Get error jobs route", jobHandler.GetErrorJobs)
+	registerNamedRoute(apiGroup, http.MethodPost, "/task", "Add task route", jobHandler.AddTask)
+	registerNamedRoute(apiGroup, http.MethodPost, "/task/patch", "Patch task route", jobHandler.PatchTask)
+	registerNamedRoute(apiGroup, http.MethodDelete, "/task/:id", "Delete task route", jobHandler.DeleteTask)
+	registerNamedRoute(apiGroup, http.MethodGet, "/task/list", "List task route", jobHandler.ListTask)
+	registerNamedRoute(apiGroup, http.MethodPost, "/run/:job", "Run job now route", jobHandler.RunJobByName)
 }
 
 // /api/v1/archive
@@ -277,20 +272,13 @@ func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Con
 	archiveGroup := apiGroup.Group("/archive")
 	archiveGroup.Use(myMiddleware.InjectUser())
 
-	archivePickApi := archiveGroup.POST("", archiveHandler.Archive)
-	statisticApi := archiveGroup.GET("/statistics", archiveHandler.GetStatistics)
-	statisticApi.Name = "Statistics route"
-	archivePickApi.Name = "Archive pick route"
-	archiveHistoryApi := archiveGroup.GET("/:url", archiveHandler.History)
-	archiveHistoryApi.Name = "Archive route"
-	randomPickApi := archiveGroup.POST("/random", archiveHandler.Random)
-	randomPickApi.Name = "Random pick route"
-	zvideoListApi := archiveGroup.GET("/zvideo", archiveHandler.ZvideoList)
-	zvideoListApi.Name = "Zvideo list route"
-	similarityApi := archiveGroup.GET("/similarity/:id", archiveHandler.Similarity)
-	similarityApi.Name = "Similarity route"
-	// selectPickApi := archiveApi.POST("/select", archiveHandler.Select)
-	// selectPickApi.Name = "Select pick route"
+	registerNamedRoute(archiveGroup, http.MethodPost, "", "Archive pick route", archiveHandler.Archive)
+	registerNamedRoute(archiveGroup, http.MethodGet, "/statistics", "Statistics route", archiveHandler.GetStatistics)
+	registerNamedRoute(archiveGroup, http.MethodGet, "/:url", "Archive route", archiveHandler.History)
+	registerNamedRoute(archiveGroup, http.MethodPost, "/random", "Random pick route", archiveHandler.Random)
+	registerNamedRoute(archiveGroup, http.MethodGet, "/zvideo", "Zvideo list route", archiveHandler.ZvideoList)
+	registerNamedRoute(archiveGroup, http.MethodGet, "/similarity/:id", "Similarity route", archiveHandler.Similarity)
+	// registerNamedRoute(archiveGroup, http.MethodPost, "/select", "Select pick route", archiveHandler.Select)
 }
 
 // /api/v1/export
@@ -298,37 +286,28 @@ func registerArchive(apiGroup *echo.Group, archiveHandler *archiveController.Con
 // /api/v1/export/zhihu
 // /api/v1/export/xiaobot
 func registerExport(exportApi *echo.Group, zsxqHandler *zsxqController.Controller, zhihuHandler *zhihuController.Controller, xiaobotHandler *xiaobotController.Controller) {
-	exportZsxqApi := exportApi.POST("/zsxq", zsxqHandler.Export)
-	exportZsxqApi.Name = "Export route for zsxq"
+	registerNamedRoute(exportApi, http.MethodPost, "/zsxq", "Export route for zsxq", zsxqHandler.Export)
 
-	exportZhihuApi := exportApi.POST("/zhihu", zhihuHandler.Export)
-	exportZhihuApi.Name = "Export route for zhihu"
+	registerNamedRoute(exportApi, http.MethodPost, "/zhihu", "Export route for zhihu", zhihuHandler.Export)
 
-	exportXiaobotApi := exportApi.POST("/xiaobot", xiaobotHandler.Export)
-	exportXiaobotApi.Name = "Export route for xiaobot"
+	registerNamedRoute(exportApi, http.MethodPost, "/xiaobot", "Export route for xiaobot", xiaobotHandler.Export)
 }
 
 // /api/v1/es
 func registerDEncryptionService(apiGroup *echo.Group, zhihuHandler *zhihuController.Controller) {
 	zhihuEncryptionServiceApi := apiGroup.Group("/zhihu")
 
-	zhihuEncryptionServiceAdd := zhihuEncryptionServiceApi.POST("/add", zhihuHandler.Add)
-	zhihuEncryptionServiceAdd.Name = "Add route for zhihu db api"
-	zhihuEncryptionServiceUpdate := zhihuEncryptionServiceApi.POST("/update", zhihuHandler.Update)
-	zhihuEncryptionServiceUpdate.Name = "Update route for zhihu db api"
-	zhihuEncryptionServiceDelete := zhihuEncryptionServiceApi.DELETE("/:id", zhihuHandler.Delete)
-	zhihuEncryptionServiceDelete.Name = "Delete route for zhihu db api"
-	zhihuEncryptionServiceList := zhihuEncryptionServiceApi.GET("", zhihuHandler.List)
-	zhihuEncryptionServiceList.Name = "List route for zhihu db api"
-	zhihuEncryptionServiceActivate := zhihuEncryptionServiceApi.POST("/activate/:id", zhihuHandler.Activate)
-	zhihuEncryptionServiceActivate.Name = "Activate route for zhihu db api"
+	registerNamedRoute(zhihuEncryptionServiceApi, http.MethodPost, "/add", "Add route for zhihu db api", zhihuHandler.Add)
+	registerNamedRoute(zhihuEncryptionServiceApi, http.MethodPost, "/update", "Update route for zhihu db api", zhihuHandler.Update)
+	registerNamedRoute(zhihuEncryptionServiceApi, http.MethodDelete, "/:id", "Delete route for zhihu db api", zhihuHandler.Delete)
+	registerNamedRoute(zhihuEncryptionServiceApi, http.MethodGet, "", "List route for zhihu db api", zhihuHandler.List)
+	registerNamedRoute(zhihuEncryptionServiceApi, http.MethodPost, "/activate/:id", "Activate route for zhihu db api", zhihuHandler.Activate)
 }
 
 // /api/v1/refmt
 // /api/v1/refmt/xiaobot
 func registerReformat(refmtApi *echo.Group, xiaobotHandler *xiaobotController.Controller) {
-	refmtXiaobotApi := refmtApi.POST("/xiaobot", xiaobotHandler.Reformat)
-	refmtXiaobotApi.Name = "Reformat route for xiaobot"
+	registerNamedRoute(refmtApi, http.MethodPost, "/xiaobot", "Reformat route for xiaobot", xiaobotHandler.Reformat)
 }
 
 // registerCookieProbes wires the optional per-cookie validators into the registry at
@@ -347,11 +326,9 @@ func registerCookieProbes(cs cookie.CookieIface) {
 
 // /api/v1/cookie  (POST: generic update for any registered cookie, GET: status of all)
 func registerCookie(apiGroup *echo.Group, cookieHandler *cookieController.Controller) {
-	updateCookiesApi := apiGroup.POST("", cookieHandler.UpdateCookies)
-	updateCookiesApi.Name = "Generic cookie updating route"
+	registerNamedRoute(apiGroup, http.MethodPost, "", "Generic cookie updating route", cookieHandler.UpdateCookies)
 
-	checkCookiesApi := apiGroup.GET("", cookieHandler.CheckCookies)
-	checkCookiesApi.Name = "Generic cookie status route"
+	registerNamedRoute(apiGroup, http.MethodGet, "", "Generic cookie status route", cookieHandler.CheckCookies)
 }
 
 // /rss
@@ -362,102 +339,71 @@ func registerRSS(e *echo.Echo, zsxqHandler *zsxqController.Controller, zhihuHand
 		myMiddleware.ExtractFeedID(),     // extract feed id from url and set it to context
 	)
 
-	rssZsxq := rssGroup.GET("/zsxq/:feed", zsxqHandler.RSS)
-	rssZsxq.Name = "RSS route for zsxq group"
+	registerNamedRoute(rssGroup, http.MethodGet, "/zsxq/:feed", "RSS route for zsxq group", zsxqHandler.RSS)
 
-	rssZsxqRandom := rssGroup.GET("/zsxq/random", zsxqHandler.RandomCanglimoDigest)
-	rssZsxqRandom.Name = "RSS route for zsxq random canglimo digest"
+	registerNamedRoute(rssGroup, http.MethodGet, "/zsxq/random", "RSS route for zsxq random canglimo digest", zsxqHandler.RandomCanglimoDigest)
 
 	rssZhihu := rssGroup.Group("/zhihu")
 
-	rssZhihuAnswer := rssZhihu.GET("/answer/:feed", zhihuHandler.AnswerRSS)
-	rssZhihuAnswer.Name = "RSS route for zhihu answer"
+	registerNamedRoute(rssZhihu, http.MethodGet, "/answer/:feed", "RSS route for zhihu answer", zhihuHandler.AnswerRSS)
 
-	rssZhihuArticle := rssZhihu.GET("/article/:feed", zhihuHandler.ArticleRSS)
-	rssZhihuArticle.Name = "RSS route for zhihu article"
+	registerNamedRoute(rssZhihu, http.MethodGet, "/article/:feed", "RSS route for zhihu article", zhihuHandler.ArticleRSS)
 
-	rssZhihuPin := rssZhihu.GET("/pin/:feed", zhihuHandler.PinRSS)
-	rssZhihuPin.Name = "RSS route for zhihu pin"
+	registerNamedRoute(rssZhihu, http.MethodGet, "/pin/:feed", "RSS route for zhihu pin", zhihuHandler.PinRSS)
 
-	rssZhihuRandom := rssZhihu.GET("/random", zhihuHandler.RandomCanglimoAnswers)
-	rssZhihuRandom.Name = "RSS route for zhihu random canglimo answers"
+	registerNamedRoute(rssZhihu, http.MethodGet, "/random", "RSS route for zhihu random canglimo answers", zhihuHandler.RandomCanglimoAnswers)
 
-	rssXiaobot := rssGroup.GET("/xiaobot/:feed", xiaobotHandler.RSS)
-	rssXiaobot.Name = "RSS route for xiaobot"
+	registerNamedRoute(rssGroup, http.MethodGet, "/xiaobot/:feed", "RSS route for xiaobot", xiaobotHandler.RSS)
 
-	rssEndOfLife := rssGroup.GET("/endoflife/:feed", endOfLifeHandler.RSS)
-	rssEndOfLife.Name = "RSS route for endoflife.date"
+	registerNamedRoute(rssGroup, http.MethodGet, "/endoflife/:feed", "RSS route for endoflife.date", endOfLifeHandler.RSS)
 
-	rssMackedBare := rssGroup.GET("/macked", mackedController.RSS)
-	rssMackedBare.Name = "RSS bare route for macked"
+	registerNamedRoute(rssGroup, http.MethodGet, "/macked", "RSS bare route for macked", mackedController.RSS)
 
 	// Add :feed here to fit the ExtractFeedID middleware
-	rssMacked := rssGroup.GET("/macked/:feed", mackedController.RSS)
-	rssMacked.Name = "RSS route for macked"
+	registerNamedRoute(rssGroup, http.MethodGet, "/macked/:feed", "RSS route for macked", mackedController.RSS)
 
-	rssTombkeeperBare := rssGroup.GET("/tombkeeper", tombkeeperController.RSS)
-	rssTombkeeperBare.Name = "RSS bare route for tombkeeper"
+	registerNamedRoute(rssGroup, http.MethodGet, "/tombkeeper", "RSS bare route for tombkeeper", tombkeeperController.RSS)
 
 	// Add :feed here to fit the ExtractFeedID middleware
-	rssTombkeeper := rssGroup.GET("/tombkeeper/:feed", tombkeeperController.RSS)
-	rssTombkeeper.Name = "RSS route for tombkeeper"
+	registerNamedRoute(rssGroup, http.MethodGet, "/tombkeeper/:feed", "RSS route for tombkeeper", tombkeeperController.RSS)
 
-	rssGithub := rssGroup.GET("/github/:feed", githubController.RSS)
-	rssGithub.Name = "RSS route for github"
+	registerNamedRoute(rssGroup, http.MethodGet, "/github/:feed", "RSS route for github", githubController.RSS)
 
-	githubRSSPreApi := rssGroup.GET("/github/pre/:feed", githubController.RSS)
-	githubRSSPreApi.Name = "RSS route for github pre"
+	registerNamedRoute(rssGroup, http.MethodGet, "/github/pre/:feed", "RSS route for github pre", githubController.RSS)
 }
 
 func registerSub(subApi *echo.Group, zhihuHandler *zhihuController.Controller, github *githubController.Controller, xiaobotHandler *xiaobotController.Controller) {
 	// /api/v1/sub/zhihu
-	zhihuSubApi := subApi.GET("/zhihu", zhihuHandler.GetSubs)
-	zhihuSubApi.Name = "Sub list route for zhihu"
-	zhihuDeleteSubApi := subApi.DELETE("/sub/zhihu/:id", zhihuHandler.DeleteSub)
-	zhihuDeleteSubApi.Name = "Delete sub route for zhihu"
-	zhihuActivateSubApi := subApi.POST("/sub/zhihu/activate/:id", zhihuHandler.ActivateSub)
-	zhihuActivateSubApi.Name = "Activate sub route for zhihu"
+	registerNamedRoute(subApi, http.MethodGet, "/zhihu", "Sub list route for zhihu", zhihuHandler.GetSubs)
+	registerNamedRoute(subApi, http.MethodDelete, "/sub/zhihu/:id", "Delete sub route for zhihu", zhihuHandler.DeleteSub)
+	registerNamedRoute(subApi, http.MethodPost, "/sub/zhihu/activate/:id", "Activate sub route for zhihu", zhihuHandler.ActivateSub)
 
 	// /api/v1/sub/github
-	githubSubApi := subApi.GET("/github", github.GetSubs)
-	githubSubApi.Name = "Sub list route for github"
-	githubDeleteSubApi := subApi.DELETE("/github/:id", github.DeleteSub)
-	githubDeleteSubApi.Name = "Delete sub route for github"
-	githubActivateSubApi := subApi.POST("/github/activate/:id", github.ActivateSub)
-	githubActivateSubApi.Name = "Activate sub route for github"
+	registerNamedRoute(subApi, http.MethodGet, "/github", "Sub list route for github", github.GetSubs)
+	registerNamedRoute(subApi, http.MethodDelete, "/github/:id", "Delete sub route for github", github.DeleteSub)
+	registerNamedRoute(subApi, http.MethodPost, "/github/activate/:id", "Activate sub route for github", github.ActivateSub)
 
 	// /api/v1/sub/xiaobot
-	xiaobotSubApi := subApi.GET("/xiaobot", xiaobotHandler.GetSubs)
-	xiaobotSubApi.Name = "Sub list route for xiaobot"
-	xiaobotDeleteSubApi := subApi.DELETE("/xiaobot/:id", xiaobotHandler.DeleteSub)
-	xiaobotDeleteSubApi.Name = "Delete sub route for xiaobot"
-	xiaobotActivateSubApi := subApi.POST("/xiaobot/activate/:id", xiaobotHandler.ActivateSub)
-	xiaobotActivateSubApi.Name = "Activate sub route for xiaobot"
+	registerNamedRoute(subApi, http.MethodGet, "/xiaobot", "Sub list route for xiaobot", xiaobotHandler.GetSubs)
+	registerNamedRoute(subApi, http.MethodDelete, "/xiaobot/:id", "Delete sub route for xiaobot", xiaobotHandler.DeleteSub)
+	registerNamedRoute(subApi, http.MethodPost, "/xiaobot/activate/:id", "Activate sub route for xiaobot", xiaobotHandler.ActivateSub)
 }
 
 func registerMigrate(migrateApi *echo.Group, migrateHandler *migrateController.Controller) {
-	migrateMinioApi := migrateApi.POST("/20240905", migrateHandler.Migrate20240905)
-	migrateMinioApi.Name = "Migrate minio files route 20240905"
-	migrate20260612Api := migrateApi.POST("/20260612", migrateHandler.Migrate20260612)
-	migrate20260612Api.Name = "Migrate db 20260612 route"
+	registerNamedRoute(migrateApi, http.MethodPost, "/20240905", "Migrate minio files route 20240905", migrateHandler.Migrate20240905)
+	registerNamedRoute(migrateApi, http.MethodPost, "/20260612", "Migrate db 20260612 route", migrateHandler.Migrate20260612)
 
-	migrateRegistryApi := migrateApi.GET("/registry", migrateHandler.MigrationRegistry)
-	migrateRegistryApi.Name = "Migration registry status route"
-	migrateRunApi := migrateApi.POST("/run/:version", migrateHandler.RunMigration)
-	migrateRunApi.Name = "Run migration by version route"
-	migrateRunPendingApi := migrateApi.POST("/run-pending", migrateHandler.RunPendingMigrations)
-	migrateRunPendingApi.Name = "Run pending migrations route"
+	registerNamedRoute(migrateApi, http.MethodGet, "/registry", "Migration registry status route", migrateHandler.MigrationRegistry)
+	registerNamedRoute(migrateApi, http.MethodPost, "/run/:version", "Run migration by version route", migrateHandler.RunMigration)
+	registerNamedRoute(migrateApi, http.MethodPost, "/run-pending", "Run pending migrations route", migrateHandler.RunPendingMigrations)
 }
 
 func registerParse(parseApi *echo.Group, parseHandler *parseHandler.Handler) {
-	parseZhihuAnswerApi := parseApi.POST("/zhihu/answer", parseHandler.ParseZhihuAnswer)
-	parseZhihuAnswerApi.Name = "Parse zhihu answer route"
+	registerNamedRoute(parseApi, http.MethodPost, "/zhihu/answer", "Parse zhihu answer route", parseHandler.ParseZhihuAnswer)
 
-	parseXiaobotPaperApi := parseApi.POST("/xiaobot", parseHandler.ParseXiaobotPaper)
-	parseXiaobotPaperApi.Name = "Parse xiaobot paper route"
+	registerNamedRoute(parseApi, http.MethodPost, "/xiaobot", "Parse xiaobot paper route", parseHandler.ParseXiaobotPaper)
 }
 
 func registerMacked(mackedApi *echo.Group, mackedHandler *mackedHandler.Handler) {
-	mackedAddAppInfoApi := mackedApi.POST("/appinfo", mackedHandler.AddAppInfo)
-	mackedAddAppInfoApi.Name = "Add app info route for macked"
+	registerNamedRoute(mackedApi, http.MethodPost, "/appinfo", "Add app info route for macked", mackedHandler.AddAppInfo)
 }

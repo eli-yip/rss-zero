@@ -2,6 +2,15 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
+**2026-07-20 · echo-v5 · 分支完成，待合并。** 按 owner 明确豁免未创建 issue/plan，HTTP 框架从
+Echo v4.15.2 升级到 v5.1.1：handler 与 middleware 改用 `*echo.Context`，错误处理器、响应元数据、
+context store、query/path 参数、测试 path values、路由枚举和命名注册均适配 v5 API；context 与参数读取
+统一使用 `ContextGet` / `QueryParam(s)` / `PathParam` 泛型 helper，服务启动改由 `StartConfig` 管理 10 秒优雅停机。
+仅支持 v4 的 `echo-pprof` 依赖已移除，以 `net/http/pprof` 保持原端点。新增命名路由和 pprof 回归测试，
+受影响包测试通过，`just lint` 0 issue；全量测试中的失败来自外网、本机服务、Postgres、沙箱监听限制，
+另有一个测试日期固定在 2021 年、现已过期的 endoflife 既有用例。Standards/Spec 双轴评审发现的英文注释
+与本条进度记录已修复，Spec 无发现。
+
 **2026-07-20 · github-api-error-response · 已发版并生产部署 `26.7.10`。** GitHub Releases API
 返回非 200 状态时，错误现在携带最多 64 KiB 响应体，超限明确标记截断；抓取中间层不再重复记 error，
 由 cron 外层统一打印一次。响应体在所有路径正确关闭，401 仍保留 `ErrUnauthorized` 分类语义。回归测试覆盖

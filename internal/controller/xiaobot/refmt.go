@@ -3,7 +3,7 @@ package controller
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
@@ -19,7 +19,7 @@ type XiaobotReformatReq struct {
 	PaperID string `json:"paper_id"`
 }
 
-func (h *Controller) Reformat(c echo.Context) error {
+func (h *Controller) Reformat(c *echo.Context) error {
 	logger := common.ExtractLogger(c)
 
 	var req XiaobotReformatReq

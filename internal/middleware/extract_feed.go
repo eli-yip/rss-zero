@@ -3,7 +3,7 @@ package middleware
 import (
 	"regexp"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // ExtractFeedID extracts the feed ID from a path params. It supports a variety of URL formats
@@ -21,8 +21,12 @@ import (
 //   - /feed.com
 func ExtractFeedID() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			c.Set("feed_id", extractFeedID(c.Param("feed")))
+		return func(c *echo.Context) error {
+			feed, err := echo.PathParamOr[string](c, "feed", "")
+			if err != nil {
+				return err
+			}
+			c.Set("feed_id", extractFeedID(feed))
 			return next(c)
 		}
 	}

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 
@@ -25,7 +25,7 @@ type Response struct {
 	TaskID string `json:"task_id"`
 }
 
-func (h *Handler) ParseZhihuAnswer(c echo.Context) (err error) {
+func (h *Handler) ParseZhihuAnswer(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req ZhihuParseRequest

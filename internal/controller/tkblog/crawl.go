@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	tkblog "github.com/eli-yip/rss-zero/pkg/routers/tkblog"
@@ -15,8 +15,11 @@ import (
 // against the allowed set (trust boundary) and rejected with 400 if unknown; it
 // rejects with 409 if a crawl is already running for that category (one per
 // category, per process); failures are logged and pushed to Bark under the job_id.
-func (h *Controller) Crawl(c echo.Context) error {
-	category := c.Param("category")
+func (h *Controller) Crawl(c *echo.Context) error {
+	category, err := echo.PathParam[string](c, "category")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "category must be xfocus or baidu")
+	}
 	if !tkblog.ValidCategory(category) {
 		return httputil.NewHTTPError(http.StatusBadRequest, "category must be xfocus or baidu")
 	}

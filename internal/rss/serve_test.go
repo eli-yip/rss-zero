@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 )
 
-func newContext(query string) (echo.Context, *httptest.ResponseRecorder) {
+func newContext(query string) (*echo.Context, *httptest.ResponseRecorder) {
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/rss/x"+query, nil)
 	rec := httptest.NewRecorder()

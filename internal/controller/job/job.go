@@ -9,14 +9,17 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 )
 
-func (h *Controller) StartJob(c echo.Context) (err error) {
+func (h *Controller) StartJob(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	taskID := c.Param("task")
+	taskID, err := echo.PathParam[string](c, "task")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "task definition not found")
+	}
 
 	definition, err := h.cronDBService.GetDefinition(taskID)
 	if err != nil {
@@ -49,10 +52,13 @@ func (h *Controller) StartJob(c echo.Context) (err error) {
 	}
 }
 
-func (h *Controller) RunJobByName(c echo.Context) (err error) {
+func (h *Controller) RunJobByName(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	jobName := c.Param("job")
+	jobName, err := echo.PathParam[string](c, "job")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "missing job name")
+	}
 
 	if err := h.cronService.RunJobNow(jobName); err != nil {
 		logger.Error("Failed to run job now", zap.Error(err))
@@ -61,7 +67,7 @@ func (h *Controller) RunJobByName(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewMessage("job started"))
 }
 
-func (h *Controller) GetJobs(c echo.Context) (err error) {
+func (h *Controller) GetJobs(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	jobs, err := h.cronDBService.FindRunningJob()
@@ -73,7 +79,7 @@ func (h *Controller) GetJobs(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewResp("success", jobs))
 }
 
-func (h *Controller) GetErrorJobs(c echo.Context) (err error) {
+func (h *Controller) GetErrorJobs(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	jobs, err := h.cronDBService.FindErrorJob()

@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	serverCommon "github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -13,7 +13,7 @@ import (
 // RSSRandomTTL under its own key (it random-selects on each miss, so it keeps its
 // own rendered-XML cache rather than going through the unified items pipeline; the
 // daily random-select cron also warms this key).
-func (h *Controller) RandomCanglimoAnswers(c echo.Context) error {
+func (h *Controller) RandomCanglimoAnswers(c *echo.Context) error {
 	logger := serverCommon.ExtractLogger(c)
 	return rss.ServeCachedString(c, h.redis, logger, redis.ZhihuRandomCanglimoAnswersPath, redis.RSSRandomTTL,
 		func() (string, error) { return random.GenerateRandomCanglimoAnswerRSS(h.db, logger) })

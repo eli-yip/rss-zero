@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
@@ -12,7 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 )
 
-func (h *Controller) AddTask(c echo.Context) (err error) {
+func (h *Controller) AddTask(c *echo.Context) (err error) {
 	type (
 		Req struct {
 			TaskType string   `json:"task_type"` // zsxq, zhihu, xiaobot
@@ -74,7 +74,7 @@ func (h *Controller) addTaskToCronService(def *cronDB.CronTask) (jobID string, e
 	return jobID, nil
 }
 
-func (h *Controller) PatchTask(c echo.Context) (err error) {
+func (h *Controller) PatchTask(c *echo.Context) (err error) {
 	type (
 		Req struct {
 			ID       string   `json:"id"`
@@ -158,10 +158,13 @@ type TaskInfo struct {
 	Exclude  []string `json:"exclude"`
 }
 
-func (h *Controller) DeleteTask(c echo.Context) (err error) {
+func (h *Controller) DeleteTask(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	taskID := c.Param("id")
+	taskID, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "empty task ID")
+	}
 	if taskID == "" {
 		logger.Error("Empty task ID")
 		return httputil.NewHTTPError(http.StatusBadRequest, "empty task ID")
@@ -200,10 +203,13 @@ func (h *Controller) DeleteTask(c echo.Context) (err error) {
 	}))
 }
 
-func (h *Controller) ListTask(c echo.Context) (err error) {
+func (h *Controller) ListTask(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	taskID := c.QueryParam("id")
+	taskID, err := echo.QueryParamOr[string](c, "id", "")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 	if taskID == "" {
 		taskDefs, err := h.cronDBService.GetDefinitions()
 		if err != nil {

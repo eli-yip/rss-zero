@@ -9,7 +9,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 
 	"github.com/eli-yip/rss-zero/pkg/routers/xiaobot/parse"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 )
@@ -21,7 +21,7 @@ type (
 	}
 )
 
-func (h *Handler) ParseXiaobotPaper(c echo.Context) (err error) {
+func (h *Handler) ParseXiaobotPaper(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 	var req XiaobotParseRequest
 	if err := c.Bind(&req); err != nil {

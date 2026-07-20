@@ -15,12 +15,12 @@ import (
 	pkgCommon "github.com/eli-yip/rss-zero/pkg/common"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
-func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
+func (h *Controller) GetBookmarkList(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req BookmarkRequest
@@ -30,7 +30,10 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 	}
 	logger.Info("bind request successfully")
 
-	username := c.Get("username").(string)
+	username, err := contextUsername(c)
+	if err != nil {
+		return err
+	}
 	var startDate, endDate time.Time
 	startDate, err = utils.ParseStartTime(req.StartDate)
 	if err != nil {
@@ -185,9 +188,12 @@ func (h *Controller) GetBookmarkList(c echo.Context) (err error) {
 }
 
 // PutBookmark handles the request to create a new bookmark
-func (h *Controller) PutBookmark(c echo.Context) (err error) {
+func (h *Controller) PutBookmark(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
-	user := c.Get("username").(string)
+	user, err := contextUsername(c)
+	if err != nil {
+		return err
+	}
 
 	var req NewBookmarkRequest
 	if err = c.Bind(&req); err != nil {
@@ -255,10 +261,16 @@ func (h *Controller) PutBookmark(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewResp("success", &NewBookmarkResponse{BookmarkID: b.ID}))
 }
 
-func (h *Controller) PatchBookmark(c echo.Context) (err error) {
+func (h *Controller) PatchBookmark(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
-	user := c.Get("username").(string)
-	bookmarkID := c.Param("id")
+	user, err := contextUsername(c)
+	if err != nil {
+		return err
+	}
+	bookmarkID, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "bookmark ID is empty")
+	}
 	if bookmarkID == "" {
 		logger.Error("bookmark ID is empty")
 		return httputil.NewHTTPError(http.StatusBadRequest, "bookmark ID is empty")
@@ -314,10 +326,16 @@ func (h *Controller) PatchBookmark(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewMessage("success"))
 }
 
-func (h *Controller) DeleteBookmark(c echo.Context) (err error) {
+func (h *Controller) DeleteBookmark(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
-	user := c.Get("username").(string)
-	bookmarkID := c.Param("id")
+	user, err := contextUsername(c)
+	if err != nil {
+		return err
+	}
+	bookmarkID, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "bookmark ID is empty")
+	}
 
 	if bookmarkID == "" {
 		logger.Error("bookmark ID is empty")
@@ -344,9 +362,12 @@ func (h *Controller) DeleteBookmark(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewMessage("success"))
 }
 
-func (h *Controller) GetAllTags(c echo.Context) (err error) {
+func (h *Controller) GetAllTags(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
-	user := c.Get("username").(string)
+	user, err := contextUsername(c)
+	if err != nil {
+		return err
+	}
 
 	tagCounts, err := h.bookmarkDBService.GetTagCountByUser(user)
 	if err != nil {

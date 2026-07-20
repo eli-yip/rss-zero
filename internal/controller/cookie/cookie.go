@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
@@ -46,7 +46,7 @@ type Result struct {
 // UpdateCookies handles POST /api/v1/cookie. Each incoming cookie is matched against
 // the registry by name (domain disambiguates); only registered cookies are stored.
 // Cookies absent from the payload are left untouched.
-func (h *Controller) UpdateCookies(c echo.Context) (err error) {
+func (h *Controller) UpdateCookies(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req struct {
@@ -143,7 +143,7 @@ type Status struct {
 }
 
 // CheckCookies handles GET /api/v1/cookie: the health of every registered cookie.
-func (h *Controller) CheckCookies(c echo.Context) (err error) {
+func (h *Controller) CheckCookies(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	specs := cookie.AllSpecs()

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -46,10 +46,13 @@ type FreshRSSFeed struct {
 // It takes the author ID as a parameter and returns a JSON response containing the external and internal feeds for the author.
 // Feed keys are derived from ZhihuContentType.FeedKey while preserving the existing JSON shape.
 // The function returns an error if there is an issue with the JSON serialization or if the author ID is not provided.
-func (h *Controller) Feed(c echo.Context) error {
+func (h *Controller) Feed(c *echo.Context) error {
 	logger := common.ExtractLogger(c)
 
-	authorID := c.Param("id")
+	authorID, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "missing author ID")
+	}
 
 	externalFeeds := buildZhihuFeedMap(config.C.Settings.ServerURL, authorID)
 	internalFeeds := buildZhihuFeedMap(config.C.Settings.InternalServerURL, authorID)

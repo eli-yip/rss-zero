@@ -3,7 +3,7 @@ package handler
 import (
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -15,7 +15,7 @@ import (
 // prewarm), so Fetch is nil and a cache miss renders an empty feed rather than
 // regenerating. The empty fallback is not cached, so a later cron write shows
 // through immediately.
-func (h *Handler) RSS(c echo.Context) error {
+func (h *Handler) RSS(c *echo.Context) error {
 	logger := common.ExtractLogger(c)
 
 	return rss.Serve(c, rss.ServeOptions{

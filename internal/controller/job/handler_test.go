@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -147,7 +147,7 @@ func newTestController(cs *cron.CronService, index *JobIndex, fake cronDB.DB) *C
 	return NewController(cs, index, nil, nil, nil, nil, nil, fake, zap.NewNop())
 }
 
-func (th *harness) ctx(method, body string) (echo.Context, *httptest.ResponseRecorder) {
+func (th *harness) ctx(method, body string) (*echo.Context, *httptest.ResponseRecorder) {
 	req := httptest.NewRequest(method, "/", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -159,7 +159,7 @@ func (th *harness) ctx(method, body string) (echo.Context, *httptest.ResponseRec
 func (th *harness) add(body string) *httptest.ResponseRecorder {
 	c, rec := th.ctx(http.MethodPost, body)
 	if err := th.h.AddTask(c); err != nil {
-		th.e.HTTPErrorHandler(err, c)
+		th.e.HTTPErrorHandler(c, err)
 	}
 	return rec
 }
@@ -167,17 +167,16 @@ func (th *harness) add(body string) *httptest.ResponseRecorder {
 func (th *harness) patch(body string) *httptest.ResponseRecorder {
 	c, rec := th.ctx(http.MethodPost, body)
 	if err := th.h.PatchTask(c); err != nil {
-		th.e.HTTPErrorHandler(err, c)
+		th.e.HTTPErrorHandler(c, err)
 	}
 	return rec
 }
 
 func (th *harness) delete(id string) *httptest.ResponseRecorder {
 	c, rec := th.ctx(http.MethodDelete, "")
-	c.SetParamNames("id")
-	c.SetParamValues(id)
+	c.SetPathValues(echo.PathValues{{Name: "id", Value: id}})
 	if err := th.h.DeleteTask(c); err != nil {
-		th.e.HTTPErrorHandler(err, c)
+		th.e.HTTPErrorHandler(c, err)
 	}
 	return rec
 }
@@ -188,15 +187,14 @@ func (th *harness) list(id string) *httptest.ResponseRecorder {
 	c := th.e.NewContext(req, rec)
 	c.Set("logger", zap.NewNop())
 	if err := th.h.ListTask(c); err != nil {
-		th.e.HTTPErrorHandler(err, c)
+		th.e.HTTPErrorHandler(c, err)
 	}
 	return rec
 }
 
 func (th *harness) start(id string) error {
 	c, _ := th.ctx(http.MethodPost, "")
-	c.SetParamNames("task")
-	c.SetParamValues(id)
+	c.SetPathValues(echo.PathValues{{Name: "task", Value: id}})
 	return th.h.StartJob(c)
 }
 

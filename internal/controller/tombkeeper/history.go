@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
@@ -17,7 +17,7 @@ import (
 // correlation. It rejects with 409 if a backfill is already running (one per
 // process); the crawl runs newest→oldest until the window is exhausted, and a
 // failure is logged and pushed to Bark under the same job_id.
-func (h *Controller) History(c echo.Context) error {
+func (h *Controller) History(c *echo.Context) error {
 	var req struct {
 		StartDate string `json:"start_date"`
 		EndDate   string `json:"end_date"`

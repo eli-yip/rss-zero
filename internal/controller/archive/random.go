@@ -3,7 +3,7 @@ package archive
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
@@ -11,7 +11,7 @@ import (
 )
 
 // /api/v1/archive/random
-func (h *Controller) Random(c echo.Context) (err error) {
+func (h *Controller) Random(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req RandomRequest
@@ -34,7 +34,10 @@ func (h *Controller) Random(c echo.Context) (err error) {
 		return httputil.NewHTTPError(http.StatusInternalServerError, "failed to select random answers")
 	}
 
-	username := c.Get("username").(string)
+	username, err := contextUsername(c)
+	if err != nil {
+		return err
+	}
 	topics, err := buildTopicsFromAnswer(answers, username, h.zhihuDBService, h.bookmarkDBService)
 	if err != nil {
 		logger.Error("Failed to build topics", zap.Error(err))

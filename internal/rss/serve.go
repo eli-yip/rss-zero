@@ -3,10 +3,9 @@ package rss
 import (
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -26,10 +25,8 @@ type ServeOptions struct {
 // Serve runs the unified pipeline: parse limit, get-or-build the items cache,
 // slice to limit, render the shared Atom envelope. The source-specific pre-step
 // (ensure subscription / resolve feed id) runs in the controller before this call.
-func Serve(c echo.Context, o ServeOptions) error {
+func Serve(c *echo.Context, o ServeOptions) error {
 	limit := parseLimit(c, o.DefaultLimit)
-	// "type" is reserved for future filtering; parsed and ignored for now.
-	_ = c.QueryParam("type")
 
 	cf, err := o.getOrBuild()
 	if err != nil {
@@ -78,7 +75,7 @@ func (o ServeOptions) getOrBuild() (cachedFeed, error) {
 // XML), generating and caching it on a miss. Unlike Serve it does not use the items
 // cache or a v2 key: the random endpoints select fresh on each miss, render once,
 // and cache the result under their own key for the (longer) random TTL.
-func ServeCachedString(c echo.Context, r redis.Redis, logger *zap.Logger, key string, ttl time.Duration, gen func() (string, error)) error {
+func ServeCachedString(c *echo.Context, r redis.Redis, logger *zap.Logger, key string, ttl time.Duration, gen func() (string, error)) error {
 	content, err := r.Get(key)
 	if err == nil {
 		return c.String(http.StatusOK, content)
@@ -101,12 +98,8 @@ func ServeCachedString(c echo.Context, r redis.Redis, logger *zap.Logger, key st
 
 // parseLimit reads ?limit, falling back to def for absent/invalid/non-positive
 // values and clamping to MaxFetch (the cache never holds more than MaxFetch items).
-func parseLimit(c echo.Context, def int) int {
-	raw := c.QueryParam("limit")
-	if raw == "" {
-		return def
-	}
-	n, err := strconv.Atoi(raw)
+func parseLimit(c *echo.Context, def int) int {
+	n, err := echo.QueryParamOr[int](c, "limit", def)
 	if err != nil || n <= 0 {
 		return def
 	}

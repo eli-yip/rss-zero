@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -37,7 +37,7 @@ type ZsxqExportResp struct {
 	URL      string `json:"url"`
 }
 
-func (h *Controller) Export(c echo.Context) (err error) {
+func (h *Controller) Export(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req ZxsqExportReq

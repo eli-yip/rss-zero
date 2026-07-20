@@ -9,7 +9,7 @@ import (
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 )
 
@@ -25,11 +25,15 @@ type (
 	}
 )
 
-func (h *Controller) Feed(c echo.Context) (err error) {
+func (h *Controller) Feed(c *echo.Context) (err error) {
 
 	logger := common.ExtractLogger(c)
 
-	userRepo := strings.Split(c.Param("user_repo"), "/")
+	userRepoValue, err := echo.PathParam[string](c, "user_repo")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
+	}
+	userRepo := strings.Split(userRepoValue, "/")
 	if len(userRepo) != 2 {
 		logger.Error("Error getting user and repo", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")

@@ -8,15 +8,18 @@ import (
 	pkgCommon "github.com/eli-yip/rss-zero/pkg/common"
 	embeddingDB "github.com/eli-yip/rss-zero/pkg/embedding/db"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
-func (h *Controller) Similarity(c echo.Context) (err error) {
+func (h *Controller) Similarity(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	id := c.Param("id")
+	id, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "id is required")
+	}
 	if id == "" {
 		logger.Error("id is required")
 		return httputil.NewHTTPError(http.StatusBadRequest, "id is required")

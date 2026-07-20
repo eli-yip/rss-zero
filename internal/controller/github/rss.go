@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -21,10 +21,13 @@ import (
 // RSS serves a github release feed through the unified pipeline. checkRepo (with
 // the /rss/github/pre prefix selecting pre-releases) resolves/creates the
 // subscription before the generic Serve fetches and renders.
-func (h *Controller) RSS(c echo.Context) (err error) {
+func (h *Controller) RSS(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	feed := c.Get("feed_id").(string)
+	feed, err := echo.ContextGet[string](c, "feed_id")
+	if err != nil {
+		return fmt.Errorf("failed to get feed id: %w", err)
+	}
 	userRepo := strings.Split(feed, "/")
 	if len(userRepo) != 2 {
 		logger.Error("Error getting user and repo, length not equal to 2", zap.String("feed", feed))

@@ -9,12 +9,12 @@ import (
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	zhihuDB "github.com/eli-yip/rss-zero/pkg/routers/zhihu/db"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
-func (h *Controller) GetStatistics(c echo.Context) (err error) {
+func (h *Controller) GetStatistics(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	logger.Info("Retrieved statistics request successfully")

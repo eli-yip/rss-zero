@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 
@@ -18,7 +18,7 @@ type AddRequest struct {
 	URL  string `json:"url"`
 }
 
-func (h *Controller) Add(c echo.Context) (err error) {
+func (h *Controller) Add(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req AddRequest
@@ -60,7 +60,7 @@ type UpdateRequest struct {
 	URL  *string `json:"url"`
 }
 
-func (h *Controller) Update(c echo.Context) (err error) {
+func (h *Controller) Update(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req UpdateRequest
@@ -102,10 +102,13 @@ func (h *Controller) Update(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewMessage("success"))
 }
 
-func (h *Controller) Delete(c echo.Context) (err error) {
+func (h *Controller) Delete(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	id := c.Param("id")
+	id, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "ID is required")
+	}
 	if err = h.db.DeleteService(id); err != nil {
 		logger.Error("Failed to delete zhihu encryption service", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusInternalServerError, "failed to delete service")
@@ -114,7 +117,7 @@ func (h *Controller) Delete(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewMessage("success"))
 }
 
-func (h *Controller) List(c echo.Context) (err error) {
+func (h *Controller) List(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	services, err := h.db.GetServices()
@@ -126,11 +129,14 @@ func (h *Controller) List(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewResp("success", services))
 }
 
-func (h *Controller) Activate(c echo.Context) (err error) {
+func (h *Controller) Activate(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	ID := c.Param("id")
-	if err = h.db.MarkAvailable(ID); err != nil {
+	id, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "ID is required")
+	}
+	if err = h.db.MarkAvailable(id); err != nil {
 		logger.Error("Failed to activate zhihu encryption service", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusInternalServerError, "failed to activate service")
 	}

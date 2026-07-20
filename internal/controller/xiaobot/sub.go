@@ -3,14 +3,14 @@ package controller
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 )
 
-func (h *Controller) GetSubs(c echo.Context) (err error) {
+func (h *Controller) GetSubs(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	subs, err := h.db.GetPapersIncludeDeleted()
@@ -41,10 +41,13 @@ func (h *Controller) GetSubs(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewResp("success", resp))
 }
 
-func (h *Controller) ActivateSub(c echo.Context) (err error) {
+func (h *Controller) ActivateSub(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	subID := c.Param("id")
+	subID, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "missing subscription ID")
+	}
 	logger.Info("Activate xiaobot sub", zap.String("sub_id", subID))
 
 	err = h.db.ActivatePaper(subID)
@@ -57,10 +60,13 @@ func (h *Controller) ActivateSub(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewMessage("Activate xiaobot sub successfully"))
 }
 
-func (h *Controller) DeleteSub(c echo.Context) (err error) {
+func (h *Controller) DeleteSub(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	subID := c.Param("id")
+	subID, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "missing subscription ID")
+	}
 	logger.Info("Delete xiaobot sub", zap.String("sub_id", subID))
 
 	if err = h.db.DeletePaper(subID); err != nil {

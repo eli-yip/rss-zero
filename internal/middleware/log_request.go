@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -14,7 +14,7 @@ import (
 // and the response details such as latency and status code.
 func LogRequest(logger *zap.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			startTime := time.Now()
 			req := c.Request()
 			method := req.Method
@@ -33,13 +33,18 @@ func LogRequest(logger *zap.Logger) echo.MiddlewareFunc {
 			)
 
 			if err := next(c); err != nil {
-				c.Error(err)
+				c.Echo().HTTPErrorHandler(c, err)
 			}
 
 			endTime := time.Now()
 			latency := endTime.Sub(startTime)
-			statusCode := c.Response().Status
-			size := c.Response().Size
+			response, err := echo.UnwrapResponse(c.Response())
+			if err != nil {
+				logger.Error("failed to unwrap echo response", zap.Error(err))
+				return nil
+			}
+			statusCode := response.Status
+			size := response.Size
 			var level zapcore.Level
 			if statusCode >= http.StatusInternalServerError {
 				level = zapcore.ErrorLevel

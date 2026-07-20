@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
@@ -16,10 +16,13 @@ import (
 
 // RSS serves a zsxq group feed through the unified pipeline. zsxq has no
 // auto-subscribe step; the feed id is the numeric group id.
-func (h *Controller) RSS(c echo.Context) error {
+func (h *Controller) RSS(c *echo.Context) error {
 	logger := common.ExtractLogger(c)
 
-	groupIDStr := c.Get("feed_id").(string)
+	groupIDStr, err := echo.ContextGet[string](c, "feed_id")
+	if err != nil {
+		return fmt.Errorf("failed to get feed id: %w", err)
+	}
 	logger.Info("Retrieved zsxq rss group id", zap.String("group_id", groupIDStr))
 
 	groupID, err := strconv.Atoi(groupIDStr)
@@ -30,8 +33,8 @@ func (h *Controller) RSS(c echo.Context) error {
 
 	dbService := zsxqDB.NewDBService(h.db)
 	return rss.Serve(c, rss.ServeOptions{
-		Redis:        h.redis,
-		Logger:       logger,
+		Redis:  h.redis,
+		Logger: logger,
 		// Key off the normalized int (matching the cron's strconv.Itoa(groupID)) so a
 		// non-canonical but parseable feed id (e.g. leading zeros) still hits the cache.
 		Key:          fmt.Sprintf(redis.ZsxqRSSPath, strconv.Itoa(groupID)),

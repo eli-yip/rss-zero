@@ -4,12 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
 
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -94,21 +94,18 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	// Start echo server
-	go func() {
-		logger.Info("Start server now!", zap.String("address", ":8080"), zap.String("version", version.Version))
-		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
-			logger.Fatal("Shutdown server", zap.Error(err))
-		}
-	}()
-
-	<-ctx.Done()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err = e.Shutdown(ctx); err != nil {
-		logger.Fatal("Failed to shutdown server", zap.Error(err))
+	logger.Info("Start server now!", zap.String("address", ":8080"), zap.String("version", version.Version))
+	startConfig := echo.StartConfig{
+		Address:         ":8080",
+		HideBanner:      true,
+		HidePort:        true,
+		GracefulTimeout: 10 * time.Second,
+		OnShutdownError: func(err error) {
+			logger.Error("Failed to shutdown server", zap.Error(err))
+		},
+	}
+	if err = startConfig.Start(ctx, e); err != nil {
+		logger.Fatal("Shutdown server", zap.Error(err))
 	}
 
 	logger.Info("Shutdown server successfully")

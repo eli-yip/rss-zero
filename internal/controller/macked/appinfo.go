@@ -6,7 +6,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 )
 
@@ -14,7 +14,7 @@ type AddAppInfoRequest struct {
 	AppName string `json:"app_name"`
 }
 
-func (h *Handler) AddAppInfo(c echo.Context) (err error) {
+func (h *Handler) AddAppInfo(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req AddAppInfoRequest

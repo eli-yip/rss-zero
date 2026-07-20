@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -12,7 +12,7 @@ import (
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 )
 
-func GenerateRSSHubFeed(c echo.Context) (err error) {
+func GenerateRSSHubFeed(c *echo.Context) (err error) {
 	type (
 		Req struct {
 			FeedType string `json:"feed_type"`

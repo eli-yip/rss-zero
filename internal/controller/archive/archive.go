@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -23,7 +23,7 @@ import (
 )
 
 // POST /api/v1/archive
-func (h *Controller) Archive(c echo.Context) (err error) {
+func (h *Controller) Archive(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req ArchiveRequest
@@ -58,7 +58,10 @@ func (h *Controller) Archive(c echo.Context) (err error) {
 		topics []Topic
 	)
 
-	username := c.Get("username").(string)
+	username, err := contextUsername(c)
+	if err != nil {
+		return err
+	}
 	switch req.Type {
 	case ContentTypeAnswer:
 		answers, err := h.zhihuDBService.FetchAnswerWithDateRange(req.Author, req.Count, offset, req.Order, startDate, endDate)
@@ -166,12 +169,15 @@ func formatSwitcherText(htmlLink, mdLink string) string {
 	return fmt.Sprintf("格式：HTML %s · Markdown %s · 纯文本（当前）", htmlLink, mdLink)
 }
 
-func (h *Controller) History(c echo.Context) (err error) {
+func (h *Controller) History(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	requestID := c.Response().Header().Get(echo.HeaderXRequestID)
 
-	u := c.Param("url")
+	u, err := echo.PathParam[string](c, "url")
+	if err != nil {
+		return c.HTML(http.StatusBadRequest, renderErrorPage(err, requestID))
+	}
 	logger.Info("Raw URL param from request", zap.String("raw_url", u))
 
 	u, err = url.PathUnescape(u)
@@ -193,12 +199,16 @@ func (h *Controller) History(c echo.Context) (err error) {
 
 	logger.Info("Get history url", zap.String("url", u))
 
-	format := parseArchiveFormat(c.QueryParam("format"))
+	formatValue, err := echo.QueryParamOr[string](c, "format", "")
+	if err != nil {
+		return c.HTML(http.StatusBadRequest, renderErrorPage(err, requestID))
+	}
+	format := parseArchiveFormat(formatValue)
 
 	// The `format` parameter selects the output format; any *other* query
 	// parameter still triggers the original redirect (it strips tracking
 	// params off the source link). The chosen format is preserved across it.
-	params := c.QueryParams()
+	params := c.Request().URL.Query()
 	for k := range params {
 		if k == "format" {
 			continue

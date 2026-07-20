@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
@@ -18,10 +18,13 @@ import (
 
 // RSS serves a xiaobot paper feed through the unified pipeline. checkPaper
 // auto-subscribes an unknown paper before the generic Serve fetches and renders.
-func (h *Controller) RSS(c echo.Context) error {
+func (h *Controller) RSS(c *echo.Context) error {
 	logger := common.ExtractLogger(c)
 
-	paperID := c.Get("feed_id").(string)
+	paperID, err := echo.ContextGet[string](c, "feed_id")
+	if err != nil {
+		return fmt.Errorf("failed to get feed id: %w", err)
+	}
 	logger.Info("Retrieved rss request", zap.String("paper id", paperID))
 
 	if err := h.checkPaper(paperID, logger); err != nil {

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -25,14 +25,17 @@ import (
 // AnswerRSS / ArticleRSS / PinRSS serve a zhihu author's feed of that content type
 // through the unified pipeline. Each ensures the subscription exists (adding the
 // author on first request, 400 if the author is unknown to zhihu) before Serve.
-func (h *Controller) AnswerRSS(c echo.Context) error  { return h.serveZhihu(c, common.ZhihuAnswer) }
-func (h *Controller) ArticleRSS(c echo.Context) error { return h.serveZhihu(c, common.ZhihuArticle) }
-func (h *Controller) PinRSS(c echo.Context) error     { return h.serveZhihu(c, common.ZhihuPin) }
+func (h *Controller) AnswerRSS(c *echo.Context) error  { return h.serveZhihu(c, common.ZhihuAnswer) }
+func (h *Controller) ArticleRSS(c *echo.Context) error { return h.serveZhihu(c, common.ZhihuArticle) }
+func (h *Controller) PinRSS(c *echo.Context) error     { return h.serveZhihu(c, common.ZhihuPin) }
 
-func (h *Controller) serveZhihu(c echo.Context, contentType common.ZhihuContentType) error {
+func (h *Controller) serveZhihu(c *echo.Context, contentType common.ZhihuContentType) error {
 	logger := serverCommon.ExtractLogger(c)
 
-	authorID := c.Get("feed_id").(string)
+	authorID, err := echo.ContextGet[string](c, "feed_id")
+	if err != nil {
+		return fmt.Errorf("failed to get feed id: %w", err)
+	}
 	logger.Info("Retrieve rss request", zap.String("author_id", authorID))
 
 	if err := h.checkSub(contentType, authorID, logger); err != nil {

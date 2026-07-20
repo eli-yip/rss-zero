@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // SetRSSContentType returns a middleware function
@@ -10,7 +10,7 @@ import (
 // from the server is recognized as an RSS feed.
 func SetRSSContentType() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			c.Response().Header().Set(echo.HeaderContentType, "application/atom+xml")
 			return next(c)
 		}

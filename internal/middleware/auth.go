@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/eli-yip/rss-zero/config"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func AllowAdmin() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return func(c *echo.Context) error {
 			if config.C.Settings.Debug {
 				return next(c)
 			}

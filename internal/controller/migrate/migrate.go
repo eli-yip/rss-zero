@@ -3,7 +3,6 @@ package controller
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/eli-yip/rss-zero/config"
 	"github.com/eli-yip/rss-zero/internal/controller/common"
@@ -11,7 +10,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/migrate"
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -30,7 +29,7 @@ func NewController(logger *zap.Logger, db *gorm.DB, notifier notify.Notifier) *C
 	}
 }
 
-func (h *Controller) Migrate20240905(c echo.Context) (err error) {
+func (h *Controller) Migrate20240905(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	minioService, err := file.NewFileServiceMinio(config.C.Minio, logger)
@@ -46,7 +45,7 @@ func (h *Controller) Migrate20240905(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewMessage("Start to migrate minio files"))
 }
 
-func (h *Controller) Migrate20260612(c echo.Context) (err error) {
+func (h *Controller) Migrate20260612(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	logger.Info("Start to migrate db 20260612")
@@ -57,7 +56,7 @@ func (h *Controller) Migrate20260612(c echo.Context) (err error) {
 }
 
 // MigrationRegistry returns the status of every registry-managed migration.
-func (h *Controller) MigrationRegistry(c echo.Context) (err error) {
+func (h *Controller) MigrationRegistry(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	statuses, err := migrate.Status(h.db)
@@ -71,10 +70,10 @@ func (h *Controller) MigrationRegistry(c echo.Context) (err error) {
 
 // RunMigration manually runs a single registry migration by version,
 // synchronously, so eligibility errors and the result are returned to the caller.
-func (h *Controller) RunMigration(c echo.Context) (err error) {
+func (h *Controller) RunMigration(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	version, err := strconv.ParseInt(c.Param("version"), 10, 64)
+	version, err := echo.PathParam[int64](c, "version")
 	if err != nil {
 		return httputil.NewHTTPError(http.StatusBadRequest, "Invalid migration version")
 	}
@@ -88,7 +87,7 @@ func (h *Controller) RunMigration(c echo.Context) (err error) {
 }
 
 // RunPendingMigrations runs all eligible registry migrations (including non-auto).
-func (h *Controller) RunPendingMigrations(c echo.Context) (err error) {
+func (h *Controller) RunPendingMigrations(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	logger.Info("Start to run pending migrations")

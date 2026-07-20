@@ -3,7 +3,7 @@ package archive
 // Disable this feature for now
 //
 // /api/v1/archive/select
-// func (h *Controller) Select(c echo.Context) (err error) {
+// func (h *Controller) Select(c *echo.Context) (err error) {
 // 	logger := common.ExtractLogger(c)
 
 // 	var req SelectRequest

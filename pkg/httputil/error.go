@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 )
 
@@ -22,17 +22,17 @@ func NewHTTPError(code int, message string) *ResponseError {
 	return &ResponseError{Code: code, Message: message}
 }
 
-// NewHTTPErrorHandler returns an echo v4 HTTPErrorHandler that renders every
-// error as the unified {message} envelope. baseLogger is the fallback when the
-// request-scoped logger (set by middleware.InjectLogger) is unavailable.
+// NewHTTPErrorHandler 返回统一渲染 {message} 响应的 Echo 错误处理器。
+// 请求级 logger 不可用时，baseLogger 作为兜底。
 func NewHTTPErrorHandler(baseLogger *zap.Logger) echo.HTTPErrorHandler {
-	return func(err error, c echo.Context) {
-		if c.Response().Committed {
+	return func(c *echo.Context, err error) {
+		response, unwrapErr := echo.UnwrapResponse(c.Response())
+		if unwrapErr == nil && response.Committed {
 			return
 		}
 
 		logger := baseLogger
-		if l, ok := c.Get("logger").(*zap.Logger); ok && l != nil {
+		if l, getErr := echo.ContextGet[*zap.Logger](c, "logger"); getErr == nil && l != nil {
 			logger = l
 		}
 

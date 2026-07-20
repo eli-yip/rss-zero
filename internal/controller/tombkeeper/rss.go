@@ -1,7 +1,7 @@
 package tombkeeper
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
 	"github.com/eli-yip/rss-zero/internal/redis"
@@ -12,7 +12,7 @@ import (
 // RSS serves the tombkeeper feed through the unified pipeline. The hourly cron
 // normally keeps the items cache warm; on a miss tk.BuildFeed regenerates it from
 // the database.
-func (h *Controller) RSS(c echo.Context) error {
+func (h *Controller) RSS(c *echo.Context) error {
 	logger := common.ExtractLogger(c)
 
 	return rss.Serve(c, rss.ServeOptions{

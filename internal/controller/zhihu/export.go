@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/config"
@@ -41,7 +41,7 @@ type ZhihuExportResp struct {
 // and starts the export process in a separate goroutine.
 // The exported file is saved to Minio and a notification is sent upon completion.
 // The function returns a JSON response with the export status and file information.
-func (h *Controller) Export(c echo.Context) (err error) {
+func (h *Controller) Export(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	var req ZhihuExportReq

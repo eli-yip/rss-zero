@@ -1,10 +1,11 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 	"slices"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"go.uber.org/zap"
 
 	"github.com/eli-yip/rss-zero/internal/controller/common"
@@ -18,7 +19,7 @@ type filterConfig struct {
 	Deleted    bool
 }
 
-func (h *Controller) GetSubs(c echo.Context) (err error) {
+func (h *Controller) GetSubs(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
 	subs, err := h.db.GetSubs()
@@ -28,21 +29,9 @@ func (h *Controller) GetSubs(c echo.Context) (err error) {
 	}
 	logger.Info("Get zhihu sub list successfully", zap.Int("count", len(subs)))
 
-	var filterConfig filterConfig
-	params := c.QueryParams()
-	if params.Has("sub_id") {
-		filterConfig.SubID = params["sub_id"]
-		filterConfig.SubID = common.RemoveEmptyStringInStringSlice(filterConfig.SubID)
-	}
-	if params.Has("prerelease") {
-		if params.Get("prerelease") == "true" {
-			filterConfig.Prerelease = true
-		} else {
-			filterConfig.Prerelease = false
-		}
-	}
-	if params.Has("deleted") {
-		filterConfig.Deleted = true
+	filterConfig, err := parseFilterConfig(c)
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	logger.Info("Filter config", zap.Any("config", filterConfig))
 
@@ -91,6 +80,25 @@ func (h *Controller) GetSubs(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewResp("success", resp))
 }
 
+func parseFilterConfig(c *echo.Context) (filterConfig filterConfig, err error) {
+	filterConfig.SubID, err = echo.QueryParamsOr[string](c, "sub_id", nil)
+	if err != nil {
+		return filterConfig, err
+	}
+	filterConfig.SubID = common.RemoveEmptyStringInStringSlice(filterConfig.SubID)
+	prerelease, err := echo.QueryParamOr[string](c, "prerelease", "")
+	if err != nil {
+		return filterConfig, err
+	}
+	filterConfig.Prerelease = prerelease == "true"
+	if _, deletedErr := echo.QueryParam[string](c, "deleted"); deletedErr == nil {
+		filterConfig.Deleted = true
+	} else if !errors.Is(deletedErr, echo.ErrNonExistentKey) {
+		return filterConfig, deletedErr
+	}
+	return filterConfig, nil
+}
+
 func filterSubs(subs []db.Sub, config filterConfig) ([]db.Sub, error) {
 	filteredSubs := make([]db.Sub, 0, len(subs))
 
@@ -125,10 +133,13 @@ func filterSubs(subs []db.Sub, config filterConfig) ([]db.Sub, error) {
 	return filteredSubs, nil
 }
 
-func (h *Controller) ActivateSub(c echo.Context) (err error) {
+func (h *Controller) ActivateSub(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	id := c.Param("id")
+	id, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "missing subscription ID")
+	}
 	logger.Info("Start to activate github sub", zap.String("id", id))
 
 	if err = h.db.ActivateSub(id); err != nil {
@@ -138,10 +149,13 @@ func (h *Controller) ActivateSub(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, httputil.NewMessage("Success"))
 }
 
-func (h *Controller) DeleteSub(c echo.Context) (err error) {
+func (h *Controller) DeleteSub(c *echo.Context) (err error) {
 	logger := common.ExtractLogger(c)
 
-	id := c.Param("id")
+	id, err := echo.PathParam[string](c, "id")
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, "missing subscription ID")
+	}
 	logger.Info("Start to delete github sub", zap.String("id", id))
 
 	if err = h.db.DeleteSub(id); err != nil {
