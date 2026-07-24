@@ -275,7 +275,7 @@ func (p *ParseService) parsePinContent(content []json.RawMessage, id int, logger
 				return emptyString, emptyString, nil, fmt.Errorf("failed to unmarshal link card content: %w", err)
 			}
 
-			text = fmt.Sprintf("[%s|%s](%s)", linkCardContent.DataContentType, linkCardContent.URL, linkCardContent.URL)
+			text = fmt.Sprintf("[包含 %s 类型链接](%s)", linkCardContent.DataContentType, linkCardContent.URL)
 			textPart = append(textPart, text)
 		case "poll":
 			logger.Info("Found poll content")
