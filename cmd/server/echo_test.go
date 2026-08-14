@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	cookieController "github.com/eli-yip/rss-zero/internal/controller/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 )
 
@@ -60,4 +61,20 @@ func TestRegisterCookieProbesIncludesGitHubTokenValidation(t *testing.T) {
 	require.NotNil(t, probe)
 	require.NoError(t, probe("token", zap.NewNop()))
 	require.Equal(t, "Bearer token", gotAuthorization)
+}
+
+func TestCredentialRoutesReplaceLegacyCookieRoute(t *testing.T) {
+	e := echo.New()
+	h := cookieController.NewController(nil)
+	registerCredentials(e.Group("/api/v1/credentials"), h)
+	registerBrowserCookies(e.Group("/api/v1/browser-cookies"), h)
+
+	_, err := e.Router().Routes().FindByMethodPath(http.MethodGet, "/api/v1/credentials")
+	require.NoError(t, err)
+	_, err = e.Router().Routes().FindByMethodPath(http.MethodPut, "/api/v1/credentials/:platform/:name")
+	require.NoError(t, err)
+	_, err = e.Router().Routes().FindByMethodPath(http.MethodPost, "/api/v1/browser-cookies/import")
+	require.NoError(t, err)
+	_, err = e.Router().Routes().FindByMethodPath(http.MethodPost, "/api/v1/cookie")
+	require.Error(t, err)
 }

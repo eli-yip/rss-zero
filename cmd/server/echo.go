@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"slices"
@@ -150,9 +152,13 @@ func setupEcho(redisService redis.Redis,
 	groupNeedAuth = append(groupNeedAuth, jobApi)
 	registerJob(jobApi, jobHandler)
 
-	cookieApi := apiGroup.Group("/cookie")
-	groupNeedAuth = append(groupNeedAuth, cookieApi)
-	registerCookie(cookieApi, cookieHandler)
+	credentialsAPI := apiGroup.Group("/credentials")
+	groupNeedAuth = append(groupNeedAuth, credentialsAPI)
+	registerCredentials(credentialsAPI, cookieHandler)
+
+	browserCookiesAPI := apiGroup.Group("/browser-cookies")
+	groupNeedAuth = append(groupNeedAuth, browserCookiesAPI)
+	registerBrowserCookies(browserCookiesAPI, cookieHandler)
 
 	encryptionServiceApi := apiGroup.Group("/es")
 	groupNeedAuth = append(groupNeedAuth, encryptionServiceApi)
@@ -316,7 +322,14 @@ func registerReformat(refmtApi *echo.Group, xiaobotHandler *xiaobotController.Co
 // packages, which themselves import pkg/cookie — embedding them would create a cycle.
 func registerCookieProbes(cs cookie.CookieIface) {
 	cookie.RegisterProbe(cookie.CookieTypeGitHubAccessToken, func(value string, _ *zap.Logger) error {
-		return githubRequest.ValidateToken(value)
+		err := githubRequest.ValidateToken(value)
+		if err == nil {
+			return nil
+		}
+		if errors.Is(err, githubRequest.ErrUnauthorized) {
+			return fmt.Errorf("%w: %v", cookie.ErrCredentialRejected, err)
+		}
+		return fmt.Errorf("%w: %v", cookie.ErrCredentialValidationUnavailable, err)
 	})
 	cookie.RegisterProbe(cookie.CookieTypeZsxqAccessToken, func(value string, l *zap.Logger) error {
 		_, err := zsxqRequest.NewRequestService(value, l).Limit(context.Background(), config.C.TestURL.Zsxq, l)
@@ -328,11 +341,13 @@ func registerCookieProbes(cs cookie.CookieIface) {
 	})
 }
 
-// /api/v1/cookie  (POST: generic update for any registered cookie, GET: status of all)
-func registerCookie(apiGroup *echo.Group, cookieHandler *cookieController.Controller) {
-	registerNamedRoute(apiGroup, http.MethodPost, "", "Generic cookie updating route", cookieHandler.UpdateCookies)
+func registerCredentials(apiGroup *echo.Group, cookieHandler *cookieController.Controller) {
+	registerNamedRoute(apiGroup, http.MethodGet, "", "Credential status route", cookieHandler.ListCredentials)
+	registerNamedRoute(apiGroup, http.MethodPut, "/:platform/:name", "Credential update route", cookieHandler.UpdateCredential)
+}
 
-	registerNamedRoute(apiGroup, http.MethodGet, "", "Generic cookie status route", cookieHandler.CheckCookies)
+func registerBrowserCookies(apiGroup *echo.Group, cookieHandler *cookieController.Controller) {
+	registerNamedRoute(apiGroup, http.MethodPost, "/import", "Browser cookie import route", cookieHandler.ImportBrowserCookies)
 }
 
 // /rss

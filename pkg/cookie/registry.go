@@ -1,6 +1,7 @@
 package cookie
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -26,6 +27,11 @@ type Spec struct {
 // pkg/cookie need not import the platform request packages (which import pkg/cookie).
 type Probe func(value string, l *zap.Logger) error
 
+var (
+	ErrCredentialRejected              = errors.New("credential rejected")
+	ErrCredentialValidationUnavailable = errors.New("credential validation unavailable")
+)
+
 var registry = []Spec{
 	{Type: CookieTypeZhihuDC0, Platform: "zhihu", Name: "d_c0", Domains: []string{".zhihu.com"}, SafetyGap: 24 * time.Hour},
 	{Type: CookieTypeZhihuZC0, Platform: "zhihu", Name: "z_c0", Domains: []string{".zhihu.com"}, SafetyGap: 24 * time.Hour},
@@ -45,29 +51,15 @@ func RegisterProbe(cookieType int, p Probe) { probes[cookieType] = p }
 // ProbeFor returns the validator for a cookie type, or nil if none is registered.
 func ProbeFor(cookieType int) Probe { return probes[cookieType] }
 
-// SpecByNameDomain resolves an incoming browser cookie to its Spec by name, using
-// domain only to disambiguate when more than one Spec shares the same Name. domain
-// may be empty.
-func SpecByNameDomain(name, domain string) (Spec, bool) {
-	var matches []Spec
+// BrowserSpecByNameDomain 只匹配可由浏览器导入的凭据，并强制同时匹配名称与域名。
+// 手工 token 即使名称相同，也不能通过 Cookie 导入接口写入。
+func BrowserSpecByNameDomain(name, domain string) (Spec, bool) {
 	for _, s := range registry {
-		if s.Name == name {
-			matches = append(matches, s)
+		if !s.Manual && s.Name == name && domainMatches(s.Domains, domain) {
+			return s, true
 		}
 	}
-	switch len(matches) {
-	case 0:
-		return Spec{}, false
-	case 1:
-		return matches[0], true
-	default:
-		for _, s := range matches {
-			if domainMatches(s.Domains, domain) {
-				return s, true
-			}
-		}
-		return Spec{}, false
-	}
+	return Spec{}, false
 }
 
 func domainMatches(domains []string, domain string) bool {
@@ -92,6 +84,16 @@ func SpecsByPlatform(platform string) []Spec {
 	return out
 }
 
+// SpecByPlatformName 使用对外稳定的 platform/name 标识查找凭据。
+func SpecByPlatformName(platform, name string) (Spec, bool) {
+	for _, s := range registry {
+		if s.Platform == platform && s.Name == name {
+			return s, true
+		}
+	}
+	return Spec{}, false
+}
+
 // SpecByType returns the Spec for a cookie type.
 func SpecByType(cookieType int) (Spec, bool) {
 	for _, s := range registry {
@@ -107,3 +109,17 @@ func AllSpecs() []Spec { return registry }
 
 // Label is a human-readable "platform/name" identifier used in logs and notifications.
 func (s Spec) Label() string { return s.Platform + "/" + s.Name }
+
+func (s Spec) Kind() string {
+	if s.Manual {
+		return "token"
+	}
+	return "browser_cookie"
+}
+
+func (s Spec) UpdateMethod() string {
+	if s.Manual {
+		return "api"
+	}
+	return "browser_cookie_import"
+}

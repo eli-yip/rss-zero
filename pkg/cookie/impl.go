@@ -14,20 +14,20 @@ type CookieService struct{ *gorm.DB }
 func NewCookieService(db *gorm.DB) CookieIface { return &CookieService{db} }
 
 func (s *CookieService) Set(cookieType int, value string, ttl time.Duration) (err error) {
-	if err = s.Del(cookieType); err != nil {
-		return fmt.Errorf("failed to delete cookie: %w", err)
-	}
-
-	if err = s.Check(cookieType); !errors.Is(err, ErrKeyNotExist) {
-		return fmt.Errorf("cookie already exists or some other error: %w", err)
-	}
-
-	return s.Save(&Cookie{
-		ID:         xid.New().String(),
-		CookieType: cookieType,
-		Value:      value,
-		ExpireAt:   time.Now().Add(ttl),
-	}).Error
+	return s.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("type = ?", cookieType).Delete(&Cookie{}).Error; err != nil {
+			return fmt.Errorf("failed to delete credential: %w", err)
+		}
+		if err := tx.Create(&Cookie{
+			ID:         xid.New().String(),
+			CookieType: cookieType,
+			Value:      value,
+			ExpireAt:   time.Now().Add(ttl),
+		}).Error; err != nil {
+			return fmt.Errorf("failed to create credential: %w", err)
+		}
+		return nil
+	})
 }
 
 func (s *CookieService) Get(cookieType int) (value string, err error) {

@@ -1,13 +1,11 @@
-// Package controller exposes the unified cookie update/check endpoints. A single
-// generic POST stores any registered cookie from the browser's native cookie shape,
-// and a single GET reports the health of every registered cookie. Platform-specific
-// knowledge lives entirely in pkg/cookie's registry, not here.
+// Package controller 提供显式凭据更新、浏览器 Cookie 导入和凭据状态查询接口。
 package controller
 
 import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v5"
@@ -24,18 +22,15 @@ type Controller struct {
 
 func NewController(c cookie.CookieIface) *Controller { return &Controller{cookie: c} }
 
-// InCookie mirrors the browser's native cookie object (chrome.cookies.Cookie), so the
-// extension can POST chrome.cookies.getAll() results verbatim.
+// InCookie 对应浏览器原生 Cookie 对象的服务端所需字段。
 type InCookie struct {
 	Name           string   `json:"name"`
 	Value          string   `json:"value"`
-	ExpirationDate *float64 `json:"expirationDate"` // Unix seconds; absent => use Spec.DefaultTTL
+	ExpirationDate *float64 `json:"expirationDate"`
 	Domain         string   `json:"domain"`
 }
 
-// Result reports the outcome for one incoming cookie so the popup can show what was
-// stored (name + expiry) and what was ignored.
-type Result struct {
+type ImportResult struct {
 	Name     string `json:"name"`
 	Platform string `json:"platform,omitempty"`
 	Stored   bool   `json:"stored"`
@@ -43,132 +38,212 @@ type Result struct {
 	Reason   string `json:"reason,omitempty"`
 }
 
-// UpdateCookies handles POST /api/v1/cookie. Each incoming cookie is matched against
-// the registry by name (domain disambiguates); only registered cookies are stored.
-// Cookies absent from the payload are left untouched.
-func (h *Controller) UpdateCookies(c *echo.Context) (err error) {
-	logger := common.ExtractLogger(c)
+type CredentialUpdateRequest struct {
+	Value     string  `json:"value"`
+	ExpiresAt *string `json:"expires_at"`
+}
 
+type CredentialUpdateResult struct {
+	Platform  string `json:"platform"`
+	Name      string `json:"name"`
+	Kind      string `json:"kind"`
+	Validated bool   `json:"validated"`
+	ExpireAt  string `json:"expires_at"`
+}
+
+type CredentialStatus struct {
+	Platform     string `json:"platform"`
+	Name         string `json:"name"`
+	Kind         string `json:"kind"`
+	UpdateMethod string `json:"update_method"`
+	Stored       bool   `json:"stored"`
+	ExpireAt     string `json:"expires_at,omitempty"`
+	Healthy      bool   `json:"healthy"`
+}
+
+// UpdateCredential 显式更新一个 platform/name 标识的手工凭据。
+func (h *Controller) UpdateCredential(c *echo.Context) error {
+	logger := common.ExtractLogger(c)
+	platform, name := c.Param("platform"), c.Param("name")
+	spec, ok := cookie.SpecByPlatformName(platform, name)
+	if !ok {
+		return httputil.NewHTTPError(http.StatusNotFound, "credential not found")
+	}
+	if !spec.Manual {
+		return httputil.NewHTTPError(http.StatusBadRequest, "credential must be updated through browser cookie import")
+	}
+
+	var req CredentialUpdateRequest
+	if err := c.Bind(&req); err != nil {
+		logger.Error("Failed to bind credential request", zap.Error(err))
+		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
+	}
+	value := strings.TrimSpace(req.Value)
+	if value == "" {
+		return httputil.NewHTTPError(http.StatusBadRequest, "credential value is required")
+	}
+
+	var expiresAt *time.Time
+	if req.ExpiresAt != nil {
+		parsed, err := time.Parse(time.RFC3339, *req.ExpiresAt)
+		if err != nil {
+			return httputil.NewHTTPError(http.StatusBadRequest, "expires_at must be RFC3339")
+		}
+		expiresAt = &parsed
+	}
+
+	storedAt, validated, err := h.storeCredential(spec, value, expiresAt, logger)
+	if err != nil {
+		switch {
+		case errors.Is(err, errCredentialExpired):
+			return httputil.NewHTTPError(http.StatusBadRequest, "credential is already expired")
+		case errors.Is(err, cookie.ErrCredentialRejected):
+			return httputil.NewHTTPError(http.StatusUnprocessableEntity, "credential validation failed")
+		case errors.Is(err, cookie.ErrCredentialValidationUnavailable):
+			return httputil.NewHTTPError(http.StatusServiceUnavailable, "credential validation unavailable")
+		}
+		return httputil.NewHTTPError(http.StatusInternalServerError, "failed to store credential")
+	}
+
+	logger.Info("Stored credential", zap.String("credential", spec.Label()), zap.Time("expire_at", storedAt))
+	return c.JSON(http.StatusOK, httputil.NewResp("credential updated", CredentialUpdateResult{
+		Platform: platform, Name: name, Kind: spec.Kind(), Validated: validated, ExpireAt: storedAt.Format(time.RFC3339),
+	}))
+}
+
+// ImportBrowserCookies 仅导入同时匹配已注册名称与域名的浏览器 Cookie。
+func (h *Controller) ImportBrowserCookies(c *echo.Context) error {
+	logger := common.ExtractLogger(c)
 	var req struct {
 		Cookies []InCookie `json:"cookies"`
 	}
-	if err = c.Bind(&req); err != nil {
-		logger.Error("Failed to bind cookies request", zap.Error(err))
+	if err := c.Bind(&req); err != nil {
+		logger.Error("Failed to bind browser cookies request", zap.Error(err))
 		return httputil.NewHTTPError(http.StatusBadRequest, "invalid request")
 	}
 
-	names := make([]string, len(req.Cookies))
-	for i, in := range req.Cookies {
-		names[i] = in.Name
-	}
-	results := make([]Result, 0, len(req.Cookies))
+	results := make([]ImportResult, 0, len(req.Cookies))
 	storedCount := 0
 	for _, in := range req.Cookies {
-		r := h.store(in, logger)
-		if r.Stored {
+		result := h.importBrowserCookie(in, logger)
+		if result.Stored {
 			storedCount++
 		}
-		results = append(results, r)
+		results = append(results, result)
 	}
-	logger.Info("Processed cookies", zap.Int("received", len(req.Cookies)),
-		zap.Strings("names", names), zap.Int("stored", storedCount))
+	logger.Info("Processed browser cookies", zap.Int("received", len(req.Cookies)), zap.Int("stored", storedCount))
 
-	return c.JSON(http.StatusOK, httputil.NewResp("cookies processed", struct {
-		Results []Result `json:"results"`
+	return c.JSON(http.StatusOK, httputil.NewResp("browser cookies processed", struct {
+		Results []ImportResult `json:"results"`
 	}{Results: results}))
 }
 
-func (h *Controller) store(in InCookie, logger *zap.Logger) Result {
-	res := Result{Name: in.Name}
-
-	spec, ok := cookie.SpecByNameDomain(in.Name, in.Domain)
+func (h *Controller) importBrowserCookie(in InCookie, logger *zap.Logger) ImportResult {
+	result := ImportResult{Name: in.Name}
+	spec, ok := cookie.BrowserSpecByNameDomain(in.Name, in.Domain)
 	if !ok {
-		res.Reason = "not registered"
-		return res
+		result.Reason = "not registered for domain"
+		return result
 	}
-	res.Platform = spec.Platform
+	result.Platform = spec.Platform
 
 	value := cookie.ExtractCookieValue(in.Value, in.Name)
 	if value == "" {
-		res.Reason = "empty value"
-		return res
+		result.Reason = "empty value"
+		return result
 	}
 
-	var ttl time.Duration
-	var expireAt time.Time
+	var expiresAt *time.Time
 	if in.ExpirationDate != nil {
-		expireAt = time.Unix(int64(*in.ExpirationDate), 0)
-		ttl = time.Until(expireAt) - spec.SafetyGap
+		parsed := time.Unix(int64(*in.ExpirationDate), 0)
+		expiresAt = &parsed
+	}
+	storedAt, _, err := h.storeCredential(spec, value, expiresAt, logger)
+	if err != nil {
+		switch {
+		case errors.Is(err, errCredentialExpired):
+			result.Reason = "already expired"
+		case errors.Is(err, cookie.ErrCredentialRejected):
+			result.Reason = "validation failed"
+		case errors.Is(err, cookie.ErrCredentialValidationUnavailable):
+			result.Reason = "validation unavailable"
+		default:
+			result.Reason = "store failed"
+		}
+		return result
+	}
+
+	result.Stored = true
+	result.ExpireAt = storedAt.Format(time.RFC3339)
+	return result
+}
+
+var (
+	errCredentialExpired = errors.New("credential expired")
+)
+
+func (h *Controller) storeCredential(spec cookie.Spec, value string, expiresAt *time.Time, logger *zap.Logger) (storedAt time.Time, validated bool, err error) {
+	now := time.Now()
+	ttl := spec.DefaultTTL
+	if ttl == 0 {
+		ttl = cookie.DefaultTTL
+	}
+	if expiresAt != nil {
+		storedAt = *expiresAt
+		ttl = storedAt.Sub(now) - spec.SafetyGap
 		if ttl <= 0 {
-			res.Reason = "already expired"
-			return res
+			return time.Time{}, false, errCredentialExpired
 		}
-		expireAt = time.Now().Add(ttl)
+		storedAt = now.Add(ttl)
 	} else {
-		ttl = spec.DefaultTTL
-		if ttl == 0 {
-			ttl = cookie.DefaultTTL
-		}
-		expireAt = time.Now().Add(ttl)
+		storedAt = now.Add(ttl)
 	}
 
 	if probe := cookie.ProbeFor(spec.Type); probe != nil {
 		if err := probe(value, logger); err != nil {
-			logger.Error("Cookie failed validation", zap.String("cookie", spec.Label()), zap.Error(err))
-			res.Reason = fmt.Sprintf("validation failed: %v", err)
-			return res
+			logger.Error("Credential failed validation", zap.String("credential", spec.Label()), zap.Error(err))
+			if errors.Is(err, cookie.ErrCredentialRejected) {
+				return time.Time{}, false, err
+			}
+			if errors.Is(err, cookie.ErrCredentialValidationUnavailable) {
+				return time.Time{}, false, err
+			}
+			return time.Time{}, false, fmt.Errorf("%w: %v", cookie.ErrCredentialValidationUnavailable, err)
 		}
+		validated = true
 	}
-
 	if err := h.cookie.Set(spec.Type, value, ttl); err != nil {
-		logger.Error("Failed to store cookie", zap.String("cookie", spec.Label()), zap.Error(err))
-		res.Reason = fmt.Sprintf("store failed: %v", err)
-		return res
+		logger.Error("Failed to store credential", zap.String("credential", spec.Label()), zap.Error(err))
+		return time.Time{}, validated, err
 	}
-
-	logger.Info("Stored cookie", zap.String("cookie", spec.Label()), zap.Time("expire_at", expireAt))
-	res.Stored = true
-	res.ExpireAt = expireAt.Format(time.RFC3339)
-	return res
+	return storedAt, validated, nil
 }
 
-// Status reports one registered cookie's health for GET /api/v1/cookie.
-type Status struct {
-	Platform string `json:"platform"`
-	Name     string `json:"name"`
-	Manual   bool   `json:"manual"`
-	Stored   bool   `json:"stored"`
-	ExpireAt string `json:"expire_at,omitempty"`
-	Healthy  bool   `json:"healthy"`
-}
-
-// CheckCookies handles GET /api/v1/cookie: the health of every registered cookie.
-func (h *Controller) CheckCookies(c *echo.Context) (err error) {
+// ListCredentials 返回所有可用凭据的发现信息和当前状态。
+func (h *Controller) ListCredentials(c *echo.Context) error {
 	logger := common.ExtractLogger(c)
-
-	specs := cookie.AllSpecs()
-	out := make([]Status, 0, len(specs))
-	for _, s := range specs {
-		st := Status{Platform: s.Platform, Name: s.Name, Manual: s.Manual}
-
-		_, err := h.cookie.Get(s.Type)
+	out := make([]CredentialStatus, 0, len(cookie.AllSpecs()))
+	for _, spec := range cookie.AllSpecs() {
+		status := CredentialStatus{
+			Platform: spec.Platform, Name: spec.Name, Kind: spec.Kind(), UpdateMethod: spec.UpdateMethod(),
+		}
+		_, err := h.cookie.Get(spec.Type)
 		switch {
 		case errors.Is(err, cookie.ErrKeyNotExist):
-			// not stored (or expired) — leave defaults
 		case err != nil:
-			logger.Error("Failed to get cookie status", zap.String("cookie", s.Label()), zap.Error(err))
-			return httputil.NewHTTPError(http.StatusInternalServerError, err.Error())
+			logger.Error("Failed to get credential status", zap.String("credential", spec.Label()), zap.Error(err))
+			return httputil.NewHTTPError(http.StatusInternalServerError, "failed to get credential status")
 		default:
-			st.Stored = true
-			if ttl, terr := h.cookie.GetTTL(s.Type); terr == nil {
-				st.ExpireAt = time.Now().Add(ttl).Format(time.RFC3339)
+			status.Stored = true
+			if ttl, ttlErr := h.cookie.GetTTL(spec.Type); ttlErr == nil {
+				status.ExpireAt = time.Now().Add(ttl).Format(time.RFC3339)
 			}
-			st.Healthy = h.cookie.CheckTTL(s.Type, 48*time.Hour) == nil
+			status.Healthy = h.cookie.CheckTTL(spec.Type, 48*time.Hour) == nil
 		}
-		out = append(out, st)
+		out = append(out, status)
 	}
 
-	return c.JSON(http.StatusOK, httputil.NewResp("cookie status", struct {
-		Cookies []Status `json:"cookies"`
-	}{Cookies: out}))
+	return c.JSON(http.StatusOK, httputil.NewResp("credential status", struct {
+		Credentials []CredentialStatus `json:"credentials"`
+	}{Credentials: out}))
 }
