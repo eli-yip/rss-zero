@@ -51,3 +51,20 @@ func Invalidate(cs CookieIface, cookieType int, n notify.Notifier, l *zap.Logger
 	}
 	notify.NoticeWithLogger(n, fmt.Sprintf("%s cookie invalid, please refresh", label), "", l)
 }
+
+// InvalidateIfCurrent 仅在当前存储值仍是发生认证失败的值时删除并通知。
+// 长任务持有旧 token 时，不能删除用户在任务运行期间刚写入的新 token。
+func InvalidateIfCurrent(cs CookieIface, cookieType int, failedValue string, n notify.Notifier, l *zap.Logger) bool {
+	label := TypeToStr(cookieType)
+	deleted, err := cs.DelIfValue(cookieType, failedValue)
+	if err != nil {
+		l.Error("Failed to conditionally delete invalid cookie", zap.String("cookie", label), zap.Error(err))
+		return false
+	}
+	if !deleted {
+		l.Info("Skipped invalidating cookie because the stored value changed", zap.String("cookie", label))
+		return false
+	}
+	notify.NoticeWithLogger(n, fmt.Sprintf("%s cookie invalid, please refresh", label), "", l)
+	return true
+}

@@ -73,6 +73,11 @@ func (s *CookieService) Del(cookieType int) (err error) {
 	return s.Where("type = ?", cookieType).Delete(&Cookie{}).Error
 }
 
+func (s *CookieService) DelIfValue(cookieType int, value string) (deleted bool, err error) {
+	result := s.Where("type = ? AND value = ?", cookieType, value).Delete(&Cookie{})
+	return result.RowsAffected > 0, result.Error
+}
+
 func (s *CookieService) GetCookieTypes() (cookieTypes []int, err error) {
 	err = s.Model(&Cookie{}).Select("DISTINCT type").Pluck("type", &cookieTypes).Error
 	return cookieTypes, err

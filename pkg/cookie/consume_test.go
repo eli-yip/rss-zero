@@ -36,6 +36,12 @@ func (f *fakeStore) Del(t int) error {
 	f.deleted = append(f.deleted, t)
 	return nil
 }
+func (f *fakeStore) DelIfValue(t int, value string) (bool, error) {
+	if f.vals[t] != value {
+		return false, nil
+	}
+	return true, f.Del(t)
+}
 
 type fakeNotifier struct {
 	count int
@@ -108,5 +114,38 @@ func TestInvalidateDeletesAndNotifies(t *testing.T) {
 	}
 	if n.count != 1 {
 		t.Fatalf("expected one notification, got %d", n.count)
+	}
+}
+
+func TestInvalidateIfCurrentDeletesMatchingValue(t *testing.T) {
+	store := newFakeStore()
+	store.vals[CookieTypeGitHubAccessToken] = "failed-token"
+	n := &fakeNotifier{}
+
+	deleted := InvalidateIfCurrent(store, CookieTypeGitHubAccessToken, "failed-token", n, zap.NewNop())
+
+	if !deleted || len(store.deleted) != 1 {
+		t.Fatalf("InvalidateIfCurrent() deleted = %v, calls = %#v", deleted, store.deleted)
+	}
+	if n.count != 1 {
+		t.Fatalf("notification count = %d, want 1", n.count)
+	}
+}
+
+func TestInvalidateIfCurrentPreservesNewValue(t *testing.T) {
+	store := newFakeStore()
+	store.vals[CookieTypeGitHubAccessToken] = "new-token"
+	n := &fakeNotifier{}
+
+	deleted := InvalidateIfCurrent(store, CookieTypeGitHubAccessToken, "failed-token", n, zap.NewNop())
+
+	if deleted {
+		t.Fatal("InvalidateIfCurrent() deleted newer token")
+	}
+	if got := store.vals[CookieTypeGitHubAccessToken]; got != "new-token" {
+		t.Fatalf("stored token = %q, want new-token", got)
+	}
+	if n.count != 0 {
+		t.Fatalf("notification count = %d, want 0", n.count)
 	}
 }

@@ -32,7 +32,7 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, aiServi
 		cronJobInfoChan <- cron.CronJobInfo{Job: &cronDB.CronJob{ID: cronJobID}}
 
 		var err error
-		var errCount  = 0
+		var errCount = 0
 
 		defer func() {
 			if errCount > 0 {
@@ -74,8 +74,7 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, aiServi
 			if err = crawl.CrawlRepo(repo.GithubUser, repo.Name, repo.ID, token, parseService, logger); err != nil {
 				errCount++
 				logger.Error("Failed to crawl github release", zap.Error(err))
-				if errors.Is(err, githubRequest.ErrUnauthorized) {
-					cookie.Invalidate(cookieService, cookie.CookieTypeGitHubAccessToken, notifier, logger)
+				if errors.Is(err, githubRequest.ErrUnauthorized) && handleUnauthorizedToken(token, cookieService, notifier, logger, githubRequest.ValidateToken) {
 					return
 				}
 				continue
@@ -95,5 +94,20 @@ func Crawl(r redis.Redis, cookieService cookie.CookieIface, db *gorm.DB, aiServi
 		}
 
 		logger.Info("Crawl all github releases done")
+	}
+}
+
+func handleUnauthorizedToken(token string, cookieService cookie.CookieIface, notifier notify.Notifier, logger *zap.Logger, validate func(string) error) (stop bool) {
+	err := validate(token)
+	switch {
+	case err == nil:
+		logger.Warn("GitHub token remains valid after repository request returned 401")
+		return false
+	case errors.Is(err, githubRequest.ErrUnauthorized):
+		cookie.InvalidateIfCurrent(cookieService, cookie.CookieTypeGitHubAccessToken, token, notifier, logger)
+		return true
+	default:
+		logger.Error("Failed to independently validate GitHub token after repository request returned 401", zap.Error(err))
+		return false
 	}
 }

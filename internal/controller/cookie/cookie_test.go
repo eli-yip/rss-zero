@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -27,6 +28,13 @@ func (f *fakeStore) CheckTTL(int, time.Duration) error {
 }
 func (f *fakeStore) GetTTL(int) (time.Duration, error) { return time.Hour, nil }
 func (f *fakeStore) Del(t int) error                   { delete(f.vals, t); return nil }
+func (f *fakeStore) DelIfValue(t int, value string) (bool, error) {
+	if f.vals[t] != value {
+		return false, nil
+	}
+	delete(f.vals, t)
+	return true, nil
+}
 
 func TestStore(t *testing.T) {
 	tenDays := float64(time.Now().Add(10 * 24 * time.Hour).Unix())
@@ -78,5 +86,22 @@ func TestStore(t *testing.T) {
 				t.Fatalf("stored value = %q, want %q", store.vals[cookie.CookieTypeZhihuDC0], tc.wantValue)
 			}
 		})
+	}
+}
+
+func TestStoreRejectsGitHubTokenThatFailsProbe(t *testing.T) {
+	cookie.RegisterProbe(cookie.CookieTypeGitHubAccessToken, func(string, *zap.Logger) error {
+		return errors.New("invalid token")
+	})
+	store := newFakeStore()
+	h := NewController(store)
+
+	res := h.store(InCookie{Name: "access_token", Value: "token"}, zap.NewNop())
+
+	if res.Stored || res.Reason != "validation failed: invalid token" {
+		t.Fatalf("store result = %+v", res)
+	}
+	if _, ok := store.vals[cookie.CookieTypeGitHubAccessToken]; ok {
+		t.Fatal("invalid GitHub token was stored")
 	}
 }

@@ -17,6 +17,7 @@ type CookieIface interface {
 	CheckTTL(cookieType int, ttl time.Duration) (err error)
 	GetTTL(cookieType int) (ttl time.Duration, err error)
 	Del(cookieType int) (err error)
+	DelIfValue(cookieType int, value string) (deleted bool, err error)
 }
 
 var DefaultTTL = 24 * 365 * time.Hour

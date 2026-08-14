@@ -38,6 +38,7 @@ import (
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	githubDB "github.com/eli-yip/rss-zero/pkg/routers/github/db"
+	githubRequest "github.com/eli-yip/rss-zero/pkg/routers/github/request"
 	"github.com/eli-yip/rss-zero/pkg/routers/macked"
 	tkblogRouter "github.com/eli-yip/rss-zero/pkg/routers/tkblog"
 	tombkeeperRouter "github.com/eli-yip/rss-zero/pkg/routers/tombkeeper"
@@ -314,6 +315,9 @@ func registerReformat(refmtApi *echo.Group, xiaobotHandler *xiaobotController.Co
 // startup. Done here (not in pkg/cookie) because the probes call the platform request
 // packages, which themselves import pkg/cookie — embedding them would create a cycle.
 func registerCookieProbes(cs cookie.CookieIface) {
+	cookie.RegisterProbe(cookie.CookieTypeGitHubAccessToken, func(value string, _ *zap.Logger) error {
+		return githubRequest.ValidateToken(value)
+	})
 	cookie.RegisterProbe(cookie.CookieTypeZsxqAccessToken, func(value string, l *zap.Logger) error {
 		_, err := zsxqRequest.NewRequestService(value, l).Limit(context.Background(), config.C.TestURL.Zsxq, l)
 		return err
