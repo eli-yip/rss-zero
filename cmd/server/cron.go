@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"go.uber.org/zap"
@@ -25,9 +26,33 @@ import (
 )
 
 type jobDefinition struct {
-	name     string
-	schedule string
-	fn       func()
+	name        string
+	schedule    string
+	fn          func()
+	randomDelay bool
+}
+
+const staticCrawlMaxDelay = 10 * time.Minute
+
+type randomDelayRunner struct {
+	maxDelay time.Duration
+	random   func(time.Duration) time.Duration
+	sleep    func(time.Duration)
+}
+
+var staticCrawlDelayRunner = randomDelayRunner{
+	maxDelay: staticCrawlMaxDelay,
+	random:   rand.N[time.Duration],
+	sleep:    time.Sleep,
+}
+
+func (r randomDelayRunner) wrap(jobName string, logger *zap.Logger, fn func()) func() {
+	return func() {
+		delay := r.random(r.maxDelay)
+		logger.Info("Delay static crawl job", zap.String("job_name", jobName), zap.Duration("delay", delay))
+		r.sleep(delay)
+		fn()
+	}
 }
 
 // setupCronCrawlJob sets up cron jobs
@@ -58,7 +83,11 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 	}
 
 	for _, job := range jobs {
-		jobID, err := cronService.AddJob(job.name, job.schedule, job.fn)
+		fn := job.fn
+		if job.randomDelay {
+			fn = staticCrawlDelayRunner.wrap(job.name, logger, fn)
+		}
+		jobID, err := cronService.AddJob(job.name, job.schedule, fn)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to add %s job: %w", job.name, err)
 		}
@@ -69,7 +98,8 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 	// cron, so a fresh deploy would serve an empty feed until the next run. Prewarm
 	// once at startup to close that window.
 	if !config.C.Settings.Debug {
-		go macked.CrawlFunc(redisService, macked.NewDBService(db), logger)()
+		fn := macked.CrawlFunc(redisService, macked.NewDBService(db), logger)
+		go staticCrawlDelayRunner.wrap("macked_startup_prewarm", logger, fn)()
 	}
 
 	return cronService, jobIndex, nil
@@ -83,14 +113,16 @@ func buildStaticJobDefinitions(redisService redis.Redis, cookieService cookie.Co
 			fn:       checkCookies(cookieService, notifier, logger),
 		},
 		{
-			name:     "macked_crawl",
-			schedule: "0 * * * *",
-			fn:       macked.CrawlFunc(redisService, macked.NewDBService(db), logger),
+			name:        "macked_crawl",
+			schedule:    "0 * * * *",
+			fn:          macked.CrawlFunc(redisService, macked.NewDBService(db), logger),
+			randomDelay: true,
 		},
 		{
-			name:     "tombkeeper_crawl",
-			schedule: "0 * * * *",
-			fn:       tombkeeper.CrawlFunc(redisService, tombkeeper.NewDBService(db), fileService, notifier, logger),
+			name:        "tombkeeper_crawl",
+			schedule:    "0 * * * *",
+			fn:          tombkeeper.CrawlFunc(redisService, tombkeeper.NewDBService(db), fileService, notifier, logger),
+			randomDelay: true,
 		},
 		{
 			name:     "canglimo_random_select",
@@ -103,17 +135,19 @@ func buildStaticJobDefinitions(redisService redis.Redis, cookieService cookie.Co
 			fn:       zsxqCron.BuildRandomSelectCanglimoDigestTopicFunc(db, redisService),
 		},
 		{
-			name:     "zvideo_crawl",
-			schedule: "0 0,3,6,9,12,15,18,21 * * *",
-			fn:       zhihuCron.BuildZvideoCrawlFunc("canglimo", db, notifier, cookieService),
+			name:        "zvideo_crawl",
+			schedule:    "0 0,3,6,9,12,15,18,21 * * *",
+			fn:          zhihuCron.BuildZvideoCrawlFunc("canglimo", db, notifier, cookieService),
+			randomDelay: true,
 		},
 	}
 
 	if !disableDouyu {
 		jobs = append(jobs, jobDefinition{
-			name:     "douyu_crawl",
-			schedule: "0 19 * * *",
-			fn:       douyu.BuildCrawlFunc(notifier, redisService),
+			name:        "douyu_crawl",
+			schedule:    "0 19 * * *",
+			fn:          douyu.BuildCrawlFunc(notifier, redisService),
+			randomDelay: true,
 		})
 	}
 
