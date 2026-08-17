@@ -2,6 +2,17 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
+**2026-08-17 · static-crawl-random-delay · 已发版并生产部署 `26.8.1`。** 按 owner 明确豁免未创建
+issue/plan、未执行独立实现评审；`macked_crawl`、`tombkeeper_crawl`、`zvideo_crawl`、`douyu_crawl`
+及 macked 启动预热在每次触发后独立随机等待 0–10 分钟再访问外站，cron 表达式与数据库任务定义保持
+不变。随机源与 sleep 可注入，回归测试覆盖抽样、等待、执行顺序、唯一执行和四个静态爬虫的原 schedule；
+`go test ./cmd/server`、`just lint` 全绿。Squash 合并 master（`f00b93ed`），OSS master 与 tag
+`26.8.1` 已推送；私有 origin 的 SSH 连接被远端连续关闭，尚待补推。镜像
+`eliyip/rss-zero:26.8.1` 与 `latest` digest 为
+`sha256:0278ca0a8936f49d72a4662414a31362a4d160fed1bfe84fd11fd7d34c681e33`。生产
+`SERVER_TAG=26.8.1`，health 返回 `26.8.1`，后端 running、restart=0、OOM=false，数据库 healthy；
+启动日志记录 macked 预热随机等待约 235.6 秒，无 error/panic。
+
 **2026-07-20 · disable-douyu · 已发版并生产部署 `26.7.12`。** 按 owner 明确豁免未创建 issue/plan、
 未执行实现评审；新增 `[settings].disable_douyu` 配置开关，默认保持斗鱼任务启用，开启后在静态 cron
 定义构建期移除 `douyu_crawl`，从入口同时停止斗鱼网络请求、Redis 状态读写与 Bark 通知。配置解析和
