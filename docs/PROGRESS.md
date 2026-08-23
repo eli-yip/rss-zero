@@ -2,6 +2,18 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
+**2026-08-23 · weibo-archive-copy-link · 已发版并生产部署 `26.8.2`。** 按 owner 明确豁免未创建
+issue/plan、未执行独立实现评审；tombkeeper 微博归档的 HTML 页面在底部「微博」链接旁新增「复制链接」
+按钮，点击只复制微博原文 URL，并提供剪贴板 API 不可用时的浏览器兼容路径；粉丝站链接、Markdown 与
+纯文本输出不变。回归测试覆盖目标 URL、脚本注入转义、仅单个复制控件与普通 HTML 无控件；
+`go test ./pkg/render ./internal/controller/archive ./pkg/routers/tombkeeper/...` 通过，`just lint` 的
+AutoCorrect、dprint、go mod tidy 与 golangci-lint 通过，最终仅被两个既有 Go 1.27 `go fix --diff`
+建议阻断（xiaobot 原子计数器、tombkeeper 反向切片遍历），本次未混入无关改写。Squash 合并 master
+（`0b9d9adf`），OSS master 与 tag `26.8.2` 已推送；镜像 `eliyip/rss-zero:26.8.2` 与 `latest`
+digest 为 `sha256:409709875ada204f158924996265b75679b52d43f1917a51516933efe1e8fdb7`。生产升级前备份
+`db-pre-26.8.2.dump`（153 MB），`SERVER_TAG=26.8.2`，health 返回 `26.8.2`，后端 running、数据库
+healthy；真实微博归档 HTML 含复制控件，Markdown 输出无复制控件。
+
 **2026-08-17 · static-crawl-random-delay · 已发版并生产部署 `26.8.1`。** 按 owner 明确豁免未创建
 issue/plan、未执行独立实现评审；`macked_crawl`、`tombkeeper_crawl`、`zvideo_crawl`、`douyu_crawl`
 及 macked 启动预热在每次触发后独立随机等待 0–10 分钟再访问外站，cron 表达式与数据库任务定义保持
