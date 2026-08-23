@@ -1,6 +1,6 @@
 # 运维手册
 
-构建、发版、部署、迁移、回填、告警。生产机 `linkerlab-us-2`，栈用 docker compose。
+构建、发版、部署、迁移、回填、告警。生产机 SSH 主机名为 `dmit`，栈用 docker compose。
 
 ## 版本与发布
 
@@ -18,7 +18,7 @@ just tpush             # git tag {{next_version}} && git push --tags
 
 ## 部署（生产）
 
-1. `ssh linkerlab-us-2`
+1. `ssh dmit`
 2. 在 `~/services/rss-zero/.env` 里改镜像 tag：`SERVER_TAG`（后端）、`WEBAPP_TAG` /
    `WEBAPP_TEST_TAG`（前端，如同批）。
 3. `docker compose pull && docker compose up -d`

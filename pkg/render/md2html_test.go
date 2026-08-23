@@ -1,10 +1,30 @@
 package render
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestHtmlRenderCopyLinkControl(t *testing.T) {
+	t.Parallel()
+
+	renderer := NewHtmlRenderService()
+	weiboURL := "https://weibo.com/1401527553/Px8nL9t2A?from=archive&x=</script>"
+	markdown := "[微博](" + weiboURL + ") · [粉丝站](https://tombkeeper.io/weibo/1)"
+
+	html, err := renderer.Render("", markdown, WithCopyLink(weiboURL))
+	assert.NoError(t, err)
+	assert.Equal(t, 1, strings.Count(html, `className = "copy-link-control"`))
+	assert.Contains(t, html, `button.setAttribute("aria-label", "复制微博链接")`)
+	assert.Contains(t, html, `https://weibo.com/1401527553/Px8nL9t2A?from=archive\u0026x=\u003c/script\u003e`)
+	assert.NotContains(t, html, `targetURL = "https://tombkeeper.io/weibo/1"`)
+
+	plainHTML, err := renderer.Render("", markdown)
+	assert.NoError(t, err)
+	assert.NotContains(t, plainHTML, "copy-link-control")
+}
 
 func TestHtmlRender(t *testing.T) {
 	assert := assert.New(t)

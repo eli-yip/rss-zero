@@ -36,7 +36,11 @@ func (h *Controller) HandleTombkeeperWeibo(link string) (*archiveResult, error) 
 	if err != nil {
 		return nil, fmt.Errorf("render tombkeeper post %d: %w", midInt, err)
 	}
-	footer := fmt.Sprintf("[微博](%s) · [粉丝站](%s)",
-		tk.WeiboPostURL(post.AuthorID, post.Bid, mid), tk.FanSiteURL(mid))
-	return &archiveResult{title: "", markdown: markdown + "\n\n" + footer}, nil
+	weiboURL := tk.WeiboPostURL(post.AuthorID, post.Bid, mid)
+	footer := fmt.Sprintf("[微博](%s) · [粉丝站](%s)", weiboURL, tk.FanSiteURL(mid))
+	return &archiveResult{
+		title:       "",
+		markdown:    markdown + "\n\n" + footer,
+		htmlCopyURL: weiboURL,
+	}, nil
 }

@@ -115,7 +115,7 @@ func (h *Controller) Archive(c *echo.Context) (err error) {
 type archiveResult struct {
 	// title is the page title (used for the HTML <title>); markdown is the
 	// full-text markdown that every output format is derived from.
-	title, markdown, redirectTo string
+	title, markdown, redirectTo, htmlCopyURL string
 }
 
 // archive output formats, selected via the `format` query parameter.
@@ -251,7 +251,11 @@ func (h *Controller) History(c *echo.Context) (err error) {
 	default:
 		switcher := formatSwitcherMarkdown(formatHTML, htmlLink, mdLink, txtLink)
 		mdWithNav := switcher + "\n\n---\n\n" + result.markdown
-		html, err := h.htmlRender.Render(result.title, mdWithNav)
+		var renderOptions []render.HTMLRenderOption
+		if result.htmlCopyURL != "" {
+			renderOptions = append(renderOptions, render.WithCopyLink(result.htmlCopyURL))
+		}
+		html, err := h.htmlRender.Render(result.title, mdWithNav, renderOptions...)
 		if err != nil {
 			logger.Error("Failed to render html", zap.Error(err))
 			return c.HTML(http.StatusInternalServerError, renderErrorPage(err, requestID))
