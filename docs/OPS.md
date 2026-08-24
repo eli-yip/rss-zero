@@ -18,6 +18,11 @@ just tpush             # git tag {{next_version}} && git push --tags
 
 ## 部署（生产）
 
+先判断本次发布是否可能改变数据库：
+
+- 仅更新应用代码，且不包含 migration、回填、重抓入库或手工 SQL：**不备份数据库**。
+- 包含 schema migration、数据迁移／回填、批量重抓入库或手工 SQL：部署前备份数据库，并确认恢复方式。
+
 1. `ssh linkerlab-us-2`
 2. 在 `~/services/rss-zero/.env` 里改镜像 tag：`SERVER_TAG`（后端）、`WEBAPP_TAG` /
    `WEBAPP_TEST_TAG`（前端，如同批）。

@@ -12,7 +12,8 @@ AutoCorrect、dprint、go mod tidy 与 golangci-lint 通过，最终仅被两个
 （`0b9d9adf`），OSS master 与 tag `26.8.2` 已推送；镜像 `eliyip/rss-zero:26.8.2` 与 `latest`
 digest 为 `sha256:409709875ada204f158924996265b75679b52d43f1917a51516933efe1e8fdb7`。生产升级前备份
 `db-pre-26.8.2.dump`（153 MB），`SERVER_TAG=26.8.2`，health 返回 `26.8.2`，后端 running、数据库
-healthy；真实微博归档 HTML 含复制控件，Markdown 输出无复制控件。
+healthy；真实微博归档 HTML 含复制控件，Markdown 输出无复制控件。owner 后续明确：这类无 migration、
+无数据改写的纯应用更新不需要数据库备份；上述备份已删除，规则已写入 OPS。
 
 **2026-08-17 · static-crawl-random-delay · 已发版并生产部署 `26.8.1`。** 按 owner 明确豁免未创建
 issue/plan、未执行独立实现评审；`macked_crawl`、`tombkeeper_crawl`、`zvideo_crawl`、`douyu_crawl`
