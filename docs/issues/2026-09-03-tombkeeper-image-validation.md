@@ -1,7 +1,7 @@
 ---
 title: "微博图片下载将 CDN 欢迎页误存为图片"
 kind: bug
-status: open
+status: closed
 priority: high
 areas: [tombkeeper, migrate]
 plan: docs/plans/2026-09-03-tombkeeper-image-validation.md
@@ -27,3 +27,9 @@ updated: "2026-09-03"
 ## 范围
 
 仅修改 tombkeeper 图片获取与本次历史数据迁移；不改微博正文解析、转发关系或其他来源的下载器。
+
+## 结果
+
+`26.9.0` 已上线，自动迁移完成：检查 1,743 张、正常 1,728 张、修复 15 张、失败 0。15 个新文件
+均已实测可访问并识别为图片，包含示例微博的三张坏图。测试、评审、备份与发布详情见
+[PROGRESS](../PROGRESS.md)。

@@ -2,15 +2,26 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
-**2026-09-03 · tombkeeper-image-validation · 实现与独立评审完成，合并 master，待发布 `26.9.0`。**
-使用标准库 `http.DetectContentType` 拒绝非图片下载响应，退出 IPFS 代理候选；新增自动迁移
+**2026-09-03 · tombkeeper-image-validation · 已发版并生产部署 `26.9.0`。**
+使用标准库 `http.DetectContentType` 拒绝非图片下载响应，退出 IPFS 代理候选；自动迁移
 `20260903000000` 检查该代理来源资产，保留有效图片，把坏图重下到新对象路径并条件更新真实来源。
-单条故障继续，任何失败不记迁移完成；保留旧对象，支持数据库备份恢复与中断后重试。
+迁移实际检查 **1,743** 张，保留 **1,728** 张、修复 **15** 张、失败 **0**，完成记录已写入
+schema_migrations。15 个新对象全部通过 HTTP 访问及图片尺寸识别，其中 14 张 JPEG、1 张 GIF；
+示例 `Rg3CcBv1Y` 的三张坏图分别恢复为 60,646、633,718、735,129 字节的 JPEG，数据库均指向
+新对象与真实下载来源。浏览器未登录存档站点，未做登录页面内目视验收。
+
 下载回归、迁移故障路径及隔离 PostgreSQL 15 集成测试通过，Standards/Spec 独立评审发现的
-UnexpectedEOF 分类与 SQL NULL 更新问题已修复并复核。`just lint` 的 AutoCorrect、dprint、
-go mod tidy、golangci-lint 通过，最终只有既有 xiaobot 原子计数器及 tombkeeper mid/bid 反向遍历
-两处 Go 1.27 `go fix` 建议；随后按 go.mod 声明使用 Go 1.26，完整 `just lint` 通过，
-推送保留 pre-push 检查，无无关改写。上线与迁移结果待发布后补记。
+UnexpectedEOF 分类与 SQL NULL 更新问题已修复并复核。Go 1.27 的 lint 只剩开发前已确认的两处
+既有 go fix 建议；按 go.mod 声明使用 Go 1.26 后，完整 `just lint`、相关包测试和 pre-push 均通过。
+Squash 实现提交 `0a0e458`，发布 tag `26.9.0` 指向 `b35c8b6`；GitHub OSS master/tag 已推送，
+私有 origin 的 SSH 连接仍被远端关闭，未完成补推。
+
+`eliyip/rss-zero:26.9.0` 与 `latest` 已推送，digest 为
+`sha256:0267d828bdc1f01f7836874339e5cfba685e3dc9dedcb675974ceff5e5608483`。
+生产 `SERVER_TAG=26.9.0`，health 返回目标版本，后端 running、restart=0、OOM=false，数据库 healthy。
+部署前已保存并用 pg_restore 验证 155 MB 备份
+`/home/yip/services/rss-zero/backups/db-pre-26.9.0-20260903.dump`（权限 600），旧图片对象保留，
+环境配置备份位于同目录 `env-pre-26.9.0-20260903`。恢复步骤见 OPS。
 
 **2026-08-23 · weibo-archive-copy-link · 已发版并生产部署 `26.8.2`。** 按 owner 明确豁免未创建
 issue/plan、未执行独立实现评审；tombkeeper 微博归档的 HTML 页面在底部「微博」链接旁新增「复制链接」
