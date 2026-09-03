@@ -92,4 +92,4 @@ updated: "2026-09-03"
 
 Standards 与 Spec 两位独立 reviewer 已复核通过。修复了底层 UnexpectedEOF 误分类与历史 NULL
 条件更新问题，对应测试均先复现再转绿。相关包测试与隔离 PostgreSQL 15 集成测试通过；
-`just lint` 前四步通过，最后仅保留开发前已确认的两处 Go 1.27 基线建议。生产部署结果见 PROGRESS。
+`just lint` 前四步通过，最后仅保留开发前已确认的两处 Go 1.27 基线建议。随后按 go.mod 声明使用 Go 1.26，完整 lint 通过，保留推送钩子。生产部署结果见 PROGRESS。

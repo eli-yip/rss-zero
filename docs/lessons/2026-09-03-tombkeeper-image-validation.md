@@ -26,3 +26,6 @@ IS NOT DISTINCT FROM 修复，同时保留并发冲突检测。
 Standards 评审补充：不能将所有 `io.ErrUnexpectedEOF` 都视为正常短文件。使用
 `io.ReadAll(io.LimitReader(body, 512))` 读取前缀，正常短流返回成功，底层异常截断仍保留为读取错误，
 避免把临时断流当作非图片覆盖健康资产；对应回归已先复现失败再修复。
+
+发布前按 go.mod 声明使用 Go 1.26 工具链，完整 `just lint` 通过；pre-push 保留执行。Go 1.27
+新增的两处既有改写建议不应混入本次业务修复，也无需跳过检查。

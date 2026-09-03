@@ -9,7 +9,8 @@ Running log across issues / plans / lessons — newest first. See [CONVENTIONS.m
 下载回归、迁移故障路径及隔离 PostgreSQL 15 集成测试通过，Standards/Spec 独立评审发现的
 UnexpectedEOF 分类与 SQL NULL 更新问题已修复并复核。`just lint` 的 AutoCorrect、dprint、
 go mod tidy、golangci-lint 通过，最终只有既有 xiaobot 原子计数器及 tombkeeper mid/bid 反向遍历
-两处 Go 1.27 `go fix` 建议；无无关改写。上线与迁移结果待发布后补记。
+两处 Go 1.27 `go fix` 建议；随后按 go.mod 声明使用 Go 1.26，完整 `just lint` 通过，
+推送保留 pre-push 检查，无无关改写。上线与迁移结果待发布后补记。
 
 **2026-08-23 · weibo-archive-copy-link · 已发版并生产部署 `26.8.2`。** 按 owner 明确豁免未创建
 issue/plan、未执行独立实现评审；tombkeeper 微博归档的 HTML 页面在底部「微博」链接旁新增「复制链接」
