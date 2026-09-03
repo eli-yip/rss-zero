@@ -52,6 +52,8 @@ cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析
   `RenderMarkdown` 生成 Markdown。
 - **缓存**：Redis 存 `cachedFeed` JSON 与部分渲染 XML（random 端点 24h TTL）。
 - **对象存储**：图片抓取后转存 OSS 换链（tombkeeper/zsxq 共用 `internal/file`）。
+  tombkeeper 在下载候选胜出前使用标准库 `http.DetectContentType` 检查真实内容，接受 JPEG/PNG/GIF/WebP，
+  拒绝 HTML 等非图片响应；该步骤验证类型，不做完整像素解码。
 - **tkblog 博客（旁支，不入 RSS 管线）**：`tombkeeper.io/{xfocus,baidu}` 的博文另存
   `tombkeeper_blog_post`（`category` 区分两源、复合主键 `(category,id)`），纯文本正文存已转义
   markdown。**只做解析/落库 + 单篇归档 HTML，无 RSS 出口**；按需**全量**抓取（伪 job，无 cron，

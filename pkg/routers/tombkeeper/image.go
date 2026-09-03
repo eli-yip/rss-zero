@@ -161,15 +161,10 @@ func sinaCandidates(picID string) []string {
 // thirdPartyProxies mirrors image-seeker's fallback proxies derived from a sina URL.
 func thirdPartyProxies(sinaURL string) []string {
 	noProto := strings.TrimPrefix(strings.TrimPrefix(sinaURL, "https://"), "http://")
-	pathOnly := noProto
-	if i := strings.Index(noProto, "/"); i >= 0 {
-		pathOnly = noProto[i:]
-	}
 	return []string{
 		"https://image.baidu.com/search/down?url=" + sinaURL,
 		"https://cdn.cdnjson.com/" + noProto,
 		"https://i0.wp.com/" + noProto,
-		"https://cdn.ipfsscan.io/weibo" + pathOnly,
 	}
 }
 

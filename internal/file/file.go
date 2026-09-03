@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"io"
 )
 
@@ -18,4 +19,11 @@ type File interface {
 	Exist(string) (bool, error)
 	// Size returns the byte size of a stored object.
 	Size(string) (int64, error)
+}
+
+// ContextFile 供迁移为存储请求设置截止时间，不改变已有调用方的接口。
+type ContextFile interface {
+	File
+	GetStreamContext(context.Context, string) (io.ReadCloser, error)
+	SaveStreamContext(context.Context, string, io.ReadCloser, int64) error
 }

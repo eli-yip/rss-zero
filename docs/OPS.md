@@ -103,3 +103,23 @@ grep 追踪）；同 category 已在抓取中返回 409。**无 cron、无断点
 ## 告警
 
 失败路径统一 Bark 推送（迁移失败、回填失败等）。健康检查 `/api/v1/health` 带 version，用于部署后核验。
+
+## 微博 IPFS 代理坏图修复（20260903000000）
+
+自动 migration `tombkeeper-ipfsscan-image-repair` 按 ID 分批扫描图片资产，精确匹配下载源主机
+`cdn.ipfsscan.io`。有效图片保留；HTML、空文件和明确缺失对象从其他候选源重下，写入
+`tombkeeper/repair-20260903/<pic_id>.<实际扩展名>`，再条件更新资产的来源、路径、存储位置和状态。
+旧对象不删除、不覆盖；数据库更新失败后原引用保留，下一次可以继续修复。
+
+读取按实际存储位置进行，单对象检查超时 30 秒、上传超时 2 分钟；未知位置、鉴权和网络错误计失败。
+单条失败继续扫描，日志定期记录 scanned/healthy/repaired/failed；有失败则不记完成，下次启动重试，
+也可由已有 migration run/version 入口重试。禁止手工补写完成记录。
+
+`RunAuto` 位于 HTTP 监听之前，首次升级可能需要等待批量检查及修复；以日志进度确认运行状态，
+不要因短暂健康请求失败而重启容器。完成后核对 schema_migrations、health 和示例微博存档图片。
+新对象 URL 避免旧坏图缓存；已有 RSS 缓存仍遵循原有效期。
+
+本次升级涉及数据改写，部署前通过 `docker exec rss-db pg_dump -U postgres -d rss -Fc` 备份到生产机
+受限文件（权限 600），并用 `pg_restore --list` 验证目录。需要恢复时先停后端，使用对应备份向干净的
+恢复数据库执行 `pg_restore --no-owner --no-acl`，确认数据后切换连接和旧镜像，再启动服务。
+保留旧对象使备份中的图片引用仍可恢复；恢复整个数据库会丢失备份之后的新数据，不能未经核对执行。

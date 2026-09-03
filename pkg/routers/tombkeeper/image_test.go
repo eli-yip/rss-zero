@@ -51,8 +51,8 @@ func TestCandidateURLsBareID(t *testing.T) {
 	if orig != "https://wx1.sinaimg.cn/large/abc123.jpg" {
 		t.Errorf("original = %s", orig)
 	}
-	if len(cands) != 16 { // 12 sina hosts + 4 third-party proxies
-		t.Fatalf("candidate count = %d, want 16", len(cands))
+	if len(cands) != 15 { // 12 sina hosts + 3 third-party proxies
+		t.Fatalf("candidate count = %d, want 15", len(cands))
 	}
 	if cands[0] != "https://wx1.sinaimg.cn/large/abc123.jpg" {
 		t.Errorf("first candidate = %s", cands[0])

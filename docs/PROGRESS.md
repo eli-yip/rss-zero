@@ -2,6 +2,15 @@
 
 Running log across issues / plans / lessons — newest first. See [CONVENTIONS.md](CONVENTIONS.md).
 
+**2026-09-03 · tombkeeper-image-validation · 实现与独立评审完成，合并 master，待发布 `26.9.0`。**
+使用标准库 `http.DetectContentType` 拒绝非图片下载响应，退出 IPFS 代理候选；新增自动迁移
+`20260903000000` 检查该代理来源资产，保留有效图片，把坏图重下到新对象路径并条件更新真实来源。
+单条故障继续，任何失败不记迁移完成；保留旧对象，支持数据库备份恢复与中断后重试。
+下载回归、迁移故障路径及隔离 PostgreSQL 15 集成测试通过，Standards/Spec 独立评审发现的
+UnexpectedEOF 分类与 SQL NULL 更新问题已修复并复核。`just lint` 的 AutoCorrect、dprint、
+go mod tidy、golangci-lint 通过，最终只有既有 xiaobot 原子计数器及 tombkeeper mid/bid 反向遍历
+两处 Go 1.27 `go fix` 建议；无无关改写。上线与迁移结果待发布后补记。
+
 **2026-08-23 · weibo-archive-copy-link · 已发版并生产部署 `26.8.2`。** 按 owner 明确豁免未创建
 issue/plan、未执行独立实现评审；tombkeeper 微博归档的 HTML 页面在底部「微博」链接旁新增「复制链接」
 按钮，点击只复制微博原文 URL，并提供剪贴板 API 不可用时的浏览器兼容路径；粉丝站链接、Markdown 与

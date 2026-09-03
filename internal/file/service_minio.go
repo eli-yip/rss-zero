@@ -38,6 +38,11 @@ func NewFileServiceMinio(minioConfig config.MinioConfig, logger *zap.Logger) (Fi
 }
 
 func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, size int64) (err error) {
+	return s.SaveStreamContext(context.Background(), objectKey, stream, size)
+}
+
+// SaveStreamContext 在请求截止或取消时停止上传，并关闭输入流。
+func (s *FileServiceMinio) SaveStreamContext(ctx context.Context, objectKey string, stream io.ReadCloser, size int64) (err error) {
 	s.logger.Info("Start to save stream to minio", zap.String("key", objectKey))
 
 	if stream == nil {
@@ -49,7 +54,7 @@ func (s *FileServiceMinio) SaveStream(objectKey string, stream io.ReadCloser, si
 
 	var info minio.UploadInfo
 	if info, err = s.minioClient.PutObject(
-		context.Background(),
+		ctx,
 		s.bucketName,
 		objectKey,
 		stream,
@@ -80,7 +85,12 @@ func (s *FileServiceMinio) getContentType(objectKey string) (contentType string)
 }
 
 func (s *FileServiceMinio) GetStream(objectKey string) (stream io.ReadCloser, err error) {
-	return s.minioClient.GetObject(context.Background(), s.bucketName, objectKey, minio.GetObjectOptions{})
+	return s.GetStreamContext(context.Background(), objectKey)
+}
+
+// GetStreamContext 的上下文同时约束惰性对象的后续读取。
+func (s *FileServiceMinio) GetStreamContext(ctx context.Context, objectKey string) (io.ReadCloser, error) {
+	return s.minioClient.GetObject(ctx, s.bucketName, objectKey, minio.GetObjectOptions{})
 }
 
 func (s *FileServiceMinio) AssetsDomain() (url string) { return s.assetsDomain }

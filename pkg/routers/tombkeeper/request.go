@@ -252,5 +252,11 @@ func (rs *RequestService) GetPicStream(ctx context.Context, picURL string) (*htt
 		_ = resp.Body.Close()
 		return nil, fmt.Errorf("empty image body (content-length 0): %s", picURL)
 	}
+	body, contentType, err := ValidateImageStream(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("invalid image from %s: %w", picURL, err)
+	}
+	resp.Body = body
+	resp.Header.Set("Content-Type", contentType)
 	return resp, nil
 }
