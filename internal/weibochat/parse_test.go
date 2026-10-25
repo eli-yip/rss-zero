@@ -21,6 +21,9 @@ func TestParseMessages(t *testing.T) {
 	}
 	require.Equal(t, MessageID("9007199254740993"), messages[0].MessageID)
 	require.Equal(t, "你好\n[doge] 🐱", messages[0].Text)
+	require.Equal(t, "42", messages[0].Sender.UID)
+	require.Equal(t, "示例", messages[0].Sender.ScreenName)
+	require.Equal(t, "https://example.com/avatar", messages[0].Sender.AvatarSourceURL)
 	require.NotContains(t, string(messages[0].Raw), "attitude_info")
 	require.EqualValues(t, 1792907148, messages[0].SentAt.Unix())
 	require.Equal(t, []AssetRef{{Kind: "image", AssetKey: "file/765"}}, messages[1].Content.Assets)

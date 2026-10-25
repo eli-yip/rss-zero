@@ -203,22 +203,31 @@ func TestArchiveCoreIntegration(t *testing.T) {
 	client := NewClient(&http.Client{Transport: transportFunc(func(req *http.Request) (*http.Response, error) {
 		payload := data
 		if req.URL.Host == "api.weibo.com" {
-			payload = []byte(`{"result":true,"messages":[{"gid":1,"id":5,"media_type":1,"fids":[123]}]}`)
+			payload = []byte(`{"result":true,"messages":[{"gid":1,"id":5,"from_uid":42,"from_user":{"screen_name":"first","avatar_large":"https://wx1.sinaimg.cn/avatar/first.png"},"media_type":1,"fids":[123]}]}`)
 			if latest {
-				payload = []byte(`{"result":true,"messages":[{"gid":1,"id":5,"media_type":1,"fids":[123]},{"gid":1,"id":6,"media_type":1,"fids":[124]}]}`)
+				payload = []byte(`{"result":true,"messages":[{"gid":1,"id":5,"from_uid":42,"from_user":{"screen_name":"updated","avatar_large":"https://wx1.sinaimg.cn/avatar/updated.png"},"media_type":1,"fids":[123]},{"gid":1,"id":6,"media_type":1,"fids":[124]}]}`)
 			}
 		}
 		return &http.Response{StatusCode: 200, ContentLength: int64(len(payload)), Body: io.NopCloser(bytes.NewReader(payload))}, nil
 	})}, func(context.Context) (string, error) { return "test", nil })
-	archiver := NewArchiver(client, store)
+	files := &memoryObjects{}
+	archiver := NewArchiver(client, store, NewUserArchiver(client, store, files))
 	_, err := archiver.Initialize(ctx, "1")
 	require.NoError(t, err)
+	firstUser, err := store.GetUser(ctx, "42")
+	require.NoError(t, err)
+	require.Equal(t, data, files.objects[firstUser.AvatarObjectKey])
 	latest = true
 	synced, err := archiver.Sync(ctx, "1", 2)
 	require.NoError(t, err)
 	require.Equal(t, 1, synced.MessagesSaved)
 	require.Equal(t, MessageID("6"), synced.Through)
-	files := &memoryObjects{}
+	user, err := store.GetUser(ctx, "42")
+	require.NoError(t, err)
+	require.Equal(t, "updated", user.ScreenName)
+	require.Equal(t, "https://wx1.sinaimg.cn/avatar/updated.png", user.AvatarSourceURL)
+	require.NotEqual(t, firstUser.AvatarObjectKey, user.AvatarObjectKey)
+	require.Equal(t, data, files.objects[user.AvatarObjectKey])
 	result, err := NewAssetArchiver(client, store, files).ArchiveAssets(ctx, "1", 10)
 	require.NoError(t, err)
 	require.Equal(t, 2, result.Stored)

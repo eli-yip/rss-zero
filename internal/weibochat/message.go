@@ -57,7 +57,8 @@ func (id *MessageID) UnmarshalJSON(data []byte) error {
 type Message struct {
 	GroupID     string     `gorm:"type:text;primaryKey"`
 	MessageID   MessageID  `gorm:"type:text;primaryKey"`
-	SenderID    string     `gorm:"type:text"`
+	SenderID    string     `gorm:"type:text;index"`
+	Sender      *User      `gorm:"-"`
 	SentAt      *time.Time `gorm:"type:timestamptz;index"`
 	MessageType *int
 	MediaType   *int
@@ -72,10 +73,8 @@ type Message struct {
 func (Message) TableName() string { return "weibo_chat_message" }
 
 type MessageContent struct {
-	SenderName string     `json:"sender_name,omitempty"`
-	AvatarURL  string     `json:"avatar_url,omitempty"`
-	Links      []Link     `json:"links,omitempty"`
-	Assets     []AssetRef `json:"assets,omitempty"`
+	Links  []Link     `json:"links,omitempty"`
+	Assets []AssetRef `json:"assets,omitempty"`
 }
 
 type Link struct {

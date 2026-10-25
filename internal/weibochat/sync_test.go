@@ -73,7 +73,7 @@ func TestSyncBudgetFailureAndReplay(t *testing.T) {
 	ctx := context.Background()
 	store := &memoryStore{state: &SyncState{GroupID: "1", SyncedThroughMessageID: "5", BackfillBeforeMessageID: "1"}}
 	source := &pageSource{pages: map[MessageID][]int{"": {10, 9}, "9": {7, 8}, "7": {5, 6}}}
-	archiver := NewArchiver(source, store)
+	archiver := NewArchiver(source, store, noopUserSyncer{})
 	result, err := archiver.Sync(ctx, "1", 2)
 	require.ErrorIs(t, err, ErrSyncIncomplete)
 	require.False(t, result.Complete)
@@ -108,7 +108,7 @@ func TestSyncFailuresPreserveCheckpoint(t *testing.T) {
 			case "checkpoint":
 				store.stateError = errors.New("checkpoint")
 			}
-			result, err := NewArchiver(source, store).Sync(context.Background(), "1", 3)
+			result, err := NewArchiver(source, store, noopUserSyncer{}).Sync(context.Background(), "1", 3)
 			require.Error(t, err)
 			require.False(t, result.Complete)
 			require.Equal(t, MessageID("5"), store.state.SyncedThroughMessageID)
@@ -120,7 +120,7 @@ func TestInitializeAndBackfill(t *testing.T) {
 	ctx := context.Background()
 	store := &memoryStore{}
 	source := &pageSource{pages: map[MessageID][]int{"": {8, 10, 9}, "8": {7, 6}, "6": {4, 5}, "4": {}}}
-	archiver := NewArchiver(source, store)
+	archiver := NewArchiver(source, store, noopUserSyncer{})
 	_, err := archiver.Sync(ctx, "1", 1)
 	require.ErrorIs(t, err, ErrNotInitialized)
 	init, err := archiver.Initialize(ctx, "1")
@@ -149,7 +149,7 @@ func TestEmptyInitializationRequiresReadingToEnd(t *testing.T) {
 	ctx := context.Background()
 	store := &memoryStore{}
 	source := &pageSource{pages: map[MessageID][]int{}}
-	archiver := NewArchiver(source, store)
+	archiver := NewArchiver(source, store, noopUserSyncer{})
 	_, err := archiver.Initialize(ctx, "1")
 	require.NoError(t, err)
 	require.NotNil(t, store.state.HistoryExhaustedAt)
@@ -161,3 +161,8 @@ func TestEmptyInitializationRequiresReadingToEnd(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, MessageID("2"), result.Through)
 }
+
+// Message pagination tests do not perform profile IO.
+type noopUserSyncer struct{}
+
+func (noopUserSyncer) SyncUsers(context.Context, []Message) error { return nil }

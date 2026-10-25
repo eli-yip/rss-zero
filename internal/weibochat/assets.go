@@ -94,38 +94,53 @@ func (a *AssetArchiver) archive(ctx context.Context, asset *Asset) error {
 	if fid, ok := strings.CutPrefix(asset.AssetKey, "file/"); ok {
 		source = "https://upload.api.weibo.com/2/mss/msget?" + url.Values{"source": {weiboSource}, "fid": {fid}}.Encode()
 	}
-	response, err := a.client.download(ctx, source)
+	stored, err := a.client.storeMedia(ctx, a.files, source, asset.Kind, "weibo-chat/"+asset.GroupID+"/"+asset.AssetKey)
 	if err != nil {
 		return err
 	}
+	now := time.Now().UTC()
+	asset.SourceURL, asset.ObjectKey, asset.StorageProvider = source, stored.key, a.files.AssetsDomain()
+	asset.ContentType, asset.ByteSize, asset.StoredAt = stored.contentType, stored.size, &now
+	return nil
+}
+
+type storedMedia struct {
+	key         string
+	contentType string
+	size        int64
+}
+
+// storeMedia is shared by message attachments and user avatars.
+func (c *Client) storeMedia(ctx context.Context, files ObjectStore, source, kind, keyPrefix string) (storedMedia, error) {
+	response, err := c.download(ctx, source)
+	if err != nil {
+		return storedMedia{}, err
+	}
 	defer response.Body.Close()
 	if response.ContentLength == 0 {
-		return fmt.Errorf("empty asset")
+		return storedMedia{}, fmt.Errorf("empty asset")
 	}
 	if response.ContentLength > maxAssetBytes {
-		return fmt.Errorf("asset exceeds size limit")
+		return storedMedia{}, fmt.Errorf("asset exceeds size limit")
 	}
 	prefix, err := io.ReadAll(io.LimitReader(response.Body, 512))
 	if err != nil {
-		return fmt.Errorf("read asset header: %w", err)
+		return storedMedia{}, fmt.Errorf("read asset header: %w", err)
 	}
 	contentType := http.DetectContentType(prefix)
-	ext := assetExtension(asset.Kind, contentType)
+	ext := assetExtension(kind, contentType)
 	if ext == "" {
-		return fmt.Errorf("unexpected asset content type: %s", contentType)
+		return storedMedia{}, fmt.Errorf("unexpected asset content type: %s", contentType)
 	}
 	stream := &assetStream{reader: io.MultiReader(bytes.NewReader(prefix), response.Body), body: response.Body, remaining: maxAssetBytes}
-	objectKey := "weibo-chat/" + asset.GroupID + "/" + asset.AssetKey + "." + ext
-	if err = a.files.SaveStreamContext(ctx, objectKey, stream, response.ContentLength); err != nil {
-		return fmt.Errorf("store asset: %w", err)
+	objectKey := keyPrefix + "." + ext
+	if err = files.SaveStreamContext(ctx, objectKey, stream, response.ContentLength); err != nil {
+		return storedMedia{}, fmt.Errorf("store asset: %w", err)
 	}
 	if stream.size == 0 || (response.ContentLength >= 0 && stream.size != response.ContentLength) {
-		return fmt.Errorf("incomplete asset stream")
+		return storedMedia{}, fmt.Errorf("incomplete asset stream")
 	}
-	now := time.Now().UTC()
-	asset.SourceURL, asset.ObjectKey, asset.StorageProvider = source, objectKey, a.files.AssetsDomain()
-	asset.ContentType, asset.ByteSize, asset.StoredAt = contentType, stream.size, &now
-	return nil
+	return storedMedia{key: objectKey, contentType: contentType, size: stream.size}, nil
 }
 
 func (c *Client) download(ctx context.Context, source string) (*http.Response, error) {

@@ -17,7 +17,7 @@ type wireMessage struct {
 	MediaType *int      `json:"media_type"`
 	SubType   *int      `json:"sub_type"`
 	Text      string    `json:"content"`
-	User      struct {
+	User      *struct {
 		Name        string `json:"screen_name"`
 		Avatar      string `json:"profile_image_url"`
 		LargeAvatar string `json:"avatar_large"`
@@ -67,10 +67,12 @@ func ParseMessage(raw json.RawMessage) (Message, error) {
 	}
 	message.MessageType, message.MediaType, message.SubType = wire.Type, wire.MediaType, wire.SubType
 	message.Text = wire.Text
-	message.Content.SenderName = wire.User.Name
-	message.Content.AvatarURL = wire.User.LargeAvatar
-	if message.Content.AvatarURL == "" {
-		message.Content.AvatarURL = wire.User.Avatar
+	if wire.User != nil && message.SenderID != "" {
+		avatar := wire.User.LargeAvatar
+		if avatar == "" {
+			avatar = wire.User.Avatar
+		}
+		message.Sender = &User{UID: message.SenderID, ScreenName: wire.User.Name, AvatarSourceURL: avatar}
 	}
 	for _, item := range wire.URLs {
 		message.Content.Links = append(message.Content.Links, Link{item.Original, item.Info.Short, item.Info.Long})

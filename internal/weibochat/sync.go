@@ -23,15 +23,21 @@ type MessageStore interface {
 	SaveState(context.Context, *SyncState) error
 }
 
+// UserSyncer refreshes the sender profiles observed in a fetched message page.
+type UserSyncer interface {
+	SyncUsers(context.Context, []Message) error
+}
+
 // Archiver is a one-shot orchestration service. All operations for the same group,
 // including backfill and asset transfer, must be serialized by the caller.
 type Archiver struct {
 	source MessageSource
 	store  MessageStore
+	users  UserSyncer
 }
 
-func NewArchiver(source MessageSource, store MessageStore) *Archiver {
-	return &Archiver{source: source, store: store}
+func NewArchiver(source MessageSource, store MessageStore, users UserSyncer) *Archiver {
+	return &Archiver{source: source, store: store, users: users}
 }
 
 type SyncResult struct {
@@ -67,7 +73,7 @@ func (a *Archiver) Initialize(ctx context.Context, groupID string) (SyncResult, 
 		return result, err
 	}
 	result.Pages = 1
-	result.MessagesSaved, err = a.store.SaveMessages(ctx, messages)
+	result.MessagesSaved, err = a.savePage(ctx, messages, messages)
 	if err != nil {
 		return result, err
 	}
@@ -115,7 +121,7 @@ func (a *Archiver) Sync(ctx context.Context, groupID string, maxPages int) (Sync
 				fresh = append(fresh, message)
 			}
 		}
-		n, err := a.store.SaveMessages(ctx, fresh)
+		n, err := a.savePage(ctx, messages, fresh)
 		result.MessagesSaved += n
 		if err != nil {
 			return result, err
@@ -157,7 +163,7 @@ func (a *Archiver) Backfill(ctx context.Context, groupID string, maxPages int) (
 			return result, err
 		}
 		result.Pages++
-		n, err := a.store.SaveMessages(ctx, messages)
+		n, err := a.savePage(ctx, messages, messages)
 		result.MessagesSaved += n
 		if err != nil {
 			return result, err
@@ -225,4 +231,17 @@ func (a *Archiver) fetch(ctx context.Context, groupID string, before MessageID) 
 		return nil, "", "", fmt.Errorf("message cursor did not advance")
 	}
 	return messages, low, high, nil
+}
+
+// Persist raw messages before trying avatar transfers. Returning a user error
+// leaves the message checkpoint unchanged so the next invocation retries the page.
+func (a *Archiver) savePage(ctx context.Context, observed, fresh []Message) (int, error) {
+	saved, err := a.store.SaveMessages(ctx, fresh)
+	if err != nil {
+		return saved, err
+	}
+	if err = a.users.SyncUsers(ctx, observed); err != nil {
+		return saved, fmt.Errorf("sync users: %w", err)
+	}
+	return saved, nil
 }

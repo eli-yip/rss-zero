@@ -64,10 +64,12 @@ cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析
 `AssetArchiver.ArchiveAssets`，调用示例见 [WEIBO_CHAT.md](WEIBO_CHAT.md)。
 
 - `client.go` 只处理 HTTP 协议，`parse.go` 为纯解析，`store.go` 封装 GORM 幂等写入；`sync.go` 编排消息，`assets.go` 编排下载和流式上传。
-- 三张表由现有 AutoMigrate 建立：`weibo_chat_message`、`weibo_chat_sync_state`、`weibo_chat_asset`。消息主键为 `(group_id, message_id)`，资产主键为 `(group_id, asset_key)`。
+- 四张表由现有 AutoMigrate 建立：`weibo_chat_message`、`weibo_chat_sync_state`、`weibo_chat_asset`、`weibo_chat_user`。消息主键为 `(group_id, message_id)`，资产主键为 `(group_id, asset_key)`。
+- `weibo_chat_user` 以 UID 为主键，保存最近观察到的昵称、头像原地址及转存结果；消息通过 `sender_id` 关联最新用户资料。每页消息先落库，再同步整页用户，包括已经存档的消息。头像转存成功后更新来源与存储位置，失败返回错误且不推进水位，下一次重试。
 - 消息 `content.assets` 保存有序的资源引用；`asset_key` 使用 `file/{fid}`、`pic/{pid}`，只有 URL 的资源使用 `url/{URL 的 SHA-256}`。不建立附件关系表。
 - 写入消息和附件引用成功后才推进游标，不建立跨网络或整轮数据库事务。重跑时读取首次存档内容补齐缺失资产，不覆盖旧消息或成功的附件。
 - `synced_through_message_id` 是增量水位，`backfill_before_message_id` 是历史排他游标；读取全部原始消息计算边界，不过滤系统消息。
+- 头像沿用现有 bucket，路径为 `weibo-chat/users/{uid}/{源 URL 的 SHA-256}.{ext}`，用户表保留来源地址、对象 key 和资源域名。
 - 附件沿用现有 bucket 和资源域名，路径为 `weibo-chat/{group_id}/{asset_key}.{ext}`；扩展名由实际内容类型决定。上传成功后记录存储结果，失败可重试。
 
 ## 定时任务（cron）
