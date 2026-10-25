@@ -29,6 +29,7 @@ const (
 	CookieTypeZhihuDC0
 	CookieTypeXiaobotAccessToken
 	CookieTypeGitHubAccessToken
+	CookieTypeWeiboSUB
 )
 
 var ErrKeyNotExist = errors.New("Cookie key not exist")

@@ -219,3 +219,26 @@ func TestListCredentialsExposesUpdateMethodWithoutValue(t *testing.T) {
 		t.Fatalf("unexpected response body: %s", body)
 	}
 }
+
+func TestImportWeiboSUB(t *testing.T) {
+	store := newFakeStore()
+	controller := NewController(store)
+	expires := time.Now().Add(10 * 24 * time.Hour).Truncate(time.Second)
+	timestamp := float64(expires.Unix())
+	result := controller.importBrowserCookie(InCookie{Name: "SUB", Value: "SUB=test-sub", Domain: ".weibo.com", ExpirationDate: &timestamp}, zap.NewNop())
+	if !result.Stored || store.vals[cookie.CookieTypeWeiboSUB] != "test-sub" {
+		t.Fatalf("SUB import failed: %+v", result)
+	}
+	if want := expires.Add(-24 * time.Hour).Format(time.RFC3339); result.ExpireAt != want {
+		t.Fatalf("expiry = %s, want %s", result.ExpireAt, want)
+	}
+	for _, in := range []InCookie{
+		{Name: "SUB", Value: "other", Domain: ".weibo.cn"},
+		{Name: "SUBP", Value: "other", Domain: ".weibo.com"},
+		{Name: "SUB", Value: "other", Domain: ".example.com"},
+	} {
+		if result := controller.importBrowserCookie(in, zap.NewNop()); result.Stored {
+			t.Fatalf("unexpected import: %+v", result)
+		}
+	}
+}

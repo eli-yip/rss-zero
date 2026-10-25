@@ -33,8 +33,9 @@ type MessagePage struct {
 // Client reads credentials for each request so callers can replace an expired SUB.
 // It never follows redirects for credential-bearing message requests.
 type Client struct {
-	http *http.Client
-	sub  func(context.Context) (string, error)
+	http          *http.Client
+	sub           func(context.Context) (string, error)
+	invalidateSUB func(string)
 }
 
 func NewClient(client *http.Client, sub func(context.Context) (string, error)) *Client {
@@ -97,6 +98,11 @@ func (c *Client) FetchMessages(ctx context.Context, input FetchMessagesRequest) 
 		var id MessageID
 		if json.Unmarshal(envelope.ErrorCode, &id) == nil {
 			code = string(id)
+		}
+		if code == "21301" && c.invalidateSUB != nil {
+			// Use the credential sent by this request, never reload a newer value.
+			sent, _ := req.Cookie("SUB")
+			c.invalidateSUB(sent.Value)
 		}
 		return MessagePage{}, &APIError{Code: code}
 	}

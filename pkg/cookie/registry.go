@@ -33,6 +33,7 @@ var (
 )
 
 var registry = []Spec{
+	{Type: CookieTypeWeiboSUB, Platform: "weibo", Name: "SUB", Domains: []string{".weibo.com"}, SafetyGap: 24 * time.Hour},
 	{Type: CookieTypeZhihuDC0, Platform: "zhihu", Name: "d_c0", Domains: []string{".zhihu.com"}, SafetyGap: 24 * time.Hour},
 	{Type: CookieTypeZhihuZC0, Platform: "zhihu", Name: "z_c0", Domains: []string{".zhihu.com"}, SafetyGap: 24 * time.Hour},
 	{Type: CookieTypeZhihuZSECK, Platform: "zhihu", Name: "__zse_ck", Domains: []string{".zhihu.com"}, SafetyGap: 48 * time.Hour},

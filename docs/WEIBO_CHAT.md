@@ -15,11 +15,11 @@ group_ids = [] # 填入实际群 ID，例如 ["群 ID 1", "群 ID 2"]
 
 ## 调用
 
-复用现有 GORM 数据库和 MinIO 文件服务。`loadSUB` 返回当前账号的 SUB 值，不包含 `SUB=`；同一账号可以存档多个群。
+复用现有 GORM 数据库、Cookie 服务和 MinIO 文件服务；同一账号可以存档多个群。
 
 ```go
 store := weibochat.NewPostgresStore(db)
-client := weibochat.NewClient(nil, loadSUB)
+client := weibochat.NewClientWithCookies(nil, cookieService, notifier, logger)
 // fileService 的动态类型为现有 *file.FileServiceMinio。
 objects, ok := fileService.(weibochat.ObjectStore)
 if !ok {
@@ -58,6 +58,16 @@ _ = archived
 ```
 
 同一群的所有调用由调用方串行执行，包括来自不同进程的调用。服务端现有 `MigrateDB` 会通过 AutoMigrate 建立四张表；独立调用者先执行 `db.AutoMigrate(&weibochat.Message{}, &weibochat.SyncState{}, &weibochat.Asset{}, &weibochat.User{})` 并检查错误。
+
+## SUB 凭据
+
+在已登录的微博页面使用现有 `cookie-updater` 导入 Cookie。服务端仅注册 `.weibo.com` 域的 `SUB`，类型为 `CookieTypeWeiboSUB`，其他微博 Cookie 暂不保存。无需修改插件或数据库结构。
+
+沿用现有期限规则：浏览器期限扣除 24 小时安全余量后存入 `ExpireAt`；没有期限时使用现有默认 TTL。`NewClientWithCookies` 每次请求读取当前 SUB，缺失或过期时通知并返回错误，不发送请求。
+
+消息接口明确返回 `21301` 时，客户端使用本次请求携带的 SUB 调用 `InvalidateIfCurrent`，按现有模式软删除并通知，同时返回 `APIError`，本轮存档停止。若 SUB 已被更新，则保留新值。`10012`、未知 API 错误、普通 HTTP 错误、限流和媒体下载错误不触发失效。
+
+独立调用者仍可使用 `NewClient(nil, loadSUB)`，其中 `loadSUB` 返回纯 SUB 值；这个入口不管理 Cookie 存储或失效通知。
 
 ## 结果含义
 
