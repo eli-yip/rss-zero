@@ -13,14 +13,18 @@ import (
 )
 
 func (h *Controller) ListGroups(c *echo.Context) error {
-	items, err := h.groupResponses(c.Request().Context())
+	owner, err := ownerUsername(c)
+	if err != nil {
+		return err
+	}
+	items, err := h.groupResponses(c.Request().Context(), owner)
 	if err != nil {
 		return err
 	}
 	return c.JSON(http.StatusOK, httputil.NewResp("weibo groups", GroupListResponse{Items: items}))
 }
 
-func (h *Controller) groupResponses(ctx context.Context) ([]GroupResponse, error) {
+func (h *Controller) groupResponses(ctx context.Context, owner string) ([]GroupResponse, error) {
 	groups, err := h.store.ListGroups(ctx)
 	if err != nil {
 		return nil, err
@@ -49,7 +53,12 @@ func (h *Controller) groupResponses(ctx context.Context) ([]GroupResponse, error
 	if err != nil {
 		return nil, err
 	}
+	unread, err := h.store.GroupsWithUnread(ctx, owner, ids)
+	if err != nil {
+		return nil, err
+	}
 	for i := range items {
+		items[i].HasUnread = unread[items[i].GroupID]
 		items[i].Name = names[items[i].GroupID]
 	}
 	return items, nil
@@ -72,7 +81,11 @@ func (h *Controller) UpdateGroup(c *echo.Context) error {
 	if utf8.RuneCountInString(name) > 100 {
 		return httputil.NewHTTPError(http.StatusBadRequest, "name must not exceed 100 characters")
 	}
-	groups, err := h.groupResponses(c.Request().Context())
+	owner, err := ownerUsername(c)
+	if err != nil {
+		return err
+	}
+	groups, err := h.groupResponses(c.Request().Context(), owner)
 	if err != nil {
 		return err
 	}

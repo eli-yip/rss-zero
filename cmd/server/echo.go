@@ -435,6 +435,8 @@ func registerMacked(mackedApi *echo.Group, mackedHandler *mackedHandler.Handler)
 
 func registerWeiboChat(group *echo.Group, handler *weibochatController.Controller) {
 	group.PATCH("/groups/:group_id", handler.UpdateGroup)
+	registerNamedRoute(group, http.MethodGet, "/groups/:group_id/read-state", "Weibo group read state route", handler.GetReadState)
+	registerNamedRoute(group, http.MethodPatch, "/groups/:group_id/read-state", "Update Weibo group read state route", handler.UpdateReadState)
 	group.POST("/bookmark-blocks", handler.CreateBookmarkBlock)
 	group.GET("/bookmark-blocks", handler.ListBookmarkBlocks)
 	group.GET("/bookmark-blocks/:block_id", handler.GetBookmarkBlock)

@@ -8,6 +8,7 @@ import (
 )
 
 type GroupResponse struct {
+	HasUnread     bool       `json:"has_unread"`
 	Name          string     `json:"name"`
 	GroupID       string     `json:"group_id"`
 	Configured    bool       `json:"configured"`

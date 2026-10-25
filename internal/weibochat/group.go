@@ -30,3 +30,10 @@ func (s *PostgresStore) GetGroupNames(ctx context.Context, ids []string) (map[st
 func (s *PostgresStore) SetGroupName(ctx context.Context, id, name string) error {
 	return s.db.WithContext(ctx).Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "group_id"}}, DoUpdates: clause.AssignmentColumns([]string{"name"})}).Create(&GroupMetadata{GroupID: id, Name: name}).Error
 }
+
+// HasGroup includes interrupted initialization with messages but no sync state.
+func (s *PostgresStore) HasGroup(ctx context.Context, id string) (bool, error) {
+	var exists bool
+	err := s.db.WithContext(ctx).Raw(`SELECT EXISTS(SELECT 1 FROM weibo_chat_message WHERE group_id = ?) OR EXISTS(SELECT 1 FROM weibo_chat_sync_state WHERE group_id = ?)`, id, id).Scan(&exists).Error
+	return exists, err
+}

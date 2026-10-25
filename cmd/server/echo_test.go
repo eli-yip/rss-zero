@@ -92,6 +92,7 @@ func TestRegisterWeiboChatRoutes(t *testing.T) {
 	registerWeiboChat(e.Group("/api/v1/weibo", myMiddleware.AllowAdmin()), weibochatController.NewController(nil, nil))
 	for _, path := range []string{
 		"/api/v1/weibo/groups",
+		"/api/v1/weibo/groups/:group_id/read-state",
 		"/api/v1/weibo/groups/:group_id/senders",
 		"/api/v1/weibo/groups/:group_id/messages",
 		"/api/v1/weibo/groups/:group_id/messages/:message_id/context",
@@ -109,7 +110,7 @@ func TestWeiboChatRoutesRequireAdmin(t *testing.T) {
 	e := echo.New()
 	e.HTTPErrorHandler = httputil.NewHTTPErrorHandler(zap.NewNop())
 	registerWeiboChat(e.Group("/api/v1/weibo", myMiddleware.AllowAdmin()), weibochatController.NewController(nil, nil))
-	for _, path := range []string{"/api/v1/weibo/groups", "/api/v1/weibo/groups/1/senders", "/api/v1/weibo/groups/1/messages", "/api/v1/weibo/groups/1/messages/100/context"} {
+	for _, path := range []string{"/api/v1/weibo/groups", "/api/v1/weibo/groups/1/read-state", "/api/v1/weibo/groups/1/senders", "/api/v1/weibo/groups/1/messages", "/api/v1/weibo/groups/1/messages/100/context"} {
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 		require.Equal(t, http.StatusForbidden, rec.Code)

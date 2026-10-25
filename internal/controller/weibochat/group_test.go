@@ -21,14 +21,18 @@ func TestGroupsIncludeConfiguredAndArchived(t *testing.T) {
 	require.Len(t, result.Data.Items, 4)
 	require.Equal(t, "1", result.Data.Items[0].GroupID)
 	require.True(t, result.Data.Items[0].Configured)
+	require.True(t, result.Data.Items[0].HasUnread)
 	require.NotNil(t, result.Data.Items[0].LastSyncedAt)
 	require.Equal(t, "2", result.Data.Items[1].GroupID)
 	require.False(t, result.Data.Items[1].Configured)
+	require.True(t, result.Data.Items[1].HasUnread)
 	require.Nil(t, result.Data.Items[1].InitializedAt)
 	require.Equal(t, "3", result.Data.Items[2].GroupID)
 	require.True(t, result.Data.Items[2].Configured)
+	require.False(t, result.Data.Items[2].HasUnread)
 	require.Nil(t, result.Data.Items[2].InitializedAt)
 	require.Equal(t, "4", result.Data.Items[3].GroupID)
+	require.False(t, result.Data.Items[3].HasUnread)
 }
 
 func TestUpdateGroupName(t *testing.T) {

@@ -33,7 +33,7 @@ GET /api/v1/weibo/groups/5152823595766382/messages?sender_id=123&asset_kind=imag
 
 接口沿用服务端管理员访问规则，只读取本地存档，不请求微博。
 
-- `groups` 返回配置中的群与已有存档的群，按数值群 ID 升序去重。每项含 `group_id`、`configured`、`initialized_at`、`last_synced_at`；未初始化的时间为 `null`。移除配置不会隐藏已有存档。
+- `groups` 返回配置中的群与已有存档的群，按数值群 ID 升序去重。每项含 `group_id`、`configured`、`initialized_at`、`last_synced_at`、当前用户的 `has_unread`；未初始化的时间为 `null`。移除配置不会隐藏已有存档。
 - `senders` 返回该群存档中出现过的发件人，按数值 UID 升序排列。每项含 `uid`、最新 `screen_name` 和转存后的 `avatar_url`。这不是当前群成员名单；缺少用户资料时仍返回 UID。
 - `messages` 返回数值消息 ID 升序列表，支持以下筛选。合法但尚未存档的群返回空列表。
 
@@ -262,3 +262,35 @@ GET /api/v1/weibo/user-preferences?blocked=true&after_uid=123
 名称为本地共享资料，不修改微博群名，也不影响抓取配置。配置中或已有存档的群均可命名；未知群返回 404。
 名称去除首尾空白，最多 100 个 Unicode 字符；空字符串清除名称，缺省或 null 返回 400。
 `weibo_chat_group` 通过 AutoMigrate 建立，独立于同步水位。
+
+## 阅读状态
+
+```http
+GET /api/v1/weibo/groups/5152823595766382/read-state
+PATCH /api/v1/weibo/groups/5152823595766382/read-state
+Content-Type: application/json
+
+{"action":"advance","message_id":"12345","revision":0}
+```
+
+GET 和 PATCH 的 `data` 均返回：
+
+```json
+{
+  "read_through_message_id": "12345",
+  "first_unread_message_id": "12346",
+  "latest_message_id": "12350",
+  "revision": 1
+}
+```
+
+阅读状态属于当前登录用户，按群保存。消息按数值 ID 排序，游标及更早消息视为已读。首次访问时游标为 `null`、版本为 `0`，全部消息未读；没有未读消息时 `first_unread_message_id` 为 `null`；空群的 `latest_message_id` 也为 `null`。搜索、发件人筛选和拉黑偏好不改变阅读游标范围。
+
+| `action`        | 含义                                                                             |
+| --------------- | -------------------------------------------------------------------------------- |
+| `advance`       | 阅读推进到 `message_id`，较早的目标不会回退游标                                  |
+| `mark_unread`   | 从 `message_id` 开始未读，包含目标消息；更早的消息已读                           |
+| `mark_all_read` | 将页面已看到的最后一条 `message_id` 及之前消息设为已读；请求后到达的新消息仍未读 |
+| `restore`       | 撤销时恢复此前的游标；`message_id: null` 恢复全部未读                            |
+
+每次 PATCH 必须携带最近一次响应中的 `revision`。旧版本返回 `409`，客户端重新 GET 后再决定下一步，避免覆盖其他标签页或设备的修改。非空 `message_id` 必须属于当前群的本地存档，否则返回 `404`。前台阅读只在普通消息流中推进游标；搜索和上下文跳转仅浏览，不自动修改阅读状态。

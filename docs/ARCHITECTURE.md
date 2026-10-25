@@ -64,7 +64,7 @@ cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析
 `AssetArchiver.ArchiveAssets`，调用示例见 [WEIBO_CHAT.md](WEIBO_CHAT.md)。
 
 - `client.go` 只处理 HTTP 协议，`parse.go` 为纯解析，`store.go` 封装 GORM 幂等写入；`sync.go` 编排消息，`assets.go` 编排下载和流式上传。
-- 九张表由现有 AutoMigrate 建立：四张存档表 `weibo_chat_message`、`weibo_chat_sync_state`、`weibo_chat_asset`、`weibo_chat_user`，三张收藏表 `weibo_chat_bookmark_block`、`weibo_chat_bookmark_message`、`weibo_chat_bookmark_tag`，以及偏好表 `weibo_chat_user_preference`、`weibo_chat_group`。消息主键为 `(group_id, message_id)`，资产主键为 `(group_id, asset_key)`。
+- 十张表由现有 AutoMigrate 建立：四张存档表 `weibo_chat_message`、`weibo_chat_sync_state`、`weibo_chat_asset`、`weibo_chat_user`，三张收藏表 `weibo_chat_bookmark_block`、`weibo_chat_bookmark_message`、`weibo_chat_bookmark_tag`，以及偏好表 `weibo_chat_user_preference`、`weibo_chat_group` 和阅读游标表 `weibo_chat_read_state`。消息主键为 `(group_id, message_id)`，资产主键为 `(group_id, asset_key)`。
 - 收藏块、标签和星标／拉黑偏好按站点登录用户名隔离，通过 `InjectUser` 注入；偏好按微博 UID 跨群生效。`/bookmark-blocks` 管理多消息收藏及标题、标签，`/users/:uid/preference` 修改阅读偏好，`/user-preferences` 分页读取星标和黑名单。消息、上下文、收藏块共用装配，批量读取收藏次数与偏好状态。
 - 普通聊天、上下文和收藏保留拉黑消息供前端显示占位；正文搜索和 `starred_only` 查询排除拉黑用户。星标跳转复用消息列表的双向游标与 `limit=1`。
 - `weibo_chat_user` 以 UID 为主键，保存最近观察到的昵称、头像原地址及转存结果；消息通过 `sender_id` 关联最新用户资料。每页消息先落库，再同步整页用户，包括已经存档的消息。头像转存成功后更新来源与存储位置，失败返回错误且不推进水位，下一次重试。
