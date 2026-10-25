@@ -1,12 +1,12 @@
 package weibochat
 
 import (
-	"github.com/eli-yip/rss-zero/pkg/httputil"
-	"github.com/labstack/echo/v5"
 	"net/http"
 	"slices"
 
 	"github.com/eli-yip/rss-zero/internal/weibochat"
+	"github.com/eli-yip/rss-zero/pkg/httputil"
+	"github.com/labstack/echo/v5"
 )
 
 type Controller struct {

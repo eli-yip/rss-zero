@@ -18,7 +18,7 @@ func (h *Controller) GetMessageContext(c *echo.Context) error {
 		return httputil.NewHTTPError(http.StatusBadRequest, "invalid group_id or message_id")
 	}
 	query := c.QueryParams()
-	for _, name := range []string{"q", "sender_id", "sent_from", "sent_before", "asset_kind", "before_message_id", "after_message_id", "limit"} {
+	for _, name := range []string{"starred_only", "q", "sender_id", "sent_from", "sent_before", "asset_kind", "before_message_id", "after_message_id", "limit"} {
 		if query.Has(name) {
 			return httputil.NewHTTPError(http.StatusBadRequest, name+" is not supported by message context")
 		}

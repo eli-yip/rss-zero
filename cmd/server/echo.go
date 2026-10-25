@@ -445,6 +445,8 @@ func registerWeiboChat(group *echo.Group, handler *weibochatController.Controlle
 	group.GET("/bookmark-tags", handler.ListBookmarkTags)
 	group.GET("/groups/:group_id/messages/:message_id/bookmark-blocks", handler.ListMessageBookmarkBlocks)
 
+	registerNamedRoute(group, http.MethodPatch, "/users/:uid/preference", "Weibo user preference route", handler.UpdateUserPreference)
+	registerNamedRoute(group, http.MethodGet, "/user-preferences", "Weibo user preferences route", handler.ListUserPreferences)
 	registerNamedRoute(group, http.MethodGet, "/groups", "Weibo archive groups route", handler.ListGroups)
 	registerNamedRoute(group, http.MethodGet, "/groups/:group_id/senders", "Weibo archive senders route", handler.ListSenders)
 	registerNamedRoute(group, http.MethodGet, "/groups/:group_id/messages", "Weibo archive messages route", handler.ListMessages)

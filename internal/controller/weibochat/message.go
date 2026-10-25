@@ -30,6 +30,7 @@ func (h *Controller) ListMessages(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+	filter.OwnerUsername = owner
 	ctx := c.Request().Context()
 	page, err := h.store.ListMessages(ctx, groupID, filter)
 	if err != nil {
@@ -61,6 +62,10 @@ func (h *Controller) messageResponses(ctx context.Context, owner, groupID string
 	if err != nil {
 		return nil, err
 	}
+	preferences, err := h.store.GetUserPreferences(ctx, owner, userIDs)
+	if err != nil {
+		return nil, err
+	}
 	users, err := h.store.GetUsers(ctx, userIDs)
 	if err != nil {
 		return nil, err
@@ -71,7 +76,10 @@ func (h *Controller) messageResponses(ctx context.Context, owner, groupID string
 	}
 	byUser := make(map[string]SenderResponse, len(users))
 	for _, user := range users {
-		byUser[user.UID] = senderResponse(user)
+		sender := senderResponse(user)
+		sender.IsStarred = preferences[user.UID].IsStarred
+		sender.IsBlocked = preferences[user.UID].IsBlocked
+		byUser[user.UID] = sender
 	}
 	byAsset := make(map[string]weibochat.Asset, len(assets))
 	for _, asset := range assets {
@@ -80,9 +88,11 @@ func (h *Controller) messageResponses(ctx context.Context, owner, groupID string
 	items := make([]MessageResponse, 0, len(messages))
 	for _, message := range messages {
 		item := MessageResponse{
-			TextMatches:   highlight.FindMatches(message.Text),
-			BookmarkCount: counts[string(message.MessageID)],
-			GroupID:       message.GroupID, MessageID: string(message.MessageID), SenderID: message.SenderID,
+			BookmarkCount:   counts[string(message.MessageID)],
+			IsSenderStarred: preferences[message.SenderID].IsStarred,
+			IsSenderBlocked: preferences[message.SenderID].IsBlocked,
+			TextMatches:     highlight.FindMatches(message.Text),
+			GroupID:         message.GroupID, MessageID: string(message.MessageID), SenderID: message.SenderID,
 			SentAt: utc(message.SentAt), Text: message.Text, Links: append([]weibochat.Link{}, message.Content.Links...),
 			Assets:      make([]AssetResponse, 0, len(message.Content.Assets)),
 			MessageType: message.MessageType, MediaType: message.MediaType, SubType: message.SubType, ParseStatus: "parsed",
@@ -110,6 +120,13 @@ func (h *Controller) messageResponses(ctx context.Context, owner, groupID string
 
 func parseMessageFilter(query url.Values) (weibochat.MessageFilter, error) {
 	filter := weibochat.MessageFilter{Limit: 50, SenderIDs: query["sender_id"], AssetKinds: query["asset_kind"]}
+	starred, err := optionalBool(query, "starred_only")
+	if err != nil {
+		return filter, err
+	}
+	if starred != nil {
+		filter.StarredOnly = *starred
+	}
 	search, err := parseSearchParameter(query, "q")
 	if err != nil {
 		return filter, err

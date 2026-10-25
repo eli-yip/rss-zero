@@ -64,7 +64,9 @@ cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析
 `AssetArchiver.ArchiveAssets`，调用示例见 [WEIBO_CHAT.md](WEIBO_CHAT.md)。
 
 - `client.go` 只处理 HTTP 协议，`parse.go` 为纯解析，`store.go` 封装 GORM 幂等写入；`sync.go` 编排消息，`assets.go` 编排下载和流式上传。
-- 四张表由现有 AutoMigrate 建立：`weibo_chat_message`、`weibo_chat_sync_state`、`weibo_chat_asset`、`weibo_chat_user`。消息主键为 `(group_id, message_id)`，资产主键为 `(group_id, asset_key)`。
+- 八张表由现有 AutoMigrate 建立：四张存档表 `weibo_chat_message`、`weibo_chat_sync_state`、`weibo_chat_asset`、`weibo_chat_user`，三张收藏表 `weibo_chat_bookmark_block`、`weibo_chat_bookmark_message`、`weibo_chat_bookmark_tag`，以及偏好表 `weibo_chat_user_preference`。消息主键为 `(group_id, message_id)`，资产主键为 `(group_id, asset_key)`。
+- 收藏块、标签和星标／拉黑偏好按站点登录用户名隔离，通过 `InjectUser` 注入；偏好按微博 UID 跨群生效。`/bookmark-blocks` 管理多消息收藏及标题、标签，`/users/:uid/preference` 修改阅读偏好，`/user-preferences` 分页读取星标和黑名单。消息、上下文、收藏块共用装配，批量读取收藏次数与偏好状态。
+- 普通聊天、上下文和收藏保留拉黑消息供前端显示占位；正文搜索和 `starred_only` 查询排除拉黑用户。星标跳转复用消息列表的双向游标与 `limit=1`。
 - `weibo_chat_user` 以 UID 为主键，保存最近观察到的昵称、头像原地址及转存结果；消息通过 `sender_id` 关联最新用户资料。每页消息先落库，再同步整页用户，包括已经存档的消息。头像转存成功后更新来源与存储位置，失败返回错误且不推进水位，下一次重试。
 - 消息 `content.assets` 保存有序的资源引用；`asset_key` 使用 `file/{fid}`、`pic/{pid}`，只有 URL 的资源使用 `url/{URL 的 SHA-256}`。不建立附件关系表。
 - 写入消息和附件引用成功后才推进游标，不建立跨网络或整轮数据库事务。重跑时读取首次存档内容补齐缺失资产，不覆盖旧消息或成功的附件。
@@ -109,6 +111,6 @@ job：
 
 ## 微博消息搜索
 
-`internal/weibochat/search.go` 负责字面关键词语法和原文码点高亮；HTTP 列表的 `q` 过滤、`highlight_q` 仅高亮。SQL 和高亮统一只折叠 ASCII 英文字母。查询表达式为 `translate(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') COLLATE "C"`，未来 `pg_bigm` 索引必须使用同一表达式；当前不安装扩展或新增索引，查询性能尚未按大数据量验证。
+`internal/weibochat/search.go` 负责字面关键词语法和原文码点高亮；HTTP 列表的 `q` 过滤、`highlight_q` 仅高亮。SQL 和高亮统一只折叠 ASCII 英文字母。查询表达式为 `translate(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') COLLATE "C"`，`pg_bigm` 的 GIN 索引需使用同一表达式和 `gin_bigm_ops`，索引部署由运维管理；查询性能尚未按大数据量验证。
 
 消息列表使用排他 `before_message_id` / `after_message_id` 选取最近一页，并统一按数值 ID 升序返回；`has_more` 只描述本次方向。`GetMessageContext` 复用同一分页查询取得目标消息两侧，无搜索过滤；控制器复用消息批量装配和 `highlight_q` 高亮。

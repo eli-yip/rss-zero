@@ -152,7 +152,7 @@ if err != nil {
 _ = archived
 ```
 
-同一群的所有调用由调用方串行执行，包括来自不同进程的调用。服务端现有 `MigrateDB` 会通过 AutoMigrate 建立四张表；独立调用者先执行 `db.AutoMigrate(&weibochat.Message{}, &weibochat.SyncState{}, &weibochat.Asset{}, &weibochat.User{})` 并检查错误。
+同一群的所有调用由调用方串行执行，包括来自不同进程的调用。服务端现有 `MigrateDB` 会通过 AutoMigrate 建立存档及阅读状态表；独立调用者先执行 `db.AutoMigrate(&weibochat.Message{}, &weibochat.SyncState{}, &weibochat.Asset{}, &weibochat.User{})` 并检查错误。
 
 ## SUB 凭据
 
@@ -226,3 +226,29 @@ Content-Type: application/json
 
 AutoMigrate 新增 `weibo_chat_bookmark_block`、`weibo_chat_bookmark_message` 和
 `weibo_chat_bookmark_tag`，不改变原始消息或 OSS 数据。
+
+## 星标与拉黑
+
+微博接口沿用管理员访问规则，并通过现有 `InjectUser` 取得站点登录用户名。星标和拉黑属于当前登录用户，按微博 UID 跨群生效，不修改共享用户资料或存档内容。
+
+```http
+PATCH /api/v1/weibo/users/123/preference
+Content-Type: application/json
+
+{"is_starred":true}
+```
+
+请求可包含 `is_starred`、`is_blocked`，至少提供一个布尔值；省略字段保留原值。两个状态独立保存：拉黑优先，但解除拉黑后原星标仍生效。响应为最新发件人资料及两个状态；没有用户资料时仍返回 UID。
+
+```http
+GET /api/v1/weibo/user-preferences?starred=true&limit=50
+GET /api/v1/weibo/user-preferences?blocked=true&after_uid=123
+```
+
+偏好列表仅返回至少一个状态为 true 的用户。`starred`、`blocked` 可选，接受 `true` 或 `false`，同时提供时取 AND。按数值 UID 升序分页，`limit` 默认 50、范围 1～100。返回 `{ "items": [], "next_after_uid": null }`，有下一页时携带最后一个 UID 作为下次 `after_uid`。发件人字段含 `is_starred`、`is_blocked`。
+
+消息列表增加 `starred_only=true`，与现有搜索、时间、发件人和附件条件取 AND；没有星标用户时返回空列表。通过 `before_message_id` / `after_message_id` 配合 `limit=1` 可定位上一条、下一条星标消息，再使用 `/context` 展示完整语境。同一星标用户连续发出的消息分别计为一个跳转位置。
+
+每条消息新增 `is_sender_starred`、`is_sender_blocked`；即使 `sender` 为 null，也提供正确状态。普通消息列表和上下文保留拉黑用户的消息位置，由前端显示占位行并隐藏正文、链接与附件，不加载媒体。拉黑是阅读偏好，不是访问权限，也不会删除消息。正文搜索 `q` 非空或开启 `starred_only` 时排除拉黑用户；只有 `highlight_q` 不触发排除。上下文拒绝 `starred_only`，始终保留完整语境。
+
+`weibo_chat_user_preference` 通过 AutoMigrate 创建，以 `(owner_username, uid)` 为主键。读取消息时批量取得当前用户偏好，不逐条查询。

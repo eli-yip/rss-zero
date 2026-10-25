@@ -129,6 +129,11 @@ func (s *PostgresStore) ListMessages(ctx context.Context, groupID string, filter
 		return page, fmt.Errorf("before_message_id and after_message_id are mutually exclusive")
 	}
 	query := s.db.WithContext(ctx).Model(&Message{}).Omit("Raw").Where("group_id = ?", groupID)
+	if filter.StarredOnly {
+		query = query.Where("EXISTS (SELECT 1 FROM weibo_chat_user_preference p WHERE p.owner_username = ? AND p.uid = weibo_chat_message.sender_id AND p.is_starred AND NOT p.is_blocked)", filter.OwnerUsername)
+	} else if filter.OwnerUsername != "" && len(filter.Search.Terms) > 0 {
+		query = query.Where("NOT EXISTS (SELECT 1 FROM weibo_chat_user_preference p WHERE p.owner_username = ? AND p.uid = weibo_chat_message.sender_id AND p.is_blocked)", filter.OwnerUsername)
+	}
 	for _, term := range filter.Search.Terms {
 		query = query.Where(`translate(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') COLLATE "C" LIKE ? ESCAPE '!'`, searchPattern(term))
 	}
