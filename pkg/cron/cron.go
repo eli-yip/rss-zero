@@ -75,9 +75,9 @@ func (c *CronService) RunJobNow(jobName string) (err error) {
 
 func GenerateRealCrawlFunc(crawlFunc func(chan CronJobInfo)) func() {
 	return func() {
-		emptyChan := make(chan CronJobInfo, 1)
-		go crawlFunc(emptyChan)
-		<-emptyChan
-		close(emptyChan)
+		// Buffer the optional start notification and keep the scheduler waiting
+		// until the entire crawl returns, so singleton mode covers its lifetime.
+		info := make(chan CronJobInfo, 1)
+		crawlFunc(info)
 	}
 }
