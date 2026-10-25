@@ -26,8 +26,6 @@ pkg/              可复用/源特定
 
 ## RSS 出口管线（统一收口）
 
-见 [issues/2026-06-24-unified-rss-pipeline.md](issues/2026-06-24-unified-rss-pipeline.md) /
-[plans/2026-06-24-unified-rss-pipeline.md](plans/2026-06-24-unified-rss-pipeline.md)。核心：
 `/rss/<source>` 这一层统一为一条管线，取代早期「6+ 套 render 结构体 + 各写各的 Atom」。
 
 - **canonical 类型**：`Item{ID,Link,Title,Author,Time,Summary,ContentHTML}` + `FeedMeta`，

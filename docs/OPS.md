@@ -6,7 +6,7 @@
 
 CalVer `YY.MM.MICRO`（如 `26.7.2`）。server 与 webapp 各自独立一条 CalVer 线，**不要**靠肉眼
 猜 creatordate —— 下一个 tag 由 `git tag` 列表经 `sort -V` + calver 推算（justfile 里的
-`next_version`），并与 [PROGRESS.md](PROGRESS.md) 对齐。
+`next_version`）。
 
 标准发版走 `/rss-zero-release` skill（在 `server/` 下触发）：算下一个 CalVer → 打并推 git tag →
 经 justfile 构建 → 推 `eliyip/rss-zero` 镜像。手动等价物：
