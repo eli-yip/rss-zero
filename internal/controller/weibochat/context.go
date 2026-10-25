@@ -35,6 +35,10 @@ func (h *Controller) GetMessageContext(c *echo.Context) error {
 	if err != nil {
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	owner, err := ownerUsername(c)
+	if err != nil {
+		return err
+	}
 	ctx := c.Request().Context()
 	result, err := h.store.GetMessageContext(ctx, groupID, messageID, before, after)
 	if errors.Is(err, weibochat.ErrMessageNotFound) {
@@ -43,7 +47,7 @@ func (h *Controller) GetMessageContext(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	items, err := h.messageResponses(ctx, groupID, result.Messages, highlight)
+	items, err := h.messageResponses(ctx, owner, groupID, result.Messages, highlight)
 	if err != nil {
 		return err
 	}

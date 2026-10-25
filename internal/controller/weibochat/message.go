@@ -26,12 +26,16 @@ func (h *Controller) ListMessages(c *echo.Context) error {
 	if err != nil {
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	owner, err := ownerUsername(c)
+	if err != nil {
+		return err
+	}
 	ctx := c.Request().Context()
 	page, err := h.store.ListMessages(ctx, groupID, filter)
 	if err != nil {
 		return err
 	}
-	items, err := h.messageResponses(ctx, groupID, page.Messages, highlight)
+	items, err := h.messageResponses(ctx, owner, groupID, page.Messages, highlight)
 	if err != nil {
 		return err
 	}
@@ -39,7 +43,7 @@ func (h *Controller) ListMessages(c *echo.Context) error {
 	return c.JSON(http.StatusOK, httputil.NewResp("weibo messages", result))
 }
 
-func (h *Controller) messageResponses(ctx context.Context, groupID string, messages []weibochat.Message, highlight weibochat.SearchQuery) ([]MessageResponse, error) {
+func (h *Controller) messageResponses(ctx context.Context, owner, groupID string, messages []weibochat.Message, highlight weibochat.SearchQuery) ([]MessageResponse, error) {
 	userIDs, assetKeys := make([]string, 0), make([]string, 0)
 	for _, message := range messages {
 		if message.SenderID != "" {
@@ -48,6 +52,14 @@ func (h *Controller) messageResponses(ctx context.Context, groupID string, messa
 		for _, ref := range message.Content.Assets {
 			assetKeys = append(assetKeys, ref.AssetKey)
 		}
+	}
+	messageIDs := make([]string, 0, len(messages))
+	for _, message := range messages {
+		messageIDs = append(messageIDs, string(message.MessageID))
+	}
+	counts, err := h.store.GetBookmarkCounts(ctx, owner, groupID, messageIDs)
+	if err != nil {
+		return nil, err
 	}
 	users, err := h.store.GetUsers(ctx, userIDs)
 	if err != nil {
@@ -68,8 +80,9 @@ func (h *Controller) messageResponses(ctx context.Context, groupID string, messa
 	items := make([]MessageResponse, 0, len(messages))
 	for _, message := range messages {
 		item := MessageResponse{
-			TextMatches: highlight.FindMatches(message.Text),
-			GroupID:     message.GroupID, MessageID: string(message.MessageID), SenderID: message.SenderID,
+			TextMatches:   highlight.FindMatches(message.Text),
+			BookmarkCount: counts[string(message.MessageID)],
+			GroupID:       message.GroupID, MessageID: string(message.MessageID), SenderID: message.SenderID,
 			SentAt: utc(message.SentAt), Text: message.Text, Links: append([]weibochat.Link{}, message.Content.Links...),
 			Assets:      make([]AssetResponse, 0, len(message.Content.Assets)),
 			MessageType: message.MessageType, MediaType: message.MediaType, SubType: message.SubType, ParseStatus: "parsed",

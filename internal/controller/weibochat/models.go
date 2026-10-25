@@ -38,19 +38,20 @@ type AssetResponse struct {
 }
 
 type MessageResponse struct {
-	TextMatches []weibochat.TextMatch `json:"text_matches"`
-	GroupID     string                `json:"group_id"`
-	MessageID   string                `json:"message_id"`
-	SenderID    string                `json:"sender_id"`
-	Sender      *SenderResponse       `json:"sender"`
-	SentAt      *time.Time            `json:"sent_at"`
-	Text        string                `json:"text"`
-	Links       []weibochat.Link      `json:"links"`
-	Assets      []AssetResponse       `json:"assets"`
-	MessageType *int                  `json:"message_type"`
-	MediaType   *int                  `json:"media_type"`
-	SubType     *int                  `json:"sub_type"`
-	ParseStatus string                `json:"parse_status"`
+	BookmarkCount int64                 `json:"bookmark_count"`
+	TextMatches   []weibochat.TextMatch `json:"text_matches"`
+	GroupID       string                `json:"group_id"`
+	MessageID     string                `json:"message_id"`
+	SenderID      string                `json:"sender_id"`
+	Sender        *SenderResponse       `json:"sender"`
+	SentAt        *time.Time            `json:"sent_at"`
+	Text          string                `json:"text"`
+	Links         []weibochat.Link      `json:"links"`
+	Assets        []AssetResponse       `json:"assets"`
+	MessageType   *int                  `json:"message_type"`
+	MediaType     *int                  `json:"media_type"`
+	SubType       *int                  `json:"sub_type"`
+	ParseStatus   string                `json:"parse_status"`
 }
 
 type MessageListResponse struct {
@@ -86,4 +87,33 @@ type MessageContextResponse struct {
 	Items           []MessageResponse `json:"items"`
 	HasMoreBefore   bool              `json:"has_more_before"`
 	HasMoreAfter    bool              `json:"has_more_after"`
+}
+
+type CreateBookmarkBlockRequest struct {
+	Title    string                 `json:"title"`
+	Tags     []string               `json:"tags"`
+	Messages []weibochat.MessageRef `json:"messages"`
+}
+type UpdateBookmarkBlockRequest struct {
+	Title *string   `json:"title"`
+	Tags  *[]string `json:"tags"`
+}
+type AddBookmarkMessagesRequest struct {
+	Messages []weibochat.MessageRef `json:"messages"`
+}
+type BookmarkBlockResponse struct {
+	ID           string    `json:"id"`
+	Title        string    `json:"title"`
+	Tags         []string  `json:"tags"`
+	MessageCount int64     `json:"message_count"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+type BookmarkBlockListResponse struct {
+	Items      []BookmarkBlockResponse `json:"items"`
+	NextCursor *string                 `json:"next_cursor"`
+}
+type BookmarkMessageListResponse struct {
+	Items      []MessageResponse `json:"items"`
+	NextCursor *string           `json:"next_cursor"`
 }

@@ -177,3 +177,52 @@ _ = archived
 图片不降级到缩略图，视频不额外下载封面，普通表情字典暂不转存。群聊 `fid` 使用 `msget`；自定义表情包和卡片图片使用上游给出的原图地址。单个附件限制为 512 MiB，传输限时 5 分钟。类型检查用于拒绝 HTML/JSON 错误页，不进行完整图片或视频解码。
 
 `msget` 的图片用法参考 [群聊图片地址构造](https://github.com/alloevil/weibo-chat-auto/blob/e7f8f2346d851fcdaff37d5efbafd5102a0e1647/lib/normalize-message.js#L50-L54) 和 [下载实现](https://github.com/alloevil/weibo-chat-auto/blob/e7f8f2346d851fcdaff37d5efbafd5102a0e1647/scripts/viewer-server.js#L1559-L1570)。消息、附件和头像流程已完成小范围真实群聊和 OSS 联机验证。未与上传原文件比较分辨率或字节内容。
+
+## 收藏块
+
+收藏属于当前登录用户。微博 API 同时使用管理员检查和现有 `InjectUser`，从 Authelia 的
+`Remote-User` 取得所有者，不接受客户端传入所有者。所有 ID 均为字符串。
+
+收藏块包含标题、标签及多条消息，可跨群追加消息。同一消息可以加入多个块，在同一块中只出现一次。
+保存的是消息引用，不复制正文和附件。移除最后一条消息保留空块；删除块也不会删除存档。
+
+```http
+POST /api/v1/weibo/bookmark-blocks
+Content-Type: application/json
+
+{"title":"数据库讨论","tags":["技术"],"messages":[{"group_id":"5152823595766382","message_id":"5357963156128139"}]}
+```
+
+创建返回 `201`，`data` 含 `id`（UUID）、`title`、`tags`、`message_count`、`created_at` 和 `updated_at`。
+标题默认空，去除首尾空白后最多 200 个 Unicode 码点；标签最多 20 个，每个去除首尾空白后为
+1～50 个码点，按完整名称去重、区分大小写。创建和追加每次接受 1～100 条消息引用，去重后写入。
+任何引用不存在则返回 `404`，本次操作不产生部分写入。
+
+| 方法与路径（省略 `/api/v1/weibo`）                                 | 行为                                                |
+| ------------------------------------------------------------------ | --------------------------------------------------- |
+| `GET /bookmark-blocks`                                             | 当前用户收藏块，按更新时间倒序、UUID 倒序分页       |
+| `GET /bookmark-blocks/:block_id`                                   | 收藏块元信息                                        |
+| `PATCH /bookmark-blocks/:block_id`                                 | 修改 `title`、`tags`；省略表示不改，`tags: []` 清空 |
+| `DELETE /bookmark-blocks/:block_id`                                | 删除块及其消息关系、标签                            |
+| `GET /bookmark-blocks/:block_id/messages`                          | 块内消息，按发送时间升序分页                        |
+| `POST /bookmark-blocks/:block_id/messages`                         | 追加消息，body 为 `{"messages":[...]}`              |
+| `DELETE /bookmark-blocks/:block_id/messages/:group_id/:message_id` | 移除一条消息关系                                    |
+| `GET /bookmark-tags`                                               | 当前用户的标签，`data.items` 为名称数组             |
+| `GET /groups/:group_id/messages/:message_id/bookmark-blocks`       | 收录该消息的个人收藏块，使用相同块列表分页          |
+
+块列表接受 `title` 字面子串（仅 ASCII 字母忽略大小写）、可重复的 `tag`（多个标签取 AND），
+以及 `limit`、`cursor`。不搜索块内正文。列表 `data` 为 `{items: [...], next_cursor: "..."}`，
+结束时 `next_cursor` 为 `null`。`limit` 默认 50，范围 1～100；后续请求保留筛选条件并传回游标。
+
+块内消息也接受 `limit`、`cursor`，返回相同分页包装，`items` 使用 `MessageResponse`；可传
+`highlight_q`，继续由服务端计算高亮，不影响成员。排序为发送时间升序，同时间按数值消息 ID、
+数值群 ID 升序；缺失时间的消息在最后，仍以消息 ID 和群 ID 稳定排序。游标独立于群内聊天游标。
+使用每条消息的群 ID 和消息 ID 调用 `/context`，即可跳回原群语境。
+
+消息列表、上下文、收藏块消息均增加 `bookmark_count`，表示当前用户有多少个收藏块收录该消息。
+收藏不是布尔开关，增加收藏应选择新建块或已有块。其他用户的块无法读取或修改，统一返回 `404`。
+追加重复消息和移除不存在的关系是幂等操作，不改变块更新时间；有效增删消息或编辑元信息会更新时间。
+追加、移除、删除成功返回 `204`，无响应正文。
+
+AutoMigrate 新增 `weibo_chat_bookmark_block`、`weibo_chat_bookmark_message` 和
+`weibo_chat_bookmark_tag`，不改变原始消息或 OSS 数据。

@@ -65,6 +65,9 @@ func MigrateDB(db *gorm.DB) (err error) {
 		&bookmark.Tag{},
 
 		&SchemaMigration{},
+		&weibochat.BookmarkBlock{},
+		&weibochat.BookmarkMessage{},
+		&weibochat.BookmarkTag{},
 		&weibochat.Message{},
 		&weibochat.User{},
 		&weibochat.SyncState{},

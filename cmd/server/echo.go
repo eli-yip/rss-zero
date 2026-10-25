@@ -198,7 +198,7 @@ func setupEcho(redisService redis.Redis,
 	groupNeedAuth = append(groupNeedAuth, tkblogGroup)
 	registerNamedRoute(tkblogGroup, http.MethodPost, "/:category/crawl", "Tkblog crawl route", tkblogH.Crawl)
 
-	weiboGroup := apiGroup.Group("/weibo", myMiddleware.AllowAdmin())
+	weiboGroup := apiGroup.Group("/weibo", myMiddleware.AllowAdmin(), myMiddleware.InjectUser())
 	registerWeiboChat(weiboGroup, weibochatHandler)
 
 	for g := range slices.Values(groupNeedAuth) {
@@ -434,6 +434,17 @@ func registerMacked(mackedApi *echo.Group, mackedHandler *mackedHandler.Handler)
 }
 
 func registerWeiboChat(group *echo.Group, handler *weibochatController.Controller) {
+	group.POST("/bookmark-blocks", handler.CreateBookmarkBlock)
+	group.GET("/bookmark-blocks", handler.ListBookmarkBlocks)
+	group.GET("/bookmark-blocks/:block_id", handler.GetBookmarkBlock)
+	group.PATCH("/bookmark-blocks/:block_id", handler.UpdateBookmarkBlock)
+	group.DELETE("/bookmark-blocks/:block_id", handler.DeleteBookmarkBlock)
+	group.GET("/bookmark-blocks/:block_id/messages", handler.ListBookmarkMessages)
+	group.POST("/bookmark-blocks/:block_id/messages", handler.AddBookmarkMessages)
+	group.DELETE("/bookmark-blocks/:block_id/messages/:group_id/:message_id", handler.RemoveBookmarkMessage)
+	group.GET("/bookmark-tags", handler.ListBookmarkTags)
+	group.GET("/groups/:group_id/messages/:message_id/bookmark-blocks", handler.ListMessageBookmarkBlocks)
+
 	registerNamedRoute(group, http.MethodGet, "/groups", "Weibo archive groups route", handler.ListGroups)
 	registerNamedRoute(group, http.MethodGet, "/groups/:group_id/senders", "Weibo archive senders route", handler.ListSenders)
 	registerNamedRoute(group, http.MethodGet, "/groups/:group_id/messages", "Weibo archive messages route", handler.ListMessages)

@@ -42,13 +42,16 @@ func testController(t *testing.T) (*echo.Echo, *gorm.DB) {
 		require.NoError(t, err)
 		require.NoError(t, conn.Close())
 	})
-	require.NoError(t, db.AutoMigrate(&weibochat.Message{}, &weibochat.User{}, &weibochat.SyncState{}, &weibochat.Asset{}))
+	require.NoError(t, db.AutoMigrate(&weibochat.BookmarkBlock{}, &weibochat.BookmarkMessage{}, &weibochat.BookmarkTag{}, &weibochat.Message{}, &weibochat.User{}, &weibochat.SyncState{}, &weibochat.Asset{}))
 	h := NewController(weibochat.NewPostgresStore(db), []string{"1", "3", "1"})
 	return testRoutes(h), db
 }
 
 func testRoutes(h *Controller) *echo.Echo {
 	e := echo.New()
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error { c.Set("username", "test-user"); return next(c) }
+	})
 	e.HTTPErrorHandler = httputil.NewHTTPErrorHandler(zap.NewNop())
 	e.GET("/groups", h.ListGroups)
 	e.GET("/groups/:group_id/messages", h.ListMessages)
