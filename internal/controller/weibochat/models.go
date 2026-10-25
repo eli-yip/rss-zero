@@ -8,6 +8,7 @@ import (
 )
 
 type GroupResponse struct {
+	Name          string     `json:"name"`
 	GroupID       string     `json:"group_id"`
 	Configured    bool       `json:"configured"`
 	InitializedAt *time.Time `json:"initialized_at"`

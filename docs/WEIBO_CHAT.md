@@ -254,3 +254,11 @@ GET /api/v1/weibo/user-preferences?blocked=true&after_uid=123
 每条消息新增 `is_sender_starred`、`is_sender_blocked`；即使 `sender` 为 null，也提供正确状态。普通消息列表和上下文保留拉黑用户的消息位置，由前端显示占位行并隐藏正文、链接与附件，不加载媒体。拉黑是阅读偏好，不是访问权限，也不会删除消息。正文搜索 `q` 非空或开启 `starred_only` 时排除拉黑用户；只有 `highlight_q` 不触发排除。上下文拒绝 `starred_only`，始终保留完整语境。
 
 `weibo_chat_user_preference` 通过 AutoMigrate 创建，以 `(owner_username, uid)` 为主键。读取消息时批量取得当前用户偏好，不逐条查询。
+
+## 群名称
+
+群列表包含 `name`，未命名时为空字符串，界面回退显示群 ID。
+`PATCH /api/v1/weibo/groups/:group_id` 接收 `{"name":"技术讨论群"}` 并返回更新后的群 DTO。
+名称为本地共享资料，不修改微博群名，也不影响抓取配置。配置中或已有存档的群均可命名；未知群返回 404。
+名称去除首尾空白，最多 100 个 Unicode 字符；空字符串清除名称，缺省或 null 返回 400。
+`weibo_chat_group` 通过 AutoMigrate 建立，独立于同步水位。

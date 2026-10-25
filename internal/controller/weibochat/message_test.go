@@ -42,7 +42,7 @@ func testController(t *testing.T) (*echo.Echo, *gorm.DB) {
 		require.NoError(t, err)
 		require.NoError(t, conn.Close())
 	})
-	require.NoError(t, db.AutoMigrate(&weibochat.BookmarkBlock{}, &weibochat.BookmarkMessage{}, &weibochat.BookmarkTag{}, &weibochat.Message{}, &weibochat.User{}, &weibochat.UserPreference{}, &weibochat.SyncState{}, &weibochat.Asset{}))
+	require.NoError(t, db.AutoMigrate(&weibochat.BookmarkBlock{}, &weibochat.BookmarkMessage{}, &weibochat.BookmarkTag{}, &weibochat.GroupMetadata{}, &weibochat.Message{}, &weibochat.User{}, &weibochat.UserPreference{}, &weibochat.SyncState{}, &weibochat.Asset{}))
 	h := NewController(weibochat.NewPostgresStore(db), []string{"1", "3", "1"})
 	return testRoutes(h), db
 }

@@ -434,6 +434,7 @@ func registerMacked(mackedApi *echo.Group, mackedHandler *mackedHandler.Handler)
 }
 
 func registerWeiboChat(group *echo.Group, handler *weibochatController.Controller) {
+	group.PATCH("/groups/:group_id", handler.UpdateGroup)
 	group.POST("/bookmark-blocks", handler.CreateBookmarkBlock)
 	group.GET("/bookmark-blocks", handler.ListBookmarkBlocks)
 	group.GET("/bookmark-blocks/:block_id", handler.GetBookmarkBlock)

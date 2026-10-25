@@ -34,8 +34,8 @@ func testStore(t *testing.T) (*PostgresStore, *gorm.DB) {
 		require.NoError(t, err)
 		require.NoError(t, conn.Close())
 	})
-	require.NoError(t, db.AutoMigrate(&BookmarkBlock{}, &BookmarkMessage{}, &BookmarkTag{}, &Message{}, &User{}, &UserPreference{}, &SyncState{}, &Asset{}))
-	require.NoError(t, db.AutoMigrate(&BookmarkBlock{}, &BookmarkMessage{}, &BookmarkTag{}, &Message{}, &User{}, &UserPreference{}, &SyncState{}, &Asset{}))
+	require.NoError(t, db.AutoMigrate(&BookmarkBlock{}, &BookmarkMessage{}, &BookmarkTag{}, &GroupMetadata{}, &Message{}, &User{}, &UserPreference{}, &SyncState{}, &Asset{}))
+	require.NoError(t, db.AutoMigrate(&BookmarkBlock{}, &BookmarkMessage{}, &BookmarkTag{}, &GroupMetadata{}, &Message{}, &User{}, &UserPreference{}, &SyncState{}, &Asset{}))
 	return NewPostgresStore(db), db
 }
 
