@@ -5,7 +5,9 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"net/url"
 	"sort"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -115,8 +117,13 @@ func (a *UserArchiver) syncUser(ctx context.Context, profile User) error {
 	}
 	current.ProfileObservedAt = profile.ProfileObservedAt
 	var avatarErr error
-	if profile.AvatarSourceURL != "" && (profile.AvatarSourceURL != current.AvatarSourceURL || current.AvatarObjectKey == "") {
-		avatarErr = a.archiveAvatar(ctx, current, profile.AvatarSourceURL)
+	if profile.AvatarSourceURL != "" {
+		if avatarIdentity(profile.AvatarSourceURL) != avatarIdentity(current.AvatarSourceURL) || current.AvatarObjectKey == "" {
+			avatarErr = a.archiveAvatar(ctx, current, profile.AvatarSourceURL)
+		} else {
+			// Refresh the full signed source URL without downloading unchanged pixels.
+			current.AvatarSourceURL = profile.AvatarSourceURL
+		}
 	}
 	return errors.Join(avatarErr, a.store.SaveUser(ctx, current))
 }
@@ -124,7 +131,7 @@ func (a *UserArchiver) syncUser(ctx context.Context, profile User) error {
 func (a *UserArchiver) archiveAvatar(ctx context.Context, user *User, source string) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
-	keyPrefix := fmt.Sprintf("weibo-chat/users/%s/%x", user.UID, sha256.Sum256([]byte(source)))
+	keyPrefix := fmt.Sprintf("weibo-chat/users/%s/%x", user.UID, sha256.Sum256([]byte(avatarIdentity(source))))
 	stored, err := a.client.storeMedia(ctx, a.files, source, "image", keyPrefix)
 	if err != nil {
 		return fmt.Errorf("archive avatar: %w", err)
@@ -133,4 +140,18 @@ func (a *UserArchiver) archiveAvatar(ctx context.Context, user *User, source str
 	user.AvatarObjectKey = stored.key
 	user.AvatarStorageProvider = a.files.AssetsDomain()
 	return nil
+}
+
+// Sina rotates these access parameters even when the avatar itself is unchanged.
+// Other hosts and query parameters retain their original identity semantics.
+func avatarIdentity(source string) string {
+	u, err := url.Parse(source)
+	if err != nil || (u.Hostname() != "sinaimg.cn" && !strings.HasSuffix(u.Hostname(), ".sinaimg.cn")) {
+		return source
+	}
+	query := u.Query()
+	query.Del("Expires")
+	query.Del("ssig")
+	u.RawQuery = query.Encode()
+	return u.String()
 }

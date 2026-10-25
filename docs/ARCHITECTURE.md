@@ -69,7 +69,7 @@ cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析
 - 消息 `content.assets` 保存有序的资源引用；`asset_key` 使用 `file/{fid}`、`pic/{pid}`，只有 URL 的资源使用 `url/{URL 的 SHA-256}`。不建立附件关系表。
 - 写入消息和附件引用成功后才推进游标，不建立跨网络或整轮数据库事务。重跑时读取首次存档内容补齐缺失资产，不覆盖旧消息或成功的附件。
 - `synced_through_message_id` 是增量水位，`backfill_before_message_id` 是历史排他游标；读取全部原始消息计算边界，不过滤系统消息。
-- 头像沿用现有 bucket，路径为 `weibo-chat/users/{uid}/{源 URL 的 SHA-256}.{ext}`，用户表保留来源地址、对象 key 和资源域名。
+- 头像沿用现有 bucket，路径为 `weibo-chat/users/{uid}/{头像资源标识的 SHA-256}.{ext}`，用户表保留完整来源地址、对象 key 和资源域名；新浪头像资源标识仅去掉 `Expires`、`ssig` 签名参数。
 - 附件沿用现有 bucket 和资源域名，路径为 `weibo-chat/{group_id}/{asset_key}.{ext}`；扩展名由实际内容类型决定。上传成功后记录存储结果，失败可重试。
 
 ## 定时任务（cron）
@@ -78,7 +78,7 @@ cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析
 job：
 
 - **静态 job**：`jobDefinition` slice（`check_cookies` / `macked_crawl` / `tombkeeper_crawl` /
-  `canglimo_*` / `zvideo_crawl` / `douyu_crawl`），固定注册，与来源枚举无关。
+  `canglimo_*` / `zvideo_crawl` / `douyu_crawl` / `weibo_chat_sync`），与来源枚举无关。微博任务仅在 `[weibo].group_ids` 非空时注册，每 15 分钟触发并随机延迟 0～5 分钟，顺序同步各群及附件。
 - **tombkeeper 告警边界**：live/history 都在一次 run 的最外层解释结果；panic、fatal error、成功但含
   可恢复单条失败三种结果互斥，每次 run 最多发一条聚合 Bark。单条失败继续处理，摘要保留总数与至多
   3 条代表性错误；手工 run-now 复用同一个 live cron 闭包。

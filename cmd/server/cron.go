@@ -77,6 +77,18 @@ func setupCronCrawlJob(logger *zap.Logger, redisService redis.Redis, cookieServi
 
 	jobs := buildStaticJobDefinitions(redisService, cookieService, db, notifier, fileService, logger, config.C.Settings.DisableDouyu)
 
+	if !config.C.Settings.Debug && len(config.C.Weibo.GroupIDs) > 0 {
+		crawl, err := buildWeiboCrawlFunc(config.C.Weibo.GroupIDs, cookieService, db, notifier, fileService, logger)
+		if err != nil {
+			return nil, nil, err
+		}
+		jobs = append(jobs, jobDefinition{
+			name:     "weibo_chat_sync",
+			schedule: weiboSyncSchedule,
+			fn:       weiboCrawlDelayRunner.wrap("weibo_chat_sync", logger, crawl),
+		})
+	}
+
 	// If debug is true, add no jobs
 	if config.C.Settings.Debug {
 		jobs = []jobDefinition{}
