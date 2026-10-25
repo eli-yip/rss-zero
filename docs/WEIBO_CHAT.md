@@ -2,6 +2,17 @@
 
 `internal/weibochat` 保存群聊消息、用户资料，并转存头像、图片、视频和自定义表情包。当前提供 Go 调用入口，尚无 HTTP API、定时任务、界面或 CLI。
 
+## 群配置
+
+在 `config.toml` 中列出同一微博账号需要存档的群，群 ID 使用字符串：
+
+```toml
+[weibo]
+group_ids = [] # 填入实际群 ID，例如 ["群 ID 1", "群 ID 2"]
+```
+
+省略此节或使用空数组表示未配置群。代码通过 `config.C.Weibo.GroupIDs` 读取列表；目前仅加载配置，尚未据此启动定时任务。
+
 ## 调用
 
 复用现有 GORM 数据库和 MinIO 文件服务。`loadSUB` 返回当前账号的 SUB 值，不包含 `SUB=`；同一账号可以存档多个群。

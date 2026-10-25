@@ -51,9 +51,14 @@ type TomlConfig struct {
 	Utils struct {
 		RsshubURL string `toml:"rsshub_url"`
 	} `toml:"utils"`
-	Zsxq ZsxqConfig `toml:"zsxq"`
+	Zsxq  ZsxqConfig  `toml:"zsxq"`
+	Weibo WeiboConfig `toml:"weibo"`
 
 	BJT *time.Location
+}
+
+type WeiboConfig struct {
+	GroupIDs []string `toml:"group_ids"`
 }
 
 // ZsxqConfig holds operational rules for the zsxq router that change by
