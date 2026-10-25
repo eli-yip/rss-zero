@@ -43,11 +43,9 @@ func (s *ExportService) ExportSingle(writer io.Writer, opt Option) (err error) {
 
 func (s *ExportService) exportSingleAnswer(writer io.Writer, opt Option) (err error) {
 	queryOpt := db.FetchAnswerOption{
-		FetchOptionBase: db.FetchOptionBase{
-			UserID:    opt.AuthorID,
-			StartTime: opt.StartTime,
-			EndTime:   opt.EndTime,
-		},
+		UserID:    opt.AuthorID,
+		StartTime: opt.StartTime,
+		EndTime:   opt.EndTime,
 	}
 
 	var (
@@ -131,11 +129,9 @@ func (s *ExportService) exportSingleAnswer(writer io.Writer, opt Option) (err er
 
 func (s *ExportService) exportSingleArticle(writer io.Writer, opt Option) (err error) {
 	queryOpt := db.FetchArticleOption{
-		FetchOptionBase: db.FetchOptionBase{
-			UserID:    opt.AuthorID,
-			StartTime: opt.StartTime,
-			EndTime:   opt.EndTime,
-		},
+		UserID:    opt.AuthorID,
+		StartTime: opt.StartTime,
+		EndTime:   opt.EndTime,
 	}
 
 	var (
@@ -214,11 +210,9 @@ func (s *ExportService) exportSingleArticle(writer io.Writer, opt Option) (err e
 
 func (s *ExportService) exportSinglePin(writer io.Writer, opt Option) (err error) {
 	queryOpt := db.FetchPinOption{
-		FetchOptionBase: db.FetchOptionBase{
-			UserID:    opt.AuthorID,
-			StartTime: opt.StartTime,
-			EndTime:   opt.EndTime,
-		},
+		UserID:    opt.AuthorID,
+		StartTime: opt.StartTime,
+		EndTime:   opt.EndTime,
 	}
 
 	var (

@@ -2,6 +2,7 @@ package tombkeeper
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -64,8 +65,8 @@ func MidToBid(mid string) string {
 		end = start
 	}
 	var b strings.Builder
-	for i := len(parts) - 1; i >= 0; i-- {
-		b.WriteString(parts[i])
+	for _, part := range slices.Backward(parts) {
+		b.WriteString(part)
 	}
 	return b.String()
 }
@@ -100,8 +101,8 @@ func BidToMid(bid string) (string, error) {
 		end = start
 	}
 	var b strings.Builder
-	for i := len(parts) - 1; i >= 0; i-- {
-		b.WriteString(parts[i])
+	for _, part := range slices.Backward(parts) {
+		b.WriteString(part)
 	}
 	return b.String(), nil
 }

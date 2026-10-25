@@ -170,7 +170,7 @@ func (h *Controller) GetBookmarkList(c *echo.Context) (err error) {
 			Total:   totalPage,
 			Current: req.Page,
 		},
-		ResponseBase: ResponseBase{Topics: make([]Topic, 0, len(bookmarks))},
+		Topics: make([]Topic, 0, len(bookmarks)),
 	}
 
 	for b := range slices.Values(bookmarks) {

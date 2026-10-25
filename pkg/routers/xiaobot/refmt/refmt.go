@@ -68,7 +68,7 @@ func (s *ReformatService) Reformat(paperID string) {
 
 	var (
 		wg    sync.WaitGroup
-		count int64
+		count atomic.Int64
 		idSet = mapset.NewSet[string]()
 	)
 
@@ -99,7 +99,7 @@ func (s *ReformatService) Reformat(paperID string) {
 			go func(i int, p *db.Post) {
 				defer wg.Done()
 
-				atomic.AddInt64(&count, 1)
+				count.Add(1)
 				logger := s.logger.With(zap.String("post_id", p.ID))
 				logger.Info("start to format paper")
 

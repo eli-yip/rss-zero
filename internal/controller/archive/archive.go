@@ -107,9 +107,9 @@ func (h *Controller) Archive(c *echo.Context) (err error) {
 	totalPage := (count + req.Count - 1) / req.Count
 
 	return c.JSON(http.StatusOK, httputil.NewResp("success", ArchiveResponse{
-		Count:        count,
-		Paging:       Paging{Total: totalPage, Current: req.Page},
-		ResponseBase: ResponseBase{Topics: topics}}))
+		Count:  count,
+		Paging: Paging{Total: totalPage, Current: req.Page},
+		Topics: topics}))
 }
 
 type archiveResult struct {

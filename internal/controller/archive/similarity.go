@@ -53,8 +53,8 @@ func (h *Controller) Similarity(c *echo.Context) (err error) {
 	}
 
 	return c.JSON(http.StatusOK, httputil.NewResp("success", ArchiveResponse{
-		Count:        len(topics),
-		Paging:       Paging{Total: 1, Current: 1},
-		ResponseBase: ResponseBase{Topics: topics},
+		Count:  len(topics),
+		Paging: Paging{Total: 1, Current: 1},
+		Topics: topics,
 	}))
 }
