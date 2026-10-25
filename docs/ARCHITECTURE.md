@@ -12,6 +12,7 @@ cmd/cli           运维/一次性任务 CLI
 internal/         应用内部（不对外复用）
   controller/     各源的 HTTP handler + 编排（zhihu xiaobot github zsxq tombkeeper
                   endoflife macked …，另有 archive job migrate parse rsshub user cookie）
+  weibochat/      微博群聊存档核心（抓取、纯解析、Postgres 存储和附件转存）
   rss/            统一 RSS 出口管线：canonical Item + FeedMeta + RenderAtom + 缓存层
   migrate/        迁移注册表（schema_migrations 表，启动自动跑）
   db/ redis/ file/ 存储访问（Postgres/GORM、Redis、对象存储/OSS）
@@ -56,6 +57,18 @@ cron / 请求 → controller.<source> → routers.<source>.Fetch（抓取+解析
   `tombkeeper_blog_post`（`category` 区分两源、复合主键 `(category,id)`），纯文本正文存已转义
   markdown。**只做解析/落库 + 单篇归档 HTML，无 RSS 出口**；按需**全量**抓取（伪 job，无 cron，
   见 [OPS](OPS.md)）。解析复用微博同款 Next.js flight 机制（`pkg/routers/tkblog`）。
+
+## 微博群聊存档（独立核心）
+
+`internal/weibochat` 不接入 RSS 管线。消息入口为 `Archiver.Initialize / Sync / Backfill`，附件入口为
+`AssetArchiver.ArchiveAssets`，调用示例见 [WEIBO_CHAT.md](WEIBO_CHAT.md)。
+
+- `client.go` 只处理 HTTP 协议，`parse.go` 为纯解析，`store.go` 封装 GORM 幂等写入；`sync.go` 编排消息，`assets.go` 编排下载和流式上传。
+- 三张表由现有 AutoMigrate 建立：`weibo_chat_message`、`weibo_chat_sync_state`、`weibo_chat_asset`。消息主键为 `(group_id, message_id)`，资产主键为 `(group_id, asset_key)`。
+- 消息 `content.assets` 保存有序的资源引用；`asset_key` 使用 `file/{fid}`、`pic/{pid}`，只有 URL 的资源使用 `url/{URL 的 SHA-256}`。不建立附件关系表。
+- 写入消息和附件引用成功后才推进游标，不建立跨网络或整轮数据库事务。重跑时读取首次存档内容补齐缺失资产，不覆盖旧消息或成功的附件。
+- `synced_through_message_id` 是增量水位，`backfill_before_message_id` 是历史排他游标；读取全部原始消息计算边界，不过滤系统消息。
+- 附件沿用现有 bucket 和资源域名，路径为 `weibo-chat/{group_id}/{asset_key}.{ext}`；扩展名由实际内容类型决定。上传成功后记录存储结果，失败可重试。
 
 ## 定时任务（cron）
 

@@ -107,7 +107,7 @@ func (s *PostgresStore) ListAssets(ctx context.Context, groupID, after string, l
 // SaveAssetResult updates an existing asset only after its transfer attempt.
 func (s *PostgresStore) SaveAssetResult(ctx context.Context, asset *Asset) error {
 	result := s.db.WithContext(ctx).Model(&Asset{}).Where("group_id = ? AND asset_key = ?", asset.GroupID, asset.AssetKey).
-		Updates(map[string]any{"status": asset.Status, "object_key": asset.ObjectKey, "storage_provider": asset.StorageProvider,
+		Updates(map[string]any{"source_url": asset.SourceURL, "status": asset.Status, "object_key": asset.ObjectKey, "storage_provider": asset.StorageProvider,
 			"content_type": asset.ContentType, "byte_size": asset.ByteSize, "stored_at": asset.StoredAt, "last_error": asset.LastError})
 	if result.Error != nil {
 		return result.Error
