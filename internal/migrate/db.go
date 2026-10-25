@@ -3,6 +3,8 @@ package migrate
 import (
 	"gorm.io/gorm"
 
+	"github.com/eli-yip/rss-zero/internal/weibochat"
+
 	bookmark "github.com/eli-yip/rss-zero/pkg/bookmark/db"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
@@ -63,5 +65,8 @@ func MigrateDB(db *gorm.DB) (err error) {
 		&bookmark.Tag{},
 
 		&SchemaMigration{},
+		&weibochat.Message{},
+		&weibochat.SyncState{},
+		&weibochat.Asset{},
 	)
 }

@@ -55,19 +55,21 @@ func (id *MessageID) UnmarshalJSON(data []byte) error {
 
 // Message retains the first observation. Raw excludes reaction metadata.
 type Message struct {
-	GroupID     string
-	MessageID   MessageID
-	SenderID    string
-	SentAt      *time.Time
+	GroupID     string     `gorm:"type:text;primaryKey"`
+	MessageID   MessageID  `gorm:"type:text;primaryKey"`
+	SenderID    string     `gorm:"type:text"`
+	SentAt      *time.Time `gorm:"type:timestamptz;index"`
 	MessageType *int
 	MediaType   *int
 	SubType     *int
-	Text        string
-	Raw         json.RawMessage
-	Content     MessageContent
-	ParseError  string
-	FetchedAt   time.Time
+	Text        string          `gorm:"type:text"`
+	Raw         json.RawMessage `gorm:"type:jsonb;serializer:json;not null"`
+	Content     MessageContent  `gorm:"type:jsonb;serializer:json;not null"`
+	ParseError  string          `gorm:"type:text"`
+	FetchedAt   time.Time       `gorm:"type:timestamptz;not null"`
 }
+
+func (Message) TableName() string { return "weibo_chat_message" }
 
 type MessageContent struct {
 	SenderName string     `json:"sender_name,omitempty"`
