@@ -1,6 +1,6 @@
 # 微博群聊存档核心
 
-`internal/weibochat` 保存群聊消息、用户资料，并转存头像、图片、视频和自定义表情包。当前提供 Go 调用入口和服务端定时抓取，尚无 HTTP API、界面或 CLI。
+`internal/weibochat` 保存群聊消息、用户资料，并转存头像、图片、视频和自定义表情包。当前提供消息浏览 API、Go 调用入口和服务端定时抓取，尚无界面或 CLI。
 
 ## 群配置
 
@@ -20,6 +20,48 @@ group_ids = [] # 填入实际群 ID，例如 ["群 ID 1", "群 ID 2"]
 新群首次抓取最新一页（最多 20 条）建立起点；后续从最新消息增量读取到旧水位，不自动回补历史。每群每轮最多读取 100 页、转存 100 个附件，并同步观察到的用户资料和头像。未完成或失败附件留到下轮重试。
 
 达到 100 页仍未接上旧水位时，本轮报错且保留旧水位，已经保存的消息不丢失；需要通过 Go 调用入口以更大的页数上限执行 `Sync` 恢复。单个群失败不阻止后续群；SUB 缺失、过期或明确认证失效时停止整轮，凭据适配器负责通知。
+
+## 消息浏览 API
+
+```http
+GET /api/v1/weibo/groups
+GET /api/v1/weibo/groups/5152823595766382/senders
+GET /api/v1/weibo/groups/5152823595766382/messages?sender_id=123&asset_kind=image&limit=50
+```
+
+三个接口沿用服务端管理员访问规则，只读取本地存档，不请求微博。暂不提供搜索。
+
+- `groups` 返回配置中的群与已有存档的群，按数值群 ID 升序去重。每项含 `group_id`、`configured`、`initialized_at`、`last_synced_at`；未初始化的时间为 `null`。移除配置不会隐藏已有存档。
+- `senders` 返回该群存档中出现过的发件人，按数值 UID 升序排列。每项含 `uid`、最新 `screen_name` 和转存后的 `avatar_url`。这不是当前群成员名单；缺少用户资料时仍返回 UID。
+- `messages` 返回数值消息 ID 降序列表，支持以下筛选。合法但尚未存档的群返回空列表。
+
+| 参数                | 含义                                                  |
+| ------------------- | ----------------------------------------------------- |
+| `sender_id`         | 可重复，同一参数多个 UID 取 OR                        |
+| `sent_from`         | 发送时间起点，包含，RFC3339                           |
+| `sent_before`       | 发送时间终点，不包含，RFC3339                         |
+| `asset_kind`        | 可重复，支持 `image`、`video`、`sticker`，多个值取 OR |
+| `before_message_id` | 排他游标，取更早的消息                                |
+| `limit`             | 默认 50，范围 1～100                                  |
+
+不同筛选维度取 AND；省略参数表示不限制。时间示例为 `2026-10-25T00:00:00Z`，使用 `+08:00` 时需将 `+` 编码为 `%2B`。起点必须早于终点。参数为空、格式错误或类型不受支持时返回 `400`。
+
+附件筛选选择包含匹配附件的整条消息，返回时保留全部附件；`image` 不包含 `sticker`。普通文件类型尚未结构化解析，不支持按 PDF、ZIP 等筛选。未知消息默认保留；设置时间范围时，缺少发送时间的消息不匹配；设置附件条件时，只返回已确认匹配的消息。
+
+响应使用现有 `{ "message": "...", "data": ... }` 包装。群和发件人列表的 `data` 为 `{ "items": [] }`。消息列表的 `data` 为：
+
+```json
+{
+  "items": [],
+  "next_before_message_id": null
+}
+```
+
+有下一页时，`next_before_message_id` 为字符串，将它作为下次请求的 `before_message_id`，并保留其他筛选参数。筛选变化后清空游标重新请求；不返回总数。
+
+消息字段包括 `group_id`、`message_id`、`sender_id`、`sender`、`sent_at`、`text`、`links`、`assets`、`message_type`、`media_type`、`sub_type` 和 `parse_status`。所有 ID 均为字符串，时间返回 UTC；缺少发件人资料或发送时间时为 `null`，空数组为 `[]`。`parse_status` 为 `parsed` 或 `partial`，未知消息类型不等于解析失败。
+
+附件项含 `asset_key`、`kind`、`status`、`url`、`content_type`、`byte_size`。只有成功转存的附件提供 URL，`pending` 或 `failed` 附件仍返回且 URL 为 `null`。头像同样只提供转存 URL；不回退到在线原链接。响应不包含原始消息 JSON、Cookie 或内部错误文本。
 
 ## 调用
 

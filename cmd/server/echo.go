@@ -27,6 +27,7 @@ import (
 	tkblogHandler "github.com/eli-yip/rss-zero/internal/controller/tkblog"
 	tombkeeperHandler "github.com/eli-yip/rss-zero/internal/controller/tombkeeper"
 	userController "github.com/eli-yip/rss-zero/internal/controller/user"
+	weibochatController "github.com/eli-yip/rss-zero/internal/controller/weibochat"
 	xiaobotController "github.com/eli-yip/rss-zero/internal/controller/xiaobot"
 	zhihuController "github.com/eli-yip/rss-zero/internal/controller/zhihu"
 	zsxqController "github.com/eli-yip/rss-zero/internal/controller/zsxq"
@@ -35,6 +36,7 @@ import (
 	"github.com/eli-yip/rss-zero/internal/notify"
 	"github.com/eli-yip/rss-zero/internal/redis"
 	"github.com/eli-yip/rss-zero/internal/version"
+	"github.com/eli-yip/rss-zero/internal/weibochat"
 	"github.com/eli-yip/rss-zero/pkg/cookie"
 	"github.com/eli-yip/rss-zero/pkg/cron"
 	cronDB "github.com/eli-yip/rss-zero/pkg/cron/db"
@@ -125,6 +127,7 @@ func setupEcho(redisService redis.Redis,
 	tkblogH := tkblogHandler.NewController(tkblogRouter.NewDBService(db), notifier, logger)
 	parseHandler := parseHandler.NewHandler(db, ai, cookieService, fileService, notifier)
 	migrateHandler := migrateController.NewController(logger, db, notifier)
+	weibochatHandler := weibochatController.NewController(weibochat.NewPostgresStore(db), config.C.Weibo.GroupIDs)
 
 	registerRSS(e, zsxqHandler, zhihuHandler, xiaobotHandler, endOfLifeHandler, githubController, mHandler, tombkeeperH)
 	// /api/v1
@@ -194,6 +197,9 @@ func setupEcho(redisService redis.Redis,
 	tkblogGroup := apiGroup.Group("/tkblog")
 	groupNeedAuth = append(groupNeedAuth, tkblogGroup)
 	registerNamedRoute(tkblogGroup, http.MethodPost, "/:category/crawl", "Tkblog crawl route", tkblogH.Crawl)
+
+	weiboGroup := apiGroup.Group("/weibo", myMiddleware.AllowAdmin())
+	registerWeiboChat(weiboGroup, weibochatHandler)
 
 	for g := range slices.Values(groupNeedAuth) {
 		g.Use(myMiddleware.AllowAdmin())
@@ -425,4 +431,10 @@ func registerParse(parseApi *echo.Group, parseHandler *parseHandler.Handler) {
 
 func registerMacked(mackedApi *echo.Group, mackedHandler *mackedHandler.Handler) {
 	registerNamedRoute(mackedApi, http.MethodPost, "/appinfo", "Add app info route for macked", mackedHandler.AddAppInfo)
+}
+
+func registerWeiboChat(group *echo.Group, handler *weibochatController.Controller) {
+	registerNamedRoute(group, http.MethodGet, "/groups", "Weibo archive groups route", handler.ListGroups)
+	registerNamedRoute(group, http.MethodGet, "/groups/:group_id/senders", "Weibo archive senders route", handler.ListSenders)
+	registerNamedRoute(group, http.MethodGet, "/groups/:group_id/messages", "Weibo archive messages route", handler.ListMessages)
 }
