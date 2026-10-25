@@ -101,13 +101,15 @@ func (a *AssetArchiver) archive(ctx context.Context, asset *Asset) error {
 	now := time.Now().UTC()
 	asset.SourceURL, asset.ObjectKey, asset.StorageProvider = source, stored.key, a.files.AssetsDomain()
 	asset.ContentType, asset.ByteSize, asset.StoredAt = stored.contentType, stored.size, &now
+	asset.Width, asset.Height = stored.width, stored.height
 	return nil
 }
 
 type storedMedia struct {
-	key         string
-	contentType string
-	size        int64
+	key           string
+	contentType   string
+	size          int64
+	width, height int
 }
 
 // storeMedia is shared by message attachments and user avatars.
@@ -132,7 +134,17 @@ func (c *Client) storeMedia(ctx context.Context, files ObjectStore, source, kind
 	if ext == "" {
 		return storedMedia{}, fmt.Errorf("unexpected asset content type: %s", contentType)
 	}
-	stream := &assetStream{reader: io.MultiReader(bytes.NewReader(prefix), response.Body), body: response.Body, remaining: maxAssetBytes}
+	reader := io.MultiReader(bytes.NewReader(prefix), response.Body)
+	width, height := 0, 0
+	if kind == "image" || kind == "sticker" {
+		var header bytes.Buffer
+		width, height, err = ReadImageDimensions(io.TeeReader(reader, &header))
+		if err != nil {
+			return storedMedia{}, fmt.Errorf("read image dimensions: %w", err)
+		}
+		reader = io.MultiReader(bytes.NewReader(header.Bytes()), reader)
+	}
+	stream := &assetStream{reader: reader, body: response.Body, remaining: maxAssetBytes}
 	objectKey := keyPrefix + "." + ext
 	if err = files.SaveStreamContext(ctx, objectKey, stream, response.ContentLength); err != nil {
 		return storedMedia{}, fmt.Errorf("store asset: %w", err)
@@ -140,7 +152,7 @@ func (c *Client) storeMedia(ctx context.Context, files ObjectStore, source, kind
 	if stream.size == 0 || (response.ContentLength >= 0 && stream.size != response.ContentLength) {
 		return storedMedia{}, fmt.Errorf("incomplete asset stream")
 	}
-	return storedMedia{key: objectKey, contentType: contentType, size: stream.size}, nil
+	return storedMedia{key: objectKey, contentType: contentType, size: stream.size, width: width, height: height}, nil
 }
 
 func (c *Client) download(ctx context.Context, source string) (*http.Response, error) {

@@ -91,7 +91,7 @@ func seedMessages(t *testing.T, db *gorm.DB) time.Time {
 	require.NoError(t, db.Create(&messages).Error)
 	users := []weibochat.User{{UID: "10", ScreenName: "latest name", AvatarSourceURL: "https://private.example/avatar", AvatarStorageProvider: "https://assets.example", AvatarObjectKey: "avatars/a b.jpg", ProfileObservedAt: sent}, {UID: "20", ScreenName: "second", ProfileObservedAt: sent}, {UID: "40", ScreenName: "other", ProfileObservedAt: sent}}
 	require.NoError(t, db.Create(&users).Error)
-	assets := []weibochat.Asset{{GroupID: "1", AssetKey: "file/1", Kind: "image", Status: weibochat.AssetStored, ObjectKey: "pictures/a b.jpg", StorageProvider: "https://assets.example", ContentType: "image/jpeg", ByteSize: 123}, {GroupID: "1", AssetKey: "file/2", Kind: "video", Status: weibochat.AssetFailed, LastError: "private download error", SourceURL: "https://private.example/file"}}
+	assets := []weibochat.Asset{{GroupID: "1", AssetKey: "file/1", Kind: "image", Status: weibochat.AssetStored, ObjectKey: "pictures/a b.jpg", StorageProvider: "https://assets.example", ContentType: "image/jpeg", ByteSize: 123, Width: 640, Height: 480}, {GroupID: "1", AssetKey: "file/2", Kind: "video", Status: weibochat.AssetFailed, LastError: "private download error", SourceURL: "https://private.example/file"}}
 	require.NoError(t, db.Create(&assets).Error)
 	require.NoError(t, db.Create(&weibochat.SyncState{GroupID: "1", InitializedAt: sent, LastSyncedAt: &later}).Error)
 	require.NoError(t, db.Create(&weibochat.SyncState{GroupID: "4", InitializedAt: sent}).Error)
@@ -123,6 +123,8 @@ func TestMessageListPaginationAndAssembly(t *testing.T) {
 	require.Equal(t, "https://assets.example/avatars/a%20b.jpg", *message.Sender.AvatarURL)
 	require.Equal(t, time.UTC, message.SentAt.Location())
 	require.Len(t, message.Assets, 3)
+	require.Equal(t, 640, message.Assets[0].Width)
+	require.Equal(t, 480, message.Assets[0].Height)
 	require.Equal(t, "https://assets.example/pictures/a%20b.jpg", *message.Assets[0].URL)
 	require.Equal(t, "failed", message.Assets[1].Status)
 	require.Nil(t, message.Assets[1].URL)

@@ -109,6 +109,8 @@ func TestArchiveRetriesFailedDownload(t *testing.T) {
 	require.Equal(t, data, files.objects[saved.ObjectKey])
 	require.Empty(t, saved.LastError)
 	require.EqualValues(t, len(data), saved.ByteSize)
+	require.Equal(t, 2, saved.Width)
+	require.Equal(t, 2, saved.Height)
 	result, err = archiver.ArchiveAssets(ctx, "1", 10)
 	require.NoError(t, err)
 	require.Zero(t, result.Attempted)

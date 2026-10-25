@@ -107,6 +107,7 @@ func (h *Controller) messageResponses(ctx context.Context, owner, groupID string
 			asset := AssetResponse{AssetKey: ref.AssetKey, Kind: ref.Kind, Status: weibochat.AssetPending}
 			if stored, ok := byAsset[ref.AssetKey]; ok {
 				asset.Status, asset.ContentType, asset.ByteSize = stored.Status, stored.ContentType, stored.ByteSize
+				asset.Width, asset.Height = stored.Width, stored.Height
 				if stored.Status == weibochat.AssetStored {
 					asset.URL = storedURL(stored.StorageProvider, stored.ObjectKey)
 				}

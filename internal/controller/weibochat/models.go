@@ -39,6 +39,8 @@ type AssetResponse struct {
 	URL         *string `json:"url"`
 	ContentType string  `json:"content_type"`
 	ByteSize    int64   `json:"byte_size"`
+	Width       int     `json:"width"`
+	Height      int     `json:"height"`
 }
 
 type MessageResponse struct {
