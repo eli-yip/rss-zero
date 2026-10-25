@@ -55,9 +55,9 @@ func (id *MessageID) UnmarshalJSON(data []byte) error {
 
 // Message retains the first observation. Raw excludes reaction metadata.
 type Message struct {
-	GroupID     string     `gorm:"type:text;primaryKey"`
-	MessageID   MessageID  `gorm:"type:text;primaryKey"`
-	SenderID    string     `gorm:"type:text;index"`
+	GroupID     string     `gorm:"type:text;primaryKey;index:idx_weibo_chat_message_order,priority:1;index:idx_weibo_chat_message_sender,priority:1"`
+	MessageID   MessageID  `gorm:"type:text;primaryKey;index:idx_weibo_chat_message_order,priority:2,expression:length(message_id),sort:desc;index:idx_weibo_chat_message_order,priority:3,collate:\"C\",sort:desc"`
+	SenderID    string     `gorm:"type:text;index;index:idx_weibo_chat_message_sender,priority:2"`
 	Sender      *User      `gorm:"-"`
 	SentAt      *time.Time `gorm:"type:timestamptz;index"`
 	MessageType *int
@@ -88,4 +88,22 @@ type AssetRef struct {
 	Kind      string `json:"kind"`
 	AssetKey  string `json:"asset_key"`
 	SourceURL string `json:"source_url,omitempty"`
+}
+
+// MessageFilter selects archived messages within one group. Filter dimensions
+// are combined with AND; multiple senders or asset kinds within a dimension use OR.
+type MessageFilter struct {
+	SenderIDs       []string
+	SentFrom        *time.Time
+	SentBefore      *time.Time
+	AssetKinds      []string
+	BeforeMessageID MessageID
+	Limit           int
+}
+
+// MessageListPage is ordered by descending numeric message ID. An empty cursor
+// means there is no next page. Raw upstream payloads are not loaded for browsing.
+type MessageListPage struct {
+	Messages            []Message
+	NextBeforeMessageID MessageID
 }

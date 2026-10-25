@@ -54,3 +54,34 @@ func TestAvatarSignatureRotation(t *testing.T) {
 	require.NotEqual(t, avatarIdentity(first), avatarIdentity("https://tvax1.sinaimg.cn/avatar/first.jpg?KID=2&Expires=100&ssig=old"))
 	require.NotEqual(t, avatarIdentity("https://other.example/avatar?Expires=100"), avatarIdentity("https://other.example/avatar?Expires=200"))
 }
+
+func TestListSendersAndGetUsers(t *testing.T) {
+	store, _ := testStore(t)
+	ctx := context.Background()
+	now := time.Now().UTC()
+	_, err := store.SaveMessages(ctx, []Message{
+		{GroupID: "1", MessageID: "1", SenderID: "9", Raw: []byte(`{}`), FetchedAt: now},
+		{GroupID: "1", MessageID: "2", SenderID: "9", Raw: []byte(`{}`), FetchedAt: now},
+		{GroupID: "1", MessageID: "3", SenderID: "10", Raw: []byte(`{}`), FetchedAt: now},
+		{GroupID: "1", MessageID: "4", Raw: []byte(`{}`), FetchedAt: now},
+		{GroupID: "2", MessageID: "5", SenderID: "20", Raw: []byte(`{}`), FetchedAt: now},
+	})
+	require.NoError(t, err)
+	require.NoError(t, store.SaveUser(ctx, &User{UID: "9", ScreenName: "old", ProfileObservedAt: now}))
+	require.NoError(t, store.SaveUser(ctx, &User{UID: "9", ScreenName: "latest", AvatarObjectKey: "avatar.jpg", ProfileObservedAt: now.Add(time.Second)}))
+	require.NoError(t, store.SaveUser(ctx, &User{UID: "20", ScreenName: "other group", ProfileObservedAt: now}))
+	senders, err := store.ListSenders(ctx, "1")
+	require.NoError(t, err)
+	require.Len(t, senders, 2)
+	require.Equal(t, "9", senders[0].UID)
+	require.Equal(t, "latest", senders[0].ScreenName)
+	require.Equal(t, "avatar.jpg", senders[0].AvatarObjectKey)
+	require.Equal(t, User{UID: "10"}, senders[1])
+	users, err := store.GetUsers(ctx, []string{"9", "10"})
+	require.NoError(t, err)
+	require.Len(t, users, 1)
+	require.Equal(t, "9", users[0].UID)
+	empty, err := store.GetUsers(ctx, nil)
+	require.NoError(t, err)
+	require.Empty(t, empty)
+}

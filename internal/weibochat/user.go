@@ -155,3 +155,27 @@ func avatarIdentity(source string) string {
 	u.RawQuery = query.Encode()
 	return u.String()
 }
+
+// GetUsers loads the latest profiles for a message page in one query.
+func (s *PostgresStore) GetUsers(ctx context.Context, uids []string) ([]User, error) {
+	users := []User{}
+	if len(uids) == 0 {
+		return users, nil
+	}
+	err := s.db.WithContext(ctx).Where("uid IN ?", uids).Find(&users).Error
+	return users, err
+}
+
+// ListSenders lists observed senders, not current group membership. A sender
+// whose profile has not been archived is still represented by their UID.
+func (s *PostgresStore) ListSenders(ctx context.Context, groupID string) ([]User, error) {
+	users := []User{}
+	err := s.db.WithContext(ctx).Raw(`
+		SELECT senders.sender_id AS uid, users.screen_name, users.avatar_source_url,
+			users.avatar_object_key, users.avatar_storage_provider, users.profile_observed_at
+		FROM (SELECT DISTINCT sender_id FROM weibo_chat_message WHERE group_id = ? AND sender_id <> '') AS senders
+		LEFT JOIN weibo_chat_user AS users ON users.uid = senders.sender_id
+		ORDER BY length(senders.sender_id), senders.sender_id COLLATE "C"
+	`, groupID).Scan(&users).Error
+	return users, err
+}

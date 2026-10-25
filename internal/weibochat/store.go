@@ -117,3 +117,65 @@ func (s *PostgresStore) SaveAssetResult(ctx context.Context, asset *Asset) error
 	}
 	return nil
 }
+
+// ListMessages reads a bounded page without fetching upstream or loading Raw.
+func (s *PostgresStore) ListMessages(ctx context.Context, groupID string, filter MessageFilter) (MessageListPage, error) {
+	page := MessageListPage{Messages: []Message{}}
+	if filter.Limit < 1 || filter.Limit > 100 {
+		return page, fmt.Errorf("message limit must be between 1 and 100")
+	}
+	query := s.db.WithContext(ctx).Model(&Message{}).Omit("Raw").Where("group_id = ?", groupID)
+	if len(filter.SenderIDs) > 0 {
+		query = query.Where("sender_id IN ?", filter.SenderIDs)
+	}
+	if filter.SentFrom != nil {
+		query = query.Where("sent_at >= ?", *filter.SentFrom)
+	}
+	if filter.SentBefore != nil {
+		query = query.Where("sent_at < ?", *filter.SentBefore)
+	}
+	if len(filter.AssetKinds) > 0 {
+		query = query.Where("EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(content->'assets', '[]'::jsonb)) AS asset WHERE asset->>'kind' IN ?)", filter.AssetKinds)
+	}
+	if filter.BeforeMessageID != "" {
+		query = query.Where(`(length(message_id), message_id COLLATE "C") < (?, ? COLLATE "C")`, len(filter.BeforeMessageID), string(filter.BeforeMessageID))
+	}
+	if err := query.Order(`length(message_id) DESC, message_id COLLATE "C" DESC`).Limit(filter.Limit + 1).Find(&page.Messages).Error; err != nil {
+		return page, err
+	}
+	if len(page.Messages) > filter.Limit {
+		page.Messages = page.Messages[:filter.Limit]
+		page.NextBeforeMessageID = page.Messages[len(page.Messages)-1].MessageID
+	}
+	return page, nil
+}
+
+// Group describes observed archive coverage. A group with messages but no saved
+// sync state remains discoverable after an interrupted initialization.
+type Group struct {
+	GroupID       string
+	InitializedAt *time.Time
+	LastSyncedAt  *time.Time
+}
+
+func (s *PostgresStore) ListGroups(ctx context.Context) ([]Group, error) {
+	groups := []Group{}
+	err := s.db.WithContext(ctx).Raw(`
+		SELECT groups.group_id, state.initialized_at, state.last_synced_at
+		FROM (SELECT group_id FROM weibo_chat_message UNION SELECT group_id FROM weibo_chat_sync_state) AS groups
+		LEFT JOIN weibo_chat_sync_state AS state USING (group_id)
+		ORDER BY length(groups.group_id), groups.group_id COLLATE "C"
+	`).Scan(&groups).Error
+	return groups, err
+}
+
+// GetAssets returns records for a page's references, including pending and failed
+// assets. Callers retain reference order when assembling individual messages.
+func (s *PostgresStore) GetAssets(ctx context.Context, groupID string, keys []string) ([]Asset, error) {
+	assets := []Asset{}
+	if len(keys) == 0 {
+		return assets, nil
+	}
+	err := s.db.WithContext(ctx).Where("group_id = ? AND asset_key IN ?", groupID, keys).Find(&assets).Error
+	return assets, err
+}
