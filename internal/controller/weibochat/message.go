@@ -35,11 +35,7 @@ func (h *Controller) ListMessages(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	result := MessageListResponse{Items: items}
-	if page.NextBeforeMessageID != "" {
-		value := string(page.NextBeforeMessageID)
-		result.NextBeforeMessageID = &value
-	}
+	result := MessageListResponse{Items: items, HasMore: page.HasMore}
 	return c.JSON(http.StatusOK, httputil.NewResp("weibo messages", result))
 }
 
@@ -116,7 +112,7 @@ func parseMessageFilter(query url.Values) (weibochat.MessageFilter, error) {
 			return filter, fmt.Errorf("asset_kind must be image, video or sticker")
 		}
 	}
-	for _, name := range []string{"sent_from", "sent_before", "before_message_id", "limit"} {
+	for _, name := range []string{"sent_from", "sent_before", "before_message_id", "after_message_id", "limit"} {
 		values, present := query[name]
 		if !present {
 			continue
@@ -136,10 +132,15 @@ func parseMessageFilter(query url.Values) (weibochat.MessageFilter, error) {
 			} else {
 				filter.SentBefore = &parsed
 			}
-		case "before_message_id":
-			filter.BeforeMessageID = weibochat.MessageID(value)
-			if !filter.BeforeMessageID.Valid() {
-				return filter, fmt.Errorf("invalid before_message_id")
+		case "before_message_id", "after_message_id":
+			id := weibochat.MessageID(value)
+			if !id.Valid() {
+				return filter, fmt.Errorf("invalid %s", name)
+			}
+			if name == "before_message_id" {
+				filter.BeforeMessageID = id
+			} else {
+				filter.AfterMessageID = id
 			}
 		case "limit":
 			limit, err := strconv.Atoi(value)
@@ -148,6 +149,9 @@ func parseMessageFilter(query url.Values) (weibochat.MessageFilter, error) {
 			}
 			filter.Limit = limit
 		}
+	}
+	if filter.BeforeMessageID != "" && filter.AfterMessageID != "" {
+		return filter, fmt.Errorf("before_message_id and after_message_id are mutually exclusive")
 	}
 	if filter.SentFrom != nil && filter.SentBefore != nil && !filter.SentFrom.Before(*filter.SentBefore) {
 		return filter, fmt.Errorf("sent_from must be before sent_before")

@@ -94,6 +94,7 @@ func TestRegisterWeiboChatRoutes(t *testing.T) {
 		"/api/v1/weibo/groups",
 		"/api/v1/weibo/groups/:group_id/senders",
 		"/api/v1/weibo/groups/:group_id/messages",
+		"/api/v1/weibo/groups/:group_id/messages/:message_id/context",
 	} {
 		route, err := e.Router().Routes().FindByMethodPath(http.MethodGet, path)
 		require.NoError(t, err)
@@ -108,13 +109,13 @@ func TestWeiboChatRoutesRequireAdmin(t *testing.T) {
 	e := echo.New()
 	e.HTTPErrorHandler = httputil.NewHTTPErrorHandler(zap.NewNop())
 	registerWeiboChat(e.Group("/api/v1/weibo", myMiddleware.AllowAdmin()), weibochatController.NewController(nil, nil))
-	for _, path := range []string{"/api/v1/weibo/groups", "/api/v1/weibo/groups/1/senders", "/api/v1/weibo/groups/1/messages"} {
+	for _, path := range []string{"/api/v1/weibo/groups", "/api/v1/weibo/groups/1/senders", "/api/v1/weibo/groups/1/messages", "/api/v1/weibo/groups/1/messages/100/context"} {
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 		require.Equal(t, http.StatusForbidden, rec.Code)
 	}
 	// Invalid IDs reach parameter validation only after passing the existing admin middleware.
-	for _, path := range []string{"/api/v1/weibo/groups/invalid/messages", "/api/v1/weibo/groups/invalid/senders"} {
+	for _, path := range []string{"/api/v1/weibo/groups/invalid/messages", "/api/v1/weibo/groups/invalid/senders", "/api/v1/weibo/groups/1/messages/invalid/context"} {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
 		req.Header.Set("Remote-Groups", "lldap_admin")
 		rec := httptest.NewRecorder()

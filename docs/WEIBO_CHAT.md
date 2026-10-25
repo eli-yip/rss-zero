@@ -29,11 +29,11 @@ GET /api/v1/weibo/groups/5152823595766382/senders
 GET /api/v1/weibo/groups/5152823595766382/messages?sender_id=123&asset_kind=image&limit=50
 ```
 
-三个接口沿用服务端管理员访问规则，只读取本地存档，不请求微博。
+接口沿用服务端管理员访问规则，只读取本地存档，不请求微博。
 
 - `groups` 返回配置中的群与已有存档的群，按数值群 ID 升序去重。每项含 `group_id`、`configured`、`initialized_at`、`last_synced_at`；未初始化的时间为 `null`。移除配置不会隐藏已有存档。
 - `senders` 返回该群存档中出现过的发件人，按数值 UID 升序排列。每项含 `uid`、最新 `screen_name` 和转存后的 `avatar_url`。这不是当前群成员名单；缺少用户资料时仍返回 UID。
-- `messages` 返回数值消息 ID 降序列表，支持以下筛选。合法但尚未存档的群返回空列表。
+- `messages` 返回数值消息 ID 升序列表，支持以下筛选。合法但尚未存档的群返回空列表。
 
 | 参数                | 含义                                                  |
 | ------------------- | ----------------------------------------------------- |
@@ -43,7 +43,8 @@ GET /api/v1/weibo/groups/5152823595766382/messages?sender_id=123&asset_kind=imag
 | `sent_from`         | 发送时间起点，包含，RFC3339                           |
 | `sent_before`       | 发送时间终点，不包含，RFC3339                         |
 | `asset_kind`        | 可重复，支持 `image`、`video`、`sticker`，多个值取 OR |
-| `before_message_id` | 排他游标，取更早的消息                                |
+| `before_message_id` | 排他游标，取更早且最近的消息                          |
+| `after_message_id`  | 排他游标，取更新且最近的消息；不能与前者同时传入      |
 | `limit`             | 默认 50，范围 1～100                                  |
 
 不同筛选维度取 AND；省略参数表示不限制。时间示例为 `2026-10-25T00:00:00Z`，使用 `+08:00` 时需将 `+` 编码为 `%2B`。起点必须早于终点。参数为空、格式错误或类型不受支持时返回 `400`。
@@ -71,15 +72,41 @@ GET /api/v1/weibo/groups/5152823595766382/messages?q=%E6%95%B0%E6%8D%AE%E5%BA%93
 ```json
 {
   "items": [],
-  "next_before_message_id": null
+  "has_more": false
 }
 ```
 
-有下一页时，`next_before_message_id` 为字符串，将它作为下次请求的 `before_message_id`，并保留其他筛选参数。筛选变化后清空游标重新请求；不返回总数。
+不传游标时取最新 N 条；传入 `before_message_id` 或 `after_message_id` 时取该方向最近 N 条。所有结果均按数值 ID 升序返回。`has_more` 表示本次查询方向是否还有匹配消息；不传游标时表示更早方向。
+
+向上加载使用当前窗口最小 ID 作为 `before_message_id`；向下加载使用最大 ID 作为 `after_message_id`，两侧分别维护加载状态。保留搜索和筛选参数；条件变化后清空窗口重新请求。不返回总数。到达底部后，可再次用最大 ID 请求 `after_message_id` 刷新新存档消息。
 
 消息字段包括 `group_id`、`message_id`、`sender_id`、`sender`、`sent_at`、`text`、`links`、`assets`、`message_type`、`media_type`、`sub_type` 和 `parse_status`。所有 ID 均为字符串，时间返回 UTC；缺少发件人资料或发送时间时为 `null`，空数组为 `[]`。`parse_status` 为 `parsed` 或 `partial`，未知消息类型不等于解析失败。
 
 附件项含 `asset_key`、`kind`、`status`、`url`、`content_type`、`byte_size`。只有成功转存的附件提供 URL，`pending` 或 `failed` 附件仍返回且 URL 为 `null`。头像同样只提供转存 URL；不回退到在线原链接。响应不包含原始消息 JSON、Cookie 或内部错误文本。
+
+## 定位消息与查看上下文
+
+```http
+GET /api/v1/weibo/groups/5152823595766382/messages/5357963156128139/context?before_limit=20&after_limit=20&highlight_q=%E6%95%B0%E6%8D%AE%E5%BA%93
+```
+
+返回目标消息及其最近的前后聊天，按数值消息 ID 升序排列。两侧各默认 20 条，允许 0～50 条；目标消息始终出现一次。同群目标不存在返回 `404`，ID、数量或高亮语法错误返回 `400`。
+
+```json
+{
+  "message": "weibo message context",
+  "data": {
+    "anchor_message_id": "5357963156128139",
+    "items": [],
+    "has_more_before": true,
+    "has_more_after": false
+  }
+}
+```
+
+`items` 使用相同消息结构和服务端 `text_matches`。`highlight_q` 只高亮，省略时没有高亮；上下文不筛选消息，不接受 `q`、发件人、时间、附件或列表分页参数，传入这些参数返回 `400`。
+
+前后标志只描述本地已存档消息，即使某侧数量为 0 也会判断该侧是否有更多消息。继续滚动时调用 `/messages`：清空搜索和筛选，携带 `highlight_q`，用窗口最小或最大 ID 作为方向游标。两侧可持续加载到存档边界，不增加独立时间线接口。
 
 ## 调用
 

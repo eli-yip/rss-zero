@@ -53,6 +53,7 @@ func testRoutes(h *Controller) *echo.Echo {
 	e.GET("/groups", h.ListGroups)
 	e.GET("/groups/:group_id/messages", h.ListMessages)
 	e.GET("/groups/:group_id/senders", h.ListSenders)
+	e.GET("/groups/:group_id/messages/:message_id/context", h.GetMessageContext)
 	return e
 }
 
@@ -97,19 +98,19 @@ func TestMessageListPaginationAndAssembly(t *testing.T) {
 	rec := get(t, e, "/groups/1/messages?limit=2", http.StatusOK)
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &first))
 	require.Len(t, first.Data.Items, 2)
-	require.Equal(t, "102", first.Data.Items[0].MessageID)
-	require.Equal(t, "101", first.Data.Items[1].MessageID)
-	require.Nil(t, first.Data.Items[1].Sender)
-	require.Nil(t, first.Data.Items[1].SentAt)
-	require.Equal(t, "parsed", first.Data.Items[1].ParseStatus)
-	require.Equal(t, "101", *first.Data.NextBeforeMessageID)
+	require.Equal(t, "101", first.Data.Items[0].MessageID)
+	require.Equal(t, "102", first.Data.Items[1].MessageID)
+	require.Nil(t, first.Data.Items[0].Sender)
+	require.Nil(t, first.Data.Items[0].SentAt)
+	require.Equal(t, "parsed", first.Data.Items[0].ParseStatus)
+	require.True(t, first.Data.HasMore)
 	var next httputil.Resp[MessageListResponse]
 	rec = get(t, e, "/groups/1/messages?limit=2&before_message_id=101", http.StatusOK)
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &next))
 	require.Len(t, next.Data.Items, 2)
-	require.Nil(t, next.Data.NextBeforeMessageID)
-	require.Equal(t, "partial", next.Data.Items[0].ParseStatus)
-	message := next.Data.Items[1]
+	require.False(t, next.Data.HasMore)
+	require.Equal(t, "partial", next.Data.Items[1].ParseStatus)
+	message := next.Data.Items[0]
 	require.Equal(t, "95", message.MessageID)
 	require.Equal(t, "latest name", message.Sender.ScreenName)
 	require.Equal(t, "https://assets.example/avatars/a%20b.jpg", *message.Sender.AvatarURL)
@@ -137,7 +138,7 @@ func TestMessageListFiltersAndEmptyResult(t *testing.T) {
 	require.Len(t, result.Data.Items[0].Assets, 3)
 	for _, path := range []string{"/groups/999/messages", "/groups/1/messages?sender_id=40"} {
 		rec := get(t, e, path, http.StatusOK)
-		require.JSONEq(t, `{"message":"weibo messages","data":{"items":[],"next_before_message_id":null}}`, rec.Body.String())
+		require.JSONEq(t, `{"message":"weibo messages","data":{"items":[],"has_more":false}}`, rec.Body.String())
 	}
 }
 
@@ -147,6 +148,8 @@ func TestMessageParameters(t *testing.T) {
 		"/groups/no/messages", "/groups/0/senders", "/groups/1/messages?sender_id=", "/groups/1/messages?sender_id=01",
 		"/groups/1/messages?asset_kind=file", "/groups/1/messages?asset_kind=", "/groups/1/messages?before_message_id=",
 		"/groups/1/messages?before_message_id=-1", "/groups/1/messages?limit=0", "/groups/1/messages?limit=101",
+		"/groups/1/messages?after_message_id=", "/groups/1/messages?after_message_id=01",
+		"/groups/1/messages?before_message_id=1&after_message_id=2", "/groups/1/messages?after_message_id=1&after_message_id=2",
 		"/groups/1/messages?limit=1&limit=2", "/groups/1/messages?sent_from=2026-10-25", "/groups/1/messages?sent_before=",
 		"/groups/1/messages?sent_from=2026-10-25T00:00:00Z&sent_before=2026-10-25T00:00:00Z",
 	} {
@@ -169,7 +172,7 @@ func TestMessageSearchAndIndependentHighlight(t *testing.T) {
 		{`q=` + url.QueryEscape(`数据库 "hello world"`), 1, []weibochat.TextMatch{{Start: 1, End: 4}, {Start: 5, End: 16}}},
 		{`q=` + url.QueryEscape(`数据库 "hello world"`) + `&highlight_q=world`, 1, []weibochat.TextMatch{{Start: 11, End: 16}}},
 		{`q=` + url.QueryEscape(`数据库 "hello world"`) + `&highlight_q=`, 1, []weibochat.TextMatch{}},
-		{`highlight_q=world`, 2, []weibochat.TextMatch{{Start: 14, End: 19}}},
+		{`highlight_q=world`, 2, []weibochat.TextMatch{{Start: 11, End: 16}}},
 		{`q=%20%20`, 2, []weibochat.TextMatch{}},
 	} {
 		rec := get(t, e, "/groups/1/messages?"+tc.query, http.StatusOK)

@@ -110,3 +110,5 @@ job：
 ## 微博消息搜索
 
 `internal/weibochat/search.go` 负责字面关键词语法和原文码点高亮；HTTP 列表的 `q` 过滤、`highlight_q` 仅高亮。SQL 和高亮统一只折叠 ASCII 英文字母。查询表达式为 `translate(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') COLLATE "C"`，未来 `pg_bigm` 索引必须使用同一表达式；当前不安装扩展或新增索引，查询性能尚未按大数据量验证。
+
+消息列表使用排他 `before_message_id` / `after_message_id` 选取最近一页，并统一按数值 ID 升序返回；`has_more` 只描述本次方向。`GetMessageContext` 复用同一分页查询取得目标消息两侧，无搜索过滤；控制器复用消息批量装配和 `highlight_q` 高亮。

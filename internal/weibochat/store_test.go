@@ -131,35 +131,35 @@ func TestListMessagesFiltersAndPagination(t *testing.T) {
 
 	page, err := store.ListMessages(ctx, "1", MessageFilter{Limit: 2})
 	require.NoError(t, err)
-	require.Equal(t, []MessageID{"18446744073709551616", "9007199254740993"}, messageIDs(page.Messages))
-	require.Equal(t, MessageID("9007199254740993"), page.NextBeforeMessageID)
+	require.Equal(t, []MessageID{"9007199254740993", "18446744073709551616"}, messageIDs(page.Messages))
+	require.True(t, page.HasMore)
 	require.Empty(t, page.Messages[0].Raw)
-	require.Equal(t, &unknown, page.Messages[1].MediaType)
-	require.NotEmpty(t, page.Messages[1].ParseError)
+	require.Equal(t, &unknown, page.Messages[0].MediaType)
+	require.NotEmpty(t, page.Messages[0].ParseError)
 
 	// A new latest message does not shift the following cursor page.
 	inserted := Message{GroupID: "1", MessageID: "18446744073709551617", Raw: []byte(`{}`), FetchedAt: start}
 	_, err = store.SaveMessages(ctx, []Message{inserted})
 	require.NoError(t, err)
-	page, err = store.ListMessages(ctx, "1", MessageFilter{BeforeMessageID: page.NextBeforeMessageID, Limit: 2})
+	page, err = store.ListMessages(ctx, "1", MessageFilter{BeforeMessageID: page.Messages[0].MessageID, Limit: 2})
 	require.NoError(t, err)
-	require.Equal(t, []MessageID{"11", "10"}, messageIDs(page.Messages))
-	require.Equal(t, MessageID("10"), page.NextBeforeMessageID)
-	page, err = store.ListMessages(ctx, "1", MessageFilter{BeforeMessageID: page.NextBeforeMessageID, Limit: 2})
+	require.Equal(t, []MessageID{"10", "11"}, messageIDs(page.Messages))
+	require.True(t, page.HasMore)
+	page, err = store.ListMessages(ctx, "1", MessageFilter{BeforeMessageID: page.Messages[0].MessageID, Limit: 2})
 	require.NoError(t, err)
 	require.Equal(t, []MessageID{"9"}, messageIDs(page.Messages))
-	require.Empty(t, page.NextBeforeMessageID)
+	require.False(t, page.HasMore)
 
 	for _, tc := range []struct {
 		name   string
 		filter MessageFilter
 		want   []MessageID
 	}{
-		{"senders", MessageFilter{SenderIDs: []string{"10", "30"}}, []MessageID{"9007199254740993", "11", "9"}},
-		{"time bounds", MessageFilter{SentFrom: &start, SentBefore: &end}, []MessageID{"18446744073709551616", "10", "9"}},
-		{"asset OR", MessageFilter{AssetKinds: []string{"image", "video"}}, []MessageID{"18446744073709551616", "9"}},
+		{"senders", MessageFilter{SenderIDs: []string{"10", "30"}}, []MessageID{"9", "11", "9007199254740993"}},
+		{"time bounds", MessageFilter{SentFrom: &start, SentBefore: &end}, []MessageID{"9", "10", "18446744073709551616"}},
+		{"asset OR", MessageFilter{AssetKinds: []string{"image", "video"}}, []MessageID{"9", "18446744073709551616"}},
 		{"sticker distinct", MessageFilter{AssetKinds: []string{"sticker"}}, []MessageID{"10"}},
-		{"combined", MessageFilter{SenderIDs: []string{"10", "20"}, SentFrom: &start, SentBefore: &end, AssetKinds: []string{"video", "sticker"}}, []MessageID{"10", "9"}},
+		{"combined", MessageFilter{SenderIDs: []string{"10", "20"}, SentFrom: &start, SentBefore: &end, AssetKinds: []string{"video", "sticker"}}, []MessageID{"9", "10"}},
 		{"no match", MessageFilter{SenderIDs: []string{"40"}}, []MessageID{}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -167,7 +167,7 @@ func TestListMessagesFiltersAndPagination(t *testing.T) {
 			page, err := store.ListMessages(ctx, "1", tc.filter)
 			require.NoError(t, err)
 			require.Equal(t, tc.want, messageIDs(page.Messages))
-			require.Empty(t, page.NextBeforeMessageID)
+			require.False(t, page.HasMore)
 		})
 	}
 
@@ -175,11 +175,11 @@ func TestListMessagesFiltersAndPagination(t *testing.T) {
 	page, err = store.ListMessages(ctx, "1", filtered)
 	require.NoError(t, err)
 	require.Equal(t, []MessageID{"18446744073709551616"}, messageIDs(page.Messages))
-	filtered.BeforeMessageID = page.NextBeforeMessageID
+	filtered.BeforeMessageID = page.Messages[0].MessageID
 	page, err = store.ListMessages(ctx, "1", filtered)
 	require.NoError(t, err)
 	require.Equal(t, []MessageID{"9"}, messageIDs(page.Messages))
-	require.Empty(t, page.NextBeforeMessageID)
+	require.False(t, page.HasMore)
 	for _, limit := range []int{0, -1, 101} {
 		_, err := store.ListMessages(ctx, "1", MessageFilter{Limit: limit})
 		require.Error(t, err)
@@ -250,9 +250,9 @@ func TestSearchLiteralTermsAndSQLHighlightAgreement(t *testing.T) {
 		q    string
 		want []MessageID
 	}{
-		{`数据库 "hello world"`, []MessageID{"3", "1"}},
-		{`100% a_b C:\tmp!`, []MessageID{"3", "1"}},
-		{`hello`, []MessageID{"3", "2", "1"}},
+		{`数据库 "hello world"`, []MessageID{"1", "3"}},
+		{`100% a_b C:\tmp!`, []MessageID{"1", "3"}},
+		{`hello`, []MessageID{"1", "2", "3"}},
 		{`é`, []MessageID{"4"}},
 	} {
 		q, err := ParseSearchQuery(tc.q)
@@ -270,9 +270,74 @@ func TestSearchLiteralTermsAndSQLHighlightAgreement(t *testing.T) {
 	page, err := store.ListMessages(ctx, "1", filter)
 	require.NoError(t, err)
 	require.Equal(t, []MessageID{"3"}, messageIDs(page.Messages))
-	filter.BeforeMessageID = page.NextBeforeMessageID
+	filter.BeforeMessageID = page.Messages[0].MessageID
 	page, err = store.ListMessages(ctx, "1", filter)
 	require.NoError(t, err)
 	require.Equal(t, []MessageID{"1"}, messageIDs(page.Messages))
-	require.Empty(t, page.NextBeforeMessageID)
+	require.False(t, page.HasMore)
+}
+
+func TestBidirectionalPagingAndContext(t *testing.T) {
+	store, _ := testStore(t)
+	ctx := context.Background()
+	now := time.Now().UTC()
+	for _, id := range []MessageID{"9", "10", "99", "100", "9007199254740993"} {
+		_, err := store.SaveMessages(ctx, []Message{{GroupID: "1", MessageID: id, SenderID: "20", Text: "match", Raw: []byte(`{}`), FetchedAt: now}})
+		require.NoError(t, err)
+	}
+	for _, tc := range []struct {
+		filter MessageFilter
+		want   []MessageID
+		more   bool
+	}{
+		{MessageFilter{Limit: 2}, []MessageID{"100", "9007199254740993"}, true},
+		{MessageFilter{BeforeMessageID: "100", Limit: 2}, []MessageID{"10", "99"}, true},
+		{MessageFilter{BeforeMessageID: "10", Limit: 2}, []MessageID{"9"}, false},
+		{MessageFilter{BeforeMessageID: "9", Limit: 2}, []MessageID{}, false},
+		{MessageFilter{AfterMessageID: "9", Limit: 2}, []MessageID{"10", "99"}, true},
+		{MessageFilter{AfterMessageID: "99", Limit: 2}, []MessageID{"100", "9007199254740993"}, false},
+		{MessageFilter{AfterMessageID: "9007199254740993", Limit: 2}, []MessageID{}, false},
+		{MessageFilter{AfterMessageID: "11", Limit: 2, Search: SearchQuery{Terms: []string{"MATCH"}}, SenderIDs: []string{"20"}}, []MessageID{"99", "100"}, true},
+	} {
+		page, err := store.ListMessages(ctx, "1", tc.filter)
+		require.NoError(t, err)
+		require.Equal(t, tc.want, messageIDs(page.Messages))
+		require.Equal(t, tc.more, page.HasMore)
+	}
+	_, err := store.ListMessages(ctx, "1", MessageFilter{BeforeMessageID: "100", AfterMessageID: "9", Limit: 2})
+	require.Error(t, err)
+	// Refreshing the newer side finds messages inserted after reaching the end.
+	_, err = store.SaveMessages(ctx, []Message{{GroupID: "1", MessageID: "9007199254740994", Raw: []byte(`{}`), FetchedAt: now}})
+	require.NoError(t, err)
+	page, err := store.ListMessages(ctx, "1", MessageFilter{AfterMessageID: "9007199254740993", Limit: 2})
+	require.NoError(t, err)
+	require.Equal(t, []MessageID{"9007199254740994"}, messageIDs(page.Messages))
+	require.False(t, page.HasMore)
+
+	for _, tc := range []struct {
+		anchor                MessageID
+		before, after         int
+		want                  []MessageID
+		moreBefore, moreAfter bool
+	}{
+		{"99", 1, 1, []MessageID{"10", "99", "100"}, true, true},
+		{"99", 0, 0, []MessageID{"99"}, true, true},
+		{"9", 0, 0, []MessageID{"9"}, false, true},
+		{"9007199254740994", 0, 0, []MessageID{"9007199254740994"}, true, false},
+		{"99", 20, 20, []MessageID{"9", "10", "99", "100", "9007199254740993", "9007199254740994"}, false, false},
+	} {
+		result, err := store.GetMessageContext(ctx, "1", tc.anchor, tc.before, tc.after)
+		require.NoError(t, err)
+		require.Equal(t, tc.anchor, result.AnchorMessageID)
+		require.Equal(t, tc.want, messageIDs(result.Messages))
+		require.Equal(t, tc.moreBefore, result.HasMoreBefore)
+		require.Equal(t, tc.moreAfter, result.HasMoreAfter)
+		for _, message := range result.Messages {
+			require.Empty(t, message.Raw)
+		}
+	}
+	_, err = store.GetMessageContext(ctx, "2", "99", 20, 20)
+	require.ErrorIs(t, err, ErrMessageNotFound)
+	_, err = store.GetMessageContext(ctx, "1", "98", 20, 20)
+	require.ErrorIs(t, err, ErrMessageNotFound)
 }

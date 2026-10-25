@@ -54,8 +54,8 @@ type MessageResponse struct {
 }
 
 type MessageListResponse struct {
-	Items               []MessageResponse `json:"items"`
-	NextBeforeMessageID *string           `json:"next_before_message_id"`
+	Items   []MessageResponse `json:"items"`
+	HasMore bool              `json:"has_more"`
 }
 
 func senderResponse(user weibochat.User) SenderResponse {
@@ -79,4 +79,11 @@ func utc(value *time.Time) *time.Time {
 	}
 	result := value.UTC()
 	return &result
+}
+
+type MessageContextResponse struct {
+	AnchorMessageID string            `json:"anchor_message_id"`
+	Items           []MessageResponse `json:"items"`
+	HasMoreBefore   bool              `json:"has_more_before"`
+	HasMoreAfter    bool              `json:"has_more_after"`
 }

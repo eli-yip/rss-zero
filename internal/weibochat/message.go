@@ -99,12 +99,21 @@ type MessageFilter struct {
 	SentBefore      *time.Time
 	AssetKinds      []string
 	BeforeMessageID MessageID
+	AfterMessageID  MessageID
 	Limit           int
 }
 
-// MessageListPage is ordered by descending numeric message ID. An empty cursor
-// means there is no next page. Raw upstream payloads are not loaded for browsing.
+// MessageListPage always presents messages in ascending numeric ID order.
+// HasMore refers to the requested direction, or older messages without a cursor.
 type MessageListPage struct {
-	Messages            []Message
-	NextBeforeMessageID MessageID
+	Messages []Message
+	HasMore  bool
+}
+
+// MessageContext contains an anchor and its nearest archived neighbors.
+type MessageContext struct {
+	AnchorMessageID MessageID
+	Messages        []Message
+	HasMoreBefore   bool
+	HasMoreAfter    bool
 }

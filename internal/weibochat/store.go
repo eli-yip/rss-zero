@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"gorm.io/gorm"
@@ -124,6 +125,9 @@ func (s *PostgresStore) ListMessages(ctx context.Context, groupID string, filter
 	if filter.Limit < 1 || filter.Limit > 100 {
 		return page, fmt.Errorf("message limit must be between 1 and 100")
 	}
+	if filter.BeforeMessageID != "" && filter.AfterMessageID != "" {
+		return page, fmt.Errorf("before_message_id and after_message_id are mutually exclusive")
+	}
 	query := s.db.WithContext(ctx).Model(&Message{}).Omit("Raw").Where("group_id = ?", groupID)
 	for _, term := range filter.Search.Terms {
 		query = query.Where(`translate(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') COLLATE "C" LIKE ? ESCAPE '!'`, searchPattern(term))
@@ -143,12 +147,20 @@ func (s *PostgresStore) ListMessages(ctx context.Context, groupID string, filter
 	if filter.BeforeMessageID != "" {
 		query = query.Where(`(length(message_id), message_id COLLATE "C") < (?, ? COLLATE "C")`, len(filter.BeforeMessageID), string(filter.BeforeMessageID))
 	}
-	if err := query.Order(`length(message_id) DESC, message_id COLLATE "C" DESC`).Limit(filter.Limit + 1).Find(&page.Messages).Error; err != nil {
+	order := `length(message_id) DESC, message_id COLLATE "C" DESC`
+	if filter.AfterMessageID != "" {
+		query = query.Where(`(length(message_id), message_id COLLATE "C") > (?, ? COLLATE "C")`, len(filter.AfterMessageID), string(filter.AfterMessageID))
+		order = `length(message_id) ASC, message_id COLLATE "C" ASC`
+	}
+	if err := query.Order(order).Limit(filter.Limit + 1).Find(&page.Messages).Error; err != nil {
 		return page, err
 	}
 	if len(page.Messages) > filter.Limit {
 		page.Messages = page.Messages[:filter.Limit]
-		page.NextBeforeMessageID = page.Messages[len(page.Messages)-1].MessageID
+		page.HasMore = true
+	}
+	if filter.AfterMessageID == "" {
+		slices.Reverse(page.Messages)
 	}
 	return page, nil
 }
@@ -181,4 +193,44 @@ func (s *PostgresStore) GetAssets(ctx context.Context, groupID string, keys []st
 	}
 	err := s.db.WithContext(ctx).Where("group_id = ? AND asset_key IN ?", groupID, keys).Find(&assets).Error
 	return assets, err
+}
+
+var ErrMessageNotFound = errors.New("archived message not found")
+
+// GetMessageContext does not apply search or sender filters. Both sides are
+// selected through the same paging rules as the message list.
+func (s *PostgresStore) GetMessageContext(ctx context.Context, groupID string, messageID MessageID, beforeLimit, afterLimit int) (MessageContext, error) {
+	result := MessageContext{AnchorMessageID: messageID, Messages: []Message{}}
+	if beforeLimit < 0 || beforeLimit > 50 || afterLimit < 0 || afterLimit > 50 {
+		return result, fmt.Errorf("context limits must be between 0 and 50")
+	}
+	var anchor Message
+	err := s.db.WithContext(ctx).Omit("Raw").Where("group_id = ? AND message_id = ?", groupID, messageID).First(&anchor).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return result, ErrMessageNotFound
+	}
+	if err != nil {
+		return result, err
+	}
+	before, err := s.ListMessages(ctx, groupID, MessageFilter{BeforeMessageID: messageID, Limit: max(1, beforeLimit)})
+	if err != nil {
+		return result, err
+	}
+	after, err := s.ListMessages(ctx, groupID, MessageFilter{AfterMessageID: messageID, Limit: max(1, afterLimit)})
+	if err != nil {
+		return result, err
+	}
+	result.HasMoreBefore, result.HasMoreAfter = before.HasMore, after.HasMore
+	if beforeLimit == 0 {
+		result.HasMoreBefore = len(before.Messages) > 0
+	} else {
+		result.Messages = append(result.Messages, before.Messages...)
+	}
+	result.Messages = append(result.Messages, anchor)
+	if afterLimit == 0 {
+		result.HasMoreAfter = len(after.Messages) > 0
+	} else {
+		result.Messages = append(result.Messages, after.Messages...)
+	}
+	return result, nil
 }
