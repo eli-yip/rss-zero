@@ -19,4 +19,4 @@ unified `/rss/<source>` pipeline. Deploy/runbook: [docs/OPS.md](docs/OPS.md).
 
 1. 使用 Conventional Commit 格式，小步提交。
 2. 使用 `justfile` 和 `just` 工作流。
-3. 开发时从 master 或指定分支创建形如 `feat-...` 格式的分支，开发完毕后 squash merge 到源分支，并清理开发分支。
+3. 开发时从 master 或指定分支创建分支，按变更性质命名（如 `feat/...`、`fix/...`、`build/...`、`chore/...`），完成后 squash merge 到源分支并清理开发分支。
