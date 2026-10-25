@@ -1,0 +1,9 @@
+[
+ {"id":9007199254740993,"gid":123,"from_uid":42,"time":1792907148,"type":321,"media_type":0,"content":"你好\n[doge] 🐱","from_user":{"screen_name":"示例","avatar_large":"https://example.com/avatar"},"attitude_info":{"attitudes":[{"name":"good","count":5}]}},
+ {"id":"9007199254740994","gid":"123","type":321,"media_type":1,"content":"分享图片","fids":[765]},
+ {"id":9007199254740995,"gid":123,"type":321,"media_type":10,"fids":[766],"annotations":{"video_pic_fid":767,"include_video":0}},
+ {"id":9007199254740996,"gid":123,"type":321,"media_type":15,"pids":["sticker1"],"pic_infos":[{"original_pic":"https://wx1.sinaimg.cn/large/sticker1.jpg","thumbnail_pic":"https://wx1.sinaimg.cn/small/sticker1.jpg"}]},
+ {"id":9007199254740997,"gid":123,"type":321,"media_type":14,"url_objects":[{"url_ori":"https://t.cn/example","info":{"url_short":"https://t.cn/example","url_long":"https://weibo.com/example"},"status":{"pic_ids":["card1"],"pic_infos":{"card1":{"original":{"url":"https://wx1.sinaimg.cn/large/card1.jpg"}}}}}]},
+ {"id":9007199254740998,"gid":123,"type":999,"media_type":999,"template":"notice","data":{"unknown":true}},
+ {"id":9007199254740999,"gid":123,"type":321,"media_type":15,"pic_infos":{"onlythumb":{"thumbnail_pic":"https://wx1.sinaimg.cn/small/onlythumb.jpg"}}}
+]
