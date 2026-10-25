@@ -3,11 +3,14 @@ package user
 import (
 	"net/http"
 
+	"github.com/eli-yip/rss-zero/internal/middleware"
+
 	"github.com/eli-yip/rss-zero/pkg/httputil"
 	"github.com/labstack/echo/v5"
 )
 
 type UserResponse struct {
+	IsAdmin  bool   `json:"is_admin"`
 	Username string `json:"username"`
 	Nickname string `json:"nickname"`
 }
@@ -23,6 +26,7 @@ func GetUserInfo(c *echo.Context) (err error) {
 	}
 	return c.JSON(http.StatusOK, httputil.NewResp("found user", &UserResponse{
 		Username: username,
+		IsAdmin:  middleware.IsAdmin(c),
 		Nickname: nickname,
 	}))
 }
