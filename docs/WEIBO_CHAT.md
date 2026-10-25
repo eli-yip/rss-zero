@@ -249,7 +249,7 @@ GET /api/v1/weibo/user-preferences?blocked=true&after_uid=123
 
 偏好列表仅返回至少一个状态为 true 的用户。`starred`、`blocked` 可选，接受 `true` 或 `false`，同时提供时取 AND。按数值 UID 升序分页，`limit` 默认 50、范围 1～100。返回 `{ "items": [], "next_after_uid": null }`，有下一页时携带最后一个 UID 作为下次 `after_uid`。发件人字段含 `is_starred`、`is_blocked`。
 
-消息列表增加 `starred_only=true`，与现有搜索、时间、发件人和附件条件取 AND；没有星标用户时返回空列表。通过 `before_message_id` / `after_message_id` 配合 `limit=1` 可定位上一条、下一条星标消息，再使用 `/context` 展示完整语境。同一星标用户连续发出的消息分别计为一个跳转位置。
+消息列表增加 `starred_only=true`，与现有搜索、时间、发件人和附件条件取 AND；没有星标用户时返回空列表。
 
 每条消息新增 `is_sender_starred`、`is_sender_blocked`；即使 `sender` 为 null，也提供正确状态。普通消息列表和上下文保留拉黑用户的消息位置，由前端显示占位行并隐藏正文、链接与附件，不加载媒体。拉黑是阅读偏好，不是访问权限，也不会删除消息。正文搜索 `q` 非空或开启 `starred_only` 时排除拉黑用户；只有 `highlight_q` 不触发排除。上下文拒绝 `starred_only`，始终保留完整语境。
 
