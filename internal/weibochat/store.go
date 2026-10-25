@@ -125,6 +125,9 @@ func (s *PostgresStore) ListMessages(ctx context.Context, groupID string, filter
 		return page, fmt.Errorf("message limit must be between 1 and 100")
 	}
 	query := s.db.WithContext(ctx).Model(&Message{}).Omit("Raw").Where("group_id = ?", groupID)
+	for _, term := range filter.Search.Terms {
+		query = query.Where(`translate(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') COLLATE "C" LIKE ? ESCAPE '!'`, searchPattern(term))
+	}
 	if len(filter.SenderIDs) > 0 {
 		query = query.Where("sender_id IN ?", filter.SenderIDs)
 	}

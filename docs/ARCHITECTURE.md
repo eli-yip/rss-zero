@@ -106,3 +106,7 @@ job：
 - **rss-zhihu-encrypt**（`../../zhihu-encrypt`）：知乎加密服务，compose 内 `:3000`。
 - **webapp**（`../webapp`）：前端，与本后端配对发布。
 - 详见 [OPS.md](OPS.md)。
+
+## 微博消息搜索
+
+`internal/weibochat/search.go` 负责字面关键词语法和原文码点高亮；HTTP 列表的 `q` 过滤、`highlight_q` 仅高亮。SQL 和高亮统一只折叠 ASCII 英文字母。查询表达式为 `translate(text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') COLLATE "C"`，未来 `pg_bigm` 索引必须使用同一表达式；当前不安装扩展或新增索引，查询性能尚未按大数据量验证。

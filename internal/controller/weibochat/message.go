@@ -1,6 +1,7 @@
 package weibochat
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -21,13 +22,30 @@ func (h *Controller) ListMessages(c *echo.Context) error {
 	if err != nil {
 		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	highlight, err := parseHighlightQuery(c.QueryParams(), filter.Search)
+	if err != nil {
+		return httputil.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 	ctx := c.Request().Context()
 	page, err := h.store.ListMessages(ctx, groupID, filter)
 	if err != nil {
 		return err
 	}
+	items, err := h.messageResponses(ctx, groupID, page.Messages, highlight)
+	if err != nil {
+		return err
+	}
+	result := MessageListResponse{Items: items}
+	if page.NextBeforeMessageID != "" {
+		value := string(page.NextBeforeMessageID)
+		result.NextBeforeMessageID = &value
+	}
+	return c.JSON(http.StatusOK, httputil.NewResp("weibo messages", result))
+}
+
+func (h *Controller) messageResponses(ctx context.Context, groupID string, messages []weibochat.Message, highlight weibochat.SearchQuery) ([]MessageResponse, error) {
 	userIDs, assetKeys := make([]string, 0), make([]string, 0)
-	for _, message := range page.Messages {
+	for _, message := range messages {
 		if message.SenderID != "" {
 			userIDs = append(userIDs, message.SenderID)
 		}
@@ -37,11 +55,11 @@ func (h *Controller) ListMessages(c *echo.Context) error {
 	}
 	users, err := h.store.GetUsers(ctx, userIDs)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	assets, err := h.store.GetAssets(ctx, groupID, assetKeys)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	byUser := make(map[string]SenderResponse, len(users))
 	for _, user := range users {
@@ -51,10 +69,11 @@ func (h *Controller) ListMessages(c *echo.Context) error {
 	for _, asset := range assets {
 		byAsset[asset.AssetKey] = asset
 	}
-	result := MessageListResponse{Items: make([]MessageResponse, 0, len(page.Messages))}
-	for _, message := range page.Messages {
+	items := make([]MessageResponse, 0, len(messages))
+	for _, message := range messages {
 		item := MessageResponse{
-			GroupID: message.GroupID, MessageID: string(message.MessageID), SenderID: message.SenderID,
+			TextMatches: highlight.FindMatches(message.Text),
+			GroupID:     message.GroupID, MessageID: string(message.MessageID), SenderID: message.SenderID,
 			SentAt: utc(message.SentAt), Text: message.Text, Links: append([]weibochat.Link{}, message.Content.Links...),
 			Assets:      make([]AssetResponse, 0, len(message.Content.Assets)),
 			MessageType: message.MessageType, MediaType: message.MediaType, SubType: message.SubType, ParseStatus: "parsed",
@@ -75,17 +94,18 @@ func (h *Controller) ListMessages(c *echo.Context) error {
 			}
 			item.Assets = append(item.Assets, asset)
 		}
-		result.Items = append(result.Items, item)
+		items = append(items, item)
 	}
-	if page.NextBeforeMessageID != "" {
-		value := string(page.NextBeforeMessageID)
-		result.NextBeforeMessageID = &value
-	}
-	return c.JSON(http.StatusOK, httputil.NewResp("weibo messages", result))
+	return items, nil
 }
 
 func parseMessageFilter(query url.Values) (weibochat.MessageFilter, error) {
 	filter := weibochat.MessageFilter{Limit: 50, SenderIDs: query["sender_id"], AssetKinds: query["asset_kind"]}
+	search, err := parseSearchParameter(query, "q")
+	if err != nil {
+		return filter, err
+	}
+	filter.Search = search
 	for _, id := range filter.SenderIDs {
 		if !weibochat.MessageID(id).Valid() {
 			return filter, fmt.Errorf("invalid sender_id")
@@ -133,4 +153,26 @@ func parseMessageFilter(query url.Values) (weibochat.MessageFilter, error) {
 		return filter, fmt.Errorf("sent_from must be before sent_before")
 	}
 	return filter, nil
+}
+
+func parseSearchParameter(query url.Values, name string) (weibochat.SearchQuery, error) {
+	values, present := query[name]
+	if !present {
+		return weibochat.SearchQuery{}, nil
+	}
+	if len(values) != 1 {
+		return weibochat.SearchQuery{}, fmt.Errorf("%s requires one value", name)
+	}
+	parsed, err := weibochat.ParseSearchQuery(values[0])
+	if err != nil {
+		return parsed, fmt.Errorf("%s: %w", name, err)
+	}
+	return parsed, nil
+}
+
+func parseHighlightQuery(query url.Values, fallback weibochat.SearchQuery) (weibochat.SearchQuery, error) {
+	if _, present := query["highlight_q"]; !present {
+		return fallback, nil
+	}
+	return parseSearchParameter(query, "highlight_q")
 }

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -149,5 +151,38 @@ func TestMessageParameters(t *testing.T) {
 		"/groups/1/messages?sent_from=2026-10-25T00:00:00Z&sent_before=2026-10-25T00:00:00Z",
 	} {
 		t.Run(path, func(t *testing.T) { get(t, e, path, http.StatusBadRequest) })
+	}
+}
+
+func TestMessageSearchAndIndependentHighlight(t *testing.T) {
+	e, db := testController(t)
+	now := time.Now().UTC()
+	require.NoError(t, db.Create(&[]weibochat.Message{
+		{GroupID: "1", MessageID: "1", Text: "🙂数据库 HELLO world", Raw: []byte(`{}`), FetchedAt: now},
+		{GroupID: "1", MessageID: "2", Text: "数据库 hello new world", Raw: []byte(`{}`), FetchedAt: now},
+	}).Error)
+	for _, tc := range []struct {
+		query   string
+		count   int
+		matches []weibochat.TextMatch
+	}{
+		{`q=` + url.QueryEscape(`数据库 "hello world"`), 1, []weibochat.TextMatch{{Start: 1, End: 4}, {Start: 5, End: 16}}},
+		{`q=` + url.QueryEscape(`数据库 "hello world"`) + `&highlight_q=world`, 1, []weibochat.TextMatch{{Start: 11, End: 16}}},
+		{`q=` + url.QueryEscape(`数据库 "hello world"`) + `&highlight_q=`, 1, []weibochat.TextMatch{}},
+		{`highlight_q=world`, 2, []weibochat.TextMatch{{Start: 14, End: 19}}},
+		{`q=%20%20`, 2, []weibochat.TextMatch{}},
+	} {
+		rec := get(t, e, "/groups/1/messages?"+tc.query, http.StatusOK)
+		var response httputil.Resp[MessageListResponse]
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+		require.Len(t, response.Data.Items, tc.count)
+		require.Equal(t, tc.matches, response.Data.Items[0].TextMatches)
+	}
+}
+
+func TestSearchParameters(t *testing.T) {
+	e := testRoutes(NewController(nil, nil))
+	for _, query := range []string{`q=a&q=b`, `highlight_q=a&highlight_q=b`, `q=%22`, `q=%22%22`, `highlight_q=%22`, `q=` + strings.Repeat("x", 257)} {
+		get(t, e, "/groups/1/messages?"+query, http.StatusBadRequest)
 	}
 }

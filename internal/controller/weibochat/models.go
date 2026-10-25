@@ -38,18 +38,19 @@ type AssetResponse struct {
 }
 
 type MessageResponse struct {
-	GroupID     string           `json:"group_id"`
-	MessageID   string           `json:"message_id"`
-	SenderID    string           `json:"sender_id"`
-	Sender      *SenderResponse  `json:"sender"`
-	SentAt      *time.Time       `json:"sent_at"`
-	Text        string           `json:"text"`
-	Links       []weibochat.Link `json:"links"`
-	Assets      []AssetResponse  `json:"assets"`
-	MessageType *int             `json:"message_type"`
-	MediaType   *int             `json:"media_type"`
-	SubType     *int             `json:"sub_type"`
-	ParseStatus string           `json:"parse_status"`
+	TextMatches []weibochat.TextMatch `json:"text_matches"`
+	GroupID     string                `json:"group_id"`
+	MessageID   string                `json:"message_id"`
+	SenderID    string                `json:"sender_id"`
+	Sender      *SenderResponse       `json:"sender"`
+	SentAt      *time.Time            `json:"sent_at"`
+	Text        string                `json:"text"`
+	Links       []weibochat.Link      `json:"links"`
+	Assets      []AssetResponse       `json:"assets"`
+	MessageType *int                  `json:"message_type"`
+	MediaType   *int                  `json:"media_type"`
+	SubType     *int                  `json:"sub_type"`
+	ParseStatus string                `json:"parse_status"`
 }
 
 type MessageListResponse struct {

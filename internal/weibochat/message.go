@@ -93,6 +93,7 @@ type AssetRef struct {
 // MessageFilter selects archived messages within one group. Filter dimensions
 // are combined with AND; multiple senders or asset kinds within a dimension use OR.
 type MessageFilter struct {
+	Search          SearchQuery
 	SenderIDs       []string
 	SentFrom        *time.Time
 	SentBefore      *time.Time

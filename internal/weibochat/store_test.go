@@ -236,3 +236,43 @@ func TestListGroupsAndGetAssets(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, empty)
 }
+
+func TestSearchLiteralTermsAndSQLHighlightAgreement(t *testing.T) {
+	store, _ := testStore(t)
+	ctx := context.Background()
+	now := time.Now().UTC()
+	texts := []string{`🙂数据库 HELLO world 100% a_b C:\tmp!`, `数据库 hello new world 100X axb C:tmp!`, `数据库 HELLO world 100% a_b C:\tmp!`, `Éé`}
+	for i, text := range texts {
+		_, err := store.SaveMessages(ctx, []Message{{GroupID: "1", MessageID: MessageID(fmt.Sprint(i + 1)), SenderID: "10", SentAt: &now, Text: text, Raw: []byte(`{}`), FetchedAt: now}})
+		require.NoError(t, err)
+	}
+	for _, tc := range []struct {
+		q    string
+		want []MessageID
+	}{
+		{`数据库 "hello world"`, []MessageID{"3", "1"}},
+		{`100% a_b C:\tmp!`, []MessageID{"3", "1"}},
+		{`hello`, []MessageID{"3", "2", "1"}},
+		{`é`, []MessageID{"4"}},
+	} {
+		q, err := ParseSearchQuery(tc.q)
+		require.NoError(t, err)
+		page, err := store.ListMessages(ctx, "1", MessageFilter{Search: q, Limit: 50})
+		require.NoError(t, err)
+		require.Equal(t, tc.want, messageIDs(page.Messages))
+		for _, message := range page.Messages {
+			require.NotEmpty(t, q.FindMatches(message.Text))
+		}
+	}
+	q, err := ParseSearchQuery(`数据库 "hello world"`)
+	require.NoError(t, err)
+	filter := MessageFilter{Search: q, SenderIDs: []string{"10"}, SentFrom: &now, Limit: 1}
+	page, err := store.ListMessages(ctx, "1", filter)
+	require.NoError(t, err)
+	require.Equal(t, []MessageID{"3"}, messageIDs(page.Messages))
+	filter.BeforeMessageID = page.NextBeforeMessageID
+	page, err = store.ListMessages(ctx, "1", filter)
+	require.NoError(t, err)
+	require.Equal(t, []MessageID{"1"}, messageIDs(page.Messages))
+	require.Empty(t, page.NextBeforeMessageID)
+}
