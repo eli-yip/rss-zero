@@ -84,6 +84,14 @@ GET /api/v1/weibo/groups/5152823595766382/messages?q=%E6%95%B0%E6%8D%AE%E5%BA%93
 
 消息字段包括 `group_id`、`message_id`、`sender_id`、`sender`、`sent_at`、`text`、`links`、`assets`、`message_type`、`media_type`、`sub_type` 和 `parse_status`。所有 ID 均为字符串，时间返回 UTC；缺少发件人资料或发送时间时为 `null`，空数组为 `[]`。`parse_status` 为 `parsed` 或 `partial`，未知消息类型不等于解析失败。
 
+`event_type` 始终返回字符串。普通消息为 `""`。已确认的群事件为 `member_joined`（入群）、`message_recalled`（撤回）、`group_notice`（防骗、称号或晋级通知）和 `weibo_published`（发布微博通知）。识别同时检查上游消息类型、媒体类型、子类型和已确认模板或正文。未知组合保持原样，不按系统账号统一归类。
+
+群事件的 `sender_id` 为 `""`，`sender` 为 `null`，发件人的星标和拉黑标志均为 `false`。群事件不进入发件人候选列表、发件人筛选或仅星标查询；正文搜索仍能查到群事件。消息列表、上下文和收藏使用相同协议。群事件可正常收藏，消息 ID、正文和阅读游标不变。
+
+`event_actor` 为 `{ "uid": "微博 UID", "screen_name": "原始昵称" }` 或 `null`。它只标明事件关联人物，不关联头像和阅读偏好。入群事件使用模板中的入群者；撤回和发布通知使用原始发件人资料；群通知缺少明确关联人物时为 `null`。`links` 保留上游已有链接；发布通知缺少微博链接时不构造入口。
+
+启动自动迁移 `20261026000000` 使用同一识别规则回填历史事件。它只修改事件类型、发件人关联和必要的事件内容字段，保留原始 JSON、正文、已有链接、附件、收藏和用户资料。迁移失败后由现有迁移框架在下次启动时重试。
+
 附件项含 `asset_key`、`kind`、`status`、`url`、`content_type`、`byte_size`。只有成功转存的附件提供 URL，`pending` 或 `failed` 附件仍返回且 URL 为 `null`。头像同样只提供转存 URL；不回退到在线原链接。响应不包含原始消息 JSON、Cookie 或内部错误文本。
 
 ## 定位消息与查看上下文

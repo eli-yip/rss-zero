@@ -44,6 +44,8 @@ type AssetResponse struct {
 }
 
 type MessageResponse struct {
+	EventType       weibochat.EventType   `json:"event_type"`
+	EventActor      *weibochat.EventActor `json:"event_actor"`
 	BookmarkCount   int64                 `json:"bookmark_count"`
 	IsSenderStarred bool                  `json:"is_sender_starred"`
 	IsSenderBlocked bool                  `json:"is_sender_blocked"`

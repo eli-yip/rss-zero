@@ -11,12 +11,14 @@ import (
 )
 
 type wireMessage struct {
-	SenderID  MessageID `json:"from_uid"`
-	Time      *int64    `json:"time"`
-	Type      *int      `json:"type"`
-	MediaType *int      `json:"media_type"`
-	SubType   *int      `json:"sub_type"`
-	Text      string    `json:"content"`
+	SenderID  MessageID       `json:"from_uid"`
+	Time      *int64          `json:"time"`
+	Type      *int            `json:"type"`
+	MediaType *int            `json:"media_type"`
+	SubType   *int            `json:"sub_type"`
+	Text      string          `json:"content"`
+	Template  json.RawMessage `json:"template"`
+	Data      json.RawMessage `json:"data"`
 	User      *struct {
 		Name        string `json:"screen_name"`
 		Avatar      string `json:"profile_image_url"`
@@ -76,6 +78,10 @@ func ParseMessage(raw json.RawMessage) (Message, error) {
 	}
 	for _, item := range wire.URLs {
 		message.Content.Links = append(message.Content.Links, Link{item.Original, item.Info.Short, item.Info.Long})
+	}
+	message.EventType, message.Content.EventActor = classifyEvent(wire)
+	if message.EventType != EventNone {
+		message.SenderID, message.Sender = "", nil
 	}
 	if wire.MediaType == nil {
 		return message, nil

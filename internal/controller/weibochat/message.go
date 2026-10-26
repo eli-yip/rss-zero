@@ -47,7 +47,7 @@ func (h *Controller) ListMessages(c *echo.Context) error {
 func (h *Controller) messageResponses(ctx context.Context, owner, groupID string, messages []weibochat.Message, highlight weibochat.SearchQuery) ([]MessageResponse, error) {
 	userIDs, assetKeys := make([]string, 0), make([]string, 0)
 	for _, message := range messages {
-		if message.SenderID != "" {
+		if message.EventType == weibochat.EventNone && message.SenderID != "" {
 			userIDs = append(userIDs, message.SenderID)
 		}
 		for _, ref := range message.Content.Assets {
@@ -88,6 +88,7 @@ func (h *Controller) messageResponses(ctx context.Context, owner, groupID string
 	items := make([]MessageResponse, 0, len(messages))
 	for _, message := range messages {
 		item := MessageResponse{
+			EventType: message.EventType, EventActor: message.Content.EventActor,
 			BookmarkCount:   counts[string(message.MessageID)],
 			IsSenderStarred: preferences[message.SenderID].IsStarred,
 			IsSenderBlocked: preferences[message.SenderID].IsBlocked,
@@ -97,8 +98,12 @@ func (h *Controller) messageResponses(ctx context.Context, owner, groupID string
 			Assets:      make([]AssetResponse, 0, len(message.Content.Assets)),
 			MessageType: message.MessageType, MediaType: message.MediaType, SubType: message.SubType, ParseStatus: "parsed",
 		}
-		if user, ok := byUser[message.SenderID]; ok {
+		if user, ok := byUser[message.SenderID]; ok && message.EventType == weibochat.EventNone {
 			item.Sender = &user
+		}
+		if message.EventType != weibochat.EventNone {
+			item.SenderID = ""
+			item.IsSenderStarred, item.IsSenderBlocked = false, false
 		}
 		if message.ParseError != "" {
 			item.ParseStatus = "partial"

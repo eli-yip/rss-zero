@@ -57,6 +57,7 @@ func (id *MessageID) UnmarshalJSON(data []byte) error {
 type Message struct {
 	GroupID     string     `gorm:"type:text;primaryKey;index:idx_weibo_chat_message_order,priority:1;index:idx_weibo_chat_message_sender,priority:1"`
 	MessageID   MessageID  `gorm:"type:text;primaryKey;index:idx_weibo_chat_message_order,priority:2,expression:length(message_id),sort:desc;index:idx_weibo_chat_message_order,priority:3,collate:\"C\",sort:desc"`
+	EventType   EventType  `gorm:"type:text;not null;default:''"`
 	SenderID    string     `gorm:"type:text;index;index:idx_weibo_chat_message_sender,priority:2"`
 	Sender      *User      `gorm:"-"`
 	SentAt      *time.Time `gorm:"type:timestamptz;index"`
@@ -73,8 +74,9 @@ type Message struct {
 func (Message) TableName() string { return "weibo_chat_message" }
 
 type MessageContent struct {
-	Links  []Link     `json:"links,omitempty"`
-	Assets []AssetRef `json:"assets,omitempty"`
+	EventActor *EventActor `json:"event_actor,omitempty"`
+	Links      []Link      `json:"links,omitempty"`
+	Assets     []AssetRef  `json:"assets,omitempty"`
 }
 
 type Link struct {
