@@ -114,7 +114,11 @@ func (h *Controller) messageResponses(ctx context.Context, owner, groupID string
 				asset.Status, asset.ContentType, asset.ByteSize = stored.Status, stored.ContentType, stored.ByteSize
 				asset.Width, asset.Height = stored.Width, stored.Height
 				if stored.Status == weibochat.AssetStored {
-					asset.URL = storedURL(stored.StorageProvider, stored.ObjectKey)
+					asset.OriginalURL = storedURL(stored.StorageProvider, stored.ObjectKey)
+					asset.URL = asset.OriginalURL
+					if stored.DisplayObjectKey != "" {
+						asset.URL = storedURL(stored.StorageProvider, stored.DisplayObjectKey)
+					}
 				}
 			}
 			item.Assets = append(item.Assets, asset)

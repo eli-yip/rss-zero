@@ -102,11 +102,13 @@ func (a *AssetArchiver) archive(ctx context.Context, asset *Asset) error {
 	asset.SourceURL, asset.ObjectKey, asset.StorageProvider = source, stored.key, a.files.AssetsDomain()
 	asset.ContentType, asset.ByteSize, asset.StoredAt = stored.contentType, stored.size, &now
 	asset.Width, asset.Height = stored.width, stored.height
+	asset.DisplayObjectKey = stored.displayKey
 	return nil
 }
 
 type storedMedia struct {
 	key           string
+	displayKey    string
 	contentType   string
 	size          int64
 	width, height int
@@ -129,12 +131,15 @@ func (c *Client) storeMedia(ctx context.Context, files ObjectStore, source strin
 	if err != nil {
 		return storedMedia{}, fmt.Errorf("read asset header: %w", err)
 	}
+	reader := io.MultiReader(bytes.NewReader(prefix), response.Body)
+	if (kind == AssetImage || kind == AssetSticker) && isHEIC(prefix) {
+		return storeHEIC(ctx, files, reader, response.ContentLength, keyPrefix)
+	}
 	contentType := http.DetectContentType(prefix)
 	ext := assetExtension(kind, contentType)
 	if ext == "" {
 		return storedMedia{}, fmt.Errorf("unexpected asset content type: %s", contentType)
 	}
-	reader := io.MultiReader(bytes.NewReader(prefix), response.Body)
 	width, height := 0, 0
 	if kind == AssetImage || kind == AssetSticker {
 		var header bytes.Buffer

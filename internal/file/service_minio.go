@@ -77,6 +77,9 @@ func (s *FileServiceMinio) SaveStreamContext(ctx context.Context, objectKey stri
 // If the extension is not found, it will return "application/octet-stream".
 func (s *FileServiceMinio) getContentType(objectKey string) (contentType string) {
 	ext := filepath.Ext(objectKey)
+	if ext == ".heic" {
+		return "image/heic"
+	}
 	contentType = gomime.TypeByExtension(ext)
 	if ext == "" {
 		contentType = "application/octet-stream"

@@ -138,6 +138,9 @@ func (a *UserArchiver) archiveAvatar(ctx context.Context, user *User, source str
 	}
 	user.AvatarSourceURL = source
 	user.AvatarObjectKey = stored.key
+	if stored.displayKey != "" {
+		user.AvatarObjectKey = stored.displayKey
+	}
 	user.AvatarStorageProvider = a.files.AssetsDomain()
 	return nil
 }

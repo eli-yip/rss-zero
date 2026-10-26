@@ -38,6 +38,7 @@ type AssetResponse struct {
 	Filename    string              `json:"filename,omitempty"`
 	Status      string              `json:"status"`
 	URL         *string             `json:"url"`
+	OriginalURL *string             `json:"original_url"`
 	ContentType string              `json:"content_type"`
 	ByteSize    int64               `json:"byte_size"`
 	Width       int                 `json:"width"`

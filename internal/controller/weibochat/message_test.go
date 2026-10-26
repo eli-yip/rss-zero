@@ -126,6 +126,8 @@ func TestMessageListPaginationAndAssembly(t *testing.T) {
 	require.Equal(t, 640, message.Assets[0].Width)
 	require.Equal(t, 480, message.Assets[0].Height)
 	require.Equal(t, "https://assets.example/pictures/a%20b.jpg", *message.Assets[0].URL)
+	require.Equal(t, message.Assets[0].URL, message.Assets[0].OriginalURL)
+	require.Nil(t, message.Assets[1].OriginalURL)
 	require.Equal(t, "failed", message.Assets[1].Status)
 	require.Nil(t, message.Assets[1].URL)
 	require.Equal(t, "pending", message.Assets[2].Status)
@@ -230,4 +232,17 @@ func TestFileMessageFilterAndAssembly(t *testing.T) {
 	require.Nil(t, assets[1].URL)
 	require.Equal(t, weibochat.AssetPending, result.Data.Items[1].Assets[0].Status)
 	require.Empty(t, result.Data.Items[1].Assets[0].Filename)
+}
+
+func TestMessageAssetDisplayAndOriginalURLs(t *testing.T) {
+	e, db := testController(t)
+	seedMessages(t, db)
+	require.NoError(t, db.Model(&weibochat.Asset{}).Where("group_id = '1' AND asset_key = 'file/1'").Updates(map[string]any{"object_key": "pictures/original.heic", "display_object_key": "pictures/display.jpg", "content_type": "image/heic"}).Error)
+	var result httputil.Resp[MessageListResponse]
+	rec := get(t, e, "/groups/1/messages?before_message_id=101", http.StatusOK)
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
+	asset := result.Data.Items[0].Assets[0]
+	require.Equal(t, "https://assets.example/pictures/display.jpg", *asset.URL)
+	require.Equal(t, "https://assets.example/pictures/original.heic", *asset.OriginalURL)
+	require.Equal(t, "image/heic", asset.ContentType)
 }

@@ -31,19 +31,20 @@ const (
 )
 
 type Asset struct {
-	GroupID         string    `gorm:"type:text;primaryKey"`
-	AssetKey        string    `gorm:"type:text;primaryKey"`
-	Kind            AssetKind `gorm:"type:text;not null"`
-	SourceURL       string    `gorm:"type:text"`
-	Status          string    `gorm:"type:text;not null"`
-	ObjectKey       string    `gorm:"type:text"`
-	StorageProvider string    `gorm:"type:text"`
-	ContentType     string    `gorm:"type:text"`
-	ByteSize        int64
-	Width           int
-	Height          int
-	StoredAt        *time.Time `gorm:"type:timestamptz"`
-	LastError       string     `gorm:"type:text"`
+	GroupID          string    `gorm:"type:text;primaryKey"`
+	AssetKey         string    `gorm:"type:text;primaryKey"`
+	Kind             AssetKind `gorm:"type:text;not null"`
+	SourceURL        string    `gorm:"type:text"`
+	Status           string    `gorm:"type:text;not null"`
+	ObjectKey        string    `gorm:"type:text"`
+	DisplayObjectKey string    `gorm:"type:text"`
+	StorageProvider  string    `gorm:"type:text"`
+	ContentType      string    `gorm:"type:text"`
+	ByteSize         int64
+	Width            int
+	Height           int
+	StoredAt         *time.Time `gorm:"type:timestamptz"`
+	LastError        string     `gorm:"type:text"`
 }
 
 func (Asset) TableName() string { return "weibo_chat_asset" }
@@ -110,7 +111,7 @@ func (s *PostgresStore) ListAssets(ctx context.Context, groupID, after string, l
 // SaveAssetResult updates an existing asset only after its transfer attempt.
 func (s *PostgresStore) SaveAssetResult(ctx context.Context, asset *Asset) error {
 	result := s.db.WithContext(ctx).Model(&Asset{}).Where("group_id = ? AND asset_key = ?", asset.GroupID, asset.AssetKey).
-		Updates(map[string]any{"source_url": asset.SourceURL, "status": asset.Status, "object_key": asset.ObjectKey, "storage_provider": asset.StorageProvider,
+		Updates(map[string]any{"source_url": asset.SourceURL, "status": asset.Status, "object_key": asset.ObjectKey, "display_object_key": asset.DisplayObjectKey, "storage_provider": asset.StorageProvider,
 			"content_type": asset.ContentType, "byte_size": asset.ByteSize, "width": asset.Width, "height": asset.Height, "stored_at": asset.StoredAt, "last_error": asset.LastError})
 	if result.Error != nil {
 		return result.Error
