@@ -51,3 +51,20 @@ func TestMessageIDComparison(t *testing.T) {
 	require.Positive(t, MessageID("9007199254740993").Compare("9007199254740992"))
 	require.Zero(t, MessageID("1").Compare("1"))
 }
+
+func TestParseFileReferencesPreservesNameAndText(t *testing.T) {
+	for _, name := range []string{"七日丝_261025.pdf", "notes.zip", ""} {
+		raw, err := json.Marshal(map[string]any{"gid": "4761715839862414", "id": "5358051223931098", "type": 321, "media_type": 5, "content": name, "fids": []any{"5358051221832241", 123}})
+		require.NoError(t, err)
+		message, err := ParseMessage(raw)
+		require.NoError(t, err)
+		require.Empty(t, message.ParseError)
+		require.Equal(t, EventNone, message.EventType)
+		require.Equal(t, name, message.Text)
+		require.JSONEq(t, string(raw), string(message.Raw))
+		require.Equal(t, []AssetRef{
+			{Kind: AssetFile, AssetKey: "file/5358051221832241", Filename: name},
+			{Kind: AssetFile, AssetKey: "file/123", Filename: name},
+		}, message.Content.Assets)
+	}
+}

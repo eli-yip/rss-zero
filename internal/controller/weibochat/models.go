@@ -33,14 +33,15 @@ type SenderListResponse struct {
 }
 
 type AssetResponse struct {
-	AssetKey    string  `json:"asset_key"`
-	Kind        string  `json:"kind"`
-	Status      string  `json:"status"`
-	URL         *string `json:"url"`
-	ContentType string  `json:"content_type"`
-	ByteSize    int64   `json:"byte_size"`
-	Width       int     `json:"width"`
-	Height      int     `json:"height"`
+	AssetKey    string              `json:"asset_key"`
+	Kind        weibochat.AssetKind `json:"kind"`
+	Filename    string              `json:"filename,omitempty"`
+	Status      string              `json:"status"`
+	URL         *string             `json:"url"`
+	ContentType string              `json:"content_type"`
+	ByteSize    int64               `json:"byte_size"`
+	Width       int                 `json:"width"`
+	Height      int                 `json:"height"`
 }
 
 type MessageResponse struct {

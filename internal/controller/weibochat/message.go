@@ -109,7 +109,7 @@ func (h *Controller) messageResponses(ctx context.Context, owner, groupID string
 			item.ParseStatus = "partial"
 		}
 		for _, ref := range message.Content.Assets {
-			asset := AssetResponse{AssetKey: ref.AssetKey, Kind: ref.Kind, Status: weibochat.AssetPending}
+			asset := AssetResponse{AssetKey: ref.AssetKey, Kind: ref.Kind, Filename: ref.Filename, Status: weibochat.AssetPending}
 			if stored, ok := byAsset[ref.AssetKey]; ok {
 				asset.Status, asset.ContentType, asset.ByteSize = stored.Status, stored.ContentType, stored.ByteSize
 				asset.Width, asset.Height = stored.Width, stored.Height
@@ -144,8 +144,10 @@ func parseMessageFilter(query url.Values) (weibochat.MessageFilter, error) {
 		}
 	}
 	for _, kind := range filter.AssetKinds {
-		if kind != "image" && kind != "video" && kind != "sticker" {
-			return filter, fmt.Errorf("asset_kind must be image, video or sticker")
+		switch weibochat.AssetKind(kind) {
+		case weibochat.AssetImage, weibochat.AssetVideo, weibochat.AssetSticker, weibochat.AssetFile:
+		default:
+			return filter, fmt.Errorf("asset_kind must be image, video, sticker or file")
 		}
 	}
 	for _, name := range []string{"sent_from", "sent_before", "before_message_id", "after_message_id", "limit"} {

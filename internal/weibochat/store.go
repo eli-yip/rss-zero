@@ -31,14 +31,14 @@ const (
 )
 
 type Asset struct {
-	GroupID         string `gorm:"type:text;primaryKey"`
-	AssetKey        string `gorm:"type:text;primaryKey"`
-	Kind            string `gorm:"type:text;not null"`
-	SourceURL       string `gorm:"type:text"`
-	Status          string `gorm:"type:text;not null"`
-	ObjectKey       string `gorm:"type:text"`
-	StorageProvider string `gorm:"type:text"`
-	ContentType     string `gorm:"type:text"`
+	GroupID         string    `gorm:"type:text;primaryKey"`
+	AssetKey        string    `gorm:"type:text;primaryKey"`
+	Kind            AssetKind `gorm:"type:text;not null"`
+	SourceURL       string    `gorm:"type:text"`
+	Status          string    `gorm:"type:text;not null"`
+	ObjectKey       string    `gorm:"type:text"`
+	StorageProvider string    `gorm:"type:text"`
+	ContentType     string    `gorm:"type:text"`
 	ByteSize        int64
 	Width           int
 	Height          int

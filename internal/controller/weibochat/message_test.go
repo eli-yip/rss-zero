@@ -155,7 +155,7 @@ func TestMessageParameters(t *testing.T) {
 	e := testRoutes(NewController(nil, nil))
 	for _, path := range []string{
 		"/groups/no/messages", "/groups/0/senders", "/groups/1/messages?sender_id=", "/groups/1/messages?sender_id=01",
-		"/groups/1/messages?asset_kind=file", "/groups/1/messages?asset_kind=", "/groups/1/messages?before_message_id=",
+		"/groups/1/messages?asset_kind=unknown", "/groups/1/messages?asset_kind=", "/groups/1/messages?before_message_id=",
 		"/groups/1/messages?before_message_id=-1", "/groups/1/messages?limit=0", "/groups/1/messages?limit=101",
 		"/groups/1/messages?after_message_id=", "/groups/1/messages?after_message_id=01",
 		"/groups/1/messages?before_message_id=1&after_message_id=2", "/groups/1/messages?after_message_id=1&after_message_id=2",
@@ -197,4 +197,37 @@ func TestSearchParameters(t *testing.T) {
 	for _, query := range []string{`q=a&q=b`, `highlight_q=a&highlight_q=b`, `q=%22`, `q=%22%22`, `highlight_q=%22`, `q=` + strings.Repeat("x", 257)} {
 		get(t, e, "/groups/1/messages?"+query, http.StatusBadRequest)
 	}
+}
+
+func TestFileMessageFilterAndAssembly(t *testing.T) {
+	e, db := testController(t)
+	store := weibochat.NewPostgresStore(db)
+	for _, raw := range []string{
+		`{"gid":1,"id":1,"type":321,"media_type":5,"content":"七日丝_261025.pdf","fids":[123,124]}`,
+		`{"gid":1,"id":2,"type":321,"media_type":5,"content":"","fids":[125]}`,
+		`{"gid":1,"id":3,"media_type":1,"fids":[126]}`,
+	} {
+		message, err := weibochat.ParseMessage([]byte(raw))
+		require.NoError(t, err)
+		message.FetchedAt = time.Now().UTC()
+		_, err = store.SaveMessages(t.Context(), []weibochat.Message{message})
+		require.NoError(t, err)
+	}
+	require.NoError(t, db.Model(&weibochat.Asset{}).Where("asset_key = 'file/123'").Updates(map[string]any{"status": weibochat.AssetStored, "storage_provider": "https://assets.example", "object_key": "weibo-chat/1/file/123.pdf", "content_type": "application/pdf", "byte_size": 42}).Error)
+	require.NoError(t, db.Model(&weibochat.Asset{}).Where("asset_key = 'file/124'").Update("status", weibochat.AssetFailed).Error)
+	var result httputil.Resp[MessageListResponse]
+	rec := get(t, e, "/groups/1/messages?asset_kind=file", http.StatusOK)
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
+	require.Len(t, result.Data.Items, 2)
+	assets := result.Data.Items[0].Assets
+	require.Len(t, assets, 2)
+	require.Equal(t, "七日丝_261025.pdf", assets[0].Filename)
+	require.Equal(t, weibochat.AssetFile, assets[0].Kind)
+	require.Equal(t, "application/pdf", assets[0].ContentType)
+	require.EqualValues(t, 42, assets[0].ByteSize)
+	require.Equal(t, "https://assets.example/weibo-chat/1/file/123.pdf", *assets[0].URL)
+	require.Equal(t, weibochat.AssetFailed, assets[1].Status)
+	require.Nil(t, assets[1].URL)
+	require.Equal(t, weibochat.AssetPending, result.Data.Items[1].Assets[0].Status)
+	require.Empty(t, result.Data.Items[1].Assets[0].Filename)
 }

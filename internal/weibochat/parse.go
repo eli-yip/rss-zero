@@ -87,16 +87,20 @@ func ParseMessage(raw json.RawMessage) (Message, error) {
 		return message, nil
 	}
 	switch *wire.MediaType {
-	case 1, 10:
-		kind := "image"
+	case 1, 5, 10:
+		kind := AssetImage
+		filename := ""
+		if *wire.MediaType == 5 {
+			kind, filename = AssetFile, wire.Text
+		}
 		if *wire.MediaType == 10 {
-			kind = "video"
+			kind = AssetVideo
 		}
 		for _, fid := range wire.Files {
-			message.Content.Assets = append(message.Content.Assets, AssetRef{Kind: kind, AssetKey: "file/" + string(fid)})
+			message.Content.Assets = append(message.Content.Assets, AssetRef{Kind: kind, AssetKey: "file/" + string(fid), Filename: filename})
 		}
 	case 15:
-		message.Content.Assets, err = pictureRefs(wire.PicInfos, wire.Pictures, "sticker")
+		message.Content.Assets, err = pictureRefs(wire.PicInfos, wire.Pictures, AssetSticker)
 	case 14:
 		for _, item := range wire.URLs {
 			if len(item.Status) == 0 || string(item.Status) == "null" {
@@ -110,7 +114,7 @@ func ParseMessage(raw json.RawMessage) (Message, error) {
 				break
 			}
 			var refs []AssetRef
-			refs, err = pictureRefs(status.Pics, status.IDs, "image")
+			refs, err = pictureRefs(status.Pics, status.IDs, AssetImage)
 			if err != nil {
 				break
 			}
@@ -123,7 +127,7 @@ func ParseMessage(raw json.RawMessage) (Message, error) {
 	return message, nil
 }
 
-func pictureRefs(raw json.RawMessage, ids []string, kind string) ([]AssetRef, error) {
+func pictureRefs(raw json.RawMessage, ids []string, kind AssetKind) ([]AssetRef, error) {
 	if len(raw) == 0 || string(raw) == "null" {
 		return nil, nil
 	}

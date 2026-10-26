@@ -174,11 +174,11 @@ func TestArchiveVideoAndTruncatedImage(t *testing.T) {
 		t.Run(kind, func(t *testing.T) {
 			data := video
 			length := int64(len(data))
-			assetKind := "video"
+			assetKind := AssetVideo
 			if kind == "truncated" {
 				data = testPNG(t)
 				length = int64(len(data) + 10)
-				assetKind = "image"
+				assetKind = AssetImage
 			}
 			client := NewClient(&http.Client{Transport: transportFunc(func(*http.Request) (*http.Response, error) {
 				return &http.Response{StatusCode: 200, ContentLength: length, Body: io.NopCloser(bytes.NewReader(data))}, nil
@@ -241,5 +241,42 @@ func TestArchiveCoreIntegration(t *testing.T) {
 		require.Contains(t, asset.SourceURL, "/mss/msget?")
 		require.Equal(t, "image/png", asset.ContentType)
 		require.Equal(t, data, files.objects[asset.ObjectKey])
+	}
+}
+
+func TestArchivePDFRejectsErrorResponsesAndRetries(t *testing.T) {
+	pdf := []byte("%PDF-1.7\n1 0 obj\n<<>>\nendobj\n%%EOF\n")
+	for _, payload := range []string{`{"error":"authentication required"}`, `<html>login</html>`, "PK\x03\x04unsupported zip"} {
+		t.Run(payload[:2], func(t *testing.T) {
+			data := []byte(payload)
+			client := NewClient(&http.Client{Transport: transportFunc(func(req *http.Request) (*http.Response, error) {
+				require.Equal(t, "5358051221832241", req.URL.Query().Get("fid"))
+				cookie, err := req.Cookie("SUB")
+				require.NoError(t, err)
+				require.Equal(t, "test", cookie.Value)
+				// MIME metadata is deliberately untrusted.
+				return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": {"application/pdf"}}, ContentLength: -1, Body: io.NopCloser(bytes.NewReader(data))}, nil
+			})}, func(context.Context) (string, error) { return "test", nil })
+			store := &memoryAssets{items: map[string]Asset{"file/5358051221832241": {GroupID: "4761715839862414", AssetKey: "file/5358051221832241", Kind: AssetFile, Status: AssetPending}}}
+			files := &memoryObjects{}
+			archiver := NewAssetArchiver(client, store, files)
+			result, err := archiver.ArchiveAssets(t.Context(), "4761715839862414", 10)
+			require.ErrorContains(t, err, "unexpected asset content type")
+			require.Equal(t, 1, result.Failed)
+			require.Empty(t, files.keys)
+			require.Equal(t, AssetFailed, store.items["file/5358051221832241"].Status)
+			data = pdf
+			result, err = archiver.ArchiveAssets(t.Context(), "4761715839862414", 10)
+			require.NoError(t, err)
+			require.Equal(t, 1, result.Stored)
+			saved := store.items["file/5358051221832241"]
+			require.Equal(t, "weibo-chat/4761715839862414/file/5358051221832241.pdf", saved.ObjectKey)
+			require.Equal(t, "application/pdf", saved.ContentType)
+			require.EqualValues(t, len(pdf), saved.ByteSize)
+			require.Equal(t, pdf, files.objects[saved.ObjectKey])
+			require.Zero(t, saved.Width)
+			require.Zero(t, saved.Height)
+			require.Empty(t, saved.LastError)
+		})
 	}
 }

@@ -113,7 +113,7 @@ type storedMedia struct {
 }
 
 // storeMedia is shared by message attachments and user avatars.
-func (c *Client) storeMedia(ctx context.Context, files ObjectStore, source, kind, keyPrefix string) (storedMedia, error) {
+func (c *Client) storeMedia(ctx context.Context, files ObjectStore, source string, kind AssetKind, keyPrefix string) (storedMedia, error) {
 	response, err := c.download(ctx, source)
 	if err != nil {
 		return storedMedia{}, err
@@ -136,7 +136,7 @@ func (c *Client) storeMedia(ctx context.Context, files ObjectStore, source, kind
 	}
 	reader := io.MultiReader(bytes.NewReader(prefix), response.Body)
 	width, height := 0, 0
-	if kind == "image" || kind == "sticker" {
+	if kind == AssetImage || kind == AssetSticker {
 		var header bytes.Buffer
 		width, height, err = ReadImageDimensions(io.TeeReader(reader, &header))
 		if err != nil {
@@ -228,8 +228,13 @@ func validAssetKey(key string) bool {
 	return false
 }
 
-func assetExtension(kind, contentType string) string {
-	if kind == "image" || kind == "sticker" {
+func assetExtension(kind AssetKind, contentType string) string {
+	// Files currently accept PDF bytes only. Upstream names and MIME headers
+	// cannot distinguish an attachment from an authentication/error response.
+	if kind == AssetFile && contentType == "application/pdf" {
+		return "pdf"
+	}
+	if kind == AssetImage || kind == AssetSticker {
 		switch contentType {
 		case "image/jpeg":
 			return "jpg"
@@ -241,7 +246,7 @@ func assetExtension(kind, contentType string) string {
 			return "webp"
 		}
 	}
-	if kind == "video" {
+	if kind == AssetVideo {
 		switch contentType {
 		case "video/mp4":
 			return "mp4"

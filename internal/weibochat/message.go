@@ -85,11 +85,22 @@ type Link struct {
 	URL         string `json:"url,omitempty"`
 }
 
+// AssetKind classifies message attachments independently of their upstream keys.
+type AssetKind string
+
+const (
+	AssetImage   AssetKind = "image"
+	AssetVideo   AssetKind = "video"
+	AssetSticker AssetKind = "sticker"
+	AssetFile    AssetKind = "file"
+)
+
 // AssetRef identifies a resource within the message's group. Slice order is display order.
 type AssetRef struct {
-	Kind      string `json:"kind"`
-	AssetKey  string `json:"asset_key"`
-	SourceURL string `json:"source_url,omitempty"`
+	Kind      AssetKind `json:"kind"`
+	AssetKey  string    `json:"asset_key"`
+	SourceURL string    `json:"source_url,omitempty"`
+	Filename  string    `json:"filename,omitempty"`
 }
 
 // MessageFilter selects archived messages within one group. Filter dimensions
