@@ -48,9 +48,17 @@ func NewClient(client *http.Client, sub func(context.Context) (string, error)) *
 }
 
 // APIError deliberately excludes upstream error text, which can contain private data.
-type APIError struct{ Code string }
+type APIError struct {
+	Code    string
+	RetCode string
+}
 
 func (e *APIError) Error() string { return "weibo API rejected request (code " + e.Code + ")" }
+
+// InvalidCredentials reports only confirmed authentication error codes.
+func (e *APIError) InvalidCredentials() bool {
+	return e.Code == "21301" || (e.Code == "21299" && e.RetCode == "50111309")
+}
 
 func (c *Client) FetchMessages(ctx context.Context, input FetchMessagesRequest) (MessagePage, error) {
 	if !MessageID(input.GroupID).Valid() || (input.Before != "" && !input.Before.Valid()) {
@@ -89,6 +97,7 @@ func (c *Client) FetchMessages(ctx context.Context, input FetchMessagesRequest) 
 		Result    bool            `json:"result"`
 		Messages  json.RawMessage `json:"messages"`
 		ErrorCode json.RawMessage `json:"error_code"`
+		Error     json.RawMessage `json:"error"`
 	}
 	if err = json.Unmarshal(data, &envelope); err != nil {
 		return MessagePage{}, fmt.Errorf("invalid message response JSON")
@@ -99,12 +108,24 @@ func (c *Client) FetchMessages(ctx context.Context, input FetchMessagesRequest) 
 		if json.Unmarshal(envelope.ErrorCode, &id) == nil {
 			code = string(id)
 		}
-		if code == "21301" && c.invalidateSUB != nil {
+		apiErr := &APIError{Code: code}
+		if code == "21299" {
+			// This wrapper carries an encoded JSON string, not a direct object.
+			// Retain only its numeric code; never expose upstream error text.
+			var nested string
+			var upstream struct {
+				RetCode MessageID `json:"retcode"`
+			}
+			if json.Unmarshal(envelope.Error, &nested) == nil && json.Unmarshal([]byte(nested), &upstream) == nil {
+				apiErr.RetCode = string(upstream.RetCode)
+			}
+		}
+		if apiErr.InvalidCredentials() && c.invalidateSUB != nil {
 			// Use the credential sent by this request, never reload a newer value.
 			sent, _ := req.Cookie("SUB")
 			c.invalidateSUB(sent.Value)
 		}
-		return MessagePage{}, &APIError{Code: code}
+		return MessagePage{}, apiErr
 	}
 	raw := bytes.TrimSpace(envelope.Messages)
 	if len(raw) == 0 || raw[0] != '[' {

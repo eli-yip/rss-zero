@@ -35,6 +35,7 @@ func TestRunWeiboGroups(t *testing.T) {
 	unavailable := errors.New("group unavailable")
 	missing := fmt.Errorf("load SUB: %w", cookie.ErrCookieMissing)
 	rejected := fmt.Errorf("fetch: %w", &weibochat.APIError{Code: "21301"})
+	wrappedRejected := fmt.Errorf("fetch: %w", &weibochat.APIError{Code: "21299", RetCode: "50111309"})
 	for _, tc := range []struct {
 		name         string
 		syncErrors   map[string]error
@@ -70,6 +71,18 @@ func TestRunWeiboGroups(t *testing.T) {
 			name:       "rejected credential stops without duplicate notice",
 			syncErrors: map[string]error{"1": rejected},
 			wantEvents: []string{"sync:1"},
+		},
+		{
+			name:       "wrapped rejected credential stops without duplicate notice",
+			syncErrors: map[string]error{"1": wrappedRejected},
+			wantEvents: []string{"sync:1"},
+		},
+		{
+			name:         "unknown wrapper continues and notifies",
+			syncErrors:   map[string]error{"1": &weibochat.APIError{Code: "21299"}},
+			wantEvents:   []string{"sync:1", "sync:2", "assets:2", "notify"},
+			wantFailures: 1,
+			wantExamples: []string{"group 1: weibo API rejected request (code 21299)"},
 		},
 		{
 			name:         "other API error continues and notifies",

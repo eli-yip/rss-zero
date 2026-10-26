@@ -53,6 +53,12 @@ func TestStoredSUBAuthenticationFailure(t *testing.T) {
 	}{
 		{name: "invalid SUB", status: 200, body: `{"error_code":21301}`, notices: 1},
 		{name: "new SUB preserved", status: 200, body: `{"error_code":21301}`, replacement: "new", wantValue: "new"},
+		{name: "wrapped invalid SUB", status: 200, body: `{"result":false,"error_code":21299,"error":"{\"retcode\":50111309,\"msg\":\"sub invalid\",\"data\":null}"}`, notices: 1},
+		{name: "wrapped invalid SUB preserves replacement", status: 200, body: `{"error_code":21299,"error":"{\"retcode\":50111309}"}`, replacement: "new", wantValue: "new"},
+		{name: "unknown wrapped error", status: 200, body: `{"error_code":21299,"error":"{\"retcode\":99999,\"msg\":\"sub invalid\"}"}`, wantValue: "old"},
+		{name: "wrapper without details", status: 200, body: `{"error_code":21299}`, wantValue: "old"},
+		{name: "malformed wrapped error", status: 200, body: `{"error_code":21299,"error":"{\"retcode\":50111309"}`, wantValue: "old"},
+		{name: "unrecognized wrapper", status: 200, body: `{"error_code":10012,"error":"{\"retcode\":50111309}"}`, wantValue: "old"},
 		{name: "referer error", status: 200, body: `{"error_code":10012}`, wantValue: "old"},
 		{name: "unknown error", status: 200, body: `{"result":false}`, wantValue: "old"},
 		{name: "forbidden", status: 403, body: `{}`, wantValue: "old"},
@@ -75,6 +81,7 @@ func TestStoredSUBAuthenticationFailure(t *testing.T) {
 			client := NewClientWithCookies(&http.Client{Transport: transport}, store, notifier, zap.NewNop())
 			_, err := client.FetchMessages(context.Background(), FetchMessagesRequest{GroupID: "123"})
 			require.Error(t, err)
+			require.NotContains(t, err.Error(), "sub invalid")
 			require.Equal(t, tc.wantValue, store.value)
 			require.Equal(t, tc.notices, notifier.count)
 			if tc.wantValue == "" {

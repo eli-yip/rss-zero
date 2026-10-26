@@ -100,7 +100,7 @@ func runWeiboGroups(groups []string, syncMessages, archiveAssets func(context.Co
 
 func isWeiboCredentialError(err error) bool {
 	var apiErr *weibochat.APIError
-	return errors.Is(err, cookie.ErrCookieMissing) || (errors.As(err, &apiErr) && apiErr.Code == "21301")
+	return errors.Is(err, cookie.ErrCookieMissing) || (errors.As(err, &apiErr) && apiErr.InvalidCredentials())
 }
 
 type weiboSyncFailures struct {
