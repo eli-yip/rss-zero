@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +30,7 @@ func TestFetchMessagesProtocol(t *testing.T) {
 		require.True(t, ok)
 		return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"result":true,"messages":[{"gid":123,"id":98}]}`))}, nil
 	})
-	client := NewClient(&http.Client{Transport: transport}, func(context.Context) (string, error) { return credential, nil })
+	client := newTestClient(&http.Client{Transport: transport}, func(context.Context) (string, error) { return credential, nil })
 	for _, value := range []string{"first", "updated"} {
 		credential = value
 		page, err := client.FetchMessages(context.Background(), FetchMessagesRequest{GroupID: "123", Before: "99"})
@@ -42,7 +43,7 @@ func TestFetchMessagesProtocol(t *testing.T) {
 func TestFetchRejectsFalseSuccess(t *testing.T) {
 	for _, body := range []string{`{"error_code":21301,"error":"secret"}`, `{"result":true}`, `{"result":true,"messages":null}`, `{"result":true,"messages":{}}`, `<html>login</html>`, `{"result":"true","messages":[]}`} {
 		t.Run(body, func(t *testing.T) {
-			client := NewClient(&http.Client{Transport: transportFunc(func(*http.Request) (*http.Response, error) {
+			client := newTestClient(&http.Client{Transport: transportFunc(func(*http.Request) (*http.Response, error) {
 				return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}, nil
 			})}, func(context.Context) (string, error) { return "test", nil })
 			_, err := client.FetchMessages(context.Background(), FetchMessagesRequest{GroupID: "123"})
@@ -50,4 +51,17 @@ func TestFetchRejectsFalseSuccess(t *testing.T) {
 			require.NotContains(t, err.Error(), "secret")
 		})
 	}
+}
+
+// Protocol and archive tests use an isolated budget without real-time sleeps.
+func newTestClient(httpClient *http.Client, sub func(context.Context) (string, error)) *Client {
+	client := NewClient(httpClient, sub)
+	client.messageLimiter = newTestMessageLimiter()
+	return client
+}
+
+func newTestMessageLimiter() *messageLimiter {
+	limiter := newMessageLimiter()
+	limiter.delay = func() time.Duration { return 0 }
+	return limiter
 }

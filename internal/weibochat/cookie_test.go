@@ -79,6 +79,7 @@ func TestStoredSUBAuthenticationFailure(t *testing.T) {
 				return &http.Response{StatusCode: tc.status, Body: io.NopCloser(strings.NewReader(tc.body))}, nil
 			})
 			client := NewClientWithCookies(&http.Client{Transport: transport}, store, notifier, zap.NewNop())
+			client.messageLimiter = newTestMessageLimiter()
 			_, err := client.FetchMessages(context.Background(), FetchMessagesRequest{GroupID: "123"})
 			require.Error(t, err)
 			require.NotContains(t, err.Error(), "sub invalid")

@@ -33,9 +33,10 @@ type MessagePage struct {
 // Client reads credentials for each request so callers can replace an expired SUB.
 // It never follows redirects for credential-bearing message requests.
 type Client struct {
-	http          *http.Client
-	sub           func(context.Context) (string, error)
-	invalidateSUB func(string)
+	http           *http.Client
+	sub            func(context.Context) (string, error)
+	invalidateSUB  func(string)
+	messageLimiter *messageLimiter
 }
 
 func NewClient(client *http.Client, sub func(context.Context) (string, error)) *Client {
@@ -44,7 +45,7 @@ func NewClient(client *http.Client, sub func(context.Context) (string, error)) *
 	}
 	copyClient := *client
 	copyClient.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
-	return &Client{http: &copyClient, sub: sub}
+	return &Client{http: &copyClient, sub: sub, messageLimiter: defaultMessageLimiter}
 }
 
 // APIError deliberately excludes upstream error text, which can contain private data.
@@ -64,6 +65,11 @@ func (c *Client) FetchMessages(ctx context.Context, input FetchMessagesRequest) 
 	if !MessageID(input.GroupID).Valid() || (input.Before != "" && !input.Before.Valid()) {
 		return MessagePage{}, fmt.Errorf("invalid group ID or message cursor")
 	}
+	if err := c.messageLimiter.acquire(ctx); err != nil {
+		return MessagePage{}, fmt.Errorf("wait for message request: %w", err)
+	}
+	defer c.messageLimiter.release()
+
 	before := string(input.Before)
 	if before == "" {
 		before = "0"
@@ -78,6 +84,10 @@ func (c *Client) FetchMessages(ctx context.Context, input FetchMessagesRequest) 
 	if err = c.authorize(req); err != nil {
 		return MessagePage{}, err
 	}
+	if err = ctx.Err(); err != nil {
+		return MessagePage{}, err
+	}
+	c.messageLimiter.started()
 	response, err := c.http.Do(req)
 	if err != nil {
 		return MessagePage{}, fmt.Errorf("fetch messages: %w", err)

@@ -77,7 +77,7 @@ func TestArchiveRetriesFailedDownload(t *testing.T) {
 	valid := false
 	calls := 0
 	data := testPNG(t)
-	client := NewClient(&http.Client{Transport: transportFunc(func(req *http.Request) (*http.Response, error) {
+	client := newTestClient(&http.Client{Transport: transportFunc(func(req *http.Request) (*http.Response, error) {
 		calls++
 		require.Equal(t, "/2/mss/msget", req.URL.Path)
 		require.Equal(t, "123", req.URL.Query().Get("fid"))
@@ -121,7 +121,7 @@ func TestArchiveRecoversUploadAndDatabaseFailures(t *testing.T) {
 	for _, failure := range []string{"upload", "database"} {
 		t.Run(failure, func(t *testing.T) {
 			data := testPNG(t)
-			client := NewClient(&http.Client{Transport: transportFunc(func(*http.Request) (*http.Response, error) {
+			client := newTestClient(&http.Client{Transport: transportFunc(func(*http.Request) (*http.Response, error) {
 				return &http.Response{StatusCode: 200, ContentLength: -1, Body: io.NopCloser(bytes.NewReader(data))}, nil
 			})}, nil)
 			store := &memoryAssets{items: map[string]Asset{"pic/abc": {GroupID: "1", AssetKey: "pic/abc", Kind: "sticker", SourceURL: "https://wx1.sinaimg.cn/large/abc.jpg", Status: AssetPending}}}
@@ -143,7 +143,7 @@ func TestArchiveRecoversUploadAndDatabaseFailures(t *testing.T) {
 
 func TestDownloadRedirectDoesNotForwardCookie(t *testing.T) {
 	calls := 0
-	client := NewClient(&http.Client{Transport: transportFunc(func(req *http.Request) (*http.Response, error) {
+	client := newTestClient(&http.Client{Transport: transportFunc(func(req *http.Request) (*http.Response, error) {
 		calls++
 		if calls == 1 {
 			return &http.Response{StatusCode: 302, Header: http.Header{"Location": {"https://wx1.sinaimg.cn/large/abc.jpg"}}, Body: io.NopCloser(strings.NewReader(""))}, nil
@@ -180,7 +180,7 @@ func TestArchiveVideoAndTruncatedImage(t *testing.T) {
 				length = int64(len(data) + 10)
 				assetKind = AssetImage
 			}
-			client := NewClient(&http.Client{Transport: transportFunc(func(*http.Request) (*http.Response, error) {
+			client := newTestClient(&http.Client{Transport: transportFunc(func(*http.Request) (*http.Response, error) {
 				return &http.Response{StatusCode: 200, ContentLength: length, Body: io.NopCloser(bytes.NewReader(data))}, nil
 			})}, func(context.Context) (string, error) { return "test", nil })
 			store := &memoryAssets{items: map[string]Asset{"file/123": {GroupID: "1", AssetKey: "file/123", Kind: assetKind, Status: AssetPending}}}
@@ -202,7 +202,7 @@ func TestArchiveCoreIntegration(t *testing.T) {
 	ctx := context.Background()
 	latest := false
 	data := testPNG(t)
-	client := NewClient(&http.Client{Transport: transportFunc(func(req *http.Request) (*http.Response, error) {
+	client := newTestClient(&http.Client{Transport: transportFunc(func(req *http.Request) (*http.Response, error) {
 		payload := data
 		if req.URL.Host == "api.weibo.com" {
 			payload = []byte(`{"result":true,"messages":[{"gid":1,"id":5,"from_uid":42,"from_user":{"screen_name":"first","avatar_large":"https://wx1.sinaimg.cn/avatar/first.png"},"media_type":1,"fids":[123]}]}`)
@@ -249,7 +249,7 @@ func TestArchivePDFRejectsErrorResponsesAndRetries(t *testing.T) {
 	for _, payload := range []string{`{"error":"authentication required"}`, `<html>login</html>`, "PK\x03\x04unsupported zip"} {
 		t.Run(payload[:2], func(t *testing.T) {
 			data := []byte(payload)
-			client := NewClient(&http.Client{Transport: transportFunc(func(req *http.Request) (*http.Response, error) {
+			client := newTestClient(&http.Client{Transport: transportFunc(func(req *http.Request) (*http.Response, error) {
 				require.Equal(t, "5358051221832241", req.URL.Query().Get("fid"))
 				cookie, err := req.Cookie("SUB")
 				require.NoError(t, err)
